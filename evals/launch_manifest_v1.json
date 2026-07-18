@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "frozen": true,
+  "split_policy": {
+    "tuning": "No launch-v1 case may be used to change prompts, validators, thresholds, or tools before this report is closed.",
+    "holdout": "The live launch probe uses the separately frozen launch_selection_v1.json.",
+    "regression": "Overlap and modification suites retain explicit regression labels and are not counted as blind production quality."
+  },
+  "suites": [
+    {
+      "name": "logic_known_bad",
+      "path": "logic_known_bad/manifest.json",
+      "sha256": "sha256:5369d7e060dd302bb6251c7dd555c4ce82f67fd3cc517c726405f1def923aa62"
+    },
+    {
+      "name": "logic_known_bad_replacement",
+      "path": "logic_known_bad_replacement/manifest.json",
+      "sha256": "sha256:d45703bf0b51b227ebcef94c5c09a1474f3b3df371f8d3d74e278e6f0dffd43c"
+    },
+    {
+      "name": "logic_known_good",
+      "path": "logic_known_good/manifest.json",
+      "sha256": "sha256:27cdd7181d3e700689738dbf41c678fa05234afc479a6a68a70e130bec350016"
+    },
+    {
+      "name": "overlap_regression",
+      "path": "overlap_holdout/manifest.json",
+      "sha256": "sha256:cefe777f308d69b08ec3b5660bf00de2719b61cc1443613976ec1096e59eba6d"
+    },
+    {
+      "name": "modification_regression",
+      "path": "modification_holdout/manifest.json",
+      "sha256": "sha256:198fff8f30345ef32116b54a0708566210e0105f23219df0ee2d677fde4b05b5"
+    },
+    {
+      "name": "launch_selection",
+      "path": "launch_selection_v1.json",
+      "sha256": "sha256:1d49fac5bf8f7ff6617e83d002d609fc63e90ea4d5414e111ab921eb479cec9d"
+    }
+  ]
+}

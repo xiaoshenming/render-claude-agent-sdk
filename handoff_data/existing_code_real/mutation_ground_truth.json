@@ -1,0 +1,8 @@
+{
+  "mutation_type": "line_endpoint_swap",
+  "issue_type": "wrong_geometry_endpoint",
+  "line_no": 158,
+  "object": "line_DB",
+  "expected_endpoints": ["p_D", "p_B"],
+  "mutated_endpoints": ["p_D", "p_C"]
+}

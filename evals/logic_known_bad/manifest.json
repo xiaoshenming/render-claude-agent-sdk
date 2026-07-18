@@ -1,0 +1,1033 @@
+{
+  "dataset_root_env": "MANIM_LOGIC_EVAL_PACKS_ROOT",
+  "frozen": true,
+  "pack_id": "geo30_mutation_holdout_v2",
+  "private_ground_truth": {
+    "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/evaluation_ground_truth_private.json",
+    "sha256": "sha256:d7d020aa76a66db70161c398dfda977ac5afc784be84ac48b0d9b8816c703163"
+  },
+  "sample_count": 29,
+  "samples": [
+    {
+      "artifacts": {
+        "candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT002_expert_point_coordinate_shift/candidate.py",
+          "sha256": "sha256:f4d81a4788ad57cbf7e16b806ec9ad0c390083d24cae5e428bfe590c7911f3d3"
+        },
+        "case_manifest.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT002_expert_point_coordinate_shift/case_manifest.json",
+          "sha256": "sha256:4005015eb890b2850a7d797efec79c760a92e9f54ceb9f9282b760f362bc7dac"
+        },
+        "original_candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT002_expert_point_coordinate_shift/original_candidate.py",
+          "sha256": "sha256:a322422bc71270b35927e50b131bab73d9288dbcde228e81e3c5daaa802ea839"
+        },
+        "problem_text.txt": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT002_expert_point_coordinate_shift/problem_text.txt",
+          "sha256": "sha256:4c495b5bbd86639ffb592b3ff25e98d66a7952cd398525caada271df77ef4200"
+        },
+        "sample_meta.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT002_expert_point_coordinate_shift/sample_meta.json",
+          "sha256": "sha256:7e29315ce90589b73acbda531c8b0bc3a92a38ec214c8b1fd3c506337884698f"
+        },
+        "source_correct.mp4": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT002_expert_point_coordinate_shift/source_correct.mp4",
+          "sha256": "sha256:a0234582fbbec312cd51f1e575ec47d8c833a65fe3b0f7418cade8e26aff9d8d"
+        }
+      },
+      "difficulty": "expert",
+      "expected_issue_type": "wrong_geometry_position",
+      "sample_id": "MUT002_expert_point_coordinate_shift",
+      "target_lines": [
+        176
+      ],
+      "truth": "known_bad"
+    },
+    {
+      "artifacts": {
+        "candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT003_expert_point_coordinate_shift/candidate.py",
+          "sha256": "sha256:4bd4b9ede2ec57e7783c7712618395a84d7756443339b58a9b14c379379c06b2"
+        },
+        "case_manifest.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT003_expert_point_coordinate_shift/case_manifest.json",
+          "sha256": "sha256:929a2eb9ca12cc444a2ed80d7e72b7b456d4656ed7dd227f3e2e178376c6b848"
+        },
+        "original_candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT003_expert_point_coordinate_shift/original_candidate.py",
+          "sha256": "sha256:3b605973f1647f0da54c3998c7c9bdbaab2d38199074566295865197ef9a103d"
+        },
+        "problem_text.txt": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT003_expert_point_coordinate_shift/problem_text.txt",
+          "sha256": "sha256:87039ddbaf72bdf8568a322f374faddfc7c352267d3523d67b623982f0c1342f"
+        },
+        "sample_meta.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT003_expert_point_coordinate_shift/sample_meta.json",
+          "sha256": "sha256:01753f465fb0093c4aacb5b1ed6ef56379ec8c11b10e5a25ff26a3a5ea7d1762"
+        },
+        "source_correct.mp4": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT003_expert_point_coordinate_shift/source_correct.mp4",
+          "sha256": "sha256:cc4baf4819fef9c730cc0b3dc6d7102ca9565a0ba637435c73606f58346d9657"
+        }
+      },
+      "difficulty": "expert",
+      "expected_issue_type": "wrong_geometry_position",
+      "sample_id": "MUT003_expert_point_coordinate_shift",
+      "target_lines": [
+        175
+      ],
+      "truth": "known_bad"
+    },
+    {
+      "artifacts": {
+        "candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT004_expert_line_endpoint_swap/candidate.py",
+          "sha256": "sha256:0ae08c5364d6463f29934520090409f9a9f997f288c94abf5002f1db878b3dab"
+        },
+        "case_manifest.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT004_expert_line_endpoint_swap/case_manifest.json",
+          "sha256": "sha256:afa320d08fa81172705d7bd8a579b3d27c1aec1332421d32ebdc2b48d02ca3e4"
+        },
+        "original_candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT004_expert_line_endpoint_swap/original_candidate.py",
+          "sha256": "sha256:7fccebc68e89b187cf90d5eef91b18d1492c1bec1db4deb469ab6e71cb920d80"
+        },
+        "problem_text.txt": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT004_expert_line_endpoint_swap/problem_text.txt",
+          "sha256": "sha256:e821ca97cf01315cd59d9f31e537df4b8c0cf89380e571dca56b43e170121de8"
+        },
+        "sample_meta.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT004_expert_line_endpoint_swap/sample_meta.json",
+          "sha256": "sha256:987df40c50ac6545665418f94e683b666d63fee92d6efff3a0c0dc6a114924b8"
+        },
+        "source_correct.mp4": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT004_expert_line_endpoint_swap/source_correct.mp4",
+          "sha256": "sha256:c7c1f87eee88e3e34e53758f67d57b09d679da8cd449ce2d8bc7146d3addaf50"
+        }
+      },
+      "difficulty": "expert",
+      "expected_issue_type": "wrong_geometry_endpoint",
+      "sample_id": "MUT004_expert_line_endpoint_swap",
+      "target_lines": [
+        227
+      ],
+      "truth": "known_bad"
+    },
+    {
+      "artifacts": {
+        "candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT005_expert_circle_line_type_swap/candidate.py",
+          "sha256": "sha256:8f0b5099623bcb38e1454538389e7900d38c8ff324fbf36cb1263e920aa88b56"
+        },
+        "case_manifest.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT005_expert_circle_line_type_swap/case_manifest.json",
+          "sha256": "sha256:17a5a387ac574476348496a49faecada6af3c60347b2d05ce14e121cad6aecf8"
+        },
+        "original_candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT005_expert_circle_line_type_swap/original_candidate.py",
+          "sha256": "sha256:daaff76655bc375f36926467907b35021c5152089ffe02ae753fb19e26558770"
+        },
+        "problem_text.txt": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT005_expert_circle_line_type_swap/problem_text.txt",
+          "sha256": "sha256:fc7743d2b16b33d64c3c516efc38a341b25b800b78c6870ba4c82e4abdb679e3"
+        },
+        "sample_meta.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT005_expert_circle_line_type_swap/sample_meta.json",
+          "sha256": "sha256:82324229d005c67025bc59405f117c2d6d48fb393f66e299b82db3e2d58d5db0"
+        },
+        "source_correct.mp4": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT005_expert_circle_line_type_swap/source_correct.mp4",
+          "sha256": "sha256:e93b2863bc71cbe8044b05db584758b83b66511d2b62c2eb3805828d3e1fe72b"
+        }
+      },
+      "difficulty": "expert",
+      "expected_issue_type": "wrong_geometry_object_type",
+      "sample_id": "MUT005_expert_circle_line_type_swap",
+      "target_lines": [
+        115
+      ],
+      "truth": "known_bad"
+    },
+    {
+      "artifacts": {
+        "candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT006_medium_chinese_line_relation_swap/candidate.py",
+          "sha256": "sha256:e4e189b362870f47090bf08da4389de8023c1590e19b157a6b0a45f76a8b493b"
+        },
+        "case_manifest.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT006_medium_chinese_line_relation_swap/case_manifest.json",
+          "sha256": "sha256:377bf4d36babe2aa79d53c47d77640e97bcac03e86ba163dc99ff50479f65657"
+        },
+        "original_candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT006_medium_chinese_line_relation_swap/original_candidate.py",
+          "sha256": "sha256:2650ba7df1bbde741b4c4a9a98f3dc6ea80cd23c5a4efae15f07068001a9e387"
+        },
+        "problem_text.txt": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT006_medium_chinese_line_relation_swap/problem_text.txt",
+          "sha256": "sha256:f4e78305c6f9a46110e78bfc909e3994de784996ed8f38c19bfeadb15712a89a"
+        },
+        "sample_meta.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT006_medium_chinese_line_relation_swap/sample_meta.json",
+          "sha256": "sha256:96f975eeb125d6441f101f2b47bd9c42ca3549f5924e1594cb13c51a28254200"
+        },
+        "source_correct.mp4": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT006_medium_chinese_line_relation_swap/source_correct.mp4",
+          "sha256": "sha256:812e781e783ec57a6ce67c2599bbc4465eb4a412b018975bcb1a61f7a6d14ab3"
+        }
+      },
+      "difficulty": "medium",
+      "expected_issue_type": "wrong_line_relation",
+      "sample_id": "MUT006_medium_chinese_line_relation_swap",
+      "target_lines": [
+        127
+      ],
+      "truth": "known_bad"
+    },
+    {
+      "artifacts": {
+        "candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT007_hard_proof_method_mismatch/candidate.py",
+          "sha256": "sha256:fd6098de2a7d3f9d44fe0a67f6bd7e0bafdba9fd4b344357de9c2a5f2a192cdb"
+        },
+        "case_manifest.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT007_hard_proof_method_mismatch/case_manifest.json",
+          "sha256": "sha256:ec17e7fb8515df8a32040590cfe14dff0ba56352ffa74abb0fb26357a41a8d26"
+        },
+        "original_candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT007_hard_proof_method_mismatch/original_candidate.py",
+          "sha256": "sha256:a076dda73e85dd2873319557524b05abf44b7a5d88c2ab10a463a8aca681185b"
+        },
+        "problem_text.txt": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT007_hard_proof_method_mismatch/problem_text.txt",
+          "sha256": "sha256:b91e37224a1cd7f46364034169c9c46dffa48ea54db53130106d5ca0f0ca65f9"
+        },
+        "sample_meta.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT007_hard_proof_method_mismatch/sample_meta.json",
+          "sha256": "sha256:c3e96ac0c11e62490bec5f565a9c1d1330e6b53d136aea121d612ad78f63d701"
+        },
+        "source_correct.mp4": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT007_hard_proof_method_mismatch/source_correct.mp4",
+          "sha256": "sha256:5dbcc1d541da1e593fe8aee03dcf0564ae4b0420a87626990545ebd319385308"
+        }
+      },
+      "difficulty": "hard",
+      "expected_issue_type": "wrong_proof_criterion",
+      "sample_id": "MUT007_hard_proof_method_mismatch",
+      "target_lines": [
+        208
+      ],
+      "truth": "known_bad"
+    },
+    {
+      "artifacts": {
+        "candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT008_hard_ratio_factor_error/candidate.py",
+          "sha256": "sha256:2a3e9724fc3d3cad79b2bafda04b998b0de0032df327c5e5d7f830231c4757d6"
+        },
+        "case_manifest.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT008_hard_ratio_factor_error/case_manifest.json",
+          "sha256": "sha256:e47ef92f953803a461ac21ca5c1df76caf46cafe113927e5ef196f24cdfc28c5"
+        },
+        "original_candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT008_hard_ratio_factor_error/original_candidate.py",
+          "sha256": "sha256:580c7df2b060f320aa0b4d04df1d4a5acf2363e9c75612fd3fabe58b795bb02a"
+        },
+        "problem_text.txt": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT008_hard_ratio_factor_error/problem_text.txt",
+          "sha256": "sha256:8daca521816bc889a47d1333464aac5f89052d1afaacadf2f96cfb4897aa71b2"
+        },
+        "sample_meta.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT008_hard_ratio_factor_error/sample_meta.json",
+          "sha256": "sha256:3d92582ed5d157b59743670dfe634189fe94d0dc93a93f8d405bf81ef0b201d7"
+        },
+        "source_correct.mp4": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT008_hard_ratio_factor_error/source_correct.mp4",
+          "sha256": "sha256:e014878c9a9ecbbfdf60178906f2c2508bd7eaa8e6eff6728f4e9fc93e47b4f2"
+        }
+      },
+      "difficulty": "hard",
+      "expected_issue_type": "wrong_ratio_or_factor",
+      "sample_id": "MUT008_hard_ratio_factor_error",
+      "target_lines": [
+        136
+      ],
+      "truth": "known_bad"
+    },
+    {
+      "artifacts": {
+        "candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT009_expert_point_coordinate_shift/candidate.py",
+          "sha256": "sha256:e9fc9fa65dcd4c6d923bc3efc0d9bdd8bfd53d473ef4e5db391608397da2aebb"
+        },
+        "case_manifest.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT009_expert_point_coordinate_shift/case_manifest.json",
+          "sha256": "sha256:eb4e8f4ea2c57f1562e593e098157688fdfa11f9bcd2a5ffdac93ed3288bdc36"
+        },
+        "original_candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT009_expert_point_coordinate_shift/original_candidate.py",
+          "sha256": "sha256:75d0323f0fe1f0f0d3bf860d21014fadfea812713fc37eae8041e98aac192245"
+        },
+        "problem_text.txt": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT009_expert_point_coordinate_shift/problem_text.txt",
+          "sha256": "sha256:c557f85d493e18cdb8592f652614781a2a10dc32bc07439b18d96ceed5e2ad26"
+        },
+        "sample_meta.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT009_expert_point_coordinate_shift/sample_meta.json",
+          "sha256": "sha256:a0119c86a9743a1a7a13818a9cdc4fe57f577aed0efc9e6368e2bc6c7adbfbb4"
+        },
+        "source_correct.mp4": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT009_expert_point_coordinate_shift/source_correct.mp4",
+          "sha256": "sha256:342f4af2a7fb56a78dda9a6cadddecc8566da260c50497c76f2feb444b23c4db"
+        }
+      },
+      "difficulty": "expert",
+      "expected_issue_type": "wrong_geometry_position",
+      "sample_id": "MUT009_expert_point_coordinate_shift",
+      "target_lines": [
+        15
+      ],
+      "truth": "known_bad"
+    },
+    {
+      "artifacts": {
+        "candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT010_medium_line_relation_swap/candidate.py",
+          "sha256": "sha256:a7841e1b6673f52d23c1b6d308ae4a12f76ff80112541a98fe08b72373fa32fa"
+        },
+        "case_manifest.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT010_medium_line_relation_swap/case_manifest.json",
+          "sha256": "sha256:733649a00c89974ea640211d6c0381cf5e92b6cd5bdc236a56006c1e5eefd1ed"
+        },
+        "original_candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT010_medium_line_relation_swap/original_candidate.py",
+          "sha256": "sha256:8c3bc20eff2a65e836d052f7166ea738097565cfa5cbdc41649a690672ea553f"
+        },
+        "problem_text.txt": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT010_medium_line_relation_swap/problem_text.txt",
+          "sha256": "sha256:cb185d0c773a3dcb009afef34a180795bccb8b606cdeccedb0e83300c8fa6deb"
+        },
+        "sample_meta.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT010_medium_line_relation_swap/sample_meta.json",
+          "sha256": "sha256:257ce4edc0d4d1543a38332734d899217e236f1dcc5c4340cf036d5218070282"
+        },
+        "source_correct.mp4": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT010_medium_line_relation_swap/source_correct.mp4",
+          "sha256": "sha256:e97a733cf74e2ffa5c14023ffdc44b0282fa7e1f4a6f469d1cd9ccdc507a2e0f"
+        }
+      },
+      "difficulty": "medium",
+      "expected_issue_type": "wrong_line_relation",
+      "sample_id": "MUT010_medium_line_relation_swap",
+      "target_lines": [
+        87
+      ],
+      "truth": "known_bad"
+    },
+    {
+      "artifacts": {
+        "candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT011_expert_axes_point_shift/candidate.py",
+          "sha256": "sha256:736f7201919bf03156e8c153c794249cf1241224cfed8c4e7c4ebbff914ee2c1"
+        },
+        "case_manifest.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT011_expert_axes_point_shift/case_manifest.json",
+          "sha256": "sha256:9518641431df602cf95e14916d3d23d48ee1a9da725d9e689b6fc56145c74d45"
+        },
+        "original_candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT011_expert_axes_point_shift/original_candidate.py",
+          "sha256": "sha256:f2ce59b96a18de01477909840ef75031c85d52e1c551ffd2d327e2c61a3d09d5"
+        },
+        "problem_text.txt": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT011_expert_axes_point_shift/problem_text.txt",
+          "sha256": "sha256:cf7844557d0c20998b84b8835655900e15ad566b44fa2a261f1115d44262e3c0"
+        },
+        "sample_meta.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT011_expert_axes_point_shift/sample_meta.json",
+          "sha256": "sha256:5fa90e6a8b15f31b02281ee8b3219ae816563173e04dcc9cbcd7df0ef82ac7d1"
+        },
+        "source_correct.mp4": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT011_expert_axes_point_shift/source_correct.mp4",
+          "sha256": "sha256:501e411d53e929fa974ad1c28797e20dd72dccc5a00a3d7c1b8caf9d15a60458"
+        }
+      },
+      "difficulty": "expert",
+      "expected_issue_type": "wrong_graph_coordinate",
+      "sample_id": "MUT011_expert_axes_point_shift",
+      "target_lines": [
+        103
+      ],
+      "truth": "known_bad"
+    },
+    {
+      "artifacts": {
+        "candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT012_expert_line_endpoint_swap/candidate.py",
+          "sha256": "sha256:0ef9dbc17e01f8a0b939d9db061650a5e8ee9289f0826ef52b185d6598934518"
+        },
+        "case_manifest.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT012_expert_line_endpoint_swap/case_manifest.json",
+          "sha256": "sha256:0bfcf6aaa5d1018d9b22d8f263f59d87817637a34201f8cf5d8dd52494c1277c"
+        },
+        "original_candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT012_expert_line_endpoint_swap/original_candidate.py",
+          "sha256": "sha256:7723127de5fa0c01b7b59f4ef4c74c24b03a9e5314c94a3d42d3662394728511"
+        },
+        "problem_text.txt": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT012_expert_line_endpoint_swap/problem_text.txt",
+          "sha256": "sha256:0f903e9da00a1d6a3d612c53da80ba9313b12923629fac62b8f615f4494274a2"
+        },
+        "sample_meta.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT012_expert_line_endpoint_swap/sample_meta.json",
+          "sha256": "sha256:038fb06dac06631c71c2a7163886019db5681bac85798427032449aa5b158532"
+        },
+        "source_correct.mp4": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT012_expert_line_endpoint_swap/source_correct.mp4",
+          "sha256": "sha256:7c947ec51f61f84f1f6adf097486a9884ee4ca7c9035c7ccfabfa4cf54450a31"
+        }
+      },
+      "difficulty": "expert",
+      "expected_issue_type": "wrong_geometry_endpoint",
+      "sample_id": "MUT012_expert_line_endpoint_swap",
+      "target_lines": [
+        195
+      ],
+      "truth": "known_bad"
+    },
+    {
+      "artifacts": {
+        "candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT013_expert_line_endpoint_swap/candidate.py",
+          "sha256": "sha256:640315c2ecc8cd3b33f402d083e70531912d92555b16bb3b8c18a81f685fb0a2"
+        },
+        "case_manifest.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT013_expert_line_endpoint_swap/case_manifest.json",
+          "sha256": "sha256:d4ea2c8c9b2ea734846846c4c9a5e1f90e612c970c4b4a420b30caeb37ee2ac0"
+        },
+        "original_candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT013_expert_line_endpoint_swap/original_candidate.py",
+          "sha256": "sha256:a322422bc71270b35927e50b131bab73d9288dbcde228e81e3c5daaa802ea839"
+        },
+        "problem_text.txt": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT013_expert_line_endpoint_swap/problem_text.txt",
+          "sha256": "sha256:4c495b5bbd86639ffb592b3ff25e98d66a7952cd398525caada271df77ef4200"
+        },
+        "sample_meta.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT013_expert_line_endpoint_swap/sample_meta.json",
+          "sha256": "sha256:f4761eef2a319e9da6e5f3b08366468721424aab2f4443cd373aff33aadc01df"
+        },
+        "source_correct.mp4": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT013_expert_line_endpoint_swap/source_correct.mp4",
+          "sha256": "sha256:a0234582fbbec312cd51f1e575ec47d8c833a65fe3b0f7418cade8e26aff9d8d"
+        }
+      },
+      "difficulty": "expert",
+      "expected_issue_type": "wrong_geometry_endpoint",
+      "sample_id": "MUT013_expert_line_endpoint_swap",
+      "target_lines": [
+        321
+      ],
+      "truth": "known_bad"
+    },
+    {
+      "artifacts": {
+        "candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT014_expert_line_endpoint_swap/candidate.py",
+          "sha256": "sha256:39f1f7cd0d0c58e0453d079ab825eb3f7ed85dc08b23bcef573a2d032d3a89ca"
+        },
+        "case_manifest.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT014_expert_line_endpoint_swap/case_manifest.json",
+          "sha256": "sha256:a87347d7be7846c7e9d945d7d4e78083434896a0b47dcb7eab5dc1bd7e90affb"
+        },
+        "original_candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT014_expert_line_endpoint_swap/original_candidate.py",
+          "sha256": "sha256:3b605973f1647f0da54c3998c7c9bdbaab2d38199074566295865197ef9a103d"
+        },
+        "problem_text.txt": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT014_expert_line_endpoint_swap/problem_text.txt",
+          "sha256": "sha256:87039ddbaf72bdf8568a322f374faddfc7c352267d3523d67b623982f0c1342f"
+        },
+        "sample_meta.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT014_expert_line_endpoint_swap/sample_meta.json",
+          "sha256": "sha256:ee1e50ccdfc4ed267f539b6f8ea9c21328b29980cd9b678993cbed385e77f4e2"
+        },
+        "source_correct.mp4": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT014_expert_line_endpoint_swap/source_correct.mp4",
+          "sha256": "sha256:cc4baf4819fef9c730cc0b3dc6d7102ca9565a0ba637435c73606f58346d9657"
+        }
+      },
+      "difficulty": "expert",
+      "expected_issue_type": "wrong_geometry_endpoint",
+      "sample_id": "MUT014_expert_line_endpoint_swap",
+      "target_lines": [
+        189
+      ],
+      "truth": "known_bad"
+    },
+    {
+      "artifacts": {
+        "candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT015_expert_line_endpoint_swap/candidate.py",
+          "sha256": "sha256:6ca40287971a896372eb57d178e018e4d468154f24d14acf9b1700ca3fd69046"
+        },
+        "case_manifest.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT015_expert_line_endpoint_swap/case_manifest.json",
+          "sha256": "sha256:1404722b85176f9e7b64c32be3c41c83a10d5212e62af81001df9671bc7a26bc"
+        },
+        "original_candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT015_expert_line_endpoint_swap/original_candidate.py",
+          "sha256": "sha256:7fccebc68e89b187cf90d5eef91b18d1492c1bec1db4deb469ab6e71cb920d80"
+        },
+        "problem_text.txt": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT015_expert_line_endpoint_swap/problem_text.txt",
+          "sha256": "sha256:e821ca97cf01315cd59d9f31e537df4b8c0cf89380e571dca56b43e170121de8"
+        },
+        "sample_meta.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT015_expert_line_endpoint_swap/sample_meta.json",
+          "sha256": "sha256:387095bac16381a1cca9b3fc79a28e94e0e1ca0c4ec596d40f1de03d6c90ae66"
+        },
+        "source_correct.mp4": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT015_expert_line_endpoint_swap/source_correct.mp4",
+          "sha256": "sha256:c7c1f87eee88e3e34e53758f67d57b09d679da8cd449ce2d8bc7146d3addaf50"
+        }
+      },
+      "difficulty": "expert",
+      "expected_issue_type": "wrong_geometry_endpoint",
+      "sample_id": "MUT015_expert_line_endpoint_swap",
+      "target_lines": [
+        179
+      ],
+      "truth": "known_bad"
+    },
+    {
+      "artifacts": {
+        "candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT016_medium_line_relation_swap/candidate.py",
+          "sha256": "sha256:f726239e61cc8f059de2addfa9bf072384e5bca6ccfc99673b2307a7d7c9d06e"
+        },
+        "case_manifest.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT016_medium_line_relation_swap/case_manifest.json",
+          "sha256": "sha256:fb0b8bf408a6d46032fa4478ab2d601fe3ec004cdf7723b5cdf998c40b9731d1"
+        },
+        "original_candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT016_medium_line_relation_swap/original_candidate.py",
+          "sha256": "sha256:daaff76655bc375f36926467907b35021c5152089ffe02ae753fb19e26558770"
+        },
+        "problem_text.txt": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT016_medium_line_relation_swap/problem_text.txt",
+          "sha256": "sha256:fc7743d2b16b33d64c3c516efc38a341b25b800b78c6870ba4c82e4abdb679e3"
+        },
+        "sample_meta.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT016_medium_line_relation_swap/sample_meta.json",
+          "sha256": "sha256:60900d9295394a2ddb6a777a03aed82004698d36ccbb7839074b23aa5c8b16ac"
+        },
+        "source_correct.mp4": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT016_medium_line_relation_swap/source_correct.mp4",
+          "sha256": "sha256:e93b2863bc71cbe8044b05db584758b83b66511d2b62c2eb3805828d3e1fe72b"
+        }
+      },
+      "difficulty": "medium",
+      "expected_issue_type": "wrong_line_relation",
+      "sample_id": "MUT016_medium_line_relation_swap",
+      "target_lines": [
+        118
+      ],
+      "truth": "known_bad"
+    },
+    {
+      "artifacts": {
+        "candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT017_hard_ratio_factor_error/candidate.py",
+          "sha256": "sha256:deae3e104e5a15965d0b7cdbc0ade11823cff749a9fc65bf142a2bfaa6f6801a"
+        },
+        "case_manifest.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT017_hard_ratio_factor_error/case_manifest.json",
+          "sha256": "sha256:b34c598c182e4e43701b3a7f1b01e60e92ace19035384f77a27222b8c9c61f0b"
+        },
+        "original_candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT017_hard_ratio_factor_error/original_candidate.py",
+          "sha256": "sha256:2650ba7df1bbde741b4c4a9a98f3dc6ea80cd23c5a4efae15f07068001a9e387"
+        },
+        "problem_text.txt": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT017_hard_ratio_factor_error/problem_text.txt",
+          "sha256": "sha256:f4e78305c6f9a46110e78bfc909e3994de784996ed8f38c19bfeadb15712a89a"
+        },
+        "sample_meta.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT017_hard_ratio_factor_error/sample_meta.json",
+          "sha256": "sha256:e0e0b073d00c8104ca18295c4a68ca84b5508e9b3cf710c8eb6d52afb574495a"
+        },
+        "source_correct.mp4": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT017_hard_ratio_factor_error/source_correct.mp4",
+          "sha256": "sha256:812e781e783ec57a6ce67c2599bbc4465eb4a412b018975bcb1a61f7a6d14ab3"
+        }
+      },
+      "difficulty": "hard",
+      "expected_issue_type": "wrong_ratio_or_factor",
+      "sample_id": "MUT017_hard_ratio_factor_error",
+      "target_lines": [
+        148
+      ],
+      "truth": "known_bad"
+    },
+    {
+      "artifacts": {
+        "candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT018_hard_theorem_concept_swap/candidate.py",
+          "sha256": "sha256:75dee5b9354b0e2c4431f01091509660356297309a770961d4e88c7a0057620c"
+        },
+        "case_manifest.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT018_hard_theorem_concept_swap/case_manifest.json",
+          "sha256": "sha256:2a7f9fc88dc31fbe4b87a190f724cfda83f8f1bfdb5f22c95e99e2c2b761cf74"
+        },
+        "original_candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT018_hard_theorem_concept_swap/original_candidate.py",
+          "sha256": "sha256:a076dda73e85dd2873319557524b05abf44b7a5d88c2ab10a463a8aca681185b"
+        },
+        "problem_text.txt": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT018_hard_theorem_concept_swap/problem_text.txt",
+          "sha256": "sha256:b91e37224a1cd7f46364034169c9c46dffa48ea54db53130106d5ca0f0ca65f9"
+        },
+        "sample_meta.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT018_hard_theorem_concept_swap/sample_meta.json",
+          "sha256": "sha256:eb35fc96f8b9578836e4026df39049112d0e48459e6548fbdc87174dd8362e94"
+        },
+        "source_correct.mp4": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT018_hard_theorem_concept_swap/source_correct.mp4",
+          "sha256": "sha256:5dbcc1d541da1e593fe8aee03dcf0564ae4b0420a87626990545ebd319385308"
+        }
+      },
+      "difficulty": "hard",
+      "expected_issue_type": "wrong_theorem_concept",
+      "sample_id": "MUT018_hard_theorem_concept_swap",
+      "target_lines": [
+        250
+      ],
+      "truth": "known_bad"
+    },
+    {
+      "artifacts": {
+        "candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT019_expert_line_endpoint_swap/candidate.py",
+          "sha256": "sha256:bf09f94c9bde0258e4b3830841bb314fdbe3c90dddd83d2b16e3f04ceb5ebaca"
+        },
+        "case_manifest.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT019_expert_line_endpoint_swap/case_manifest.json",
+          "sha256": "sha256:286c2d050af0a4825c7a69678b6b66aba9fbaf3fbd25fb599fd289c7520a839e"
+        },
+        "original_candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT019_expert_line_endpoint_swap/original_candidate.py",
+          "sha256": "sha256:580c7df2b060f320aa0b4d04df1d4a5acf2363e9c75612fd3fabe58b795bb02a"
+        },
+        "problem_text.txt": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT019_expert_line_endpoint_swap/problem_text.txt",
+          "sha256": "sha256:8daca521816bc889a47d1333464aac5f89052d1afaacadf2f96cfb4897aa71b2"
+        },
+        "sample_meta.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT019_expert_line_endpoint_swap/sample_meta.json",
+          "sha256": "sha256:d5e43ffaec8d428002d4491e65126d5fb762226467cd5d88939c5d8882764e11"
+        },
+        "source_correct.mp4": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT019_expert_line_endpoint_swap/source_correct.mp4",
+          "sha256": "sha256:e014878c9a9ecbbfdf60178906f2c2508bd7eaa8e6eff6728f4e9fc93e47b4f2"
+        }
+      },
+      "difficulty": "expert",
+      "expected_issue_type": "wrong_geometry_endpoint",
+      "sample_id": "MUT019_expert_line_endpoint_swap",
+      "target_lines": [
+        126
+      ],
+      "truth": "known_bad"
+    },
+    {
+      "artifacts": {
+        "candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT020_expert_point_coordinate_shift/candidate.py",
+          "sha256": "sha256:65a0f4b4a11c74a49eb19974648f2b1ec89d9476c45e19c31c59ab0838ab5d11"
+        },
+        "case_manifest.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT020_expert_point_coordinate_shift/case_manifest.json",
+          "sha256": "sha256:ae0532a58c87d02da462d70eda0d6a576a8989f909af8f4dc5ac9d62d946f2e6"
+        },
+        "original_candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT020_expert_point_coordinate_shift/original_candidate.py",
+          "sha256": "sha256:75d0323f0fe1f0f0d3bf860d21014fadfea812713fc37eae8041e98aac192245"
+        },
+        "problem_text.txt": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT020_expert_point_coordinate_shift/problem_text.txt",
+          "sha256": "sha256:c557f85d493e18cdb8592f652614781a2a10dc32bc07439b18d96ceed5e2ad26"
+        },
+        "sample_meta.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT020_expert_point_coordinate_shift/sample_meta.json",
+          "sha256": "sha256:82adb1a7031d74ffaceecfd71f2be20d89130f0b17cd7b74eba8c1444079db63"
+        },
+        "source_correct.mp4": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT020_expert_point_coordinate_shift/source_correct.mp4",
+          "sha256": "sha256:342f4af2a7fb56a78dda9a6cadddecc8566da260c50497c76f2feb444b23c4db"
+        }
+      },
+      "difficulty": "expert",
+      "expected_issue_type": "wrong_geometry_position",
+      "sample_id": "MUT020_expert_point_coordinate_shift",
+      "target_lines": [
+        14
+      ],
+      "truth": "known_bad"
+    },
+    {
+      "artifacts": {
+        "candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT021_expert_line_endpoint_swap/candidate.py",
+          "sha256": "sha256:02affc6c524b38bab7d70b708d0df5ce7304ad0768ce21ba2fab7065b19e796b"
+        },
+        "case_manifest.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT021_expert_line_endpoint_swap/case_manifest.json",
+          "sha256": "sha256:713991f233397ff6d6dbac3b5a9b848651a8c81f294c068931864e4c33b650d6"
+        },
+        "original_candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT021_expert_line_endpoint_swap/original_candidate.py",
+          "sha256": "sha256:8c3bc20eff2a65e836d052f7166ea738097565cfa5cbdc41649a690672ea553f"
+        },
+        "problem_text.txt": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT021_expert_line_endpoint_swap/problem_text.txt",
+          "sha256": "sha256:cb185d0c773a3dcb009afef34a180795bccb8b606cdeccedb0e83300c8fa6deb"
+        },
+        "sample_meta.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT021_expert_line_endpoint_swap/sample_meta.json",
+          "sha256": "sha256:9ec27d560c2eb570316412fdc11b1122603e3a5bca8d934f993c8d83fa089e7d"
+        },
+        "source_correct.mp4": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT021_expert_line_endpoint_swap/source_correct.mp4",
+          "sha256": "sha256:e97a733cf74e2ffa5c14023ffdc44b0282fa7e1f4a6f469d1cd9ccdc507a2e0f"
+        }
+      },
+      "difficulty": "expert",
+      "expected_issue_type": "wrong_geometry_endpoint",
+      "sample_id": "MUT021_expert_line_endpoint_swap",
+      "target_lines": [
+        289
+      ],
+      "truth": "known_bad"
+    },
+    {
+      "artifacts": {
+        "candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT022_expert_axes_point_shift/candidate.py",
+          "sha256": "sha256:d38a85c6ce451e5e6dda39eaca0116f386e34ab1aa6623a769300315f266a7b1"
+        },
+        "case_manifest.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT022_expert_axes_point_shift/case_manifest.json",
+          "sha256": "sha256:cd5eebaedddfa3b85d1709e21c2ff49012ae27a391e5f0cd90e306bb38ec78ab"
+        },
+        "original_candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT022_expert_axes_point_shift/original_candidate.py",
+          "sha256": "sha256:f2ce59b96a18de01477909840ef75031c85d52e1c551ffd2d327e2c61a3d09d5"
+        },
+        "problem_text.txt": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT022_expert_axes_point_shift/problem_text.txt",
+          "sha256": "sha256:cf7844557d0c20998b84b8835655900e15ad566b44fa2a261f1115d44262e3c0"
+        },
+        "sample_meta.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT022_expert_axes_point_shift/sample_meta.json",
+          "sha256": "sha256:71f2597be2c9f3b921e296e912d9dad04859250c2fe3b1351131cfe0008eee6f"
+        },
+        "source_correct.mp4": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT022_expert_axes_point_shift/source_correct.mp4",
+          "sha256": "sha256:501e411d53e929fa974ad1c28797e20dd72dccc5a00a3d7c1b8caf9d15a60458"
+        }
+      },
+      "difficulty": "expert",
+      "expected_issue_type": "wrong_graph_coordinate",
+      "sample_id": "MUT022_expert_axes_point_shift",
+      "target_lines": [
+        90
+      ],
+      "truth": "known_bad"
+    },
+    {
+      "artifacts": {
+        "candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT023_expert_line_endpoint_swap/candidate.py",
+          "sha256": "sha256:286e71c544ac253bd942c8ac617ae404e9b8262c0d0cccc45009ecd418fc4584"
+        },
+        "case_manifest.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT023_expert_line_endpoint_swap/case_manifest.json",
+          "sha256": "sha256:f821de9fecbefc0070c9a6d7b7bd83ba4fb4431fbdafb9db835a6811c00d0568"
+        },
+        "original_candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT023_expert_line_endpoint_swap/original_candidate.py",
+          "sha256": "sha256:7723127de5fa0c01b7b59f4ef4c74c24b03a9e5314c94a3d42d3662394728511"
+        },
+        "problem_text.txt": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT023_expert_line_endpoint_swap/problem_text.txt",
+          "sha256": "sha256:0f903e9da00a1d6a3d612c53da80ba9313b12923629fac62b8f615f4494274a2"
+        },
+        "sample_meta.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT023_expert_line_endpoint_swap/sample_meta.json",
+          "sha256": "sha256:b8b1439cdcbe7443f47cb668df9fef17f79974976394419945cb35cf6ff5cfa9"
+        },
+        "source_correct.mp4": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT023_expert_line_endpoint_swap/source_correct.mp4",
+          "sha256": "sha256:7c947ec51f61f84f1f6adf097486a9884ee4ca7c9035c7ccfabfa4cf54450a31"
+        }
+      },
+      "difficulty": "expert",
+      "expected_issue_type": "wrong_geometry_endpoint",
+      "sample_id": "MUT023_expert_line_endpoint_swap",
+      "target_lines": [
+        199
+      ],
+      "truth": "known_bad"
+    },
+    {
+      "artifacts": {
+        "candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT024_expert_line_endpoint_swap/candidate.py",
+          "sha256": "sha256:80bafeef716f7abbde7f5e0d00805a28e1d8e0d8b8fc6147ecfca010f5b6ef34"
+        },
+        "case_manifest.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT024_expert_line_endpoint_swap/case_manifest.json",
+          "sha256": "sha256:153328ee33cc5598b7adcbd3ee1da00299d26a63b3b15c1aab869138181f5f02"
+        },
+        "original_candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT024_expert_line_endpoint_swap/original_candidate.py",
+          "sha256": "sha256:a322422bc71270b35927e50b131bab73d9288dbcde228e81e3c5daaa802ea839"
+        },
+        "problem_text.txt": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT024_expert_line_endpoint_swap/problem_text.txt",
+          "sha256": "sha256:4c495b5bbd86639ffb592b3ff25e98d66a7952cd398525caada271df77ef4200"
+        },
+        "sample_meta.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT024_expert_line_endpoint_swap/sample_meta.json",
+          "sha256": "sha256:af90e616ab635fc9ebd0fd8dcc87dca84fad8d11a637f4ffabf6fab2d401c89d"
+        },
+        "source_correct.mp4": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT024_expert_line_endpoint_swap/source_correct.mp4",
+          "sha256": "sha256:a0234582fbbec312cd51f1e575ec47d8c833a65fe3b0f7418cade8e26aff9d8d"
+        }
+      },
+      "difficulty": "expert",
+      "expected_issue_type": "wrong_geometry_endpoint",
+      "sample_id": "MUT024_expert_line_endpoint_swap",
+      "target_lines": [
+        185
+      ],
+      "truth": "known_bad"
+    },
+    {
+      "artifacts": {
+        "candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT025_expert_line_endpoint_swap/candidate.py",
+          "sha256": "sha256:d5526bebc2d7d9a4393a44ad413c0c83902ea1074b15e3441e29bb138887ebd5"
+        },
+        "case_manifest.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT025_expert_line_endpoint_swap/case_manifest.json",
+          "sha256": "sha256:0423b6f03f8087457ee8cfe439048bfed2dea384b6c8f3163d204ef2a422372b"
+        },
+        "original_candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT025_expert_line_endpoint_swap/original_candidate.py",
+          "sha256": "sha256:3b605973f1647f0da54c3998c7c9bdbaab2d38199074566295865197ef9a103d"
+        },
+        "problem_text.txt": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT025_expert_line_endpoint_swap/problem_text.txt",
+          "sha256": "sha256:87039ddbaf72bdf8568a322f374faddfc7c352267d3523d67b623982f0c1342f"
+        },
+        "sample_meta.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT025_expert_line_endpoint_swap/sample_meta.json",
+          "sha256": "sha256:9ca6232d46a09e87b6b5250191f5fe201c2b1fb0d8b519a9777214e135b944e5"
+        },
+        "source_correct.mp4": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT025_expert_line_endpoint_swap/source_correct.mp4",
+          "sha256": "sha256:cc4baf4819fef9c730cc0b3dc6d7102ca9565a0ba637435c73606f58346d9657"
+        }
+      },
+      "difficulty": "expert",
+      "expected_issue_type": "wrong_geometry_endpoint",
+      "sample_id": "MUT025_expert_line_endpoint_swap",
+      "target_lines": [
+        184
+      ],
+      "truth": "known_bad"
+    },
+    {
+      "artifacts": {
+        "candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT026_expert_point_coordinate_shift/candidate.py",
+          "sha256": "sha256:02d5e6a009559502f8ae4f37de169ce49ca5b3ea3d59646ada7834d72b571fb8"
+        },
+        "case_manifest.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT026_expert_point_coordinate_shift/case_manifest.json",
+          "sha256": "sha256:7bb15311657882f92453c7641908499e3fa724befbf5353bb1bb5f3b3b93ca6c"
+        },
+        "original_candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT026_expert_point_coordinate_shift/original_candidate.py",
+          "sha256": "sha256:7fccebc68e89b187cf90d5eef91b18d1492c1bec1db4deb469ab6e71cb920d80"
+        },
+        "problem_text.txt": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT026_expert_point_coordinate_shift/problem_text.txt",
+          "sha256": "sha256:e821ca97cf01315cd59d9f31e537df4b8c0cf89380e571dca56b43e170121de8"
+        },
+        "sample_meta.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT026_expert_point_coordinate_shift/sample_meta.json",
+          "sha256": "sha256:01195cdc73bbb6ff941a1513b2ba2b303cad897f0f7e5b3cabfb8c17ddb5ee9d"
+        },
+        "source_correct.mp4": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT026_expert_point_coordinate_shift/source_correct.mp4",
+          "sha256": "sha256:c7c1f87eee88e3e34e53758f67d57b09d679da8cd449ce2d8bc7146d3addaf50"
+        }
+      },
+      "difficulty": "expert",
+      "expected_issue_type": "wrong_geometry_position",
+      "sample_id": "MUT026_expert_point_coordinate_shift",
+      "target_lines": [
+        170
+      ],
+      "truth": "known_bad"
+    },
+    {
+      "artifacts": {
+        "candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT027_medium_chinese_line_relation_swap/candidate.py",
+          "sha256": "sha256:c96c16bd4872d1f6adff43765a0e299f0fa3c2f73b6706d6c0f7b7423ec5423d"
+        },
+        "case_manifest.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT027_medium_chinese_line_relation_swap/case_manifest.json",
+          "sha256": "sha256:73009da14a6ecdaa707d72bd1e5b0e1ab0df2a98a2d8f869c32aff10d31a4779"
+        },
+        "original_candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT027_medium_chinese_line_relation_swap/original_candidate.py",
+          "sha256": "sha256:daaff76655bc375f36926467907b35021c5152089ffe02ae753fb19e26558770"
+        },
+        "problem_text.txt": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT027_medium_chinese_line_relation_swap/problem_text.txt",
+          "sha256": "sha256:fc7743d2b16b33d64c3c516efc38a341b25b800b78c6870ba4c82e4abdb679e3"
+        },
+        "sample_meta.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT027_medium_chinese_line_relation_swap/sample_meta.json",
+          "sha256": "sha256:ed60c99d88ec9bbfa8481ea03cb789d256842a0ff634aac237c81b6489b474c6"
+        },
+        "source_correct.mp4": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT027_medium_chinese_line_relation_swap/source_correct.mp4",
+          "sha256": "sha256:e93b2863bc71cbe8044b05db584758b83b66511d2b62c2eb3805828d3e1fe72b"
+        }
+      },
+      "difficulty": "medium",
+      "expected_issue_type": "wrong_line_relation",
+      "sample_id": "MUT027_medium_chinese_line_relation_swap",
+      "target_lines": [
+        234
+      ],
+      "truth": "known_bad"
+    },
+    {
+      "artifacts": {
+        "candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT028_medium_line_relation_swap/candidate.py",
+          "sha256": "sha256:7e8ad8f00e1a965298c6d4195e85324faaeb6dfdb8284edee04c1caa1547a654"
+        },
+        "case_manifest.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT028_medium_line_relation_swap/case_manifest.json",
+          "sha256": "sha256:84f21531ef65e651cdd97eed36dca13959b9147ab4bf8ceeaac8fa25336d6177"
+        },
+        "original_candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT028_medium_line_relation_swap/original_candidate.py",
+          "sha256": "sha256:2650ba7df1bbde741b4c4a9a98f3dc6ea80cd23c5a4efae15f07068001a9e387"
+        },
+        "problem_text.txt": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT028_medium_line_relation_swap/problem_text.txt",
+          "sha256": "sha256:f4e78305c6f9a46110e78bfc909e3994de784996ed8f38c19bfeadb15712a89a"
+        },
+        "sample_meta.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT028_medium_line_relation_swap/sample_meta.json",
+          "sha256": "sha256:5bb7b1d57d09a60dfaad0ee777f832ce52cb4d6458c5b863ef4d612cba71da93"
+        },
+        "source_correct.mp4": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT028_medium_line_relation_swap/source_correct.mp4",
+          "sha256": "sha256:812e781e783ec57a6ce67c2599bbc4465eb4a412b018975bcb1a61f7a6d14ab3"
+        }
+      },
+      "difficulty": "medium",
+      "expected_issue_type": "wrong_line_relation",
+      "sample_id": "MUT028_medium_line_relation_swap",
+      "target_lines": [
+        86
+      ],
+      "truth": "known_bad"
+    },
+    {
+      "artifacts": {
+        "candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT029_medium_equality_inequality_flip/candidate.py",
+          "sha256": "sha256:4611faa8901a9f04fb2fceb2fd1d2b0b7812e612f6572ded95764c0ea8688c70"
+        },
+        "case_manifest.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT029_medium_equality_inequality_flip/case_manifest.json",
+          "sha256": "sha256:0a44b737e2cb986afd339498e263c7ccd36e35148e1202ff38887004fd2b37f9"
+        },
+        "original_candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT029_medium_equality_inequality_flip/original_candidate.py",
+          "sha256": "sha256:a076dda73e85dd2873319557524b05abf44b7a5d88c2ab10a463a8aca681185b"
+        },
+        "problem_text.txt": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT029_medium_equality_inequality_flip/problem_text.txt",
+          "sha256": "sha256:b91e37224a1cd7f46364034169c9c46dffa48ea54db53130106d5ca0f0ca65f9"
+        },
+        "sample_meta.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT029_medium_equality_inequality_flip/sample_meta.json",
+          "sha256": "sha256:c54038e4c86842f918ab7397d0f160f2a8d9ead5fb76a4deda6e6684a84b2b9a"
+        },
+        "source_correct.mp4": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT029_medium_equality_inequality_flip/source_correct.mp4",
+          "sha256": "sha256:5dbcc1d541da1e593fe8aee03dcf0564ae4b0420a87626990545ebd319385308"
+        }
+      },
+      "difficulty": "medium",
+      "expected_issue_type": "wrong_equal_relation",
+      "sample_id": "MUT029_medium_equality_inequality_flip",
+      "target_lines": [
+        148
+      ],
+      "truth": "known_bad"
+    },
+    {
+      "artifacts": {
+        "candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT030_expert_line_endpoint_swap/candidate.py",
+          "sha256": "sha256:d29ecc08dbe03cf3eb424c6e3226c9bf7df753d6e5b2decff0c2fb4891678c01"
+        },
+        "case_manifest.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT030_expert_line_endpoint_swap/case_manifest.json",
+          "sha256": "sha256:6e6d53e158fe73491c82862ca2c18e282ff354a266fae3dd88bde0ea66f315f5"
+        },
+        "original_candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT030_expert_line_endpoint_swap/original_candidate.py",
+          "sha256": "sha256:580c7df2b060f320aa0b4d04df1d4a5acf2363e9c75612fd3fabe58b795bb02a"
+        },
+        "problem_text.txt": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT030_expert_line_endpoint_swap/problem_text.txt",
+          "sha256": "sha256:8daca521816bc889a47d1333464aac5f89052d1afaacadf2f96cfb4897aa71b2"
+        },
+        "sample_meta.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT030_expert_line_endpoint_swap/sample_meta.json",
+          "sha256": "sha256:f981c3a88693f90dabd4f2e6d4de943a623146fb4640bd989dfee8249fb94ab5"
+        },
+        "source_correct.mp4": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/samples/MUT030_expert_line_endpoint_swap/source_correct.mp4",
+          "sha256": "sha256:e014878c9a9ecbbfdf60178906f2c2508bd7eaa8e6eff6728f4e9fc93e47b4f2"
+        }
+      },
+      "difficulty": "expert",
+      "expected_issue_type": "wrong_geometry_endpoint",
+      "sample_id": "MUT030_expert_line_endpoint_swap",
+      "target_lines": [
+        42
+      ],
+      "truth": "known_bad"
+    }
+  ],
+  "schema_version": "manim-quality.logic-eval.v1",
+  "source_manifest": {
+    "path": "mutation_eval_packs_20260708/geo30_mutation_v5_blind/manifest.json",
+    "sha256": "sha256:be0f135b0d526cd6e08fe2a9475959b169d17e2e70132ef25ae90ff8561ca5a6"
+  },
+  "truth": "known_bad"
+}

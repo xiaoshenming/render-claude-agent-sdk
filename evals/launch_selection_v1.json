@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "frozen": true,
+  "selection_policy": "first five cases in frozen known-bad manifest order and first five cases in frozen known-good manifest order",
+  "selection_count": 10,
+  "known_bad": [
+    "MUT002_expert_point_coordinate_shift",
+    "MUT003_expert_point_coordinate_shift",
+    "MUT004_expert_line_endpoint_swap",
+    "MUT005_expert_circle_line_type_swap",
+    "MUT006_medium_chinese_line_relation_swap"
+  ],
+  "known_good": [
+    "GOOD001_MTT02_BASE_r7218_q494",
+    "GOOD002_MTT03_BASE_r7217_q496",
+    "GOOD003_MTT05_BASE_r7212_q484",
+    "GOOD004_MTT21_GEO_r6707_q421",
+    "GOOD005_MTT24_GEO_r6692_q423"
+  ],
+  "notes": "Small launch probe approved for this iteration; not sufficient for commercial-rate claims."
+}

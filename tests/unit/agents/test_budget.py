@@ -1,0 +1,164 @@
+import pytest
+
+from manim_quality.agents.budget import BudgetExceeded, BudgetLimits, BudgetTracker
+from manim_quality.agents.usage import TokenUsage
+
+
+class Clock:
+    def __init__(self) -> None:
+        self.now = 0.0
+
+    def __call__(self) -> float:
+        return self.now
+
+
+def limits(**changes: int) -> BudgetLimits:
+    values = {
+        "max_context_bytes": 100,
+        "max_turns": 2,
+        "max_tool_calls": 2,
+        "max_elapsed_ms": 1_000,
+        "max_input_tokens": 100,
+        "max_output_tokens": 50,
+        "max_cache_read_tokens": 20,
+        "max_cache_write_tokens": 20,
+        "max_total_tokens": 150,
+    }
+    values.update(changes)
+    return BudgetLimits(**values)
+
+
+def test_budget_checks_context_rounds_tools_and_elapsed_before_work() -> None:
+    clock = Clock()
+    tracker = BudgetTracker(limits(), clock=clock)
+
+    tracker.check_context(100)
+    tracker.before_round(
+        estimated_input_tokens=10,
+        reserved_output_tokens=5,
+        reserved_cache_read_tokens=0,
+        reserved_cache_write_tokens=0,
+    )
+    tracker.before_tool_call()
+    tracker.before_tool_call()
+    with pytest.raises(BudgetExceeded, match="tool calls"):
+        tracker.before_tool_call()
+    tracker.before_round(
+        estimated_input_tokens=10,
+        reserved_output_tokens=5,
+        reserved_cache_read_tokens=0,
+        reserved_cache_write_tokens=0,
+    )
+    with pytest.raises(BudgetExceeded, match="turns"):
+        tracker.before_round(
+            estimated_input_tokens=1,
+            reserved_output_tokens=1,
+            reserved_cache_read_tokens=0,
+            reserved_cache_write_tokens=0,
+        )
+    clock.now = 2.0
+    with pytest.raises(BudgetExceeded, match="elapsed"):
+        tracker.check_elapsed()
+
+
+def test_budget_refuses_next_round_that_cannot_fit_hard_token_caps() -> None:
+    tracker = BudgetTracker(limits(max_total_tokens=40))
+    tracker.before_round(
+        estimated_input_tokens=20,
+        reserved_output_tokens=10,
+        reserved_cache_read_tokens=0,
+        reserved_cache_write_tokens=0,
+    )
+    tracker.record_usage(TokenUsage(input_tokens=20, output_tokens=10))
+
+    with pytest.raises(BudgetExceeded, match="total tokens"):
+        tracker.before_round(
+            estimated_input_tokens=5,
+            reserved_output_tokens=6,
+            reserved_cache_read_tokens=0,
+            reserved_cache_write_tokens=0,
+        )
+
+
+def test_actual_usage_is_accounted_by_token_category() -> None:
+    tracker = BudgetTracker(limits())
+    tracker.before_round(
+        estimated_input_tokens=10,
+        reserved_output_tokens=5,
+        reserved_cache_read_tokens=0,
+        reserved_cache_write_tokens=0,
+    )
+    usage = TokenUsage(
+        input_tokens=10,
+        output_tokens=5,
+        cache_read_tokens=3,
+        cache_write_tokens=2,
+    )
+
+    tracker.record_usage(usage)
+
+    assert tracker.snapshot().usage == usage
+    with pytest.raises(BudgetExceeded, match="cache read"):
+        tracker.record_usage(TokenUsage(cache_read_tokens=18))
+
+
+def test_budget_reserves_cache_capacity_before_starting_round() -> None:
+    tracker = BudgetTracker(limits(max_cache_read_tokens=5))
+
+    with pytest.raises(BudgetExceeded, match="cache read"):
+        tracker.before_round(
+            estimated_input_tokens=1,
+            reserved_output_tokens=1,
+            reserved_cache_read_tokens=6,
+            reserved_cache_write_tokens=0,
+        )
+
+
+def test_budget_reconciles_authoritative_aggregate_without_adding_turn() -> None:
+    tracker = BudgetTracker(limits())
+    tracker.before_round(
+        estimated_input_tokens=10,
+        reserved_output_tokens=5,
+        reserved_cache_read_tokens=0,
+        reserved_cache_write_tokens=0,
+    )
+    tracker.record_usage(TokenUsage(input_tokens=10, output_tokens=5))
+
+    tracker.reconcile_usage(TokenUsage(input_tokens=10, output_tokens=25))
+
+    assert tracker.snapshot().usage == TokenUsage(input_tokens=10, output_tokens=25)
+    assert tracker.snapshot().turns == 1
+
+
+def test_budget_reconciles_cache_reclassified_from_input_tokens() -> None:
+    tracker = BudgetTracker(limits())
+    tracker.before_round(
+        estimated_input_tokens=10,
+        reserved_output_tokens=5,
+        reserved_cache_read_tokens=0,
+        reserved_cache_write_tokens=0,
+    )
+    tracker.record_usage(TokenUsage(input_tokens=40, output_tokens=5))
+
+    aggregate = TokenUsage(
+        input_tokens=30,
+        output_tokens=8,
+        cache_read_tokens=10,
+    )
+    tracker.reconcile_usage(aggregate)
+
+    assert tracker.snapshot().usage == aggregate
+
+
+def test_budget_rejects_aggregate_below_observed_usage() -> None:
+    tracker = BudgetTracker(limits())
+    tracker.before_round(
+        estimated_input_tokens=10,
+        reserved_output_tokens=5,
+        reserved_cache_read_tokens=0,
+        reserved_cache_write_tokens=0,
+    )
+    tracker.record_usage(TokenUsage(input_tokens=10, output_tokens=5))
+
+    with pytest.raises(ValueError, match="aggregate usage cannot be lower"):
+        tracker.reconcile_usage(TokenUsage(input_tokens=9, output_tokens=5))

@@ -1,0 +1,5 @@
+vendor/logic_engine_mvp_baseline/** -text whitespace=-blank-at-eof
+docs/handoff/EXPECTED_RELATION_INTEGRATION_20260714.md whitespace=-blank-at-eof
+docs/handoff/README_FIRST_20260714.md whitespace=-blank-at-eof
+handoff_data/existing_code_real/*.py whitespace=-trailing-space
+src/manim_quality/logic/expectations/__init__.py whitespace=-blank-at-eof

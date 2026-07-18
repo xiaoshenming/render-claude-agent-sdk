@@ -1,0 +1,78 @@
+{
+  "logic_good": {
+    "status": "failed",
+    "sample_count": 5,
+    "reason": "false-positive rate exceeds the 3% launch target",
+    "metrics": {
+      "true_negative": 4,
+      "false_positive": 1,
+      "false_positive_rate": 0.2,
+      "over_edit_rate": 0.0,
+      "review_report_sha256": "sha256:3b7ebfc8b723b4b7cb93e6478d795736d0e42f09532f2a5fc7e98f2bf3e1d128"
+    }
+  },
+  "logic_bad": {
+    "status": "failed",
+    "sample_count": 5,
+    "reason": "detection and frozen-reference target restoration are below launch quality",
+    "metrics": {
+      "true_positive": 2,
+      "false_negative": 3,
+      "detection_rate": 0.4,
+      "repair_attempted": 3,
+      "candidate_ready": 2,
+      "target_restored": 0,
+      "verifier_pass_rate": 0.4,
+      "review_tokens": 443651,
+      "repair_tokens": 95816,
+      "repair_report_sha256": "sha256:be13161ddf915549e878792c841b31230468d6416cfe62dfa7b1f0914bd73fbc"
+    }
+  },
+  "overlap": {
+    "status": "failed",
+    "sample_count": 10,
+    "reason": "regression evidence has no final real-render certification and is not an untouched holdout",
+    "metrics": {
+      "clean": 2,
+      "degraded": 1,
+      "unchanged": 0,
+      "rejected": 3,
+      "unsupported": 4,
+      "accepted_worse": 0
+    }
+  },
+  "modification": {
+    "status": "passed",
+    "sample_count": 10,
+    "reason": null,
+    "metrics": {
+      "scenarios_passed": 10,
+      "e2e_tests_passed": 16,
+      "regressions": 0
+    }
+  },
+  "fake_load": {
+    "status": "passed",
+    "sample_count": 100,
+    "reason": null,
+    "metrics": {
+      "completed": 100,
+      "dead_letter": 0,
+      "duplicate": 0,
+      "duration_ms": 2969,
+      "report_sha256": "sha256:c00a6bad0c546e52b61968076838d71187d561dcebcd9ce102f3dd7339ea7d39"
+    }
+  },
+  "real_render": {
+    "status": "not_run",
+    "sample_count": 0,
+    "reason": "target Linux Manim render infrastructure is not connected",
+    "metrics": {}
+  },
+  "canary": {
+    "status": "not_run",
+    "sample_count": 0,
+    "reason": "production shadow submission feed is not connected",
+    "metrics": {}
+  }
+}

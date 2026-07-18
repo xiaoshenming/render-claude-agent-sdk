@@ -1,0 +1,1 @@
+几何中等题3：如图，三角形 ABC 与三角形 DCB 共用边 BC。已知 AB = DC，∠ABC = ∠DCB。证明：△ABC ≌ △DCB，并说明 AC = DB。

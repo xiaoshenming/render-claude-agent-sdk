@@ -1,0 +1,420 @@
+{
+  "dataset_root_env": "MANIM_LOGIC_EVAL_PACKS_ROOT",
+  "frozen": true,
+  "pack_id": "logic_mutation_real10_20260713_v1",
+  "private_ground_truth": {
+    "path": "logic_mutation_real10_20260713_v1/evaluation_ground_truth_private.json",
+    "sha256": "sha256:4eaaa556f0b5e5ad551bbb00f95ef7a8979005f3645b71a4fed1af119cbf6ede"
+  },
+  "sample_count": 10,
+  "samples": [
+    {
+      "artifacts": {
+        "before.mp4": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M01_easy_area_answer/before.mp4",
+          "sha256": "sha256:b2ee3d7672f8f962f0f6a3db45f93473940d2cf14cbf8d551620c312a56cef4f"
+        },
+        "candidate.py": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M01_easy_area_answer/candidate.py",
+          "sha256": "sha256:444ebece5a6de22cc70f90b681f625707de3664e42190a6fc2349d02b1e4cc5f"
+        },
+        "case_manifest.json": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M01_easy_area_answer/case_manifest.json",
+          "sha256": "sha256:6a6a913d705cfe7ec6bff461187c1d0d3b512e285759468d1b94daa19ff86ae4"
+        },
+        "original_candidate.py": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M01_easy_area_answer/original_candidate.py",
+          "sha256": "sha256:be39ea9b976fff7701f78540ad310f48fcdbc21e3d0211803abd17a374500487"
+        },
+        "problem_text.txt": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M01_easy_area_answer/problem_text.txt",
+          "sha256": "sha256:8d0a454c603a21e7b8d86682aa4bf007506642a51558d4e7e3fceb3add6a1d07"
+        },
+        "sample_meta.json": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M01_easy_area_answer/sample_meta.json",
+          "sha256": "sha256:55cfc44fee588dc9d77b3cec4715104954e24f0b005515a7e3d2ef7e2cf021a5"
+        },
+        "source_correct.mp4": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M01_easy_area_answer/source_correct.mp4",
+          "sha256": "sha256:fec9df9778d26537d4bfe4e50edec1697a4b5223a269083c2df510055afb2dd7"
+        }
+      },
+      "difficulty": "easy",
+      "expected_issue_type": "wrong_final_answer",
+      "sample_id": "REAL10_M01_easy_area_answer",
+      "target_lines": [
+        168,
+        234
+      ],
+      "truth": "known_bad"
+    },
+    {
+      "artifacts": {
+        "before.mp4": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M02_easy_quadratic_root/before.mp4",
+          "sha256": "sha256:fd0e5cc00b83382755685528d836a1bd9b6c19e3789d6a9a806013646311caeb"
+        },
+        "candidate.py": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M02_easy_quadratic_root/candidate.py",
+          "sha256": "sha256:f8afa13cca272b044c12ae442a393290e891eb550f50966a3439fef025f13386"
+        },
+        "case_manifest.json": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M02_easy_quadratic_root/case_manifest.json",
+          "sha256": "sha256:1825b7c1cbf79b96ba01a8262c18ae5711c75cba2acb26090431d801f7661bfc"
+        },
+        "original_candidate.py": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M02_easy_quadratic_root/original_candidate.py",
+          "sha256": "sha256:52c5813f0cc20277b0a1d4a4189348f00a626ea2d4df54d4f43dc07ef34bf391"
+        },
+        "problem_text.txt": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M02_easy_quadratic_root/problem_text.txt",
+          "sha256": "sha256:c1b854bc1e51f60d5af9e0675a05b55513c3ad322ec0b0ff7a35914d99e85311"
+        },
+        "sample_meta.json": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M02_easy_quadratic_root/sample_meta.json",
+          "sha256": "sha256:a5d05a5ec1e793b4c394e43f70986bf807cb114e3f97c235d9024fddbe3cf93c"
+        },
+        "source_correct.mp4": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M02_easy_quadratic_root/source_correct.mp4",
+          "sha256": "sha256:c6e69ea940e84e4514dd5ffd990df8d5027f20e7d06804bca0dfa563d0ba87a4"
+        }
+      },
+      "difficulty": "easy",
+      "expected_issue_type": "wrong_final_answer",
+      "sample_id": "REAL10_M02_easy_quadratic_root",
+      "target_lines": [
+        193,
+        202
+      ],
+      "truth": "known_bad"
+    },
+    {
+      "artifacts": {
+        "before.mp4": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M03_medium_conditional_probability/before.mp4",
+          "sha256": "sha256:1cf1d24394c432e30527eb40f7242cbbe58bdf6dd259e52fa0f98ee199b29e51"
+        },
+        "candidate.py": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M03_medium_conditional_probability/candidate.py",
+          "sha256": "sha256:e34ea5ef48eb78fa5b9db8a87adf7b2cf4470abe067a78db0dec8143c2e7d3da"
+        },
+        "case_manifest.json": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M03_medium_conditional_probability/case_manifest.json",
+          "sha256": "sha256:3d9d11633e0de21b735acc1b4f651ad0261ae21e0b3ecd4f67310a86f72abeed"
+        },
+        "original_candidate.py": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M03_medium_conditional_probability/original_candidate.py",
+          "sha256": "sha256:7b9e6f6e2754399539cfb0fafd22d8fd8ab02bc1790a134a7543b118698a8ceb"
+        },
+        "problem_text.txt": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M03_medium_conditional_probability/problem_text.txt",
+          "sha256": "sha256:811931cda54dfdb7804f6ce568d9ebd40c0632bbbeb90c21cddd9c9e1b11bca1"
+        },
+        "sample_meta.json": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M03_medium_conditional_probability/sample_meta.json",
+          "sha256": "sha256:14f5b8b6ae49821d30f23e12e1d6fc973ece2f18403acb176eb4d5f59e8a62a4"
+        },
+        "source_correct.mp4": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M03_medium_conditional_probability/source_correct.mp4",
+          "sha256": "sha256:d951c13cd94abe8d0e0713bd3cbcbad0c9791dbcc4fff953bd02b9b8fae1f7ab"
+        }
+      },
+      "difficulty": "medium",
+      "expected_issue_type": "wrong_probability_reasoning",
+      "sample_id": "REAL10_M03_medium_conditional_probability",
+      "target_lines": [
+        179,
+        217,
+        219,
+        236,
+        240
+      ],
+      "truth": "known_bad"
+    },
+    {
+      "artifacts": {
+        "before.mp4": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M04_hard_denominator_clearing/before.mp4",
+          "sha256": "sha256:f8859d95228351a1a357d021a82d612dbfb54b6d18bd41a8a263e098ea17002c"
+        },
+        "candidate.py": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M04_hard_denominator_clearing/candidate.py",
+          "sha256": "sha256:8dbb7fee627ec1b83d249dc92ac05c7fef413ac2caab2b391eff123ed2ba1e58"
+        },
+        "case_manifest.json": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M04_hard_denominator_clearing/case_manifest.json",
+          "sha256": "sha256:621ac909e22424ec5d1426a69bb6bb25236a15b339efafdb0980756c2889232b"
+        },
+        "original_candidate.py": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M04_hard_denominator_clearing/original_candidate.py",
+          "sha256": "sha256:ee2e7fbaf1a776b1a725cbf7743c3cf81a8824a5116c2b3b3dc8631878a00f97"
+        },
+        "problem_text.txt": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M04_hard_denominator_clearing/problem_text.txt",
+          "sha256": "sha256:d739f0f47b49a806345081102ea606ac744f51e334560d0d8ea9625f7a6de3fa"
+        },
+        "sample_meta.json": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M04_hard_denominator_clearing/sample_meta.json",
+          "sha256": "sha256:382e33f349c4c931213806fbaf89de3200b4fca5e36dc2b9c74be4bb8c4c6081"
+        },
+        "source_correct.mp4": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M04_hard_denominator_clearing/source_correct.mp4",
+          "sha256": "sha256:ce97f1f39a51bedfdd1c008cb3b4abf5c798253cbbde6e7f6b2f19dc569416dc"
+        }
+      },
+      "difficulty": "hard",
+      "expected_issue_type": "wrong_algebraic_transformation",
+      "sample_id": "REAL10_M04_hard_denominator_clearing",
+      "target_lines": [
+        136,
+        143,
+        146,
+        149,
+        152,
+        158,
+        159
+      ],
+      "truth": "known_bad"
+    },
+    {
+      "artifacts": {
+        "before.mp4": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M05_expert_square_extension/before.mp4",
+          "sha256": "sha256:f0f5353e9c171c804607beb903551e4dfef28d585c7aecd69439106125fdde29"
+        },
+        "candidate.py": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M05_expert_square_extension/candidate.py",
+          "sha256": "sha256:0bda25f2c580561ca8c0ea79e688c925ae7bdc34332070b12434ee8eff2fd4ee"
+        },
+        "case_manifest.json": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M05_expert_square_extension/case_manifest.json",
+          "sha256": "sha256:02e11fc36745061cbf785582f11cb9db06bfd3e16518331e2a230f801d77ee21"
+        },
+        "original_candidate.py": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M05_expert_square_extension/original_candidate.py",
+          "sha256": "sha256:1d6d70fc52b78d7cf31869c646b7988c601125e6eef77949438f6cc4b248fee4"
+        },
+        "problem_text.txt": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M05_expert_square_extension/problem_text.txt",
+          "sha256": "sha256:d2547dd9dc738f77ca2e3912063e215f0219d91fb2b2e8a8635959747196f040"
+        },
+        "sample_meta.json": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M05_expert_square_extension/sample_meta.json",
+          "sha256": "sha256:a6b0c72bb568b3804d3242bfb38ec1ae7a6ef46bf4a1c6c9c7cc37c77aece6f4"
+        },
+        "source_correct.mp4": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M05_expert_square_extension/source_correct.mp4",
+          "sha256": "sha256:ab4f653ee967d767d14365dcfe000709fbca9e1746c005558d10ebbddf8670d6"
+        }
+      },
+      "difficulty": "expert",
+      "expected_issue_type": "wrong_geometry_position",
+      "sample_id": "REAL10_M05_expert_square_extension",
+      "target_lines": [
+        160
+      ],
+      "truth": "known_bad"
+    },
+    {
+      "artifacts": {
+        "before.mp4": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M06_expert_angle_bisector_point/before.mp4",
+          "sha256": "sha256:f8554597faafab759f93e6c3214cbdeea2f732a0ed40684897121299158bc1fa"
+        },
+        "candidate.py": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M06_expert_angle_bisector_point/candidate.py",
+          "sha256": "sha256:0996bcf0700412224f971c4bbed39ada9fff1e331d895dc91efa495af19aac49"
+        },
+        "case_manifest.json": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M06_expert_angle_bisector_point/case_manifest.json",
+          "sha256": "sha256:e29640aededf2936005448816b354e25c560ba51898e7be4528f5ffa8e3efb0a"
+        },
+        "original_candidate.py": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M06_expert_angle_bisector_point/original_candidate.py",
+          "sha256": "sha256:c28b953c5f203baa24b90bb5fd9224d16c2bdf14ec7588702d386843f006474b"
+        },
+        "problem_text.txt": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M06_expert_angle_bisector_point/problem_text.txt",
+          "sha256": "sha256:acab9d81773c862028c1d37ef1dec038e6d4c04a39d901d51f47b87e53522e01"
+        },
+        "sample_meta.json": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M06_expert_angle_bisector_point/sample_meta.json",
+          "sha256": "sha256:28959484382fc2400ab8f1894fb0cc29c5c9be3595892182acf64cd6bd86e217"
+        },
+        "source_correct.mp4": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M06_expert_angle_bisector_point/source_correct.mp4",
+          "sha256": "sha256:0c24d131110b4cbcd79c5c9b06daa060975e33fd006c21988d1d9c527163b689"
+        }
+      },
+      "difficulty": "expert",
+      "expected_issue_type": "wrong_geometry_position",
+      "sample_id": "REAL10_M06_expert_angle_bisector_point",
+      "target_lines": [
+        145
+      ],
+      "truth": "known_bad"
+    },
+    {
+      "artifacts": {
+        "before.mp4": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M07_expert_tangent_point/before.mp4",
+          "sha256": "sha256:53074ed3cfa0f0f710bffc5acb8792f1c5f872e7ebacc4be624e878de02fa567"
+        },
+        "candidate.py": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M07_expert_tangent_point/candidate.py",
+          "sha256": "sha256:e387672780fb8480504466f530f2729394d042acd3d2348b2dd01231b6b9b945"
+        },
+        "case_manifest.json": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M07_expert_tangent_point/case_manifest.json",
+          "sha256": "sha256:460e1aeb9954f2274b2c87ae9cfa2488e14a22505312701f6a4f94c12600781a"
+        },
+        "original_candidate.py": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M07_expert_tangent_point/original_candidate.py",
+          "sha256": "sha256:342f6185da4b5a00337b087af5883e330a524b94a5101abfd0b5351f48ab50e7"
+        },
+        "problem_text.txt": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M07_expert_tangent_point/problem_text.txt",
+          "sha256": "sha256:8a00097fd7ea0468392be39238039ac51d9c9130de44fe8f3a5a16b96ec15a31"
+        },
+        "sample_meta.json": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M07_expert_tangent_point/sample_meta.json",
+          "sha256": "sha256:c9b9cece9606695f5e31aba5bb57bc2ee15da758a9f75633553f2c71e09fc78c"
+        },
+        "source_correct.mp4": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M07_expert_tangent_point/source_correct.mp4",
+          "sha256": "sha256:b8aef6e290ef43b38a224d7162dca04c496073a43d9c4887558562bac1364490"
+        }
+      },
+      "difficulty": "expert",
+      "expected_issue_type": "wrong_geometry_position",
+      "sample_id": "REAL10_M07_expert_tangent_point",
+      "target_lines": [
+        144
+      ],
+      "truth": "known_bad"
+    },
+    {
+      "artifacts": {
+        "before.mp4": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M08_expert_parallel_construction/before.mp4",
+          "sha256": "sha256:3d30bfd7978c648cc01a9c396b1d0f414592f0b3402d97a4316b128abd2c916d"
+        },
+        "candidate.py": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M08_expert_parallel_construction/candidate.py",
+          "sha256": "sha256:2b3162ee3f9fc4853d022685394992eb357a819ea11d589307260dfb8564ac61"
+        },
+        "case_manifest.json": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M08_expert_parallel_construction/case_manifest.json",
+          "sha256": "sha256:ff685304ffef5eb706f02ddfa6dc147c60340c597841333d6ce020792cbe7177"
+        },
+        "original_candidate.py": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M08_expert_parallel_construction/original_candidate.py",
+          "sha256": "sha256:16999319955c7c716ef078ab7bc6f556070e6a00cea5f94f345f6669d0a2dd21"
+        },
+        "problem_text.txt": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M08_expert_parallel_construction/problem_text.txt",
+          "sha256": "sha256:f0ca735719857f1b79d99de88c286f28ac939f5d9e102570939a8d1efaf1ee8f"
+        },
+        "sample_meta.json": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M08_expert_parallel_construction/sample_meta.json",
+          "sha256": "sha256:da44a163d5713116f6bdf5b990fb71b0aed78755756b6c6cf3f6a5fb7c18a2b5"
+        },
+        "source_correct.mp4": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M08_expert_parallel_construction/source_correct.mp4",
+          "sha256": "sha256:ba828f5f9271ba8d3d41ed5e354e2111be56bb3838d928e33ea9509eb58143c7"
+        }
+      },
+      "difficulty": "expert",
+      "expected_issue_type": "wrong_geometry_position",
+      "sample_id": "REAL10_M08_expert_parallel_construction",
+      "target_lines": [
+        137
+      ],
+      "truth": "known_bad"
+    },
+    {
+      "artifacts": {
+        "before.mp4": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M09_hard_chord_endpoint/before.mp4",
+          "sha256": "sha256:0c1caffde06810e2bdf831143860ef4c2ed793f204a4c3ea3e5431e69d761f35"
+        },
+        "candidate.py": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M09_hard_chord_endpoint/candidate.py",
+          "sha256": "sha256:da0f83f57769bb2c6bdd1dae875c3a2b1a8e56228636688ebdb38d7616905f7f"
+        },
+        "case_manifest.json": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M09_hard_chord_endpoint/case_manifest.json",
+          "sha256": "sha256:d9f73d98f6bc0fd759e1b8d465135c27d6c458d9b9bc27557819aa4b78217329"
+        },
+        "original_candidate.py": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M09_hard_chord_endpoint/original_candidate.py",
+          "sha256": "sha256:9dd4b64014689e709b3924809b13f22103be294b4e12f546107d572e406e9607"
+        },
+        "problem_text.txt": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M09_hard_chord_endpoint/problem_text.txt",
+          "sha256": "sha256:ec4267741a285fd183a2e0a381076c495ea920a6ab03f6227da31a9976b1a5bb"
+        },
+        "sample_meta.json": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M09_hard_chord_endpoint/sample_meta.json",
+          "sha256": "sha256:b1cf1773ed92027b7ee2d11826c8d96cccb59eeb5d0afd389faa19e9c0efbbc9"
+        },
+        "source_correct.mp4": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M09_hard_chord_endpoint/source_correct.mp4",
+          "sha256": "sha256:a3cc33f280dd4e1e383f3ad0c239183c751291e03dc16db7d6c1bee4b97dd164"
+        }
+      },
+      "difficulty": "hard",
+      "expected_issue_type": "wrong_geometry_endpoint",
+      "sample_id": "REAL10_M09_hard_chord_endpoint",
+      "target_lines": [
+        332
+      ],
+      "truth": "known_bad"
+    },
+    {
+      "artifacts": {
+        "before.mp4": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M10_expert_hyperbola_curve/before.mp4",
+          "sha256": "sha256:02f80732c54e55ceae2cc4749f54ec7d10455be764a3135c2031c093d4e71b26"
+        },
+        "candidate.py": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M10_expert_hyperbola_curve/candidate.py",
+          "sha256": "sha256:a71e723917917277156ef881ee150034cc3b1509f2dc349b196db6c110b753cc"
+        },
+        "case_manifest.json": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M10_expert_hyperbola_curve/case_manifest.json",
+          "sha256": "sha256:45c298580b4919c13084048db77f944b3764cf7b4354e27970b59bd900ec87cc"
+        },
+        "original_candidate.py": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M10_expert_hyperbola_curve/original_candidate.py",
+          "sha256": "sha256:c74116ef3d87a810252012f1451d869135b058d96017f24b3bd894f146e0696c"
+        },
+        "problem_text.txt": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M10_expert_hyperbola_curve/problem_text.txt",
+          "sha256": "sha256:8c4bdec5f56ac2d8b6af06f59d597cffb6355912c68f0c64c9c081f6af573d3e"
+        },
+        "sample_meta.json": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M10_expert_hyperbola_curve/sample_meta.json",
+          "sha256": "sha256:dc6182a772db31f906863c5c89b02a564572c4037d2e2094174f89be0792246c"
+        },
+        "source_correct.mp4": {
+          "path": "logic_mutation_real10_20260713_v1/samples/REAL10_M10_expert_hyperbola_curve/source_correct.mp4",
+          "sha256": "sha256:1e6e0c094ceb0ea440880770b9c66dcd4efc7a7101aa97d8290eaee93d63c2b1"
+        }
+      },
+      "difficulty": "expert",
+      "expected_issue_type": "wrong_graph_function",
+      "sample_id": "REAL10_M10_expert_hyperbola_curve",
+      "target_lines": [
+        143
+      ],
+      "truth": "known_bad"
+    }
+  ],
+  "schema_version": "manim-quality.logic-eval.v1",
+  "source_manifest": {
+    "path": "logic_mutation_real10_20260713_v1/manifest.json",
+    "sha256": "sha256:908e85f35214565008162663e71d254a157c28797e247a6308a305155f45301b"
+  },
+  "truth": "known_bad"
+}

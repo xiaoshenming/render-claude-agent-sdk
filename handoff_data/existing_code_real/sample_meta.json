@@ -1,0 +1,7 @@
+{
+  "case_id": "MUTNEW001_line_endpoint_swap",
+  "source_sample_id": "MTT06_BASE_r7209_q481",
+  "scene_name": "Solution",
+  "source_kind": "real_generated_render_success",
+  "selection_frozen_before_detector_run": true
+}

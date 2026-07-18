@@ -1,0 +1,1 @@
+在 △ABC 和 △DCB 中，AB = DC，∠ABC = ∠DCB，BC = CB 为公共边。两边及夹角分别相等，所以 △ABC ≌ △DCB（SAS）。全等三角形对应边相等，因此 AC = DB。

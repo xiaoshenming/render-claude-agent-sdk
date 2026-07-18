@@ -1,0 +1,16 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.env
+# 完整 V3 的冻结修复引擎属于发布内容，必须进入独立仓库。
+!.vendor/
+!.vendor/**
+artifacts/
+runs/
+workspaces/
+evals/reports/

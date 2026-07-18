@@ -1,0 +1,1086 @@
+from __future__ import annotations
+
+
+PROBE_RUNNER_SOURCE = r'''
+from __future__ import annotations
+
+import argparse
+import contextlib
+import importlib.util
+import json
+import math
+import sys
+import traceback
+from pathlib import Path
+from typing import Any
+
+import numpy as np
+
+
+def _round(value: float) -> float:
+    if math.isnan(value) or math.isinf(value):
+        return 0.0
+    return round(float(value), 4)
+
+
+def _load_module(script_path: Path):
+    spec = importlib.util.spec_from_file_location("layout_probe_target", script_path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"Cannot load script: {script_path}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def _class_name(obj: Any) -> str:
+    return obj.__class__.__name__
+
+
+def _text_of(mob: Any) -> str:
+    for attr in ("original_text", "text", "tex_string"):
+        value = getattr(mob, attr, None)
+        if value:
+            return str(value)
+    pieces: list[str] = []
+    for child in getattr(mob, "submobjects", []) or []:
+        value = getattr(child, "tex_string", None) or getattr(child, "original_text", None)
+        if value:
+            pieces.append(str(value))
+    return "".join(pieces)[:120]
+
+
+def _bbox_of(mob: Any) -> dict[str, float] | None:
+    try:
+        left = float(mob.get_left()[0])
+        right = float(mob.get_right()[0])
+        top = float(mob.get_top()[1])
+        bottom = float(mob.get_bottom()[1])
+        width = float(mob.width)
+        height = float(mob.height)
+        center = mob.get_center()
+    except Exception:
+        return None
+    if width <= 0 or height <= 0:
+        return None
+    return {
+        "left": _round(left),
+        "right": _round(right),
+        "top": _round(top),
+        "bottom": _round(bottom),
+        "width": _round(width),
+        "height": _round(height),
+        "center_x": _round(float(center[0])),
+        "center_y": _round(float(center[1])),
+        "center_z": _round(float(center[2])),
+    }
+
+
+def _bbox_from_points2(points: list[list[float]]) -> dict[str, float] | None:
+    if not points:
+        return None
+    xs = [float(point[0]) for point in points]
+    ys = [float(point[1]) for point in points]
+    left = min(xs)
+    right = max(xs)
+    bottom = min(ys)
+    top = max(ys)
+    width = right - left
+    height = top - bottom
+    if width <= 0 or height <= 0:
+        return None
+    return {
+        "left": _round(left),
+        "right": _round(right),
+        "top": _round(top),
+        "bottom": _round(bottom),
+        "width": _round(width),
+        "height": _round(height),
+        "center_x": _round((left + right) / 2.0),
+        "center_y": _round((top + bottom) / 2.0),
+    }
+
+
+def _point2(value: Any) -> list[float] | None:
+    try:
+        return [_round(float(value[0])), _round(float(value[1]))]
+    except Exception:
+        return None
+
+
+def _points2(values: Any, *, max_points: int = 80) -> list[list[float]]:
+    points: list[list[float]] = []
+    try:
+        iterable = list(values)
+    except Exception:
+        return points
+    for value in iterable[:max_points]:
+        point = _point2(value)
+        if point is None:
+            continue
+        if not points or point != points[-1]:
+            points.append(point)
+    return points
+
+
+def _display_points2(scene: Any, mob: Any, values: Any, *, max_points: int = 120) -> list[list[float]]:
+    try:
+        raw_points = np.array(list(values)[:max_points], dtype=float)
+    except Exception:
+        return []
+    if raw_points.size == 0:
+        return []
+    camera = getattr(scene, "camera", None)
+    transformer = getattr(camera, "transform_points_pre_display", None)
+    if not callable(transformer):
+        return _points2(raw_points, max_points=max_points)
+    try:
+        return _points2(transformer(mob, raw_points), max_points=max_points)
+    except Exception:
+        return _points2(raw_points, max_points=max_points)
+
+
+def _bbox_corner_points(bbox: dict[str, float]) -> list[list[float]]:
+    z = float(bbox.get("center_z") or 0.0)
+    return [
+        [float(bbox["left"]), float(bbox["bottom"]), z],
+        [float(bbox["right"]), float(bbox["bottom"]), z],
+        [float(bbox["right"]), float(bbox["top"]), z],
+        [float(bbox["left"]), float(bbox["top"]), z],
+    ]
+
+
+def _display_bbox_of(
+    scene: Any,
+    mob: Any,
+    fallback_bbox: dict[str, float],
+    *,
+    prefer_bbox_corners: bool = False,
+) -> dict[str, float] | None:
+    raw_points: Any = []
+    if not prefer_bbox_corners and hasattr(mob, "get_all_points"):
+        try:
+            raw_points = mob.get_all_points()
+        except Exception:
+            raw_points = []
+    try:
+        if len(raw_points) == 0:
+            raw_points = _bbox_corner_points(fallback_bbox)
+    except Exception:
+        raw_points = _bbox_corner_points(fallback_bbox)
+    return _bbox_from_points2(_display_points2(scene, mob, raw_points, max_points=160))
+
+
+def _geometry_of(mob: Any) -> dict[str, Any] | None:
+    name = _class_name(mob)
+    if name in {"Line", "DashedLine", "Arrow", "DoubleArrow"}:
+        start = _point2(mob.get_start()) if hasattr(mob, "get_start") else None
+        end = _point2(mob.get_end()) if hasattr(mob, "get_end") else None
+        if start and end:
+            return {"type": "line", "points": [start, end]}
+    if name in {"Axes", "NumberPlane"}:
+        try:
+            points = _points2(mob.get_all_points(), max_points=120)
+        except Exception:
+            points = []
+        if len(points) >= 2:
+            return {"type": "polyline", "points": points}
+        return None
+    if hasattr(mob, "get_vertices"):
+        try:
+            vertices = _points2(mob.get_vertices())
+        except Exception:
+            vertices = []
+        if len(vertices) >= 3:
+            filled = False
+            try:
+                filled = float(mob.get_fill_opacity()) > 0.05
+            except Exception:
+                pass
+            return {"type": "polygon", "points": vertices, "filled": filled}
+    if hasattr(mob, "get_all_points"):
+        try:
+            points = _points2(mob.get_all_points(), max_points=120)
+        except Exception:
+            points = []
+        if len(points) >= 2:
+            return {"type": "polyline", "points": points}
+    return None
+
+
+def _display_geometry_of(scene: Any, mob: Any, geometry: dict[str, Any] | None) -> dict[str, Any] | None:
+    if not geometry:
+        return None
+    points = geometry.get("points") if isinstance(geometry.get("points"), list) else []
+    if not points:
+        return None
+    projected = _display_points2(scene, mob, [[p[0], p[1], 0.0] for p in points], max_points=160)
+    if not projected:
+        return None
+    return {**geometry, "points": projected}
+
+
+def _semantic_kind(mob: Any) -> str:
+    name = _class_name(mob)
+    if name in {"Text", "MarkupText", "Paragraph"}:
+        return "text"
+    if "Tex" in name:
+        return "formula"
+    # Only explicit text-background rectangles should be treated as containers.
+    # Generic Rectangle/Square objects are frequently geometry, vehicles, bars,
+    # or decorative plates; classifying them as containers turns normal text
+    # overlays into hard layout failures.
+    if name.endswith("SurroundingRectangle") or name in {
+        "BackgroundRectangle",
+        "RoundedRectangle",
+    }:
+        return "container"
+    if name in {"Rectangle", "Square", "Circle", "Polygon", "Line", "Arrow", "NumberPlane", "Axes"}:
+        return "shape"
+    return "group" if getattr(mob, "submobjects", None) else "other"
+
+
+def _refine_kind_for_bbox(name: str, kind: str, bbox: dict[str, float]) -> str:
+    if kind != "container":
+        return kind
+    width = float(bbox.get("width") or 0.0)
+    height = float(bbox.get("height") or 0.0)
+    if width <= 0 or height <= 0:
+        return kind
+    aspect = width / height
+    if width >= 9.5 and height >= 2.0:
+        return "guide"
+    if width < 0.08 or height < 0.08 or aspect > 40.0 or aspect < 0.025:
+        return "guide"
+    if name == "SurroundingRectangle" and (width < 0.35 or height < 0.24 or aspect > 8.0 or aspect < 0.125):
+        return "guide"
+    return kind
+
+
+def _collect_objects(scene: Any) -> list[dict[str, Any]]:
+    items: list[dict[str, Any]] = []
+    seen: set[int] = set()
+
+    def add_item(mob: Any, path: str, top_level: bool) -> None:
+        oid = id(mob)
+        if oid in seen:
+            return
+        bbox = _bbox_of(mob)
+        if bbox is None:
+            return
+        kind = _refine_kind_for_bbox(_class_name(mob), _semantic_kind(mob), bbox)
+        if not top_level and kind not in {"text", "formula", "container", "shape"}:
+            return
+        seen.add(oid)
+        try:
+            geometry = _geometry_of(mob) if kind == "shape" else None
+        except Exception:
+            geometry = None
+        display_bbox = _display_bbox_of(
+            scene,
+            mob,
+            bbox,
+            prefer_bbox_corners=kind in {"text", "formula", "container"},
+        )
+        if display_bbox is not None:
+            bbox = display_bbox
+            geometry = _display_geometry_of(scene, mob, geometry) if geometry else geometry
+        items.append(
+            {
+                "id": len(items),
+                "path": path,
+                "class": _class_name(mob),
+                "kind": kind,
+                "text": _text_of(mob),
+                "bbox": bbox,
+                **({"geometry": geometry} if geometry else {}),
+            }
+        )
+
+    def walk(mob: Any, path: str, top_level: bool = False) -> None:
+        kind = _semantic_kind(mob)
+        if top_level or kind in {"text", "formula", "container", "shape"}:
+            add_item(mob, path, top_level)
+        for idx, child in enumerate(getattr(mob, "submobjects", []) or []):
+            walk(child, f"{path}.{idx}", False)
+
+    for idx, mob in enumerate(getattr(scene, "mobjects", []) or []):
+        walk(mob, f"mobjects.{idx}", True)
+    return items
+
+
+def _is_parent_child(a: dict[str, Any], b: dict[str, Any]) -> bool:
+    pa = str(a.get("path", ""))
+    pb = str(b.get("path", ""))
+    return pa.startswith(pb + ".") or pb.startswith(pa + ".")
+
+
+def _parent_path(item: dict[str, Any]) -> str:
+    path = str(item.get("path") or "")
+    if "." not in path:
+        return ""
+    return path.rsplit(".", 1)[0]
+
+
+def _same_immediate_parent(a: dict[str, Any], b: dict[str, Any]) -> bool:
+    parent_a = _parent_path(a)
+    parent_b = _parent_path(b)
+    return bool(parent_a and parent_a == parent_b)
+
+
+def _object_payload(item: dict[str, Any]) -> dict[str, Any]:
+    path = str(item.get("path") or "")
+    payload = {
+        "class": item["class"],
+        "kind": item["kind"],
+        "text": item["text"],
+        "bbox": item["bbox"],
+    }
+    if path:
+        payload["path"] = path
+        payload["parent_path"] = _parent_path(item)
+    return payload
+
+
+def _intersection(a: dict[str, float], b: dict[str, float]) -> tuple[float, float, float]:
+    x_overlap = min(a["right"], b["right"]) - max(a["left"], b["left"])
+    y_overlap = min(a["top"], b["top"]) - max(a["bottom"], b["bottom"])
+    if x_overlap <= 0 or y_overlap <= 0:
+        return 0.0, 0.0, 0.0
+    area = x_overlap * y_overlap
+    min_area = min(a["width"] * a["height"], b["width"] * b["height"])
+    ratio = area / min_area if min_area > 0 else 0.0
+    return _round(x_overlap), _round(y_overlap), _round(ratio)
+
+
+def _rect_points(box: dict[str, float]) -> list[tuple[float, float]]:
+    return [
+        (float(box["left"]), float(box["bottom"])),
+        (float(box["right"]), float(box["bottom"])),
+        (float(box["right"]), float(box["top"])),
+        (float(box["left"]), float(box["top"])),
+    ]
+
+
+def _point_in_rect(point: tuple[float, float], box: dict[str, float], *, tolerance: float = 0.0) -> bool:
+    x, y = point
+    return (
+        float(box["left"]) - tolerance <= x <= float(box["right"]) + tolerance
+        and float(box["bottom"]) - tolerance <= y <= float(box["top"]) + tolerance
+    )
+
+
+def _orientation(a: tuple[float, float], b: tuple[float, float], c: tuple[float, float]) -> float:
+    return (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])
+
+
+def _on_segment(a: tuple[float, float], b: tuple[float, float], c: tuple[float, float], *, tolerance: float = 1e-7) -> bool:
+    return (
+        min(a[0], c[0]) - tolerance <= b[0] <= max(a[0], c[0]) + tolerance
+        and min(a[1], c[1]) - tolerance <= b[1] <= max(a[1], c[1]) + tolerance
+        and abs(_orientation(a, b, c)) <= tolerance
+    )
+
+
+def _segments_intersect(
+    a1: tuple[float, float],
+    a2: tuple[float, float],
+    b1: tuple[float, float],
+    b2: tuple[float, float],
+) -> bool:
+    o1 = _orientation(a1, a2, b1)
+    o2 = _orientation(a1, a2, b2)
+    o3 = _orientation(b1, b2, a1)
+    o4 = _orientation(b1, b2, a2)
+    if o1 * o2 < 0 and o3 * o4 < 0:
+        return True
+    return (
+        _on_segment(a1, b1, a2)
+        or _on_segment(a1, b2, a2)
+        or _on_segment(b1, a1, b2)
+        or _on_segment(b1, a2, b2)
+    )
+
+
+def _rect_edges(box: dict[str, float]) -> list[tuple[tuple[float, float], tuple[float, float]]]:
+    p = _rect_points(box)
+    return list(zip(p, p[1:] + p[:1]))
+
+
+def _point_in_polygon(point: tuple[float, float], polygon: list[tuple[float, float]]) -> bool:
+    inside = False
+    x, y = point
+    count = len(polygon)
+    for i in range(count):
+        x1, y1 = polygon[i]
+        x2, y2 = polygon[(i + 1) % count]
+        if _on_segment((x1, y1), point, (x2, y2)):
+            return True
+        if (y1 > y) != (y2 > y):
+            x_cross = (x2 - x1) * (y - y1) / (y2 - y1 + 1e-12) + x1
+            if x < x_cross:
+                inside = not inside
+    return inside
+
+
+def _line_intersects_rect(points: list[list[float]], box: dict[str, float]) -> bool:
+    tuples = [(float(p[0]), float(p[1])) for p in points]
+    if len(tuples) < 2:
+        return False
+    for start, end in zip(tuples, tuples[1:]):
+        if _point_in_rect(start, box) or _point_in_rect(end, box):
+            return True
+        if any(_segments_intersect(start, end, edge_start, edge_end) for edge_start, edge_end in _rect_edges(box)):
+            return True
+    return False
+
+
+def _polygon_intersects_rect(geometry: dict[str, Any], box: dict[str, float]) -> bool:
+    points = [(float(p[0]), float(p[1])) for p in geometry.get("points", [])]
+    if len(points) < 3:
+        return False
+    rect = _rect_points(box)
+    for start, end in zip(points, points[1:] + points[:1]):
+        if _point_in_rect(start, box) or any(
+            _segments_intersect(start, end, edge_start, edge_end)
+            for edge_start, edge_end in _rect_edges(box)
+        ):
+            return True
+    if bool(geometry.get("filled")):
+        if any(_point_in_polygon(point, points) for point in rect):
+            return True
+        if any(_point_in_rect(point, box) for point in points):
+            return True
+    return False
+
+
+def _precise_shape_text_overlap(a: dict[str, Any], b: dict[str, Any]) -> bool:
+    shape, text = (a, b) if a.get("kind") == "shape" else (b, a)
+    geometry = shape.get("geometry") if isinstance(shape.get("geometry"), dict) else None
+    if not geometry:
+        return True
+    box = text.get("bbox") if isinstance(text.get("bbox"), dict) else None
+    if not box:
+        return True
+    geometry_type = str(geometry.get("type") or "")
+    points = geometry.get("points") if isinstance(geometry.get("points"), list) else []
+    if geometry_type in {"line", "polyline"}:
+        return _line_intersects_rect(points, box)
+    if geometry_type == "polygon":
+        return _polygon_intersects_rect(geometry, box)
+    return True
+
+
+def _classify_overlap(a: dict[str, Any], b: dict[str, Any], ratio: float) -> str | None:
+    if a["kind"] == "group" or b["kind"] == "group":
+        return None
+    kinds = {a["kind"], b["kind"]}
+    if "container" in kinds and ("text" in kinds or "formula" in kinds):
+        category = _classify_container_text_overlap(a, b)
+        if _same_immediate_parent(a, b) and category != "text_container_overflow":
+            return None
+        return _classify_container_text_overlap(a, b)
+    if kinds <= {"text", "formula"}:
+        return "text_formula_overlap" if ratio >= 0.03 else None
+    if ("text" in kinds or "formula" in kinds) and "shape" in kinds:
+        if not _precise_shape_text_overlap(a, b):
+            return None
+        return "label_shape_overlap_risk" if ratio >= 0.08 else None
+    return None
+
+
+def _classify_container_text_overlap(a: dict[str, Any], b: dict[str, Any]) -> str | None:
+    text_item, container = (a, b) if a["kind"] in {"text", "formula"} else (b, a)
+    text_box = text_item.get("bbox") or {}
+    container_box = container.get("bbox") or {}
+    if not text_box or not container_box:
+        return None
+
+    margins = [
+        float(text_box["left"]) - float(container_box["left"]),
+        float(container_box["right"]) - float(text_box["right"]),
+        float(container_box["top"]) - float(text_box["top"]),
+        float(text_box["bottom"]) - float(container_box["bottom"]),
+    ]
+    if min(margins) < -0.01:
+        return "text_container_overflow"
+
+    text_min_size = min(float(text_box.get("width") or 0), float(text_box.get("height") or 0))
+    min_padding = min(0.10, max(0.035, text_min_size * 0.08))
+    if min(margins) < min_padding:
+        return "text_container_border_overlap"
+    return None
+
+
+def _near_text_shape_collision(a: dict[str, Any], b: dict[str, Any]) -> dict[str, Any] | None:
+    kinds = {a["kind"], b["kind"]}
+    if "shape" not in kinds or not ("text" in kinds or "formula" in kinds):
+        return None
+    text_item, shape = (a, b) if a["kind"] in {"text", "formula"} else (b, a)
+    text = str(text_item.get("text") or "").strip()
+    text_box = text_item.get("bbox") or {}
+    shape_box = shape.get("bbox") or {}
+    if not text or not text_box or not shape_box:
+        return None
+    compact = text.replace(" ", "")
+    text_width = float(text_box.get("width") or 0.0)
+    text_height = float(text_box.get("height") or 0.0)
+    if len(compact) <= 3 and text_width < 0.8:
+        return None
+
+    x_overlap = min(text_box["right"], shape_box["right"]) - max(text_box["left"], shape_box["left"])
+    y_overlap = min(text_box["top"], shape_box["top"]) - max(text_box["bottom"], shape_box["bottom"])
+    vertical_gap = max(
+        float(shape_box["bottom"]) - float(text_box["top"]),
+        float(text_box["bottom"]) - float(shape_box["top"]),
+        0.0,
+    )
+    horizontal_gap = max(
+        float(shape_box["left"]) - float(text_box["right"]),
+        float(text_box["left"]) - float(shape_box["right"]),
+        0.0,
+    )
+    max_gap = max(0.34, min(0.52, text_height * 0.9))
+    near_vertically = x_overlap > min(text_width, float(shape_box.get("width") or 0.0)) * 0.18 and 0.0 < vertical_gap <= max_gap
+    near_horizontally = y_overlap > text_height * 0.25 and 0.0 < horizontal_gap <= max_gap
+    if not near_vertically and not near_horizontally:
+        return None
+    return {
+        "category": "label_shape_overlap_risk",
+        "ratio_of_smaller": 0.1001,
+        "x_overlap": _round(max(0.0, x_overlap)),
+        "y_overlap": _round(max(0.0, y_overlap)),
+        "metadata": {
+            "near_collision": True,
+            "gap": _round(vertical_gap if near_vertically else horizontal_gap),
+        },
+        "a": {
+            **_object_payload(a),
+        },
+        "b": {
+            **_object_payload(b),
+        },
+    }
+
+
+def _find_overlaps(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    overlaps: list[dict[str, Any]] = []
+    for i, a in enumerate(items):
+        for b in items[i + 1:]:
+            if _is_parent_child(a, b):
+                continue
+            dx, dy, ratio = _intersection(a["bbox"], b["bbox"])
+            if ratio <= 0:
+                near = _near_text_shape_collision(a, b)
+                if near:
+                    overlaps.append(near)
+                continue
+            category = _classify_overlap(a, b, ratio)
+            if not category:
+                continue
+            overlaps.append(
+                {
+                    "category": category,
+                    "ratio_of_smaller": ratio,
+                    "x_overlap": dx,
+                    "y_overlap": dy,
+                    "a": _object_payload(a),
+                    "b": _object_payload(b),
+                }
+            )
+    overlaps.sort(key=lambda item: item["ratio_of_smaller"], reverse=True)
+    return overlaps
+
+
+def _find_frame_bounds_violations(
+    items: list[dict[str, Any]],
+    *,
+    frame_width: float,
+    frame_height: float,
+) -> list[dict[str, Any]]:
+    frame = {
+        "left": _round(-frame_width / 2.0),
+        "right": _round(frame_width / 2.0),
+        "top": _round(frame_height / 2.0),
+        "bottom": _round(-frame_height / 2.0),
+    }
+    tolerance = 0.04
+    violations: list[dict[str, Any]] = []
+    for item in items:
+        if item.get("kind") not in {"text", "formula", "container", "shape", "group"}:
+            continue
+        bbox = item.get("bbox") or {}
+        if not bbox:
+            continue
+        overflow_left = max(0.0, float(frame["left"]) - float(bbox["left"]) - tolerance)
+        overflow_right = max(0.0, float(bbox["right"]) - float(frame["right"]) - tolerance)
+        overflow_top = max(0.0, float(bbox["top"]) - float(frame["top"]) - tolerance)
+        overflow_bottom = max(0.0, float(frame["bottom"]) - float(bbox["bottom"]) - tolerance)
+        overflow_x = max(overflow_left, overflow_right)
+        overflow_y = max(overflow_top, overflow_bottom)
+        if overflow_x <= 0 and overflow_y <= 0:
+            continue
+        sides: list[str] = []
+        if overflow_left > 0:
+            sides.append("left")
+        if overflow_right > 0:
+            sides.append("right")
+        if overflow_top > 0:
+            sides.append("top")
+        if overflow_bottom > 0:
+            sides.append("bottom")
+        violations.append(
+            {
+                "category": "frame_bounds_overflow",
+                "overflow_x": _round(overflow_x),
+                "overflow_y": _round(overflow_y),
+                "sides": sides,
+                "frame": frame,
+                "object": {
+                    "class": item["class"],
+                    "kind": item["kind"],
+                    "text": item["text"],
+                    "path": item.get("path"),
+                    "bbox": bbox,
+                },
+            }
+        )
+    violations.sort(
+        key=lambda item: max(item["overflow_x"], item["overflow_y"]),
+        reverse=True,
+    )
+    return violations
+
+
+class _DummyTracker:
+    duration = 0
+
+    def time_until_bookmark(self, *_args: Any, **_kwargs: Any) -> float:
+        return 0.0
+
+    def get_remaining_duration(self) -> float:
+        return 0.0
+
+
+@contextlib.contextmanager
+def _dummy_voiceover(*_args: Any, **_kwargs: Any):
+    yield _DummyTracker()
+
+
+def _patch_scene_runtime(module: Any, snapshots: list[dict[str, Any]]) -> None:
+    from manim import FadeOut, MoveAlongPath, ReplacementTransform, Scene, Transform
+
+    additive_animation_names = {
+        "AddTextLetterByLetter",
+        "Create",
+        "DrawBorderThenFill",
+        "FadeIn",
+        "GrowArrow",
+        "GrowFromCenter",
+        "GrowFromEdge",
+        "ShowCreation",
+        "ShowIncreasingSubsets",
+        "ShowPartial",
+        "Write",
+    }
+    transient_animation_names = {
+        "ApplyWave",
+        "Circumscribe",
+        "Flash",
+        "FocusOn",
+        "Indicate",
+        "ShowCreationThenFadeOut",
+        "ShowPassingFlash",
+        "Wiggle",
+    }
+
+    def animation_names(anim: Any) -> set[str]:
+        try:
+            return {cls.__name__ for cls in type(anim).mro()}
+        except Exception:
+            return {_class_name(anim)}
+
+    def update_scene_mobjects(scene: Any) -> None:
+        for mob in list(getattr(scene, "mobjects", []) or []):
+            try:
+                mob.update(0)
+            except Exception:
+                continue
+
+    def safe_float(value: Any, default: float = 0.0) -> float:
+        try:
+            result = float(value)
+        except (TypeError, ValueError):
+            return default
+        if math.isnan(result) or math.isinf(result):
+            return default
+        return max(0.0, result)
+
+    def time_window(start: float, end: float) -> dict[str, float]:
+        start_value = _round(max(0.0, start))
+        end_value = _round(max(start_value, end))
+        return {
+            "start": start_value,
+            "end": end_value,
+            "recommended_timestamp": _round((start_value + end_value) / 2.0),
+        }
+
+    def play_duration(animations: tuple[Any, ...], kwargs: dict[str, Any]) -> float:
+        if "run_time" in kwargs:
+            return safe_float(kwargs.get("run_time"), 1.0)
+        durations: list[float] = []
+        for anim in animations:
+            durations.append(safe_float(getattr(anim, "run_time", None), 0.0))
+        return max(durations or [1.0]) or 1.0
+
+    def wait_duration(args: tuple[Any, ...], kwargs: dict[str, Any]) -> float:
+        if args:
+            return safe_float(args[0], 1.0)
+        if "duration" in kwargs:
+            return safe_float(kwargs.get("duration"), 1.0)
+        if "run_time" in kwargs:
+            return safe_float(kwargs.get("run_time"), 1.0)
+        return 1.0
+
+    def snapshot(scene: Any, event: str, *, start: float | None = None, end: float | None = None) -> None:
+        update_scene_mobjects(scene)
+        items = _collect_objects(scene)
+        frame_width, frame_height = _current_frame_size()
+        current_time = safe_float(getattr(scene, "_layout_probe_time", 0.0), 0.0)
+        window_start = current_time if start is None else start
+        window_end = current_time if end is None else end
+        snapshots.append(
+            {
+                "scene": _class_name(scene),
+                "step": getattr(scene, "_layout_probe_step", 0),
+                "event": event,
+                "time_window": time_window(window_start, window_end),
+                "estimated_duration": _round(current_time),
+                "object_count": len(items),
+                "objects": items,
+                "overlaps": _find_overlaps(items)[:40],
+                "bounds_violations": _find_frame_bounds_violations(
+                    items,
+                    frame_width=frame_width,
+                    frame_height=frame_height,
+                )[:40],
+            }
+        )
+
+    def add_mobject(scene: Any, mob: Any) -> None:
+        if mob is None:
+            return
+        try:
+            Scene.add(scene, mob)
+        except Exception:
+            pass
+
+    def mobject_family_ids(mob: Any) -> set[int]:
+        ids: set[int] = set()
+
+        def walk(item: Any) -> None:
+            if item is None:
+                return
+            oid = id(item)
+            if oid in ids:
+                return
+            ids.add(oid)
+            for child in getattr(item, "submobjects", []) or []:
+                walk(child)
+
+        walk(mob)
+        return ids
+
+    def remove_mobject(scene: Any, mob: Any) -> None:
+        if mob is None:
+            return
+        try:
+            Scene.remove(scene, mob)
+        except Exception:
+            pass
+        family_ids = mobject_family_ids(mob)
+        try:
+            scene.mobjects = [
+                item
+                for item in list(getattr(scene, "mobjects", []) or [])
+                if id(item) not in family_ids
+            ]
+        except Exception:
+            pass
+
+    def apply_animation(scene: Any, anim: Any) -> None:
+        if _class_name(anim) == "_AnimationBuilder":
+            builder = getattr(anim, "build", None)
+            if callable(builder):
+                try:
+                    anim = builder()
+                except Exception:
+                    pass
+        child_animations = list(getattr(anim, "animations", []) or [])
+        for child in child_animations:
+            apply_animation(scene, child)
+        if child_animations:
+            return
+
+        names = animation_names(anim)
+        if names & transient_animation_names:
+            return
+
+        mobject = getattr(anim, "mobject", None)
+        target = getattr(anim, "target_mobject", None)
+        if isinstance(anim, FadeOut):
+            remove_mobject(scene, mobject)
+            return
+        if names & additive_animation_names:
+            add_mobject(scene, mobject)
+            return
+        if isinstance(anim, ReplacementTransform):
+            remove_mobject(scene, mobject)
+            add_mobject(scene, target)
+            return
+        if isinstance(anim, MoveAlongPath):
+            path = getattr(anim, "path", None)
+            if mobject is not None and path is not None:
+                try:
+                    mobject.move_to(path.point_from_proportion(1.0))
+                except Exception:
+                    pass
+            add_mobject(scene, mobject)
+            return
+        if isinstance(anim, Transform):
+            if mobject is None:
+                add_mobject(scene, target)
+                return
+            if target is not None:
+                try:
+                    mobject.become(target)
+                except Exception:
+                    for attr in ("text", "original_text", "tex_string", "submobjects"):
+                        try:
+                            setattr(mobject, attr, getattr(target, attr))
+                        except Exception:
+                            pass
+            add_mobject(scene, mobject)
+            return
+        if target is not None and mobject is not None:
+            try:
+                if hasattr(mobject, "set_value") and hasattr(target, "get_value"):
+                    mobject.set_value(target.get_value())
+                    update_scene_mobjects(scene)
+                    return
+            except Exception:
+                pass
+        add_mobject(scene, target or mobject)
+
+    def fake_play(self: Any, *animations: Any, **kwargs: Any) -> None:
+        self._layout_probe_step = getattr(self, "_layout_probe_step", 0) + 1
+        start = safe_float(getattr(self, "_layout_probe_time", 0.0), 0.0)
+        for anim in animations:
+            apply_animation(self, anim)
+        end = start + play_duration(animations, kwargs)
+        self._layout_probe_time = end
+        snapshot(self, "after_play", start=start, end=end)
+
+    def fake_wait(self: Any, *args: Any, **kwargs: Any) -> None:
+        self._layout_probe_step = getattr(self, "_layout_probe_step", 0) + 1
+        start = safe_float(getattr(self, "_layout_probe_time", 0.0), 0.0)
+        end = start + wait_duration(args, kwargs)
+        self._layout_probe_time = end
+        snapshot(self, "after_wait", start=start, end=end)
+
+    def fake_wait_until_bookmark(self: Any, *_args: Any, **_kwargs: Any) -> None:
+        self._layout_probe_step = getattr(self, "_layout_probe_step", 0) + 1
+        current_time = safe_float(getattr(self, "_layout_probe_time", 0.0), 0.0)
+        snapshot(self, "after_bookmark", start=current_time, end=current_time)
+
+    def fake_set_speech_service(self: Any, *_args: Any, **_kwargs: Any) -> None:
+        return None
+
+    for value in vars(module).values():
+        if isinstance(value, type) and issubclass(value, Scene):
+            value.play = fake_play
+            value.wait = fake_wait
+            value.wait_until_bookmark = fake_wait_until_bookmark
+            value.voiceover = _dummy_voiceover
+            value.set_speech_service = fake_set_speech_service
+
+
+def _current_frame_size() -> tuple[float, float]:
+    config = getattr(sys.modules.get("manim"), "config", None)
+    try:
+        return float(config.frame_width), float(config.frame_height)
+    except Exception:
+        return 14.2222, 8.0
+
+
+def _dedupe_overlaps(overlaps: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    seen: dict[tuple[str, str, str], dict[str, Any]] = {}
+    for item in overlaps:
+        a = item["a"]
+        b = item["b"]
+        key = tuple(sorted([a.get("text") or a["class"], b.get("text") or b["class"]])) + (
+            item["category"],
+        )
+        if key in seen:
+            _record_occurrence(seen[key], item)
+            continue
+        retained = dict(item)
+        retained["occurrence_count"] = 1
+        retained["observed_duration"] = _window_duration(item)
+        retained["observed_events"] = [str(item.get("event") or "")]
+        seen[key] = retained
+        out.append(retained)
+    return out
+
+
+def _record_occurrence(retained: dict[str, Any], item: dict[str, Any]) -> None:
+    retained["occurrence_count"] = int(retained.get("occurrence_count") or 1) + 1
+    retained["observed_duration"] = _round(
+        float(retained.get("observed_duration") or 0.0) + _window_duration(item)
+    )
+    events = retained.setdefault("observed_events", [])
+    event = str(item.get("event") or "")
+    if event and event not in events:
+        events.append(event)
+
+
+def _window_duration(item: dict[str, Any]) -> float:
+    window = item.get("time_window") or {}
+    try:
+        return max(0.0, float(window.get("end") or 0.0) - float(window.get("start") or 0.0))
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _dedupe_bounds_violations(violations: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    seen: set[tuple[str, str, str]] = set()
+    for item in violations:
+        obj = item.get("object") or {}
+        key = (
+            str(obj.get("class") or ""),
+            str(obj.get("text") or ""),
+            ",".join(item.get("sides") or []),
+        )
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(item)
+    return out
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("script", type=Path)
+    parser.add_argument("--scene", required=True)
+    parser.add_argument("--width", type=int, default=1280)
+    parser.add_argument("--height", type=int, default=720)
+    args = parser.parse_args()
+
+    from manim import Scene, config
+
+    config.pixel_width = args.width
+    config.pixel_height = args.height
+    if args.height > args.width:
+        config.frame_width = 8.0
+        config.frame_height = 8.0 * args.height / args.width
+    else:
+        config.frame_height = 8.0
+        config.frame_width = 8.0 * args.width / args.height
+    config.disable_caching = True
+    config.media_dir = "/tmp/manim_layout_probe_media"
+
+    snapshots: list[dict[str, Any]] = []
+    errors: list[dict[str, str]] = []
+    try:
+        module = _load_module(args.script)
+        _patch_scene_runtime(module, snapshots)
+        scene_cls = getattr(module, args.scene)
+        if not isinstance(scene_cls, type) or not issubclass(scene_cls, Scene):
+            raise RuntimeError(f"{args.scene} is not a Manim Scene")
+        scene = scene_cls()
+        scene._layout_probe_step = 0
+        scene._layout_probe_time = 0.0
+        setup = getattr(scene, "setup", None)
+        if callable(setup):
+            setup()
+        scene.construct()
+        items = _collect_objects(scene)
+        current_time = _round(float(getattr(scene, "_layout_probe_time", 0.0) or 0.0))
+        snapshots.append(
+            {
+                "scene": args.scene,
+                "step": getattr(scene, "_layout_probe_step", 0),
+                "event": "end",
+                "time_window": {
+                    "start": current_time,
+                    "end": current_time,
+                    "recommended_timestamp": current_time,
+                },
+                "estimated_duration": current_time,
+                "object_count": len(items),
+                "objects": items,
+                "overlaps": _find_overlaps(items)[:40],
+                "bounds_violations": _find_frame_bounds_violations(
+                    items,
+                    frame_width=float(config.frame_width),
+                    frame_height=float(config.frame_height),
+                )[:40],
+            }
+        )
+    except Exception as exc:
+        errors.append({"scene": args.scene, "error": repr(exc), "traceback": traceback.format_exc()})
+
+    all_overlaps: list[dict[str, Any]] = []
+    all_bounds_violations: list[dict[str, Any]] = []
+    for snapshot in snapshots:
+        for item in snapshot["overlaps"]:
+            all_overlaps.append(
+                {
+                    "scene": snapshot["scene"],
+                    "step": snapshot["step"],
+                    "event": snapshot["event"],
+                    "time_window": snapshot.get("time_window") or {},
+                    "estimated_duration": snapshot.get("estimated_duration"),
+                    **item,
+                }
+            )
+        for item in snapshot.get("bounds_violations", []):
+            all_bounds_violations.append(
+                {
+                    "scene": snapshot["scene"],
+                    "step": snapshot["step"],
+                    "event": snapshot["event"],
+                    "time_window": snapshot.get("time_window") or {},
+                    "estimated_duration": snapshot.get("estimated_duration"),
+                    **item,
+                }
+            )
+    all_overlaps.sort(key=lambda item: item["ratio_of_smaller"], reverse=True)
+    all_bounds_violations.sort(
+        key=lambda item: max(item["overflow_x"], item["overflow_y"]),
+        reverse=True,
+    )
+    print(
+        json.dumps(
+            {
+                "scene": args.scene,
+                "error_count": len(errors),
+                "errors": errors,
+                "snapshot_count": len(snapshots),
+                "estimated_duration": max(
+                    [float(item.get("estimated_duration") or 0.0) for item in snapshots] or [0.0]
+                ),
+                "top_overlaps": _dedupe_overlaps(all_overlaps)[:80],
+                "top_bounds_violations": _dedupe_bounds_violations(all_bounds_violations)[:80],
+            },
+            ensure_ascii=False,
+        )
+    )
+    return 1 if errors else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+'''

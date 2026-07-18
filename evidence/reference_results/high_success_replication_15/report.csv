@@ -1,0 +1,16 @@
+﻿slot_id,round_id,task_id,status,elapsed_ms,tokens
+slot-031,3,geo-011,deliver,71855,35878
+slot-032,3,geo-012,deliver_with_warning,106956,72617
+slot-033,3,fun-001,deliver_with_warning,172083,110160
+slot-034,3,fun-002,deliver_with_warning,187481,91784
+slot-035,3,fun-003,deliver_with_warning,217682,115600
+slot-036,3,fun-004,deliver_with_warning,104848,59571
+slot-037,3,alg-001,deliver,57413,35614
+slot-038,3,alg-002,deliver,159282,85664
+slot-039,3,prob-001,deliver,57932,44011
+slot-040,3,stat-001,deliver_with_warning,107094,108325
+slot-041,3,geo-001,deliver,67074,57186
+slot-042,3,geo-002,deliver,149002,105389
+slot-043,3,geo-003,deliver,98426,95154
+slot-044,3,geo-004,deliver_with_warning,83432,44601
+slot-045,3,geo-005,logic_hold,45889,52170

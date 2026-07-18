@@ -1,0 +1,53 @@
+{
+  "dataset_root_env": "MANIM_LOGIC_EVAL_PACKS_ROOT",
+  "frozen": true,
+  "pack_id": "geo30_mutation_v4-replacement-holdout",
+  "private_ground_truth": {
+    "path": "mutation_eval_packs_20260708/geo30_mutation_v4/samples/MUT029_medium_chinese_line_relation_swap/mutation_ground_truth.json",
+    "sha256": "sha256:77b6fc862e1aeaa72d71befaa0671bcc96747d397a42aa5c818392337cfb50d6"
+  },
+  "sample_count": 1,
+  "samples": [
+    {
+      "artifacts": {
+        "candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v4/samples/MUT029_medium_chinese_line_relation_swap/candidate.py",
+          "sha256": "sha256:1f70025816464ec209dd5d5772c747c56f55df9fd356fa99511e0074d1a53516"
+        },
+        "case_manifest.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v4/samples/MUT029_medium_chinese_line_relation_swap/case_manifest.json",
+          "sha256": "sha256:f2890f9652468d3e17ceeec2bfb1f1594239b12a25ff33b8e5121a699a30cd63"
+        },
+        "original_candidate.py": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v4/samples/MUT029_medium_chinese_line_relation_swap/original_candidate.py",
+          "sha256": "sha256:daaff76655bc375f36926467907b35021c5152089ffe02ae753fb19e26558770"
+        },
+        "problem_text.txt": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v4/samples/MUT029_medium_chinese_line_relation_swap/problem_text.txt",
+          "sha256": "sha256:fc7743d2b16b33d64c3c516efc38a341b25b800b78c6870ba4c82e4abdb679e3"
+        },
+        "sample_meta.json": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v4/samples/MUT029_medium_chinese_line_relation_swap/sample_meta.json",
+          "sha256": "sha256:b4f58ca41622c2a39fabc8cb507ea8d09bb1132d7763187c84fb0a84e3b6fb8b"
+        },
+        "source_correct.mp4": {
+          "path": "mutation_eval_packs_20260708/geo30_mutation_v4/samples/MUT029_medium_chinese_line_relation_swap/source_correct.mp4",
+          "sha256": "sha256:e93b2863bc71cbe8044b05db584758b83b66511d2b62c2eb3805828d3e1fe72b"
+        }
+      },
+      "difficulty": "medium",
+      "expected_issue_type": "wrong_line_relation",
+      "sample_id": "BAD030_V4_MUT029_medium_chinese_line_relation_swap",
+      "target_lines": [
+        117
+      ],
+      "truth": "known_bad"
+    }
+  ],
+  "schema_version": "manim-quality.logic-eval.v1",
+  "source_manifest": {
+    "path": "mutation_eval_packs_20260708/geo30_mutation_v4/manifest.json",
+    "sha256": "sha256:a5c3c6c6bd0f3ad693691beff5a2b2673ad08b29fc65311c7eba3185374d6d53"
+  },
+  "truth": "known_bad"
+}

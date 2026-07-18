@@ -1,0 +1,1081 @@
+{
+  "schema_version": "manim-quality.workbench-report.v1",
+  "job_count": 20,
+  "status_counts": {
+    "deliver": 10,
+    "deliver_with_warning": 9,
+    "logic_hold": 1
+  },
+  "delivery_count": 10,
+  "strict_delivery_count": 10,
+  "warning_release_count": 9,
+  "quality_release_count": 19,
+  "total_tokens": 1430212,
+  "average_tokens": 71510.6,
+  "cases": [
+    {
+      "schema_version": "manim-quality.workbench-job.v1",
+      "slot_id": "slot-001",
+      "round_id": 1,
+      "task_id": "h20-geo-01",
+      "status": "deliver",
+      "elapsed_ms": 87240,
+      "generation": {
+        "input_tokens": 4178,
+        "output_tokens": 22502,
+        "total_tokens": 26680,
+        "elapsed_ms": 29502,
+        "model": "gemini-3.5-flash-high",
+        "attempts": 1
+      },
+      "baseline_render": {
+        "succeeded": true,
+        "scene_name": "Solution",
+        "video_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-001\\render_baseline\\videos\\candidate_generated\\480p15\\result.mp4",
+        "elapsed_ms": 25382,
+        "returncode": 0,
+        "error": null
+      },
+      "logic": {
+        "status": "review_pass",
+        "decision": "pass",
+        "candidate_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-001\\candidate_generated.py",
+        "review_elapsed_ms": 15183,
+        "repair_elapsed_ms": 0,
+        "review_tokens": 22504,
+        "repair_tokens": 0,
+        "error": null
+      },
+      "layout": {
+        "status": "clean",
+        "candidate_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-001\\candidate_generated.py",
+        "before_blocking": 0,
+        "after_blocking": 0,
+        "rounds": 0,
+        "tokens": 0,
+        "elapsed_ms": 17064,
+        "requires_render_recheck": false,
+        "error": null
+      },
+      "final_render": {
+        "succeeded": true,
+        "scene_name": "Solution",
+        "video_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-001\\render_baseline\\videos\\candidate_generated\\480p15\\result.mp4",
+        "elapsed_ms": 25382,
+        "returncode": 0,
+        "error": null
+      },
+      "warning": null
+    },
+    {
+      "schema_version": "manim-quality.workbench-job.v1",
+      "slot_id": "slot-002",
+      "round_id": 1,
+      "task_id": "h20-fun-01",
+      "status": "deliver_with_warning",
+      "elapsed_ms": 217505,
+      "generation": {
+        "input_tokens": 4484,
+        "output_tokens": 18992,
+        "total_tokens": 23476,
+        "elapsed_ms": 24981,
+        "model": "gemini-3.5-flash-high",
+        "attempts": 1
+      },
+      "baseline_render": {
+        "succeeded": true,
+        "scene_name": "Solution",
+        "video_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-002\\render_baseline\\videos\\candidate_generated\\480p15\\result.mp4",
+        "elapsed_ms": 32251,
+        "returncode": 0,
+        "error": null
+      },
+      "logic": {
+        "status": "review_pass",
+        "decision": "pass",
+        "candidate_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-002\\candidate_generated.py",
+        "review_elapsed_ms": 12202,
+        "repair_elapsed_ms": 0,
+        "review_tokens": 23266,
+        "repair_tokens": 0,
+        "error": null
+      },
+      "layout": {
+        "status": "error",
+        "candidate_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-002\\candidate_generated.py",
+        "before_blocking": 4,
+        "after_blocking": 1,
+        "rounds": 1,
+        "tokens": 84711,
+        "elapsed_ms": 147958,
+        "requires_render_recheck": false,
+        "error": "vendor_usage_exceeds_remaining_budget"
+      },
+      "final_render": {
+        "succeeded": true,
+        "scene_name": "Solution",
+        "video_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-002\\render_baseline\\videos\\candidate_generated\\480p15\\result.mp4",
+        "elapsed_ms": 32251,
+        "returncode": 0,
+        "error": null
+      },
+      "warning": "vendor_usage_exceeds_remaining_budget"
+    },
+    {
+      "schema_version": "manim-quality.workbench-job.v1",
+      "slot_id": "slot-003",
+      "round_id": 1,
+      "task_id": "h20-geo-02",
+      "status": "deliver_with_warning",
+      "elapsed_ms": 202755,
+      "generation": {
+        "input_tokens": 4178,
+        "output_tokens": 17146,
+        "total_tokens": 21324,
+        "elapsed_ms": 25395,
+        "model": "gemini-3.5-flash-high",
+        "attempts": 1
+      },
+      "baseline_render": {
+        "succeeded": true,
+        "scene_name": "Solution",
+        "video_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-003\\render_baseline\\videos\\candidate_generated\\480p15\\result.mp4",
+        "elapsed_ms": 28315,
+        "returncode": 0,
+        "error": null
+      },
+      "logic": {
+        "status": "review_pass",
+        "decision": "pass",
+        "candidate_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-003\\candidate_generated.py",
+        "review_elapsed_ms": 16729,
+        "repair_elapsed_ms": 0,
+        "review_tokens": 23515,
+        "repair_tokens": 0,
+        "error": null
+      },
+      "layout": {
+        "status": "error",
+        "candidate_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-003\\candidate_generated.py",
+        "before_blocking": 4,
+        "after_blocking": 2,
+        "rounds": 1,
+        "tokens": 93324,
+        "elapsed_ms": 132208,
+        "requires_render_recheck": false,
+        "error": "vendor_usage_exceeds_remaining_budget"
+      },
+      "final_render": {
+        "succeeded": true,
+        "scene_name": "Solution",
+        "video_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-003\\render_baseline\\videos\\candidate_generated\\480p15\\result.mp4",
+        "elapsed_ms": 28315,
+        "returncode": 0,
+        "error": null
+      },
+      "warning": "vendor_usage_exceeds_remaining_budget"
+    },
+    {
+      "schema_version": "manim-quality.workbench-job.v1",
+      "slot_id": "slot-004",
+      "round_id": 1,
+      "task_id": "h20-alg-01",
+      "status": "deliver",
+      "elapsed_ms": 56037,
+      "generation": {
+        "input_tokens": 4089,
+        "output_tokens": 18623,
+        "total_tokens": 22712,
+        "elapsed_ms": 22261,
+        "model": "gemini-3.5-flash-high",
+        "attempts": 1
+      },
+      "baseline_render": {
+        "succeeded": true,
+        "scene_name": "Solution",
+        "video_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-004\\render_baseline\\videos\\candidate_generated\\480p15\\result.mp4",
+        "elapsed_ms": 15052,
+        "returncode": 0,
+        "error": null
+      },
+      "logic": {
+        "status": "review_pass",
+        "decision": "pass",
+        "candidate_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-004\\candidate_generated.py",
+        "review_elapsed_ms": 11505,
+        "repair_elapsed_ms": 0,
+        "review_tokens": 16791,
+        "repair_tokens": 0,
+        "error": null
+      },
+      "layout": {
+        "status": "clean",
+        "candidate_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-004\\candidate_generated.py",
+        "before_blocking": 0,
+        "after_blocking": 0,
+        "rounds": 0,
+        "tokens": 0,
+        "elapsed_ms": 7129,
+        "requires_render_recheck": false,
+        "error": null
+      },
+      "final_render": {
+        "succeeded": true,
+        "scene_name": "Solution",
+        "video_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-004\\render_baseline\\videos\\candidate_generated\\480p15\\result.mp4",
+        "elapsed_ms": 15052,
+        "returncode": 0,
+        "error": null
+      },
+      "warning": null
+    },
+    {
+      "schema_version": "manim-quality.workbench-job.v1",
+      "slot_id": "slot-005",
+      "round_id": 1,
+      "task_id": "h20-geo-03",
+      "status": "deliver_with_warning",
+      "elapsed_ms": 194134,
+      "generation": {
+        "input_tokens": 4168,
+        "output_tokens": 24225,
+        "total_tokens": 28393,
+        "elapsed_ms": 33241,
+        "model": "gemini-3.5-flash-high",
+        "attempts": 1
+      },
+      "baseline_render": {
+        "succeeded": true,
+        "scene_name": "Solution",
+        "video_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-005\\render_baseline\\videos\\candidate_generated\\480p15\\result.mp4",
+        "elapsed_ms": 32447,
+        "returncode": 0,
+        "error": null
+      },
+      "logic": {
+        "status": "review_pass",
+        "decision": "pass",
+        "candidate_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-005\\candidate_generated.py",
+        "review_elapsed_ms": 10436,
+        "repair_elapsed_ms": 0,
+        "review_tokens": 9537,
+        "repair_tokens": 0,
+        "error": null
+      },
+      "layout": {
+        "status": "rejected",
+        "candidate_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-005\\candidate_generated.py",
+        "before_blocking": 10,
+        "after_blocking": 0,
+        "rounds": 1,
+        "tokens": 32415,
+        "elapsed_ms": 117904,
+        "requires_render_recheck": false,
+        "error": "zero_blocking;semantic_fingerprint_changed"
+      },
+      "final_render": {
+        "succeeded": true,
+        "scene_name": "Solution",
+        "video_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-005\\render_baseline\\videos\\candidate_generated\\480p15\\result.mp4",
+        "elapsed_ms": 32447,
+        "returncode": 0,
+        "error": null
+      },
+      "warning": "zero_blocking;semantic_fingerprint_changed"
+    },
+    {
+      "schema_version": "manim-quality.workbench-job.v1",
+      "slot_id": "slot-006",
+      "round_id": 1,
+      "task_id": "h20-prob-01",
+      "status": "deliver",
+      "elapsed_ms": 58711,
+      "generation": {
+        "input_tokens": 4107,
+        "output_tokens": 17714,
+        "total_tokens": 21821,
+        "elapsed_ms": 21873,
+        "model": "gemini-3.5-flash-high",
+        "attempts": 1
+      },
+      "baseline_render": {
+        "succeeded": true,
+        "scene_name": "Solution",
+        "video_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-006\\render_baseline\\videos\\candidate_generated\\480p15\\result.mp4",
+        "elapsed_ms": 13709,
+        "returncode": 0,
+        "error": null
+      },
+      "logic": {
+        "status": "review_pass",
+        "decision": "pass",
+        "candidate_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-006\\candidate_generated.py",
+        "review_elapsed_ms": 16299,
+        "repair_elapsed_ms": 0,
+        "review_tokens": 14539,
+        "repair_tokens": 0,
+        "error": null
+      },
+      "layout": {
+        "status": "clean",
+        "candidate_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-006\\candidate_generated.py",
+        "before_blocking": 0,
+        "after_blocking": 0,
+        "rounds": 0,
+        "tokens": 0,
+        "elapsed_ms": 6735,
+        "requires_render_recheck": false,
+        "error": null
+      },
+      "final_render": {
+        "succeeded": true,
+        "scene_name": "Solution",
+        "video_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-006\\render_baseline\\videos\\candidate_generated\\480p15\\result.mp4",
+        "elapsed_ms": 13709,
+        "returncode": 0,
+        "error": null
+      },
+      "warning": null
+    },
+    {
+      "schema_version": "manim-quality.workbench-job.v1",
+      "slot_id": "slot-007",
+      "round_id": 1,
+      "task_id": "h20-fun-02",
+      "status": "deliver",
+      "elapsed_ms": 125173,
+      "generation": {
+        "input_tokens": 9469,
+        "output_tokens": 34643,
+        "total_tokens": 44112,
+        "elapsed_ms": 49248,
+        "model": "gemini-3.5-flash-high",
+        "attempts": 2,
+        "render_recovery_used": true
+      },
+      "baseline_render": {
+        "succeeded": true,
+        "scene_name": "Solution",
+        "video_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-007\\render_baseline_recovery\\videos\\candidate_render_recovery\\480p15\\result.mp4",
+        "elapsed_ms": 27452,
+        "returncode": 0,
+        "error": null
+      },
+      "logic": {
+        "status": "review_pass",
+        "decision": "pass",
+        "candidate_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-007\\candidate_render_recovery.py",
+        "review_elapsed_ms": 10947,
+        "repair_elapsed_ms": 0,
+        "review_tokens": 17823,
+        "repair_tokens": 0,
+        "error": null
+      },
+      "layout": {
+        "status": "clean",
+        "candidate_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-007\\candidate_render_recovery.py",
+        "before_blocking": 0,
+        "after_blocking": 0,
+        "rounds": 0,
+        "tokens": 0,
+        "elapsed_ms": 21591,
+        "requires_render_recheck": false,
+        "error": null
+      },
+      "final_render": {
+        "succeeded": true,
+        "scene_name": "Solution",
+        "video_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-007\\render_baseline_recovery\\videos\\candidate_render_recovery\\480p15\\result.mp4",
+        "elapsed_ms": 27452,
+        "returncode": 0,
+        "error": null
+      },
+      "warning": null
+    },
+    {
+      "schema_version": "manim-quality.workbench-job.v1",
+      "slot_id": "slot-008",
+      "round_id": 1,
+      "task_id": "h20-geo-04",
+      "status": "deliver",
+      "elapsed_ms": 100911,
+      "generation": {
+        "input_tokens": 4170,
+        "output_tokens": 17232,
+        "total_tokens": 21402,
+        "elapsed_ms": 21506,
+        "model": "gemini-3.5-flash-high",
+        "attempts": 1
+      },
+      "baseline_render": {
+        "succeeded": true,
+        "scene_name": "Solution",
+        "video_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-008\\render_baseline\\videos\\candidate_generated\\480p15\\result.mp4",
+        "elapsed_ms": 12493,
+        "returncode": 0,
+        "error": null
+      },
+      "logic": {
+        "status": "review_pass",
+        "decision": "pass",
+        "candidate_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-008\\candidate_generated.py",
+        "review_elapsed_ms": 15468,
+        "repair_elapsed_ms": 0,
+        "review_tokens": 27848,
+        "repair_tokens": 0,
+        "error": null
+      },
+      "layout": {
+        "status": "candidate_recheck_required",
+        "candidate_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-008\\layout\\repair_evidence\\slot-008\\workdir\\candidate.py",
+        "before_blocking": 2,
+        "after_blocking": 0,
+        "rounds": 1,
+        "tokens": 26583,
+        "elapsed_ms": 40294,
+        "requires_render_recheck": true,
+        "error": null
+      },
+      "final_render": {
+        "succeeded": true,
+        "scene_name": "Solution",
+        "video_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-008\\render_after_layout\\videos\\candidate\\480p15\\result.mp4",
+        "elapsed_ms": 11034,
+        "returncode": 0,
+        "error": null
+      },
+      "warning": null
+    },
+    {
+      "schema_version": "manim-quality.workbench-job.v1",
+      "slot_id": "slot-009",
+      "round_id": 1,
+      "task_id": "h20-alg-02",
+      "status": "deliver_with_warning",
+      "elapsed_ms": 144834,
+      "generation": {
+        "input_tokens": 8681,
+        "output_tokens": 29366,
+        "total_tokens": 38047,
+        "elapsed_ms": 39605,
+        "model": "gemini-3.5-flash-high",
+        "attempts": 2,
+        "render_recovery_used": true
+      },
+      "baseline_render": {
+        "succeeded": true,
+        "scene_name": "Solution",
+        "video_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-009\\render_baseline_recovery\\videos\\candidate_render_recovery\\480p15\\result.mp4",
+        "elapsed_ms": 13616,
+        "returncode": 0,
+        "error": null
+      },
+      "logic": {
+        "status": "review_pass",
+        "decision": "pass",
+        "candidate_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-009\\candidate_render_recovery.py",
+        "review_elapsed_ms": 11971,
+        "repair_elapsed_ms": 0,
+        "review_tokens": 16837,
+        "repair_tokens": 0,
+        "error": null
+      },
+      "layout": {
+        "status": "rejected",
+        "candidate_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-009\\candidate_render_recovery.py",
+        "before_blocking": 6,
+        "after_blocking": 6,
+        "rounds": 1,
+        "tokens": 51481,
+        "elapsed_ms": 74180,
+        "requires_render_recheck": false,
+        "error": "output_identical_to_input;no_progress"
+      },
+      "final_render": {
+        "succeeded": true,
+        "scene_name": "Solution",
+        "video_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-009\\render_baseline_recovery\\videos\\candidate_render_recovery\\480p15\\result.mp4",
+        "elapsed_ms": 13616,
+        "returncode": 0,
+        "error": null
+      },
+      "warning": "output_identical_to_input;no_progress"
+    },
+    {
+      "schema_version": "manim-quality.workbench-job.v1",
+      "slot_id": "slot-010",
+      "round_id": 1,
+      "task_id": "h20-geo-05",
+      "status": "deliver_with_warning",
+      "elapsed_ms": 143167,
+      "generation": {
+        "input_tokens": 4178,
+        "output_tokens": 16181,
+        "total_tokens": 20359,
+        "elapsed_ms": 21538,
+        "model": "gemini-3.5-flash-high",
+        "attempts": 1
+      },
+      "baseline_render": {
+        "succeeded": true,
+        "scene_name": "Solution",
+        "video_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-010\\render_baseline\\videos\\candidate_generated\\480p15\\result.mp4",
+        "elapsed_ms": 20101,
+        "returncode": 0,
+        "error": null
+      },
+      "logic": {
+        "status": "review_pass",
+        "decision": "pass",
+        "candidate_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-010\\candidate_generated.py",
+        "review_elapsed_ms": 14086,
+        "repair_elapsed_ms": 0,
+        "review_tokens": 22367,
+        "repair_tokens": 0,
+        "error": null
+      },
+      "layout": {
+        "status": "error",
+        "candidate_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-010\\candidate_generated.py",
+        "before_blocking": 2,
+        "after_blocking": 0,
+        "rounds": 1,
+        "tokens": 67653,
+        "elapsed_ms": 87351,
+        "requires_render_recheck": false,
+        "error": "vendor_usage_exceeds_remaining_budget"
+      },
+      "final_render": {
+        "succeeded": true,
+        "scene_name": "Solution",
+        "video_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-010\\render_baseline\\videos\\candidate_generated\\480p15\\result.mp4",
+        "elapsed_ms": 20101,
+        "returncode": 0,
+        "error": null
+      },
+      "warning": "vendor_usage_exceeds_remaining_budget"
+    },
+    {
+      "schema_version": "manim-quality.workbench-job.v1",
+      "slot_id": "slot-011",
+      "round_id": 1,
+      "task_id": "h20-fun-03",
+      "status": "deliver_with_warning",
+      "elapsed_ms": 166279,
+      "generation": {
+        "input_tokens": 4479,
+        "output_tokens": 19802,
+        "total_tokens": 24281,
+        "elapsed_ms": 24979,
+        "model": "gemini-3.5-flash-high",
+        "attempts": 1
+      },
+      "baseline_render": {
+        "succeeded": true,
+        "scene_name": "Solution",
+        "video_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-011\\render_baseline\\videos\\candidate_generated\\480p15\\result.mp4",
+        "elapsed_ms": 24993,
+        "returncode": 0,
+        "error": null
+      },
+      "logic": {
+        "status": "review_pass",
+        "decision": "pass",
+        "candidate_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-011\\candidate_generated.py",
+        "review_elapsed_ms": 12114,
+        "repair_elapsed_ms": 0,
+        "review_tokens": 19085,
+        "repair_tokens": 0,
+        "error": null
+      },
+      "layout": {
+        "status": "rejected",
+        "candidate_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-011\\candidate_generated.py",
+        "before_blocking": 7,
+        "after_blocking": 0,
+        "rounds": 1,
+        "tokens": 39534,
+        "elapsed_ms": 104096,
+        "requires_render_recheck": false,
+        "error": "zero_blocking;semantic_fingerprint_changed"
+      },
+      "final_render": {
+        "succeeded": true,
+        "scene_name": "Solution",
+        "video_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-011\\render_baseline\\videos\\candidate_generated\\480p15\\result.mp4",
+        "elapsed_ms": 24993,
+        "returncode": 0,
+        "error": null
+      },
+      "warning": "zero_blocking;semantic_fingerprint_changed"
+    },
+    {
+      "schema_version": "manim-quality.workbench-job.v1",
+      "slot_id": "slot-012",
+      "round_id": 1,
+      "task_id": "h20-geo-06",
+      "status": "deliver_with_warning",
+      "elapsed_ms": 159796,
+      "generation": {
+        "input_tokens": 4164,
+        "output_tokens": 18641,
+        "total_tokens": 22805,
+        "elapsed_ms": 22728,
+        "model": "gemini-3.5-flash-high",
+        "attempts": 1
+      },
+      "baseline_render": {
+        "succeeded": true,
+        "scene_name": "Solution",
+        "video_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-012\\render_baseline\\videos\\candidate_generated\\480p15\\result.mp4",
+        "elapsed_ms": 24178,
+        "returncode": 0,
+        "error": null
+      },
+      "logic": {
+        "status": "review_pass",
+        "decision": "pass",
+        "candidate_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-012\\candidate_generated.py",
+        "review_elapsed_ms": 11622,
+        "repair_elapsed_ms": 0,
+        "review_tokens": 20053,
+        "repair_tokens": 0,
+        "error": null
+      },
+      "layout": {
+        "status": "rejected",
+        "candidate_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-012\\candidate_generated.py",
+        "before_blocking": 4,
+        "after_blocking": 0,
+        "rounds": 1,
+        "tokens": 51262,
+        "elapsed_ms": 101177,
+        "requires_render_recheck": false,
+        "error": "zero_blocking;semantic_fingerprint_changed"
+      },
+      "final_render": {
+        "succeeded": true,
+        "scene_name": "Solution",
+        "video_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-012\\render_baseline\\videos\\candidate_generated\\480p15\\result.mp4",
+        "elapsed_ms": 24178,
+        "returncode": 0,
+        "error": null
+      },
+      "warning": "zero_blocking;semantic_fingerprint_changed"
+    },
+    {
+      "schema_version": "manim-quality.workbench-job.v1",
+      "slot_id": "slot-013",
+      "round_id": 1,
+      "task_id": "h20-seq-01",
+      "status": "deliver",
+      "elapsed_ms": 54870,
+      "generation": {
+        "input_tokens": 4087,
+        "output_tokens": 16881,
+        "total_tokens": 20968,
+        "elapsed_ms": 21253,
+        "model": "gemini-3.5-flash-high",
+        "attempts": 1
+      },
+      "baseline_render": {
+        "succeeded": true,
+        "scene_name": "Solution",
+        "video_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-013\\render_baseline\\videos\\candidate_generated\\480p15\\result.mp4",
+        "elapsed_ms": 18088,
+        "returncode": 0,
+        "error": null
+      },
+      "logic": {
+        "status": "review_pass",
+        "decision": "pass",
+        "candidate_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-013\\candidate_generated.py",
+        "review_elapsed_ms": 8189,
+        "repair_elapsed_ms": 0,
+        "review_tokens": 15977,
+        "repair_tokens": 0,
+        "error": null
+      },
+      "layout": {
+        "status": "clean",
+        "candidate_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-013\\candidate_generated.py",
+        "before_blocking": 0,
+        "after_blocking": 0,
+        "rounds": 0,
+        "tokens": 0,
+        "elapsed_ms": 7242,
+        "requires_render_recheck": false,
+        "error": null
+      },
+      "final_render": {
+        "succeeded": true,
+        "scene_name": "Solution",
+        "video_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-013\\render_baseline\\videos\\candidate_generated\\480p15\\result.mp4",
+        "elapsed_ms": 18088,
+        "returncode": 0,
+        "error": null
+      },
+      "warning": null
+    },
+    {
+      "schema_version": "manim-quality.workbench-job.v1",
+      "slot_id": "slot-014",
+      "round_id": 1,
+      "task_id": "h20-geo-07",
+      "status": "deliver",
+      "elapsed_ms": 75098,
+      "generation": {
+        "input_tokens": 4166,
+        "output_tokens": 18943,
+        "total_tokens": 23109,
+        "elapsed_ms": 25342,
+        "model": "gemini-3.5-flash-high",
+        "attempts": 1
+      },
+      "baseline_render": {
+        "succeeded": true,
+        "scene_name": "Solution",
+        "video_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-014\\render_baseline\\videos\\candidate_generated\\480p15\\result.mp4",
+        "elapsed_ms": 24760,
+        "returncode": 0,
+        "error": null
+      },
+      "logic": {
+        "status": "review_pass",
+        "decision": "pass",
+        "candidate_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-014\\candidate_generated.py",
+        "review_elapsed_ms": 10498,
+        "repair_elapsed_ms": 0,
+        "review_tokens": 18050,
+        "repair_tokens": 0,
+        "error": null
+      },
+      "layout": {
+        "status": "clean",
+        "candidate_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-014\\candidate_generated.py",
+        "before_blocking": 0,
+        "after_blocking": 0,
+        "rounds": 0,
+        "tokens": 0,
+        "elapsed_ms": 14389,
+        "requires_render_recheck": false,
+        "error": null
+      },
+      "final_render": {
+        "succeeded": true,
+        "scene_name": "Solution",
+        "video_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-014\\render_baseline\\videos\\candidate_generated\\480p15\\result.mp4",
+        "elapsed_ms": 24760,
+        "returncode": 0,
+        "error": null
+      },
+      "warning": null
+    },
+    {
+      "schema_version": "manim-quality.workbench-job.v1",
+      "slot_id": "slot-015",
+      "round_id": 1,
+      "task_id": "h20-fun-04",
+      "status": "deliver_with_warning",
+      "elapsed_ms": 256792,
+      "generation": {
+        "input_tokens": 9384,
+        "output_tokens": 34525,
+        "total_tokens": 43909,
+        "elapsed_ms": 45770,
+        "model": "gemini-3.5-flash-high",
+        "attempts": 2,
+        "render_recovery_used": true
+      },
+      "baseline_render": {
+        "succeeded": true,
+        "scene_name": "Solution",
+        "video_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-015\\render_baseline_recovery\\videos\\candidate_render_recovery\\480p15\\result.mp4",
+        "elapsed_ms": 41328,
+        "returncode": 0,
+        "error": null
+      },
+      "logic": {
+        "status": "review_pass",
+        "decision": "pass",
+        "candidate_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-015\\candidate_render_recovery.py",
+        "review_elapsed_ms": 13190,
+        "repair_elapsed_ms": 0,
+        "review_tokens": 17490,
+        "repair_tokens": 0,
+        "error": null
+      },
+      "layout": {
+        "status": "rejected",
+        "candidate_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-015\\candidate_render_recovery.py",
+        "before_blocking": 2,
+        "after_blocking": 0,
+        "rounds": 1,
+        "tokens": 45630,
+        "elapsed_ms": 126700,
+        "requires_render_recheck": false,
+        "error": "zero_blocking;semantic_fingerprint_changed"
+      },
+      "final_render": {
+        "succeeded": true,
+        "scene_name": "Solution",
+        "video_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-015\\render_baseline_recovery\\videos\\candidate_render_recovery\\480p15\\result.mp4",
+        "elapsed_ms": 41328,
+        "returncode": 0,
+        "error": null
+      },
+      "warning": "zero_blocking;semantic_fingerprint_changed"
+    },
+    {
+      "schema_version": "manim-quality.workbench-job.v1",
+      "slot_id": "slot-016",
+      "round_id": 1,
+      "task_id": "h20-alg-03",
+      "status": "deliver_with_warning",
+      "elapsed_ms": 114968,
+      "generation": {
+        "input_tokens": 4049,
+        "output_tokens": 16765,
+        "total_tokens": 20814,
+        "elapsed_ms": 23284,
+        "model": "gemini-3.5-flash-high",
+        "attempts": 1
+      },
+      "baseline_render": {
+        "succeeded": true,
+        "scene_name": "Solution",
+        "video_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-016\\render_baseline\\videos\\candidate_generated\\480p15\\result.mp4",
+        "elapsed_ms": 30352,
+        "returncode": 0,
+        "error": null
+      },
+      "logic": {
+        "status": "review_pass",
+        "decision": "pass",
+        "candidate_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-016\\candidate_generated.py",
+        "review_elapsed_ms": 12582,
+        "repair_elapsed_ms": 0,
+        "review_tokens": 19565,
+        "repair_tokens": 0,
+        "error": null
+      },
+      "layout": {
+        "status": "rejected",
+        "candidate_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-016\\candidate_generated.py",
+        "before_blocking": 2,
+        "after_blocking": 0,
+        "rounds": 1,
+        "tokens": 23418,
+        "elapsed_ms": 48637,
+        "requires_render_recheck": false,
+        "error": "zero_blocking;semantic_fingerprint_changed"
+      },
+      "final_render": {
+        "succeeded": true,
+        "scene_name": "Solution",
+        "video_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-016\\render_baseline\\videos\\candidate_generated\\480p15\\result.mp4",
+        "elapsed_ms": 30352,
+        "returncode": 0,
+        "error": null
+      },
+      "warning": "zero_blocking;semantic_fingerprint_changed"
+    },
+    {
+      "schema_version": "manim-quality.workbench-job.v1",
+      "slot_id": "slot-017",
+      "round_id": 1,
+      "task_id": "h20-geo-08",
+      "status": "deliver",
+      "elapsed_ms": 69899,
+      "generation": {
+        "input_tokens": 4161,
+        "output_tokens": 17644,
+        "total_tokens": 21805,
+        "elapsed_ms": 25285,
+        "model": "gemini-3.5-flash-high",
+        "attempts": 1
+      },
+      "baseline_render": {
+        "succeeded": true,
+        "scene_name": "Solution",
+        "video_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-017\\render_baseline\\videos\\candidate_generated\\480p15\\result.mp4",
+        "elapsed_ms": 15745,
+        "returncode": 0,
+        "error": null
+      },
+      "logic": {
+        "status": "review_pass",
+        "decision": "pass",
+        "candidate_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-017\\candidate_generated.py",
+        "review_elapsed_ms": 18073,
+        "repair_elapsed_ms": 0,
+        "review_tokens": 25237,
+        "repair_tokens": 0,
+        "error": null
+      },
+      "layout": {
+        "status": "clean",
+        "candidate_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-017\\candidate_generated.py",
+        "before_blocking": 0,
+        "after_blocking": 0,
+        "rounds": 0,
+        "tokens": 0,
+        "elapsed_ms": 10691,
+        "requires_render_recheck": false,
+        "error": null
+      },
+      "final_render": {
+        "succeeded": true,
+        "scene_name": "Solution",
+        "video_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-017\\render_baseline\\videos\\candidate_generated\\480p15\\result.mp4",
+        "elapsed_ms": 15745,
+        "returncode": 0,
+        "error": null
+      },
+      "warning": null
+    },
+    {
+      "schema_version": "manim-quality.workbench-job.v1",
+      "slot_id": "slot-018",
+      "round_id": 1,
+      "task_id": "h20-stat-01",
+      "status": "logic_hold",
+      "elapsed_ms": 43579,
+      "generation": {
+        "input_tokens": 4081,
+        "output_tokens": 15966,
+        "total_tokens": 20047,
+        "elapsed_ms": 19665,
+        "model": "gemini-3.5-flash-high",
+        "attempts": 1
+      },
+      "baseline_render": {
+        "succeeded": true,
+        "scene_name": "Solution",
+        "video_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-018\\render_baseline\\videos\\candidate_generated\\480p15\\result.mp4",
+        "elapsed_ms": 18002,
+        "returncode": 0,
+        "error": null
+      },
+      "logic": {
+        "status": "review_error",
+        "decision": null,
+        "candidate_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-018\\candidate_generated.py",
+        "review_elapsed_ms": 5814,
+        "repair_elapsed_ms": 0,
+        "review_tokens": 4556,
+        "repair_tokens": 0,
+        "error": "PathDenied: path cannot be resolved: C:\\Users\\Admin\\AppData\\Local\\Temp\\manim-quality-shadow-skywonta\\helper\\candidate.py"
+      },
+      "error": "PathDenied: path cannot be resolved: C:\\Users\\Admin\\AppData\\Local\\Temp\\manim-quality-shadow-skywonta\\helper\\candidate.py"
+    },
+    {
+      "schema_version": "manim-quality.workbench-job.v1",
+      "slot_id": "slot-019",
+      "round_id": 1,
+      "task_id": "h20-prob-02",
+      "status": "deliver",
+      "elapsed_ms": 119602,
+      "generation": {
+        "input_tokens": 4077,
+        "output_tokens": 16786,
+        "total_tokens": 20863,
+        "elapsed_ms": 20510,
+        "model": "gemini-3.5-flash-high",
+        "attempts": 1
+      },
+      "baseline_render": {
+        "succeeded": true,
+        "scene_name": "Solution",
+        "video_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-019\\render_baseline\\videos\\candidate_generated\\480p15\\result.mp4",
+        "elapsed_ms": 18250,
+        "returncode": 0,
+        "error": null
+      },
+      "logic": {
+        "status": "review_pass",
+        "decision": "pass",
+        "candidate_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-019\\candidate_generated.py",
+        "review_elapsed_ms": 9815,
+        "repair_elapsed_ms": 0,
+        "review_tokens": 16749,
+        "repair_tokens": 0,
+        "error": null
+      },
+      "layout": {
+        "status": "candidate_recheck_required",
+        "candidate_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-019\\layout\\repair_evidence\\slot-019\\workdir\\candidate.py",
+        "before_blocking": 1,
+        "after_blocking": 0,
+        "rounds": 1,
+        "tokens": 30466,
+        "elapsed_ms": 55089,
+        "requires_render_recheck": true,
+        "error": null
+      },
+      "final_render": {
+        "succeeded": true,
+        "scene_name": "Solution",
+        "video_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-019\\render_after_layout\\videos\\candidate\\480p15\\result.mp4",
+        "elapsed_ms": 15818,
+        "returncode": 0,
+        "error": null
+      },
+      "warning": null
+    },
+    {
+      "schema_version": "manim-quality.workbench-job.v1",
+      "slot_id": "slot-020",
+      "round_id": 1,
+      "task_id": "h20-geo-09",
+      "status": "deliver",
+      "elapsed_ms": 65792,
+      "generation": {
+        "input_tokens": 4169,
+        "output_tokens": 19647,
+        "total_tokens": 23816,
+        "elapsed_ms": 25049,
+        "model": "gemini-3.5-flash-high",
+        "attempts": 1
+      },
+      "baseline_render": {
+        "succeeded": true,
+        "scene_name": "Solution",
+        "video_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-020\\render_baseline\\videos\\candidate_generated\\480p15\\result.mp4",
+        "elapsed_ms": 18565,
+        "returncode": 0,
+        "error": null
+      },
+      "logic": {
+        "status": "review_pass",
+        "decision": "pass",
+        "candidate_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-020\\candidate_generated.py",
+        "review_elapsed_ms": 13641,
+        "repair_elapsed_ms": 0,
+        "review_tokens": 21203,
+        "repair_tokens": 0,
+        "error": null
+      },
+      "layout": {
+        "status": "clean",
+        "candidate_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-020\\candidate_generated.py",
+        "before_blocking": 0,
+        "after_blocking": 0,
+        "rounds": 0,
+        "tokens": 0,
+        "elapsed_ms": 8440,
+        "requires_render_recheck": false,
+        "error": null
+      },
+      "final_render": {
+        "succeeded": true,
+        "scene_name": "Solution",
+        "video_path": "D:\\manim_quality_platform_runs_20260713\\workbench_holdout20_v1\\round-1\\slot-020\\render_baseline\\videos\\candidate_generated\\480p15\\result.mp4",
+        "elapsed_ms": 18565,
+        "returncode": 0,
+        "error": null
+      },
+      "warning": null
+    }
+  ]
+}

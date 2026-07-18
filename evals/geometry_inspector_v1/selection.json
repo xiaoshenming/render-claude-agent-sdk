@@ -1,0 +1,253 @@
+{
+  "schema_version": "manim-quality.geometry-inspector-selection.v1",
+  "pack_id": "geometry-inspector-v1-production-and-controls",
+  "frozen": true,
+  "roots": {
+    "production_bad": "MANIM_GEOMETRY_PRODUCTION_ROOT",
+    "known_good_control": "MANIM_GEOMETRY_CONTROL_ROOT"
+  },
+  "cases": [
+    {
+      "sample_id": "PLOGIC-003",
+      "bucket": "production_bad",
+      "candidate_path": "PLOGIC-003__01KT30D0A45FPZTE95CX1S2KFT__Scene_01_Problem__geometry_relation_error/candidate.py",
+      "candidate_sha256": "sha256:db0ba8d3bb5faf95c792faeaacbd290a384678dbca1839636fc963ec86981f5f",
+      "scene_id": "Scene_01_Problem",
+      "relation": "equal_length",
+      "operands": ["down_line", "up_line"],
+      "expected_status": "known",
+      "expected_truth": false
+    },
+    {
+      "sample_id": "PLOGIC-005",
+      "bucket": "production_bad",
+      "candidate_path": "PLOGIC-005__01KT3PB3HA2FNGFZSTNEFCDRBT__Scene_05_Example2_Setup__geometry_relation_error/candidate.py",
+      "candidate_sha256": "sha256:a83c9e7b9fe10ec14aaf2e9fd6caca95ced00b8b6e1b4162e035f9a4dccc72a0",
+      "scene_id": "Scene_05_Example2_Setup",
+      "relation": "point_on_line",
+      "operands": ["O", "diag_AC"],
+      "expected_status": "known",
+      "expected_truth": false
+    },
+    {
+      "sample_id": "PLOGIC-018",
+      "bucket": "production_bad",
+      "candidate_path": "PLOGIC-018__01KT83XFCBCB5V8WMWFWMFQSY8__Scene_02_Geometry__geometry_relation_error/candidate.py",
+      "candidate_sha256": "sha256:d34da37233edb26490c5b757c559b82f560fb0b8e1833bd9b294e6ed6621b4b1",
+      "scene_id": "Scene_02_Geometry",
+      "relation": "parallel",
+      "operands": ["tangent_line", "x_axis"],
+      "expected_status": "unknown",
+      "expected_truth": null
+    },
+    {
+      "sample_id": "PLOGIC-021",
+      "bucket": "production_bad",
+      "candidate_path": "PLOGIC-021__01KT8RH9E0H4F3R8DWCZFWAP99__Scene_01_Intro__geometry_relation_error/candidate.py",
+      "candidate_sha256": "sha256:6fe21bdc3b8137d5fc12383e735a27abef7a88a782fcdd5cb8294a06849ce1b3",
+      "scene_id": "Scene_01_Intro",
+      "relation": "point_on_line",
+      "operands": ["f1_pos", "x_axis"],
+      "expected_status": "unknown",
+      "expected_truth": null
+    },
+    {
+      "sample_id": "PLOGIC-027",
+      "bucket": "production_bad",
+      "candidate_path": "PLOGIC-027__01KT9Y71Q2CZC9268BTQ4R2ZJ8__Scene_01__geometry_relation_error/candidate.py",
+      "candidate_sha256": "sha256:ad144aa2649e2e29c8c94d6498866e1a7222747c0740c9c5efb087f47b343ddf",
+      "scene_id": "Scene_01",
+      "relation": "perpendicular",
+      "operands": ["line_AB", "line_AD"],
+      "expected_status": "unknown",
+      "expected_truth": null
+    },
+    {
+      "sample_id": "PLOGIC-032",
+      "bucket": "production_bad",
+      "candidate_path": "PLOGIC-032__01KTAJSTPMCM5T4TMXY5H5QWFZ__Scene_03_CollinearityAndCalculation__geometry_relation_error/candidate.py",
+      "candidate_sha256": "sha256:25171c4f66788e6a647c7744a7de783de6e77a64f6a9088d6770e40c35964b18",
+      "scene_id": "Scene_03_CollinearityAndCalculation",
+      "relation": "collinear",
+      "operands": ["A", "B", "C"],
+      "expected_status": "known",
+      "expected_truth": false
+    },
+    {
+      "sample_id": "PLOGIC-036",
+      "bucket": "production_bad",
+      "candidate_path": "PLOGIC-036__01KTAPKBHJ9QPPKYW994CC1MRB__AreaFormulaDerivation__geometry_relation_error/candidate.py",
+      "candidate_sha256": "sha256:253360bb56c101757577f47b1669fed4b6e21cdfbc6fc05b26f43f9202e8b1fd",
+      "scene_id": "AreaFormulaDerivation",
+      "relation": "parallel",
+      "operands": ["line_HB", "line_DC"],
+      "expected_status": "unknown",
+      "expected_truth": null
+    },
+    {
+      "sample_id": "PLOGIC-038",
+      "bucket": "production_bad",
+      "candidate_path": "PLOGIC-038__01KTB8D6QAWB0N6HV7PAZETSGZ__Scene_03_Auxiliary_Line__geometry_relation_error/candidate.py",
+      "candidate_sha256": "sha256:3c8f33331b77ed3b1ffb6f7a7fd02519da57b01563773e22c2f3cec50277cf3c",
+      "scene_id": "Scene_03_Auxiliary_Line",
+      "relation": "perpendicular",
+      "operands": ["line_ce", "line_ad"],
+      "expected_status": "known",
+      "expected_truth": false
+    },
+    {
+      "sample_id": "PLOGIC-045",
+      "bucket": "production_bad",
+      "candidate_path": "PLOGIC-045__01KTC1WKYYJWACA7FDQGDSASP1__Scene_05_ThreePerpTheorem__geometry_relation_error/candidate.py",
+      "candidate_sha256": "sha256:1416c5e9c034b1ab5d398903b3ad00ebe0d01657291936cbab60db139fd41946",
+      "scene_id": "Scene_05_ThreePerpTheorem",
+      "relation": "perpendicular",
+      "operands": ["line_PA", "plane_alpha"],
+      "expected_status": "unknown",
+      "expected_truth": null
+    },
+    {
+      "sample_id": "PLOGIC-048",
+      "bucket": "production_bad",
+      "candidate_path": "PLOGIC-048__01KTDA1SMJJ8ZQRG42RMDJGGSH__Scene_07_Examples__geometry_relation_error/candidate.py",
+      "candidate_sha256": "sha256:9a4be074e50cace91df818305171dbb4e41d87f28b2a2feaeef4eb7e4d7e405c",
+      "scene_id": "Scene_07_Examples",
+      "relation": "parallel",
+      "operands": ["line_EH", "line_AC"],
+      "expected_status": "unknown",
+      "expected_truth": null
+    },
+    {
+      "sample_id": "PLOGIC-050",
+      "bucket": "production_bad",
+      "candidate_path": "PLOGIC-050__01KTDJSQ795N51MFNW0XCGJ0C9__Scene_01_Introduction__geometry_relation_error/candidate.py",
+      "candidate_sha256": "sha256:38fbd9000b4a25048a7ac34432328d3992232ba35cdabaddeef338ffd4879f6d",
+      "scene_id": "Scene_01_Introduction",
+      "relation": "equal_length",
+      "operands": ["sq_c", "sq_a"],
+      "expected_status": "unknown",
+      "expected_truth": null
+    },
+    {
+      "sample_id": "CONTROL_MUT001_expert_line_endpoint_swap",
+      "bucket": "known_good_control",
+      "candidate_path": "samples/MUT001_expert_line_endpoint_swap/original_candidate.py",
+      "candidate_sha256": "sha256:7723127de5fa0c01b7b59f4ef4c74c24b03a9e5314c94a3d42d3662394728511",
+      "scene_id": "Solution",
+      "relation": "line_endpoints",
+      "operands": ["line_AD", "A", "D"],
+      "expected_status": "unknown",
+      "expected_truth": null
+    },
+    {
+      "sample_id": "CONTROL_MUT012_expert_line_endpoint_swap",
+      "bucket": "known_good_control",
+      "candidate_path": "samples/MUT012_expert_line_endpoint_swap/original_candidate.py",
+      "candidate_sha256": "sha256:7723127de5fa0c01b7b59f4ef4c74c24b03a9e5314c94a3d42d3662394728511",
+      "scene_id": "Solution",
+      "relation": "line_endpoints",
+      "operands": ["line_BC", "B", "C"],
+      "expected_status": "known",
+      "expected_truth": true
+    },
+    {
+      "sample_id": "CONTROL_MUT013_expert_line_endpoint_swap",
+      "bucket": "known_good_control",
+      "candidate_path": "samples/MUT013_expert_line_endpoint_swap/original_candidate.py",
+      "candidate_sha256": "sha256:a322422bc71270b35927e50b131bab73d9288dbcde228e81e3c5daaa802ea839",
+      "scene_id": "Solution",
+      "relation": "line_endpoints",
+      "operands": ["line_fc", "F", "C"],
+      "expected_status": "known",
+      "expected_truth": true
+    },
+    {
+      "sample_id": "CONTROL_MUT014_expert_line_endpoint_swap",
+      "bucket": "known_good_control",
+      "candidate_path": "samples/MUT014_expert_line_endpoint_swap/original_candidate.py",
+      "candidate_sha256": "sha256:3b605973f1647f0da54c3998c7c9bdbaab2d38199074566295865197ef9a103d",
+      "scene_id": "Solution",
+      "relation": "line_endpoints",
+      "operands": ["line_CA", "C", "A"],
+      "expected_status": "known",
+      "expected_truth": true
+    },
+    {
+      "sample_id": "CONTROL_MUT015_expert_line_endpoint_swap",
+      "bucket": "known_good_control",
+      "candidate_path": "samples/MUT015_expert_line_endpoint_swap/original_candidate.py",
+      "candidate_sha256": "sha256:7fccebc68e89b187cf90d5eef91b18d1492c1bec1db4deb469ab6e71cb920d80",
+      "scene_id": "Solution",
+      "relation": "line_endpoints",
+      "operands": ["line_AD", "A", "D"],
+      "expected_status": "known",
+      "expected_truth": true
+    },
+    {
+      "sample_id": "CONTROL_MUT019_expert_line_endpoint_swap",
+      "bucket": "known_good_control",
+      "candidate_path": "samples/MUT019_expert_line_endpoint_swap/original_candidate.py",
+      "candidate_sha256": "sha256:580c7df2b060f320aa0b4d04df1d4a5acf2363e9c75612fd3fabe58b795bb02a",
+      "scene_id": "MainScene",
+      "relation": "line_endpoints",
+      "operands": ["line_OB", "O", "B"],
+      "expected_status": "unknown",
+      "expected_truth": null
+    },
+    {
+      "sample_id": "CONTROL_MUT021_expert_line_endpoint_swap",
+      "bucket": "known_good_control",
+      "candidate_path": "samples/MUT021_expert_line_endpoint_swap/original_candidate.py",
+      "candidate_sha256": "sha256:8c3bc20eff2a65e836d052f7166ea738097565cfa5cbdc41649a690672ea553f",
+      "scene_id": "MainScene",
+      "relation": "line_endpoints",
+      "operands": ["line_AD", "A", "D"],
+      "expected_status": "known",
+      "expected_truth": true
+    },
+    {
+      "sample_id": "CONTROL_MUT023_expert_line_endpoint_swap",
+      "bucket": "known_good_control",
+      "candidate_path": "samples/MUT023_expert_line_endpoint_swap/original_candidate.py",
+      "candidate_sha256": "sha256:7723127de5fa0c01b7b59f4ef4c74c24b03a9e5314c94a3d42d3662394728511",
+      "scene_id": "Solution",
+      "relation": "line_endpoints",
+      "operands": ["line_AF", "A", "F"],
+      "expected_status": "unknown",
+      "expected_truth": null
+    },
+    {
+      "sample_id": "CONTROL_MUT024_expert_line_endpoint_swap",
+      "bucket": "known_good_control",
+      "candidate_path": "samples/MUT024_expert_line_endpoint_swap/original_candidate.py",
+      "candidate_sha256": "sha256:a322422bc71270b35927e50b131bab73d9288dbcde228e81e3c5daaa802ea839",
+      "scene_id": "Solution",
+      "relation": "line_endpoints",
+      "operands": ["line_cf", "C", "F"],
+      "expected_status": "known",
+      "expected_truth": true
+    },
+    {
+      "sample_id": "CONTROL_MUT025_expert_line_endpoint_swap",
+      "bucket": "known_good_control",
+      "candidate_path": "samples/MUT025_expert_line_endpoint_swap/original_candidate.py",
+      "candidate_sha256": "sha256:3b605973f1647f0da54c3998c7c9bdbaab2d38199074566295865197ef9a103d",
+      "scene_id": "Solution",
+      "relation": "line_endpoints",
+      "operands": ["line_AC", "A", "C"],
+      "expected_status": "known",
+      "expected_truth": true
+    },
+    {
+      "sample_id": "CONTROL_MUT030_expert_line_endpoint_swap",
+      "bucket": "known_good_control",
+      "candidate_path": "samples/MUT030_expert_line_endpoint_swap/original_candidate.py",
+      "candidate_sha256": "sha256:580c7df2b060f320aa0b4d04df1d4a5acf2363e9c75612fd3fabe58b795bb02a",
+      "scene_id": "MainScene",
+      "relation": "line_endpoints",
+      "operands": ["line_AC", "A", "C"],
+      "expected_status": "unknown",
+      "expected_truth": null
+    }
+  ]
+}

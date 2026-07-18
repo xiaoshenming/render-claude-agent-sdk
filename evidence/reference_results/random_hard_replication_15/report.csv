@@ -1,0 +1,16 @@
+﻿slot_id,round_id,task_id,status,elapsed_ms,tokens
+random-hard-001,4,prob-001,deliver_with_warning,85316,62653
+random-hard-002,4,geo-009,deliver_with_warning,112157,110731
+random-hard-003,4,fun-001,deliver_with_warning,138186,101033
+random-hard-004,4,geo-001,deliver_with_warning,107989,111056
+random-hard-005,4,geo-003,deliver,54434,40468
+random-hard-006,4,geo-005,deliver_with_warning,110433,72772
+random-hard-007,4,geo-011,deliver,81142,30994
+random-hard-008,4,fun-002,deliver_with_warning,151250,111865
+random-hard-009,4,geo-007,deliver,80430,60181
+random-hard-010,4,fun-003,deliver_with_warning,94740,84280
+random-hard-011,4,geo-002,deliver,60334,44285
+random-hard-012,4,geo-008,deliver_with_warning,119132,84244
+random-hard-013,4,alg-001,deliver,44001,35331
+random-hard-014,4,geo-012,deliver_with_warning,140112,143818
+random-hard-015,4,fun-004,deliver,61069,35832

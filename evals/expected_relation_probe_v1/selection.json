@@ -1,0 +1,18 @@
+{
+  "schema_version": "manim-quality.expected-relation-selection.v1",
+  "pack_id": "expected-relation-probe-v1",
+  "source_pack": "geo30_mutation_v5",
+  "sample_ids": [
+    "MUT001_expert_line_endpoint_swap",
+    "MUT002_expert_point_coordinate_shift",
+    "MUT003_expert_point_coordinate_shift",
+    "MUT004_expert_line_endpoint_swap",
+    "MUT005_expert_circle_line_type_swap",
+    "MUT006_medium_chinese_line_relation_swap",
+    "MUT007_hard_proof_method_mismatch",
+    "MUT008_hard_ratio_factor_error",
+    "MUT009_expert_point_coordinate_shift",
+    "MUT010_medium_line_relation_swap",
+    "MUT011_expert_axes_point_shift"
+  ]
+}

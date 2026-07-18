@@ -1,0 +1,6 @@
+{
+  "issue_type": "final_answer_error",
+  "wrong_text": "18",
+  "expected_text": "24",
+  "explanation": "The video shows 18 as the final answer, but the expected answer is 24."
+}

@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "source_database_sha256": "fc19ba2c637eb6c1c15a10055c5f2b53d32f289065474047ad0a6e3a24f52dc3",
+  "exported_latest_versions": [
+    {
+      "prompt_id": 95,
+      "name": "讲题_FIXED_20260630",
+      "version_id": 276,
+      "version_number": 1,
+      "content_sha256": "ab9f2dc3225c4f0405799fcfcfcbbd6908c33caacc9cf1e4c2351b9b9e1266a7",
+      "content_chars": 7437
+    },
+    {
+      "prompt_id": 98,
+      "name": "几何讲题_线索提醒_v2_focus",
+      "version_id": 279,
+      "version_number": 1,
+      "content_sha256": "51ce6f76fb446df19e785931b1d717cda3fed7b5682196d8dcda85067304fb03",
+      "content_chars": 8033
+    },
+    {
+      "prompt_id": 99,
+      "name": "一次函数讲题_图像提醒_v2_focus",
+      "version_id": 280,
+      "version_number": 1,
+      "content_sha256": "27ef0a0c8ccbdad161e1e9a5092400c9f762ddb2497747d9447679a0f77ac061",
+      "content_chars": 8304
+    }
+  ],
+  "database_file": "prompts_minimal.sqlite3"
+}
