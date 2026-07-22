@@ -6,6 +6,35 @@
 
 这个仓库保存的是 MathPi 当前完整的 Claude Agent SDK V3 模块，不是早期的单次 SDK 审查脚本，也不是生成 Manim 代码的 LLM 管线。
 
+## 2026-07-22 当前快照
+
+本仓库已同步 MathPi `dev-PB8` 当前 V3 源码、Harness、测试和 MathPi 接入快照，包含今天在 server3 验证的：
+
+- 重叠修复最多 5 轮的单一运行参数；
+- 连续 2 轮无进展才停止；
+- Token 只观测，不因平台预算估算差异丢弃候选；
+- 每轮复检与 Agent 编排耗时证据；
+- 历史最佳候选保护；
+- `SUCCESS_DEGRADED` 返回残留候选和风险；
+- 语义等价字符串不再机械回滚；
+- 拆分式布局探针加载；
+- MathPi 三态代码、视频和 diff 接入快照；
+- 逻辑 Reviewer、Coder、Verifier 的完整调试证据合同。
+
+server3 同类困难源码重放结果：
+
+| 模块 | 结果 | 边界 |
+|---|---:|---|
+| 逻辑 Agent | 33 条历史 rejected 源码中，14 条触发修复，10 条形成候选，71.4% | 机器合同接受率，不是人工数学正确率 |
+| 重叠 Agent | 29 条触发任务全部改善，26 条清零，3 条保留残留最佳候选 | BBox/代码复检结果，不是全部 MP4 人工验收 |
+
+技术负责人应先阅读：
+
+- [`docs/reports/2026-07-22-Agent技术改造点对点功能审计.md`](docs/reports/2026-07-22-Agent技术改造点对点功能审计.md)：13 个可直接建工单的技术改造点；
+- [`docs/reports/2026-07-22-server3-Agent全量日志审计及优化建议.md`](docs/reports/2026-07-22-server3-Agent全量日志审计及优化建议.md)：真实批次、Token、耗时、失败根因和证据边界。
+
+当前最明确的后续工作不是更换模型，而是把重复 Read 硬失败改成缓存返回、放宽 Verifier 的机械行绑定、统一 Agent attempt 事实层，并建立固定人工金标集。所有质量异常继续保留证据并 fail-open，不作为 MathPi 视频交付的新增硬拦截。
+
 ## 先用一分钟理解整个系统
 
 普通的“让 AI 检查并修改代码”有三个隐患：
@@ -430,7 +459,7 @@ python scripts/check_engineering_standards.py
 python scripts/verify_vendor_sources.py
 ```
 
-独立发布时的真实结果为 `1371 passed, 10 failed`。剩余失败来自当前 V3 已存在的旧断言、旧 Hash 基线和测试路径问题，本仓库没有为了制造“全绿”回退 server3 已验证的修复。详细分类见 [独立仓库验证记录](docs/reports/2026-07-18-independent-repo-verification.md)。
+2026-07-22 同步后的 Agent 核心切片为 `63 passed`，工程行数检查通过。全量历史套件为 `1424 passed, 34 failed, 12 errors`；未通过项集中在旧测试拆分包装、冻结来源 Hash 和历史存储测试基线，不应被包装成“全绿”，也不应据此回退已经在 server3 验证的 V3 修复。详细历史分类见 [独立仓库验证记录](docs/reports/2026-07-18-independent-repo-verification.md)。
 
 ## 如何判断一次运行真的完整
 

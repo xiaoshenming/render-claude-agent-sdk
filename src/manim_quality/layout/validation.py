@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Protocol
 
 from .result_mapping import VendorResult
+from .runtime_policy import OVERLAP_MAX_ROUNDS
 
 
 class RepairRequest(Protocol):
@@ -15,12 +16,12 @@ class RepairRequest(Protocol):
 
 
 def result_violation(result: VendorResult, request: RepairRequest) -> str | None:
+    if type(result.tokens_used) is not int or result.tokens_used < 0:
+        return "vendor_usage_invalid"
     if (
-        type(result.tokens_used) is not int
-        or not 0 <= result.tokens_used <= request.remaining_tokens
+        type(result.rounds_used) is not int
+        or not 0 <= result.rounds_used <= OVERLAP_MAX_ROUNDS
     ):
-        return "vendor_usage_exceeds_remaining_budget"
-    if type(result.rounds_used) is not int or not 0 <= result.rounds_used <= 2:
         return "vendor_rounds_exceed_platform_budget"
     if not isinstance(result.before, dict) or not isinstance(result.after, dict):
         return "vendor_check_evidence_invalid"

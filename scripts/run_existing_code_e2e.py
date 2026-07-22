@@ -74,32 +74,9 @@ def _finish(output: Path, started: float, status: str, **values: object) -> int:
     return 0 if status in {"deliver", "deliver_with_warning"} else 2
 
 
-def main() -> int:
-    from evals.workbench_e2e.layout_stage import LayoutStageConfig, run_layout_stage
+def _run_logic(args, candidate, baseline, output, problem, expected, provider):
     from evals.workbench_e2e.logic_stage import LogicStageConfig, run_logic_stage
-    from evals.workbench_e2e.rendering import LocalManimRenderer
 
-    args = _arguments()
-    started = time.perf_counter()
-    if not args.base_url or not args.model:
-        raise SystemExit("ANTHROPIC_BASE_URL and QUALITY_MODEL are required")
-    output = args.output.resolve()
-    output.mkdir(parents=True, exist_ok=True)
-    code = args.code.resolve(strict=True)
-    problem = args.problem.resolve(strict=True).read_text(encoding="utf-8")
-    expected = args.expected_solution.resolve(strict=True).read_text(encoding="utf-8")
-    candidate = output / "candidate_input.py"
-    shutil.copyfile(code, candidate)
-    key = _api_key()
-    provider = {
-        "ANTHROPIC_BASE_URL": args.base_url,
-        "ANTHROPIC_AUTH_TOKEN": key,
-        "ANTHROPIC_API_KEY": key,
-    }
-    renderer = LocalManimRenderer(python=str(args.manim_python.absolute()))
-    baseline = renderer.render(candidate, output / "render_baseline")
-    if not baseline.succeeded or baseline.video_path is None:
-        return _finish(output, started, "baseline_render_failed", error=baseline.error)
     logic = run_logic_stage(
         job_id=args.job_id,
         candidate=candidate,
@@ -109,28 +86,17 @@ def main() -> int:
         output_dir=output / "logic",
         config=LogicStageConfig(args.model, provider),
     )
-    logic_payload = {**asdict(logic), "candidate_path": str(logic.candidate_path)}
-    if logic.status not in {"review_pass", "review_record_only", "candidate_ready"}:
-        return _finish(
-            output,
-            started,
-            "logic_hold",
-            logic=logic_payload,
-            error=logic.error or logic.status,
-        )
-    current = logic.candidate_path
-    current_render = baseline
-    if current.resolve() != candidate.resolve():
-        current_render = renderer.render(current, output / "render_after_logic")
-        if not current_render.succeeded:
-            return _finish(
-                output,
-                started,
-                "logic_render_hold",
-                logic=logic_payload,
-                error=current_render.error,
-            )
-    layout = run_layout_stage(
+    payload = {**asdict(logic), "candidate_path": str(logic.candidate_path)}
+    accepted = logic.status in {
+        "review_pass", "review_record_only", "candidate_ready",
+    }
+    return logic, payload, accepted
+
+
+def _run_layout(args, current, output, provider):
+    from evals.workbench_e2e.layout_stage import LayoutStageConfig, run_layout_stage
+
+    return run_layout_stage(
         job_id=args.job_id,
         candidate=current,
         output_dir=output / "layout",
@@ -144,32 +110,75 @@ def main() -> int:
             allow_vendor_clean_fallback=args.allow_vendor_clean_fallback,
         ),
     )
-    layout_payload = {**asdict(layout), "candidate_path": str(layout.candidate_path)}
-    final_candidate = (
-        layout.candidate_path if layout.requires_render_recheck else current
+
+
+def _render_candidate(renderer, candidate, output, stage, fallback, payload):
+    rendered = renderer.render(candidate, output / stage)
+    if rendered.succeeded:
+        return candidate, rendered, False
+    payload["render_error"] = rendered.error
+    return fallback[0], fallback[1], True
+
+
+def _provider(args) -> dict[str, str]:
+    key = _api_key()
+    return {
+        "ANTHROPIC_BASE_URL": args.base_url,
+        "ANTHROPIC_AUTH_TOKEN": key,
+        "ANTHROPIC_API_KEY": key,
+    }
+
+
+def main() -> int:
+    from evals.workbench_e2e.rendering import LocalManimRenderer
+
+    args = _arguments()
+    started = time.perf_counter()
+    if not args.base_url or not args.model:
+        raise SystemExit("ANTHROPIC_BASE_URL and QUALITY_MODEL are required")
+    output = args.output.resolve()
+    output.mkdir(parents=True, exist_ok=True)
+    code = args.code.resolve(strict=True)
+    problem = args.problem.resolve(strict=True).read_text(encoding="utf-8")
+    expected = args.expected_solution.resolve(strict=True).read_text(encoding="utf-8")
+    candidate = output / "candidate_input.py"
+    shutil.copyfile(code, candidate)
+    provider = _provider(args)
+    renderer = LocalManimRenderer(python=str(args.manim_python.absolute()))
+    baseline = renderer.render(candidate, output / "render_baseline")
+    if not baseline.succeeded or baseline.video_path is None:
+        return _finish(output, started, "baseline_render_failed", error=baseline.error)
+    logic, logic_payload, logic_accepted = _run_logic(
+        args, candidate, baseline, output, problem, expected, provider
     )
+    logic_warning = not logic_accepted or logic.status == "review_record_only"
+    current = logic.candidate_path if logic_accepted else candidate
+    current_render = baseline
+    if current.resolve() != candidate.resolve():
+        current, current_render, failed = _render_candidate(
+            renderer, current, output, "render_after_logic",
+            (candidate, baseline), logic_payload,
+        )
+        logic_warning = logic_warning or failed
+    layout = _run_layout(args, current, output, provider)
+    layout_payload = {**asdict(layout), "candidate_path": str(layout.candidate_path)}
+    final_candidate = layout.candidate_path if layout.requires_render_recheck else current
     final_render = current_render
     if layout.requires_render_recheck:
-        final_render = renderer.render(final_candidate, output / "render_after_layout")
-        if not final_render.succeeded:
-            return _finish(
-                output,
-                started,
-                "layout_render_hold",
-                logic=logic_payload,
-                layout=layout_payload,
-                error=final_render.error,
-            )
+        final_candidate, final_render, _ = _render_candidate(
+            renderer, final_candidate, output, "render_after_layout",
+            (current, current_render), layout_payload,
+        )
     shutil.copyfile(final_candidate, output / "candidate_final.py")
     if final_render.video_path is None:
         return _finish(output, started, "final_video_missing", error="no final video")
     shutil.copyfile(final_render.video_path, output / "video_final.mp4")
-    warning = logic.status == "review_record_only" or layout.status in {
+    warning = logic_warning or layout.status in {
         "detection_error",
         "rejected",
         "error",
         "vendor_clean_recheck_required",
-    }
+    } or bool(layout_payload.get("render_error"))
     return _finish(
         output,
         started,

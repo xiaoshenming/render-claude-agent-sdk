@@ -26,7 +26,8 @@ def _system_prompt_for(editable_file: str, workdir: Path) -> str:
             "Do not use /workspace paths, path aliases, commands, grep, glob, Agent/Task/subagents, or tools other than Read/Edit. "
             f"Read {issue_path} first, read {editable_path} once, then edit if the full issue list shows real source-fixable overlap. "
             "Use short exact old_string snippets for Edit. If an Edit fails because the source changed, reread the editable file once and retry with a smaller exact snippet. "
-            "Use multiple Edit calls only for clearly source-fixable layout issues; after a strong improvement, stop and let the checker decide whether another round is needed. "
+            "Group issues that share a source object, parent VGroup, or layout statement and fix the highest-impact shared cause first. "
+            "Use multiple Edit calls for distinct source-fixable clusters. Do not stop after the first improvement; finish every clearly source-fixable blocking cluster in this pass, or name a specific unsafe-to-edit reason for each remainder. "
             f"If issue_count is nonzero and {editable_path} contains related panel/text/formula layout code, attempt a safe layout edit instead of generic no_fix. "
             "If a repeated Read is denied, use the latest source context already read; do not return no_fix because of read budget. "
             "Preserve text/formula/voiceover strings, math meaning, colors, animations, and teaching order. "
@@ -43,7 +44,8 @@ def _system_prompt_for(editable_file: str, workdir: Path) -> str:
         f"Read {issue_path} first, read {editable_path} once, then edit if the full issue list shows real source-fixable overlap. "
         "candidate.py will be composed and checked automatically after your edit. "
         "Use short exact old_string snippets for Edit. If an Edit fails because the source changed, reread the editable file once and retry with a smaller exact snippet. "
-        "Use multiple Edit calls only for clearly source-fixable layout issues; after a strong improvement, stop and let the checker decide whether another round is needed. "
+        "Group issues that share a source object, parent VGroup, or layout statement and fix the highest-impact shared cause first. "
+        "Use multiple Edit calls for distinct source-fixable clusters. Do not stop after the first improvement; finish every clearly source-fixable blocking cluster in this pass, or name a specific unsafe-to-edit reason for each remainder. "
         f"If issue_count is nonzero and {editable_path} contains related panel/text/formula layout code, attempt a safe layout edit instead of generic no_fix. "
         "If a repeated Read is denied, use the latest source context already read; do not return no_fix because of read budget. "
         "Preserve text/formula/voiceover strings, math meaning, colors, animations, and teaching order. "
@@ -104,7 +106,6 @@ class ClaudeSDKRunner:
             strict_mcp_config=True,
             permission_mode="acceptEdits",
             max_turns=self._max_turns,
-            task_budget={"total": budget.token_hard_cap},
             model=budget.model or self._model or sdk_env.get("QUALITY_REPAIR_SDK_MODEL"),
             setting_sources=[],
             skills=[],

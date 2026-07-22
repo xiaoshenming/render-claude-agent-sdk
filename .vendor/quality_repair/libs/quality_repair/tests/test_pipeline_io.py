@@ -35,7 +35,10 @@ def test_layout_prompt_uses_audit_direct_protocol_without_ticket_dump(tmp_path: 
     assert f"Read {tmp_path / 'candidate.py'} once" in prompt
     assert f"edit {tmp_path / 'candidate.py'} for the clearly source-fixable layout clusters" in prompt
     assert "Use short exact Edit.old_string snippets" in prompt
-    assert "after a strong improvement, stop and let the checker decide" in prompt
+    assert "Group the digest by shared source object, parent VGroup, or layout statement" in prompt
+    assert "Do not stop after the first improvement" in prompt
+    assert "every remaining clearly source-fixable blocking cluster" in prompt
+    assert "after a strong improvement, stop" not in prompt
     assert "smallest related layout change" not in prompt
     assert "Never read full candidate.py" not in prompt
     assert f"Do not read any file except {tmp_path / 'layout_issue_digest.json'} and {tmp_path / 'candidate.py'}" in prompt

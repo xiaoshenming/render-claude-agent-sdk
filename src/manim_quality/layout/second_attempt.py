@@ -6,6 +6,7 @@ from types import SimpleNamespace
 from typing import Any
 
 from .validation import result_violation
+from .runtime_policy import remaining_rounds
 
 
 def validate_second_result(api: Any, request: Any, first: Any, second: Any) -> Any:
@@ -34,11 +35,14 @@ def validate_second_result(api: Any, request: Any, first: Any, second: Any) -> A
 
 
 def _reason(violation: str | None, first: Any, second: Any) -> str | None:
-    if violation == "vendor_usage_exceeds_remaining_budget":
+    if violation in {"vendor_usage_exceeds_remaining_budget", "vendor_usage_invalid"}:
         return "followup_usage_invalid"
     if violation is not None:
         return f"followup_{violation}"
-    if type(second.rounds_used) is not int or not 0 <= second.rounds_used <= 1:
+    if (
+        type(second.rounds_used) is not int
+        or not 0 <= second.rounds_used <= remaining_rounds(first.rounds_used)
+    ):
         return "followup_round_count_invalid"
     if dict(second.before) != dict(first.after):
         return "followup_evidence_discontinuity"

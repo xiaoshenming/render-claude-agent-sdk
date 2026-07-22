@@ -115,7 +115,10 @@ def test_runner_sdk_options_disable_subagents(tmp_path: Path, monkeypatch):
     assert str(tmp_path / "layout_issue_digest.json") in captured["system_prompt"]
     assert str(tmp_path / "candidate.py") in captured["system_prompt"]
     assert "Use short exact old_string snippets" in captured["system_prompt"]
-    assert "after a strong improvement, stop and let the checker decide" in captured["system_prompt"]
+    assert "parent VGroup, or layout statement" in captured["system_prompt"]
+    assert "Do not stop after the first improvement" in captured["system_prompt"]
+    assert "every clearly source-fixable blocking cluster" in captured["system_prompt"]
+    assert "after a strong improvement, stop" not in captured["system_prompt"]
     assert "or absolute paths" not in captured["system_prompt"]
     assert "Do not use /workspace paths" in captured["system_prompt"]
     assert "layout_issue_digest.json" in captured["system_prompt"]
@@ -220,9 +223,6 @@ def test_runner_preserves_final_assistant_text(tmp_path: Path, monkeypatch):
 
 def test_runner_allows_full_read_layout_repairs_without_expanded_turn_budget(tmp_path: Path, monkeypatch):
     (tmp_path / "candidate.py").write_text("x = 1\n", encoding="utf-8")
-    monkeypatch.setattr(
-        "libs.quality_repair.agent.runner._load_persistent_sdk_env", lambda: {}
-    )
     captured: dict = {}
 
     class FakeSDK(_BaseFakeSDK):
@@ -237,13 +237,10 @@ def test_runner_allows_full_read_layout_repairs_without_expanded_turn_budget(tmp
 
     monkeypatch.setitem(sys.modules, "claude_agent_sdk", FakeSDK)
 
-    report = ClaudeSDKRunner().run(
-        tmp_path, "fix it", Budget(token_hard_cap=12_345)
-    )
+    report = ClaudeSDKRunner().run(tmp_path, "fix it", Budget())
 
     assert report.error is None
     assert captured["max_turns"] == 14
-    assert captured["task_budget"] == {"total": 12_345}
 
 
 def test_runner_hides_tool_config_while_sdk_runs(tmp_path: Path, monkeypatch):

@@ -116,33 +116,19 @@ def _run_new_job(
         output_dir=job_dir / "logic",
         config=config.logic,
     )
-    if logic.status not in {"review_pass", "review_record_only", "candidate_ready"}:
-        return _terminal(
-            job_dir,
-            slot,
-            started,
-            "logic_hold",
-            generation=combined_generation_metrics(generated, recovered),
-            baseline_render=_render_metrics(baseline),
-            logic=_path_safe(asdict(logic)),
-            error=logic.error or logic.status,
-        )
-    current = logic.candidate_path
+    logic_accepted = logic.status in {
+        "review_pass", "review_record_only", "candidate_ready",
+    }
+    logic_warning = not logic_accepted or logic.status == "review_record_only"
+    current = logic.candidate_path if logic_accepted else candidate
     current_render = baseline
     if current.resolve() != candidate.resolve():
-        current_render = config.renderer.render(current, job_dir / "render_after_logic")
-        if not current_render.succeeded:
-            return _terminal(
-                job_dir,
-                slot,
-                started,
-                "logic_render_hold",
-                generation=combined_generation_metrics(generated, recovered),
-                baseline_render=_render_metrics(baseline),
-                logic=_path_safe(asdict(logic)),
-                logic_render=_render_metrics(current_render),
-                error=current_render.error,
-            )
+        repaired_render = config.renderer.render(current, job_dir / "render_after_logic")
+        if repaired_render.succeeded:
+            current_render = repaired_render
+        else:
+            logic_warning = True
+            current = candidate
     layout = run_layout_stage(
         job_id=slot.slot_id,
         candidate=current,
@@ -151,24 +137,15 @@ def _run_new_job(
     )
     final_render = current_render
     if layout.requires_render_recheck:
-        final_render = config.renderer.render(
+        repaired_render = config.renderer.render(
             layout.candidate_path, job_dir / "render_after_layout"
         )
-        if not final_render.succeeded:
-            return _terminal(
-                job_dir,
-                slot,
-                started,
-                "layout_render_warning",
-                generation=combined_generation_metrics(generated, recovered),
-                baseline_render=_render_metrics(baseline),
-                logic=_path_safe(asdict(logic)),
-                layout=_path_safe(asdict(layout)),
-                final_render=_render_metrics(final_render),
-                error=final_render.error,
-            )
+        if repaired_render.succeeded:
+            final_render = repaired_render
     final_candidate = (
-        layout.candidate_path if layout.requires_render_recheck else current
+        layout.candidate_path
+        if layout.requires_render_recheck and final_render is not current_render
+        else current
     )
     _copy(final_candidate, job_dir / "candidate_final.py")
     if final_render.video_path:
@@ -179,7 +156,6 @@ def _run_new_job(
         "error",
         "vendor_clean_recheck_required",
     }
-    logic_warning = logic.status == "review_record_only"
     warning = layout_warning or logic_warning
     warning_text = ";".join(
         item

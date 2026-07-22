@@ -64,3 +64,26 @@ apps/render/tests/test_quality_platform_*.py
 ```
 
 这些文件只用于解释和复用当前接入方式，不属于 V3 独立领域核心。
+
+## 2026-07-22 同步记录
+
+本次从 MathPi `dev-PB8` 的以下目录重新同步：
+
+```text
+apps/render/manim_quality_platform/v3
+apps/render/app/quality_platform
+apps/render/tests/test_quality_platform_*.py
+apps/render/tests/test_v3_three_state.py
+```
+
+同步时 MathPi 仓库头部包含：
+
+```text
+796b74481 补充Agent技术实施审计与证据入口
+9831139b5 汇总Agent全量日志审计与优化建议
+93db536d6 兼容拆分式布局探针加载
+2270964ba 保持重叠Agent令牌仅观测合同
+9c1d8cd5d 修复重叠Agent五轮与最佳候选合同
+```
+
+独立仓库没有复制 MathPi 用户、积分、数据库、MQ、COS、TTS、STT 或生成主管线，只保留 V3 独立核心、Harness、测试、评估工具和宿主适配快照。

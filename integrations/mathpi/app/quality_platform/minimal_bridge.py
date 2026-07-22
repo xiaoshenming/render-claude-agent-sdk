@@ -11,6 +11,7 @@ from typing import Any
 from app.core.config import settings
 from app.quality_platform.retention import persist_quality_event
 from app.quality_platform.v3_runner import run_v3_existing_code
+from app.quality_platform.v3_three_state import persist_v3_three_state
 
 
 @dataclass(frozen=True, slots=True)
@@ -66,6 +67,13 @@ async def run_minimal_quality_platform(
                 str(result.final_video_path),
                 evidence,
             )
+        await _persist_three_state_fail_soft(
+            task_data=task_data,
+            code=code,
+            video_path=video_path,
+            result_path=result.result_path,
+            evidence=evidence,
+        )
     except Exception as exc:  # noqa: BLE001 - 已渲染视频必须继续归档。
         evidence = _evidence(
             "orchestrator_fail_open",
@@ -77,6 +85,28 @@ async def run_minimal_quality_platform(
         artifact = MinimalQualityArtifact(code, video_bytes, video_path, evidence)
     await _persist(task_data, evidence)
     return artifact
+
+
+async def _persist_three_state_fail_soft(
+    *,
+    task_data: dict[str, Any],
+    code: str,
+    video_path: str,
+    result_path: Path | None,
+    evidence: dict[str, Any],
+) -> None:
+    try:
+        stored = await persist_v3_three_state(
+            job_id=str(task_data["job_id"]),
+            aspect_ratio=str(task_data.get("aspect_ratio") or "16:9"),
+            original_code=code,
+            original_video_path=video_path,
+            result_path=result_path,
+        )
+        evidence["three_state_persisted"] = bool(stored)
+    except Exception as exc:  # noqa: BLE001 - 证据归档绝不能改变可播放结果。
+        evidence["three_state_persisted"] = False
+        evidence["three_state_error"] = f"{type(exc).__name__}: {exc}"[:1000]
 
 
 async def _persist(task_data: dict[str, Any], evidence: dict[str, Any]) -> None:

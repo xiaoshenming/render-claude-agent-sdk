@@ -52,7 +52,13 @@ def make_check(api, blocking: int):
         passed=blocking == 0,
         blocking_count=blocking,
         issues=[
-            {"kind": "overlap", "a": f"label-{index}", "b": f"axis-{index}"}
+            {
+                "category": "text_formula_overlap",
+                "ratio_of_smaller": 0.5,
+                "occurrence_count": 3,
+                "a": f"label-{index}",
+                "b": f"axis-{index}",
+            }
             for index in range(blocking)
         ],
     )

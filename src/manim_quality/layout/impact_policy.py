@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-POLICY_VERSION = "overlap-impact.v2"
+POLICY_VERSION = "overlap-impact.v3"
 MUST_REPAIR = "must_repair"
 CONDITIONAL = "conditional_repair"
 RECORD_ONLY = "record_only"

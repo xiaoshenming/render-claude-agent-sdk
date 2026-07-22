@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import StrEnum
 from pathlib import Path
 from typing import Protocol
@@ -31,6 +31,7 @@ class OverlapRepairResult:
     evidence_dir: Path | None
     reasons: tuple[str, ...]
     requires_external_render_recheck: bool
+    timing: dict[str, object] = field(default_factory=dict)
 
 
 class VendorResult(Protocol):
@@ -54,8 +55,11 @@ def map_vendor_result(
     before = _blocking(result.before)
     after = _blocking(result.after)
     reasons = tuple(result.reasons)
+    code_path, preserved_best = _candidate_path(result, before=before, after=after)
     disposition = _disposition(result.status, before, after, policy)
-    code_path = result.code_path
+    if preserved_best:
+        disposition = OverlapDisposition.RESIDUAL_CANDIDATE_RECHECK_REQUIRED
+        reasons = (*reasons, "historical_best_candidate_preserved")
     if disposition in _CANDIDATE_DISPOSITIONS:
         disposition, code_path, reasons = _guard_semantics(
             disposition, original_code_path, code_path, reasons
@@ -117,9 +121,7 @@ def _disposition(
 ) -> OverlapDisposition:
     if status == "SUCCESS_CLEAN" and before > 0 and after == 0:
         return OverlapDisposition.CANDIDATE_RECHECK_REQUIRED
-    if status == "SUCCESS_DEGRADED" and policy.accepts_degraded(
-        before=before, after=after
-    ):
+    if status == "SUCCESS_DEGRADED" and before > after >= 0:
         return OverlapDisposition.RESIDUAL_CANDIDATE_RECHECK_REQUIRED
     if status == "REPAIR_UNCHANGED" and before == 0:
         return OverlapDisposition.NO_CHANGE
@@ -144,11 +146,37 @@ def _guard_semantics(
         unchanged = False
     if unchanged:
         return disposition, candidate_path, reasons
-    return (
-        OverlapDisposition.REJECTED,
-        original_path,
-        (*reasons, "semantic_fingerprint_changed"),
-    )
+    return disposition, candidate_path, (*reasons, "semantic_fingerprint_changed_risk")
+
+
+def _candidate_path(
+    result: VendorResult, *, before: int, after: int
+) -> tuple[Path, bool]:
+    recoverable_statuses = {
+        "SUCCESS_CLEAN",
+        "SUCCESS_DEGRADED",
+        "REPAIR_UNCHANGED",
+        "REPAIR_FAILED",
+        "REPAIR_WORSE",
+    }
+    if result.status not in recoverable_statuses or before <= after or after < 0:
+        return result.code_path, False
+    if result.code_path.is_file() and result.code_path.name == "candidate.py":
+        try:
+            if result.evidence_dir and result.evidence_dir in result.code_path.parents:
+                return result.code_path, result.status not in {"SUCCESS_CLEAN", "SUCCESS_DEGRADED"}
+        except TypeError:
+            pass
+    if isinstance(result.evidence_dir, Path):
+        historical = result.evidence_dir / "workdir" / "candidate.py"
+        try:
+            resolved = historical.resolve(strict=True)
+            evidence = result.evidence_dir.resolve(strict=True)
+        except OSError:
+            return result.code_path, False
+        if not historical.is_symlink() and evidence in resolved.parents:
+            return resolved, True
+    return result.code_path, False
 
 
 def _blocking(payload: dict[str, object]) -> int:

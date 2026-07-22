@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from manim_quality.revisions import sha256_text
 
 from .geometry_projection import normalize_unframed_translations
+from .runtime_policy import OVERLAP_MAX_ROUNDS
 
 _LAYOUT_METHODS = frozenset(
     {
@@ -32,11 +33,13 @@ _LAYOUT_METHODS = frozenset(
     }
 )
 
-MAX_AGENT_CALL_TOKENS = 300_000
+OBSERVATION_ONLY_TOKEN_CAP = 2**63 - 1
 
 
 def agent_token_cap(remaining_tokens: int) -> int:
-    return min(MAX_AGENT_CALL_TOKENS, remaining_tokens)
+    """Record usage without rejecting a candidate by the platform token estimate."""
+    del remaining_tokens
+    return OBSERVATION_ONLY_TOKEN_CAP
 
 
 @dataclass(frozen=True, slots=True)
@@ -73,7 +76,7 @@ class ResidualRiskPolicy:
         attempts_used: int,
     ) -> bool:
         return (
-            attempts_used == 1
+            0 <= attempts_used < OVERLAP_MAX_ROUNDS
             and residual_blocking >= self.full_candidate_min_blocking
             and remaining_tokens >= self.full_candidate_min_tokens
             and "runner_error_no_edit" in stop_reasons
@@ -88,7 +91,7 @@ class ResidualRiskPolicy:
         attempts_used: int,
     ) -> bool:
         return (
-            attempts_used == 1
+            0 <= attempts_used < OVERLAP_MAX_ROUNDS
             and before_blocking > residual_blocking > self.max_degraded_blocking
             and remaining_tokens >= self.second_attempt_min_tokens
         )

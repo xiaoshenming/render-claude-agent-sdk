@@ -6,6 +6,11 @@ from typing import Any
 
 from .policy import agent_token_cap
 from .second_attempt import validate_second_result
+from .runtime_policy import (
+    OVERLAP_NO_PROGRESS_STOP,
+    OVERLAP_SAME_SIGNATURE_STOP,
+    remaining_rounds,
+)
 
 
 def execute_full_candidate_fallback(
@@ -16,10 +21,10 @@ def execute_full_candidate_fallback(
 ) -> Any:
     remaining = request.remaining_tokens - first.tokens_used
     budget = api.Budget(
-        max_rounds=1,
+        max_rounds=remaining_rounds(first.rounds_used),
         token_hard_cap=agent_token_cap(remaining),
-        no_progress_stop=1,
-        same_signature_stop=2,
+        no_progress_stop=OVERLAP_NO_PROGRESS_STOP,
+        same_signature_stop=OVERLAP_SAME_SIGNATURE_STOP,
         accept_degraded_max_blocking=2,
         accept_degraded_min_reduction_ratio=0.5,
         accept_risk_only_max_blocking=6,
@@ -35,7 +40,7 @@ def execute_full_candidate_fallback(
     second = api.repair(bundle, api.ToolBox(checker=checker))
     second = validate_second_result(api, request, first, second)
     if second.status == "REVIEW_ERROR":
-        return second
+        return first
     return _combine(api, request, first, second)
 
 
@@ -46,7 +51,7 @@ def _combine(api: Any, request: Any, first: Any, second: Any) -> Any:
     reasons = [*first.reasons, "full_candidate_fallback", *second.reasons]
     return api.RepairResult(
         status=second.status if improved else "REPAIR_UNCHANGED",
-        code_path=second.code_path if improved else request.code_path,
+        code_path=second.code_path if improved else first.code_path,
         repairability=second.repairability,
         before=dict(first.before),
         after=dict(second.after) if improved else dict(first.after),

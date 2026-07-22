@@ -9,17 +9,17 @@ BASELINES: dict[str, dict[str, object]] = {
         "materialized_root": ".vendor/quality_repair",
         "source_type": "tar.gz archive",
         "source_archive_sha256": (
-            "7af3fb512fe8ddf08da1f1687e7f0fdd0f5b4741a9ac4f17612987a35e02d6c7"
+            "90d0a55d14d54acee640645c0fd48ad37faa7e7be6c4a8585c4e73ce6865579c"
         ),
         "source_revision": "ae371aecd9cd258344c94ecdfa6a6cdd36417f5c",
         "compatibility_revision": "quality-platform.1",
         "content_identity": (
-            "sha256:658bad46d52c87b3cb991284c101b43ee8a741c35181845ea983aa5301393c54"
+            "sha256:18083bc719d18c22fd5fee461db4d29f9e7d487531fba20a4e57fad2355d1d93"
         ),
         "claude_agent_sdk_version": "0.2.115",
         "manifest_path": "PAYLOAD_SHA256SUMS.txt",
         "manifest_sha256": (
-            "658bad46d52c87b3cb991284c101b43ee8a741c35181845ea983aa5301393c54"
+            "18083bc719d18c22fd5fee461db4d29f9e7d487531fba20a4e57fad2355d1d93"
         ),
         "inventory_manifest_path": "SOURCE_MANIFEST.txt",
         "inventory_manifest_sha256": (

@@ -85,7 +85,7 @@ def test_centered_shape_label_is_recorded_without_starting_agent(
     assert evidence.is_file()
 
 
-def test_platform_gives_vendor_only_one_round_per_call(
+def test_platform_runs_at_most_five_rounds_for_must_repair(
     tmp_path: Path, vendor_api, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     backend, api = vendor_api
@@ -111,8 +111,10 @@ def test_platform_gives_vendor_only_one_round_per_call(
     monkeypatch.setattr(api, "repair", capture)
     backend.repair(make_request(tmp_path, tokens=400_000), object())
 
-    assert captured["budget"].max_rounds == 1
-    assert captured["budget"].token_hard_cap == 300_000
+    assert captured["budget"].max_rounds == 5
+    assert captured["budget"].no_progress_stop == 2
+    assert captured["budget"].accept_degraded_max_blocking == 0
+    assert captured["budget"].token_hard_cap == 2**63 - 1
     assert captured["bundle"].candidate_mode == "core"
 
 
@@ -138,7 +140,7 @@ def test_clean_repair_is_only_a_candidate_and_preserves_usage_and_evidence(
     assert (result.evidence_dir / "summary.json").is_file()
 
 
-def test_layout_repair_rejects_content_semantic_changes(
+def test_layout_repair_keeps_candidate_and_records_semantic_risk(
     tmp_path: Path, vendor_api, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     backend, api = vendor_api
@@ -154,9 +156,9 @@ def test_layout_repair_rejects_content_semantic_changes(
 
     result = OverlapAdapter(backend).repair(make_request(tmp_path), checker)
 
-    assert result.disposition is OverlapDisposition.REJECTED
-    assert result.code_path == tmp_path / "candidate.py"
-    assert "semantic_fingerprint_changed" in result.reasons
+    assert result.disposition is OverlapDisposition.CANDIDATE_RECHECK_REQUIRED
+    assert result.code_path != tmp_path / "candidate.py"
+    assert "semantic_fingerprint_changed_risk" in result.reasons
 
 
 def test_degraded_result_requires_platform_residual_risk_policy(

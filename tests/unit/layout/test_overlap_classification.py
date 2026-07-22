@@ -76,7 +76,7 @@ def test_centered_contained_geometry_label_is_record_only(tmp_path: Path) -> Non
     assert (tmp_path / "platform_overlap_classification.json").is_file()
 
 
-def test_edge_crossing_geometry_label_remains_blocking(tmp_path: Path) -> None:
+def test_edge_crossing_geometry_label_is_conditional_evidence(tmp_path: Path) -> None:
     issue = _issue(
         {
             "left": 0.8,
@@ -95,14 +95,12 @@ def test_edge_crossing_geometry_label_remains_blocking(tmp_path: Path) -> None:
 
     result = checker.run_check(tmp_path / "candidate.py", tmp_path)
 
-    assert result.passed is False
-    assert result.blocking_count == 1
-    assert result.issues[0]["category"] == issue["category"]
-    assert result.issues[0]["impact"] == "conditional_repair"
-    assert result.raw["platform_warning_count"] == 0
+    assert result.passed is True
+    assert result.blocking_count == 0
+    assert result.raw["platform_conditional_count"] == 1
 
 
-def test_centered_long_content_remains_blocking(tmp_path: Path) -> None:
+def test_centered_long_content_remains_conditional(tmp_path: Path) -> None:
     issue = _issue(
         {
             "left": -0.8,
@@ -122,8 +120,8 @@ def test_centered_long_content_remains_blocking(tmp_path: Path) -> None:
 
     result = checker.run_check(tmp_path / "candidate.py", tmp_path)
 
-    assert result.blocking_count == 1
-    assert result.raw["platform_warning_count"] == 0
+    assert result.blocking_count == 0
+    assert result.raw["platform_conditional_count"] == 1
 
 
 def test_centered_short_label_crossing_shape_edge_remains_blocking(
@@ -147,8 +145,8 @@ def test_centered_short_label_crossing_shape_edge_remains_blocking(
 
     result = checker.run_check(tmp_path / "candidate.py", tmp_path)
 
-    assert result.blocking_count == 1
-    assert result.raw["platform_warning_count"] == 0
+    assert result.blocking_count == 0
+    assert result.raw["platform_conditional_count"] == 1
 
 def test_near_shape_collision_is_record_only(tmp_path: Path) -> None:
     issue = _issue(
@@ -195,8 +193,9 @@ def test_persistent_shape_intersection_is_conditional_repair(tmp_path: Path) -> 
 
     result = checker.run_check(tmp_path / "candidate.py", tmp_path)
 
-    assert result.blocking_count == 1
-    assert result.issues[0]["impact"] == "conditional_repair"
+    assert result.blocking_count == 0
+    assert result.raw["platform_conditional_count"] == 1
+    assert result.raw["platform_warnings"][0]["impact"] == "conditional_repair"
 
 
 def test_brief_small_text_contact_is_record_only(tmp_path: Path) -> None:

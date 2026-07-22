@@ -34,11 +34,15 @@ class ImpactClassifyingChecker:
             return result
         blocking, warnings = _classify(list(result.issues))
         raw = dict(getattr(result, "raw", {}) or {})
+        conditional_count = sum(
+            item["impact"] == CONDITIONAL for item in warnings
+        )
         raw.update(
             {
                 "platform_policy_version": POLICY_VERSION,
                 "platform_raw_blocking_count": result.blocking_count,
                 "platform_warning_count": len(warnings),
+                "platform_conditional_count": conditional_count,
                 "platform_warnings": warnings,
             }
         )
@@ -56,16 +60,41 @@ def _classify(issues: list[dict[str, Any]]) -> tuple[list[dict], list[dict]]:
     blocking: list[dict] = []
     warnings: list[dict] = []
     for issue in issues:
-        if _is_contained_short_label(issue):
+        if _is_single_character_geometry_label(issue):
+            impact, reason = RECORD_ONLY, "single_character_geometry_label"
+        elif _is_contained_short_label(issue):
             impact, reason = RECORD_ONLY, "intentional_contained_shape_label"
         else:
             impact, reason = classify_issue(issue)
         enriched = {**issue, "impact": impact, "impact_reason": reason}
-        if impact in {MUST_REPAIR, CONDITIONAL}:
+        if impact == MUST_REPAIR:
             blocking.append(enriched)
         else:
             warnings.append({"impact": impact, "reason": reason, "issue": enriched})
     return blocking, warnings
+
+
+def _is_single_character_geometry_label(issue: dict[str, Any]) -> bool:
+    category = str(issue.get("category") or issue.get("kind") or "")
+    if category != "label_shape_overlap_risk":
+        return False
+    objects = _issue_objects(issue)
+    label = next(
+        (item for item in objects if str(item.get("kind") or "") in _CONTENT_KINDS),
+        None,
+    )
+    shape = next(
+        (item for item in objects if str(item.get("kind") or "") == "shape"),
+        None,
+    )
+    if label is None or shape is None:
+        return False
+    text = "".join(str(label.get("text") or "").split())
+    shape_class = str(shape.get("class") or "")
+    geometry = _AREA_SHAPES | {
+        "Arc", "Arrow", "DashedLine", "Dot", "Line", "TangentLine", "Vector"
+    }
+    return len(text) == 1 and shape_class in geometry
 
 
 def _is_contained_short_label(issue: dict[str, Any]) -> bool:

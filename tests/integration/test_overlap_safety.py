@@ -43,7 +43,6 @@ def test_full_candidate_fallback_is_strictly_bounded(
     [
         ("SUCCESS_CLEAN", 2, 1),
         ("SUCCESS_CLEAN", -1, 0),
-        ("SUCCESS_DEGRADED", 4, 3),
         ("NOT_A_VENDOR_STATUS", 2, 0),
     ],
 )

@@ -46,6 +46,7 @@ class LayoutStageResult:
     requires_render_recheck: bool
     error: str | None = None
     issue_summary: dict[str, Any] | None = None
+    timing: dict[str, Any] | None = None
 
 
 def run_layout_stage(
@@ -61,7 +62,9 @@ def run_layout_stage(
     configure_vendor_sdk(config)
     checker = LocalLayoutProbeChecker(config, backend.api.CheckResult)
     classified_checker = ImpactClassifyingChecker(checker)
+    probe_started = time.perf_counter()
     initial = classified_checker.run_check(candidate, output_dir / "detect")
+    initial_probe_ms = _elapsed(probe_started)
     summary = _summary(initial)
     if not initial.ok:
         return _finish(
@@ -77,6 +80,7 @@ def run_layout_stage(
                 False,
                 initial.error,
                 summary,
+                {"initial_probe_elapsed_ms": initial_probe_ms},
             ),
         )
     if initial.passed:
@@ -92,6 +96,7 @@ def run_layout_stage(
                 _elapsed(started),
                 False,
                 issue_summary=summary,
+                timing={"initial_probe_elapsed_ms": initial_probe_ms},
             ),
         )
     classified_payload = {
@@ -133,6 +138,7 @@ def run_layout_stage(
                 True,
                 "platform_semantic_guard_recorded",
                 summary,
+                _timing(initial_probe_ms, repaired.timing),
             ),
         )
     error = (
@@ -154,6 +160,7 @@ def run_layout_stage(
             repaired.requires_external_render_recheck,
             error,
             summary,
+            _timing(initial_probe_ms, repaired.timing),
         ),
     )
 
@@ -184,6 +191,10 @@ def _vendor_clean_candidate(repaired) -> Path | None:
 
 def _elapsed(started: float) -> int:
     return round((time.perf_counter() - started) * 1_000)
+
+
+def _timing(initial_probe_ms: int, repair: dict[str, object]) -> dict[str, Any]:
+    return {"initial_probe_elapsed_ms": initial_probe_ms, **repair}
 
 
 def _write_json(path: Path, value: dict) -> None:

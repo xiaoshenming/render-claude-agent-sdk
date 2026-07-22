@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+import time
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Protocol
 
@@ -15,6 +16,7 @@ from .result_mapping import (
 )
 from .validation import result_violation
 from .vendor_runtime import MaterializedQualityRepair
+from .timing import TimedChecker
 
 
 @dataclass(frozen=True, slots=True)
@@ -54,30 +56,44 @@ class OverlapAdapter:
     def repair(
         self, request: OverlapRepairRequest, checker: object
     ) -> OverlapRepairResult:
+        started = time.perf_counter()
+        timed_checker = TimedChecker(checker)
         try:
-            result = self._backend.repair(request, checker)
+            result = self._backend.repair(request, timed_checker)
         except Exception as error:
-            return _backend_error(request, "vendor_repair_error", error)
+            mapped = _backend_error(request, "vendor_repair_error", error)
+            return _with_timing(mapped, timed_checker, started)
         invalid = result_violation(result, request)
         if invalid is not None:
-            return _invalid_result(request, result, invalid)
+            mapped = _invalid_result(request, result, invalid)
+            return _with_timing(mapped, timed_checker, started)
         try:
-            result = self._maybe_second_attempt(request, checker, result)
+            result = self._maybe_second_attempt(request, timed_checker, result)
         except Exception as error:
-            return _backend_error(
-                request,
-                "overlap_second_attempt_error",
-                error,
-                observed=result,
+            mapped = map_vendor_result(
+                result,
+                original_code_path=request.code_path,
+                policy=self._policy,
             )
+            mapped = replace(
+                mapped,
+                reasons=(
+                    *mapped.reasons,
+                    f"overlap_second_attempt_error:{type(error).__name__}",
+                    "previous_best_preserved",
+                ),
+            )
+            return _with_timing(mapped, timed_checker, started)
         invalid = result_violation(result, request)
         if invalid is not None:
-            return _invalid_result(request, result, invalid)
-        return map_vendor_result(
+            mapped = _invalid_result(request, result, invalid)
+            return _with_timing(mapped, timed_checker, started)
+        mapped = map_vendor_result(
             result,
             original_code_path=request.code_path,
             policy=self._policy,
         )
+        return _with_timing(mapped, timed_checker, started)
 
     def _maybe_second_attempt(
         self,
@@ -180,6 +196,13 @@ def _layout_semantics_match(original: Path, candidate: Path) -> bool:
         ) == layout_invariant_fingerprint(candidate.read_text(encoding="utf-8"))
     except (OSError, SyntaxError):
         return False
+
+
+def _with_timing(
+    result: OverlapRepairResult, checker: TimedChecker, started: float
+) -> OverlapRepairResult:
+    elapsed = round((time.perf_counter() - started) * 1_000)
+    return replace(result, timing=checker.summary(elapsed))
 
 
 __all__ = ["MaterializedQualityRepair", "OverlapAdapter", "OverlapRepairRequest"]

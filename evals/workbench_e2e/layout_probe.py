@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib
+import importlib.util
 import json
 import subprocess
 import sys
@@ -25,7 +26,7 @@ class LocalLayoutProbeChecker:
         call_dir.mkdir(parents=True, exist_ok=True)
         runner = call_dir / "probe_runner.py"
         runner.write_text(
-            _probe_source(self._config.probe_source_path, call_dir / "manim_media"),
+            _probe_source(self._config.probe_source_path, workdir / "shared_manim_media"),
             encoding="utf-8",
         )
         command = [
@@ -115,15 +116,32 @@ def payload_from_probe(root: Path, probe: dict[str, Any]) -> dict[str, Any]:
 
 
 def _probe_source(path: Path, media_dir: Path) -> str:
-    scope: dict[str, Any] = {}
-    text = path.read_text(encoding="utf-8")
-    exec(compile(text, str(path), "exec"), scope)
-    source = scope.get("PROBE_RUNNER_SOURCE")
+    source = _load_probe_source(path)
     if not isinstance(source, str) or not source.strip():
         raise ValueError("probe source file does not define PROBE_RUNNER_SOURCE")
     marker = 'config.media_dir = "/tmp/manim_layout_probe_media"'
     replacement = f"config.media_dir = {str(media_dir.resolve())!r}"
     return source.replace(marker, replacement)
+
+
+def _load_probe_source(path: Path) -> object:
+    """Load both the legacy single-file probe and the split probe package."""
+    parts_path = path.with_name("probe_runner_parts.py")
+    if parts_path.is_file():
+        spec = importlib.util.spec_from_file_location(
+            f"manim_quality_probe_parts_{id(parts_path)}", parts_path
+        )
+        if spec is None or spec.loader is None:
+            raise ValueError(f"cannot load probe source module: {parts_path}")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        factory = getattr(module, "probe_runner_source", None)
+        if callable(factory):
+            return factory()
+    scope: dict[str, Any] = {"__name__": "manim_quality_embedded_probe"}
+    text = path.read_text(encoding="utf-8")
+    exec(compile(text, str(path), "exec"), scope)
+    return scope.get("PROBE_RUNNER_SOURCE")
 
 
 def _vendor_import(root: Path, module: str):

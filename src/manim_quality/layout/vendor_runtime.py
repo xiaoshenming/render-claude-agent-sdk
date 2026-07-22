@@ -13,9 +13,15 @@ from .classification import ImpactClassifyingChecker
 from .fallback import execute_full_candidate_fallback
 from .followup import execute_core_followup
 from .policy import agent_token_cap
+from .prompt_contract import install_prompt_contract
 from .result_mapping import VendorResult
+from .runtime_policy import (
+    OVERLAP_MAX_ROUNDS,
+    OVERLAP_NO_PROGRESS_STOP,
+    OVERLAP_SAME_SIGNATURE_STOP,
+)
 
-_MANIFEST_SHA256 = "658bad46d52c87b3cb991284c101b43ee8a741c35181845ea983aa5301393c54"
+_MANIFEST_SHA256 = "18083bc719d18c22fd5fee461db4d29f9e7d487531fba20a4e57fad2355d1d93"
 
 
 class MaterializedQualityRepair:
@@ -25,14 +31,18 @@ class MaterializedQualityRepair:
         self._root = root.resolve(strict=True)
         _verify_materialized_payload(self._root)
         self.api = _load_api(self._root)
+        _allow_semantic_equivalent_layout_strings(self._root)
+        api_module = importlib.import_module("libs.quality_repair.api")
+        _require_module_inside(api_module, self._root)
+        install_prompt_contract(api_module)
 
     def repair(self, request: Any, checker: object) -> VendorResult:
         budget = self.api.Budget(
-            max_rounds=1,
+            max_rounds=OVERLAP_MAX_ROUNDS,
             token_hard_cap=agent_token_cap(request.remaining_tokens),
-            no_progress_stop=1,
-            same_signature_stop=2,
-            accept_degraded_max_blocking=2,
+            no_progress_stop=OVERLAP_NO_PROGRESS_STOP,
+            same_signature_stop=OVERLAP_SAME_SIGNATURE_STOP,
+            accept_degraded_max_blocking=0,
             accept_degraded_min_reduction_ratio=0.5,
             accept_risk_only_max_blocking=6,
         )
@@ -90,6 +100,18 @@ def _load_api(root: Path) -> ModuleType:
     public = importlib.import_module("libs.quality_repair")
     _require_module_inside(public, root)
     return public
+
+
+def _allow_semantic_equivalent_layout_strings(root: Path) -> None:
+    """关闭 vendored layout 的逐字字符串保护，不改写已验签 payload。"""
+    module = importlib.import_module(
+        "libs.quality_repair.contract.workdir_files"
+    )
+    _require_module_inside(module, root)
+    protected = getattr(module, "PROTECTED_DEFAULT", None)
+    if not isinstance(protected, dict):
+        raise TypeError("quality_repair PROTECTED_DEFAULT is unavailable")
+    protected["protect_string_literals"] = False
 
 
 def _require_module_inside(module: ModuleType, root: Path) -> None:
