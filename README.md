@@ -30,6 +30,7 @@ server3 同类困难源码重放结果：
 
 技术负责人应先阅读：
 
+- [`docs/INDEX.md`](docs/INDEX.md)：持续维护的代码、Harness、合同、验证和报告总索引；
 - [`docs/reports/2026-07-22-Agent技术改造点对点功能审计.md`](docs/reports/2026-07-22-Agent技术改造点对点功能审计.md)：13 个可直接建工单的技术改造点；
 - [`docs/reports/2026-07-22-server3-Agent全量日志审计及优化建议.md`](docs/reports/2026-07-22-server3-Agent全量日志审计及优化建议.md)：真实批次、Token、耗时、失败根因和证据边界。
 
