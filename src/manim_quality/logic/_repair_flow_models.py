@@ -9,6 +9,7 @@ from typing import Protocol
 
 class RepairFlowStatus(StrEnum):
     CANDIDATE_READY = "candidate_ready"
+    CANDIDATE_RISK = "candidate_risk"
     REJECTED = "rejected"
     HUMAN_REVIEW = "human_review"
 

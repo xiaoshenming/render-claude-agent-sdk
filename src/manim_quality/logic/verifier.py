@@ -8,16 +8,13 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
-from manim_quality.agents._runtime_models import (
-    AgentRunFailed,
-    CorrectableOutputError,
-)
+from manim_quality.agents._runtime_models import AgentRunFailed
 from manim_quality.agents.profile import AgentProfile, AgentRole
 from manim_quality.agents.runtime import AgentRunRequest, AgentRuntime
+from manim_quality.agents.tool_policy import ToolInputPolicy
 from manim_quality.agents.usage import AgentCallRecord
 from manim_quality.revisions.fingerprint import code_hash
 
-from ._verifier_evidence import bind_candidate_evidence
 from .diff_guard import DiffGuardResult
 from .repair_plan import RepairPlan
 from .validators.registry import ValidationReport, ValidationStatus
@@ -76,7 +73,6 @@ class DirectedVerifier:
         candidate = _candidate_path(workspace, candidate_path)
         patched = candidate.read_text(encoding="utf-8")
         unresolved = _unresolved_issue_ids(validation)
-        validator = _output_validator(before_code, patched, plan, unresolved)
         prompt = _prompt(before_code, patched, plan, validation)
         request = AgentRunRequest(
             run_id=run_id,
@@ -91,7 +87,7 @@ class DirectedVerifier:
             reserved_output_tokens=reserved_output_tokens,
             reserved_cache_read_tokens=reserved_cache_read_tokens,
             reserved_cache_write_tokens=reserved_cache_write_tokens,
-            output_validator=validator,
+            tool_policies={"Read": ToolInputPolicy(max_calls=50)},
         )
         try:
             result = self._runtime.run(request)
@@ -109,18 +105,6 @@ class DirectedVerifier:
             review_gaps=tuple(bound["review_gaps"]),
             call_record=result.record,
         )
-
-
-def _output_validator(
-    before: str, code: str, plan: RepairPlan, issue_ids: tuple[str, ...]
-):
-    def validate(value: Mapping[str, object]) -> None:
-        try:
-            _bind_output(value, before, code, plan, issue_ids)
-        except (TypeError, ValueError) as error:
-            raise CorrectableOutputError(str(error)) from error
-
-    return validate
 
 
 def _bind_output(
@@ -185,26 +169,19 @@ def _result_items(
 def _result_item(
     value: object, before: str, code: str, plan: RepairPlan
 ) -> dict[str, object]:
-    if not isinstance(value, Mapping) or set(value) != {
-        "issue_id",
-        "resolved",
-        "candidate_evidence",
-        "reason",
-    }:
+    required = {"issue_id", "resolved", "reason"}
+    allowed = required | {"candidate_evidence"}
+    if (
+        not isinstance(value, Mapping)
+        or not required <= set(value)
+        or not set(value) <= allowed
+    ):
         raise ValueError("verifier result fields do not match schema")
     issue_id = _text(value.get("issue_id"), "issue_id")
     resolved = value.get("resolved")
     if type(resolved) is not bool:
         raise TypeError("resolved must be bool")
     _text(value.get("reason"), "reason")
-    bind_candidate_evidence(
-        value.get("candidate_evidence"),
-        before,
-        code,
-        plan,
-        issue_id,
-        require_changed=resolved,
-    )
     return {"issue_id": issue_id, "resolved": resolved}
 
 
@@ -239,6 +216,7 @@ def _prompt(
             for check in validation.checks
             if check.status is ValidationStatus.UNRESOLVED
         ],
+        "patched_candidate_code": after,
         "diff": _diff(before, after),
     }
     template = _PROMPT_PATH.read_text(encoding="utf-8")

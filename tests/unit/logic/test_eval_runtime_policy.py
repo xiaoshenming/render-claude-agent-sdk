@@ -26,6 +26,8 @@ def test_shadow_policy_allows_bounded_quality_first_reviewer_reasoning() -> None
     )
     assert geometry_limits.max_turns == 10
     assert geometry_limits.max_tool_calls == 12
+    focused_limits = _logic_shadow_case._limits(ReviewInputVersion.FOCUSED_V2_3)
+    assert focused_limits.max_turns == 10
 
 
 def test_shadow_review_versions_are_explicit_and_rollback_safe() -> None:
@@ -34,6 +36,7 @@ def test_shadow_review_versions_are_explicit_and_rollback_safe() -> None:
         "digest-v2": "logic-reviewer-v7-digest",
         "digest-v2-1": "logic-reviewer-v7.1-digest",
         "digest-v2-2-geometry": "logic-reviewer-v8-geometry",
+        "focused-v2-3": "logic-reviewer-v9-focused",
     }
 
 

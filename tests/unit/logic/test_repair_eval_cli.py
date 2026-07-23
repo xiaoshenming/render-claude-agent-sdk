@@ -37,4 +37,4 @@ def test_explicit_manifest_replaces_default_packs(
 
 
 def test_coder_turn_budget_supports_multi_location_repairs() -> None:
-    assert CODER_MAX_TURNS == 7
+    assert CODER_MAX_TURNS == 12

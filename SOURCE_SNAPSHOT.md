@@ -87,3 +87,25 @@ apps/render/tests/test_v3_three_state.py
 ```
 
 独立仓库没有复制 MathPi 用户、积分、数据库、MQ、COS、TTS、STT 或生成主管线，只保留 V3 独立核心、Harness、测试、评估工具和宿主适配快照。
+
+## 2026-07-23 逻辑软合同同步记录
+
+本次从 MathPi `dev-PB8` 合并提交 `2c7e347b4` 对应的 V3 功能分支同步：
+
+```text
+608e0f6b2 文档：汇总逻辑Agent软合同重放结果
+e90a5134c 修复：Verifier引用降级为非阻断证据
+2b04c7272 修复：逻辑Agent临时错误自动重试
+d2b7b7d66 修复：Verifier直接验收完整候选源码
+8bb546997 修复：保留逻辑Agent历史最佳候选
+```
+
+同步范围包括：
+
+- `src/manim_quality/logic/` 的 Reviewer、Coder、Verifier、历史最佳候选与输入合同；
+- `src/manim_quality/agents/guards.py` 的有界工具策略；
+- 逻辑错误源码重放与极简端到端评估入口；
+- 对应单元和集成测试；
+- server3 六条真实逻辑错误源码的脱敏汇总报告。
+
+本次不复制 MathPi 业务数据库、任务日志、视频、密钥或 server3 实验目录。报告中的任务标识只用于追溯汇总结论，仓库内不包含生产凭据。

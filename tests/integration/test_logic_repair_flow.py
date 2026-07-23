@@ -187,7 +187,7 @@ def test_flow_allows_second_attempt_only_after_deterministic_resolution(
     assert coder.calls[1]["retry_context"]["resolved_issue_ids"] == ["I-1"]
 
 
-def test_flow_stops_after_first_attempt_without_measured_improvement(
+def test_flow_keeps_candidate_as_risk_when_verifier_cannot_measure_improvement(
     tmp_path: Path,
 ) -> None:
     coder = FakeCoder([FIRST_PATCH, SECOND_PATCH])
@@ -195,21 +195,25 @@ def test_flow_stops_after_first_attempt_without_measured_improvement(
 
     result = run(tmp_path, coder, verifier)
 
-    assert result.status is RepairFlowStatus.REJECTED
-    assert result.attempt_count == 1
-    assert len(coder.calls) == 1
-    assert (tmp_path / "candidate.py").read_text(encoding="utf-8") == BASELINE
+    assert result.status is RepairFlowStatus.CANDIDATE_RISK
+    assert result.attempt_count == 2
+    assert len(coder.calls) == 2
+    assert result.requires_render is True
+    assert result.candidate_code == FIRST_PATCH
+    assert "best candidate preserved" in result.reason
+    assert (tmp_path / "candidate.py").read_text(encoding="utf-8") == FIRST_PATCH
 
 
-def test_flow_ignores_agent_claim_as_second_attempt_progress(tmp_path: Path) -> None:
+def test_flow_keeps_unverified_agent_patch_as_risk(tmp_path: Path) -> None:
     coder = FakeCoder([FIRST_PATCH, SECOND_PATCH])
     verifier = FakeVerifier([verifier_result(False, ("I-1",))])
 
     result = run(tmp_path, coder, verifier)
 
-    assert result.status is RepairFlowStatus.REJECTED
-    assert result.attempt_count == 1
-    assert len(coder.calls) == 1
+    assert result.status is RepairFlowStatus.CANDIDATE_RISK
+    assert result.attempt_count == 2
+    assert len(coder.calls) == 2
+    assert (tmp_path / "candidate.py").read_text(encoding="utf-8") == FIRST_PATCH
 
 
 def test_flow_uses_deterministic_progress_to_allow_second_attempt(
@@ -227,34 +231,31 @@ def test_flow_uses_deterministic_progress_to_allow_second_attempt(
     assert coder.calls[1]["retry_context"]["resolved_issue_ids"] == ["I-1"]
 
 
-def test_flow_restores_baseline_when_verifier_raises_unexpected_error(
+def test_flow_preserves_best_candidate_when_verifier_raises_unexpected_error(
     tmp_path: Path,
 ) -> None:
     class ExplodingVerifier:
         def verify(self, **kwargs):
             raise RuntimeError("unexpected verifier failure")
 
-    coder = FakeCoder([FIRST_PATCH])
+    coder = FakeCoder([FIRST_PATCH, FIRST_PATCH])
     candidate = tmp_path / "candidate.py"
     candidate.write_text(BASELINE, encoding="utf-8")
 
-    try:
-        LogicRepairFlow(coder, ExplodingVerifier()).run(
-            run_id="flow-error",
-            plan=plan(),
-            workspace=tmp_path,
-            candidate_path=candidate,
-            coder_estimated_input_tokens=100,
-            coder_reserved_output_tokens=100,
-            verifier_estimated_input_tokens=100,
-            verifier_reserved_output_tokens=100,
-        )
-    except RuntimeError as error:
-        assert str(error) == "unexpected verifier failure"
-    else:
-        raise AssertionError("unexpected verifier failure must propagate")
+    result = LogicRepairFlow(coder, ExplodingVerifier()).run(
+        run_id="flow-error",
+        plan=plan(),
+        workspace=tmp_path,
+        candidate_path=candidate,
+        coder_estimated_input_tokens=100,
+        coder_reserved_output_tokens=100,
+        verifier_estimated_input_tokens=100,
+        verifier_reserved_output_tokens=100,
+    )
 
-    assert candidate.read_text(encoding="utf-8") == BASELINE
+    assert result.status is RepairFlowStatus.CANDIDATE_RISK
+    assert "unexpected verifier failure" in result.reason
+    assert candidate.read_text(encoding="utf-8") == FIRST_PATCH
 
 
 def test_flow_counts_a_coder_rejection_as_an_attempt(tmp_path: Path) -> None:
@@ -265,10 +266,47 @@ def test_flow_counts_a_coder_rejection_as_an_attempt(tmp_path: Path) -> None:
     result = run(tmp_path, RejectingCoder(), FakeVerifier([]))
 
     assert result.status is RepairFlowStatus.REJECTED
-    assert result.attempt_count == 1
+    assert result.attempt_count == 2
 
 
-def test_flow_rejects_duplicate_second_patch_and_never_starts_third(
+def test_flow_retries_transient_coder_error_before_any_edit(tmp_path: Path) -> None:
+    delegate = FakeCoder([FIRST_PATCH])
+
+    class TransientCoder:
+        calls = 0
+
+        def patch(self, **kwargs):
+            self.calls += 1
+            if self.calls == 1:
+                raise LogicCoderError("assistant error: server_error")
+            return delegate.patch(**kwargs)
+
+    result = run(
+        tmp_path,
+        TransientCoder(),
+        FakeVerifier([verifier_result(True, ("I-1", "I-2"))]),
+    )
+
+    assert result.status is RepairFlowStatus.CANDIDATE_READY
+    assert result.attempt_count == 2
+
+
+def test_flow_preserves_edit_when_coder_reports_budget_error(tmp_path: Path) -> None:
+    class EditedThenRejectedCoder:
+        def patch(self, **kwargs):
+            Path(kwargs["candidate_path"]).write_text(FIRST_PATCH, encoding="utf-8")
+            raise LogicCoderError("BudgetExceeded: output tokens exceed hard limit")
+
+    result = run(tmp_path, EditedThenRejectedCoder(), FakeVerifier([]))
+
+    assert result.status is RepairFlowStatus.CANDIDATE_RISK
+    assert result.attempt_count == 2
+    assert result.candidate_code == FIRST_PATCH
+    assert "BudgetExceeded" in result.reason
+    assert (tmp_path / "candidate.py").read_text(encoding="utf-8") == FIRST_PATCH
+
+
+def test_flow_preserves_duplicate_best_patch_as_risk_and_never_starts_third(
     tmp_path: Path,
 ) -> None:
     coder = FakeCoder([FIRST_PATCH, FIRST_PATCH, SECOND_PATCH])
@@ -276,8 +314,23 @@ def test_flow_rejects_duplicate_second_patch_and_never_starts_third(
 
     result = run(tmp_path, coder, verifier, measurable_plan())
 
-    assert result.status is RepairFlowStatus.REJECTED
+    assert result.status is RepairFlowStatus.CANDIDATE_RISK
     assert result.attempt_count == 2
     assert len(coder.calls) == 2
     assert "duplicate patch" in result.reason
-    assert (tmp_path / "candidate.py").read_text(encoding="utf-8") == BASELINE
+    assert (tmp_path / "candidate.py").read_text(encoding="utf-8") == FIRST_PATCH
+
+
+def test_flow_returns_historical_best_when_later_attempt_is_worse(
+    tmp_path: Path,
+) -> None:
+    coder = FakeCoder([FIRST_PATCH, SECOND_PATCH])
+    verifier = FakeVerifier(
+        [verifier_result(False, ("I-1",)), verifier_result(False, ())]
+    )
+
+    result = run(tmp_path, coder, verifier)
+
+    assert result.status is RepairFlowStatus.CANDIDATE_RISK
+    assert result.candidate_code == FIRST_PATCH
+    assert (tmp_path / "candidate.py").read_text(encoding="utf-8") == FIRST_PATCH

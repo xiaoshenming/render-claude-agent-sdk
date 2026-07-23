@@ -22,7 +22,8 @@ from manim_quality.logic.schemas import (
     LogicIssue,
 )
 from manim_quality.logic.validators.registry import validate_candidate
-from manim_quality.logic.verifier import DirectedVerifier, DirectedVerifierError
+from manim_quality.logic.verifier import DirectedVerifier
+from manim_quality.logic.verifier_output_schema import VERIFIER_OUTPUT_SCHEMA
 from manim_quality.revisions.fingerprint import code_hash, sha256_text
 
 BEFORE = """from manim import *
@@ -111,7 +112,7 @@ def validation(repair_plan: RepairPlan):
 
 
 
-def test_directed_verifier_rejects_resolved_claim_citing_unchanged_code(
+def test_directed_verifier_does_not_gate_on_citation_location(
     tmp_path: Path,
 ) -> None:
     payload = {
@@ -137,20 +138,21 @@ def test_directed_verifier_rejects_resolved_claim_citing_unchanged_code(
     repair_plan = plan()
     candidate_diff, report = validation(repair_plan)
 
-    with pytest.raises(DirectedVerifierError, match="issue source"):
-        DirectedVerifier(
-            runtime, verifier_profile(model="fake", prompt_version="verifier-v1")
-        ).verify(
-            run_id="verify-unchanged",
-            plan=repair_plan,
-            diff=candidate_diff,
-            validation=report,
-            before_code=BEFORE,
-            workspace=tmp_path,
-            candidate_path=candidate,
-            estimated_input_tokens=100,
-            reserved_output_tokens=100,
-        )
+    result = DirectedVerifier(
+        runtime, verifier_profile(model="fake", prompt_version="verifier-v1")
+    ).verify(
+        run_id="verify-unchanged",
+        plan=repair_plan,
+        diff=candidate_diff,
+        validation=report,
+        before_code=BEFORE,
+        workspace=tmp_path,
+        candidate_path=candidate,
+        estimated_input_tokens=100,
+        reserved_output_tokens=100,
+    )
+
+    assert result.verified is True
 
 def test_verifier_changed_evidence_must_match_issue_source_hunk() -> None:
     unrelated = BEFORE.replace(
@@ -172,6 +174,12 @@ def test_verifier_changed_evidence_must_match_issue_source_hunk() -> None:
             "I-1",
             require_changed=True,
         )
+
+
+def test_verifier_evidence_is_optional_metadata() -> None:
+    item = VERIFIER_OUTPUT_SCHEMA["properties"]["results"]["items"]
+
+    assert "candidate_evidence" not in item["required"]
 
 def test_verifier_can_bind_adjacent_evidence_after_faulty_line_is_deleted() -> None:
     after = BEFORE.replace('        answer = MathTex("x=12")\n', "")

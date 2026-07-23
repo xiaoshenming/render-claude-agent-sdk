@@ -1,10 +1,8 @@
 """Bounded logic repair loop that produces an unrendered candidate only."""
-
 from __future__ import annotations
 
 from collections.abc import Mapping
 from pathlib import Path
-
 from manim_quality.revisions.fingerprint import code_hash
 
 from ._repair_flow_models import (
@@ -16,8 +14,10 @@ from ._repair_flow_models import (
     VerifierPort,
 )
 from .coder import LogicCoderError
+from .candidate_history import CandidateHistory
+from .candidate_policy import coder_error_outcome, human_review_result
+from .candidate_policy import ready_result, rejected_result
 from .repair_plan import RepairPlan
-from .verifier import DirectedVerifierError
 
 
 class LogicRepairFlow:
@@ -62,7 +62,10 @@ class LogicRepairFlow:
                     verifier_reserved_output_tokens,
                 ),
             )
-            keep_candidate = result.status is RepairFlowStatus.CANDIDATE_READY
+            keep_candidate = result.status in {
+                RepairFlowStatus.CANDIDATE_READY,
+                RepairFlowStatus.CANDIDATE_RISK,
+            }
             return result
         finally:
             if not keep_candidate:
@@ -82,6 +85,7 @@ class LogicRepairFlow:
         hashes: list[str] = []
         resolved: tuple[str, ...] = ()
         retry_context: Mapping[str, object] | None = None
+        history = CandidateHistory()
         for attempt in range(1, plan.max_attempts + 1):
             outcome = self._attempt(
                 run_id=run_id,
@@ -94,34 +98,24 @@ class LogicRepairFlow:
                 verifier_tokens=verifier_tokens,
                 retry_context=retry_context,
             )
-            if outcome.patch_hash in hashes:
-                hashes.append(outcome.patch_hash)
-                return _rejected(
-                    candidate, baseline, hashes, attempt, "duplicate patch"
-                )
-            if outcome.patch_hash is not None:
-                hashes.append(outcome.patch_hash)
-            if outcome.status is AttemptStatus.READY:
-                return _ready(hashes, attempt, outcome.candidate_code or "")
+            history.consider(outcome)
+            result = _terminal_result(
+                outcome, history, candidate, baseline, hashes, attempt, plan.max_attempts
+            )
+            if result is not None:
+                return result
             if outcome.status is AttemptStatus.REJECTED:
-                return _rejected(candidate, baseline, hashes, attempt, outcome.reason)
-            if outcome.status is AttemptStatus.HUMAN_REVIEW:
-                return _human_review(candidate, baseline, hashes, attempt, outcome)
+                retry_context = {"previous_error": outcome.reason}
+                continue
             improvement = outcome.resolved_issue_ids
-            if attempt >= plan.max_attempts or not _strict_improvement(
-                resolved, improvement
-            ):
-                return _rejected(
-                    candidate,
-                    baseline,
-                    hashes,
-                    attempt,
-                    "no measurable improvement",
-                )
-            resolved = improvement
+            if _strict_improvement(resolved, improvement):
+                resolved = improvement
             retry_context = _retry_context(plan, outcome)
             candidate.write_text(baseline, encoding="utf-8")
-        return _rejected(
+        preserved = history.preserve(
+            candidate, hashes, plan.max_attempts, "best candidate preserved"
+        )
+        return preserved or rejected_result(
             candidate,
             baseline,
             hashes,
@@ -153,7 +147,7 @@ class LogicRepairFlow:
                 retry_context=retry_context,
             )
         except LogicCoderError as error:
-            return AttemptOutcome(AttemptStatus.REJECTED, reason=str(error))
+            return coder_error_outcome(candidate, baseline, error)
         patch_hash = patch.diff.patch_hash
         if patch.validation.passed:
             return AttemptOutcome(AttemptStatus.READY, patch_hash, patch.candidate_code)
@@ -200,8 +194,14 @@ class LogicRepairFlow:
                 estimated_input_tokens=verifier_tokens[0],
                 reserved_output_tokens=verifier_tokens[1],
             )
-        except DirectedVerifierError as error:
-            return AttemptOutcome(AttemptStatus.REJECTED, reason=str(error))
+        except Exception as error:
+            return AttemptOutcome(
+                AttemptStatus.PARTIAL,
+                patch.diff.patch_hash,
+                patch.candidate_code,
+                deterministic,
+                (f"verifier_error: {error}",),
+            )
         if verification.verified:
             return AttemptOutcome(
                 AttemptStatus.READY, patch.diff.patch_hash, patch.candidate_code
@@ -218,6 +218,41 @@ class LogicRepairFlow:
             deterministic,
             tuple(verification.review_gaps),
         )
+
+
+def _terminal_result(
+    outcome: AttemptOutcome,
+    history: CandidateHistory,
+    candidate: Path,
+    baseline: str,
+    hashes: list[str],
+    attempt: int,
+    max_attempts: int,
+) -> LogicRepairFlowResult | None:
+    if outcome.patch_hash in hashes:
+        hashes.append(outcome.patch_hash)
+        return history.preserve(candidate, hashes, attempt, "duplicate patch") or (
+            rejected_result(candidate, baseline, hashes, attempt, "duplicate patch")
+        )
+    if outcome.patch_hash is not None:
+        hashes.append(outcome.patch_hash)
+    if outcome.status is AttemptStatus.READY:
+        return ready_result(hashes, attempt, outcome.candidate_code or "")
+    if outcome.status is AttemptStatus.REJECTED and attempt >= max_attempts:
+        return history.preserve(candidate, hashes, attempt, outcome.reason) or (
+            rejected_result(candidate, baseline, hashes, attempt, outcome.reason)
+        )
+    if outcome.status is AttemptStatus.HUMAN_REVIEW:
+        reason = "verifier requested human review"
+        return history.preserve(candidate, hashes, attempt, reason) or human_review_result(
+            candidate, baseline, hashes, attempt, "; ".join(outcome.review_gaps)
+        )
+    if attempt >= max_attempts:
+        reason = "repair attempts ended; best candidate preserved"
+        return history.preserve(candidate, hashes, attempt, reason) or rejected_result(
+            candidate, baseline, hashes, attempt, "no measurable improvement"
+        )
+    return None
 
 
 def _strict_improvement(previous: tuple[str, ...], current: tuple[str, ...]) -> bool:
@@ -242,50 +277,6 @@ def _retry_context(plan: RepairPlan, outcome: AttemptOutcome) -> Mapping[str, ob
             issue_id for issue_id in plan.issue_ids if issue_id not in resolved
         ],
     }
-
-
-def _ready(
-    hashes: list[str], attempt_count: int, candidate_code: str
-) -> LogicRepairFlowResult:
-    return LogicRepairFlowResult(
-        RepairFlowStatus.CANDIDATE_READY,
-        attempt_count,
-        tuple(hashes),
-        candidate_code,
-        True,
-        "candidate requires external render and recheck",
-    )
-
-
-def _rejected(
-    candidate: Path,
-    baseline: str,
-    hashes: list[str],
-    attempt_count: int,
-    reason: str,
-) -> LogicRepairFlowResult:
-    candidate.write_text(baseline, encoding="utf-8")
-    return LogicRepairFlowResult(
-        RepairFlowStatus.REJECTED,
-        attempt_count,
-        tuple(hashes),
-        None,
-        False,
-        reason,
-    )
-
-
-def _human_review(candidate, baseline, hashes, attempt_count, verification):
-    candidate.write_text(baseline, encoding="utf-8")
-    reason = "; ".join(verification.review_gaps) or "directed verifier requested review"
-    return LogicRepairFlowResult(
-        RepairFlowStatus.HUMAN_REVIEW,
-        attempt_count,
-        tuple(hashes),
-        None,
-        False,
-        reason,
-    )
 
 
 def _candidate_path(workspace: Path, candidate_path: Path) -> Path:

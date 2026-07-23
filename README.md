@@ -6,15 +6,20 @@
 
 这个仓库保存的是 MathPi 当前完整的 Claude Agent SDK V3 模块，不是早期的单次 SDK 审查脚本，也不是生成 Manim 代码的 LLM 管线。
 
-## 2026-07-22 当前快照
+## 2026-07-23 当前快照
 
-本仓库已同步 MathPi `dev-PB8` 当前 V3 源码、Harness、测试和 MathPi 接入快照，包含今天在 server3 验证的：
+本仓库已同步 MathPi `dev-PB8` 当前 V3 源码、Harness、测试和 MathPi 接入快照。除既有五轮重叠修复外，本次新增并在 server3 使用真实逻辑错误源码验证：
 
 - 重叠修复最多 5 轮的单一运行参数；
 - 连续 2 轮无进展才停止；
 - Token 只观测，不因平台预算估算差异丢弃候选；
 - 每轮复检与 Agent 编排耗时证据；
-- 历史最佳候选保护；
+- 逻辑修复历史最佳候选保护；
+- Coder 临时 SDK/结构化输出错误自动重试；
+- Coder 12 turn、Verifier 8 turn、总工具调用 64 的软预算；
+- Verifier 直接验收完整候选源码；
+- Verifier 对每个 Issue 分别输出 `resolved / unresolved / unknown`；
+- 行号、引用和最终说明格式只作为风险证据，不再机械清空已生成候选；
 - `SUCCESS_DEGRADED` 返回残留候选和风险；
 - 语义等价字符串不再机械回滚；
 - 拆分式布局探针加载；
@@ -25,16 +30,17 @@ server3 同类困难源码重放结果：
 
 | 模块 | 结果 | 边界 |
 |---|---:|---|
-| 逻辑 Agent | 33 条历史 rejected 源码中，14 条触发修复，10 条形成候选，71.4% | 机器合同接受率，不是人工数学正确率 |
+| 逻辑 Agent（本次6条真实错误源码） | 4 条逐项确认，2 条保留风险候选，0 条恢复原错误代码 | 2 条复杂候选尚未完成最终视频人工验收 |
 | 重叠 Agent | 29 条触发任务全部改善，26 条清零，3 条保留残留最佳候选 | BBox/代码复检结果，不是全部 MP4 人工验收 |
 
 技术负责人应先阅读：
 
 - [`docs/INDEX.md`](docs/INDEX.md)：持续维护的代码、Harness、合同、验证和报告总索引；
+- [`docs/reports/2026-07-23-逻辑Agent软合同与错误样本重放报告.md`](docs/reports/2026-07-23-逻辑Agent软合同与错误样本重放报告.md)：本次实现、真实样本、Token、耗时和回滚点；
 - [`docs/reports/2026-07-22-Agent技术改造点对点功能审计.md`](docs/reports/2026-07-22-Agent技术改造点对点功能审计.md)：13 个可直接建工单的技术改造点；
 - [`docs/reports/2026-07-22-server3-Agent全量日志审计及优化建议.md`](docs/reports/2026-07-22-server3-Agent全量日志审计及优化建议.md)：真实批次、Token、耗时、失败根因和证据边界。
 
-当前最明确的后续工作不是更换模型，而是把重复 Read 硬失败改成缓存返回、放宽 Verifier 的机械行绑定、统一 Agent attempt 事实层，并建立固定人工金标集。所有质量异常继续保留证据并 fail-open，不作为 MathPi 视频交付的新增硬拦截。
+当前最明确的后续工作是建立更大的人工金标错误源码集，并对复杂 `candidate_risk` 候选补做真实渲染和三态人工验收。所有质量异常继续保留证据并 fail-open，不作为 MathPi 视频交付的新增硬拦截。
 
 ## 先用一分钟理解整个系统
 
@@ -460,7 +466,7 @@ python scripts/check_engineering_standards.py
 python scripts/verify_vendor_sources.py
 ```
 
-2026-07-22 同步后的 Agent 核心切片为 `63 passed`，工程行数检查通过。全量历史套件为 `1424 passed, 34 failed, 12 errors`；未通过项集中在旧测试拆分包装、冻结来源 Hash 和历史存储测试基线，不应被包装成“全绿”，也不应据此回退已经在 server3 验证的 V3 修复。详细历史分类见 [独立仓库验证记录](docs/reports/2026-07-18-independent-repo-verification.md)。
+2026-07-23 逻辑软合同核心切片为 `43 passed`，工程行数检查通过。旧的 `test_eval_runtime_policy.py` 仍调用已删除的私有 `_geometry_snapshot`，属于历史测试兼容问题，不计入本次功能通过数。2026-07-22 全量历史套件记录仍为 `1424 passed, 34 failed, 12 errors`；未通过项集中在旧测试拆分包装、冻结来源 Hash 和历史存储测试基线，不应被包装成“全绿”，也不应据此回退已经在 server3 验证的 V3 修复。详细历史分类见 [独立仓库验证记录](docs/reports/2026-07-18-independent-repo-verification.md)。
 
 ## 如何判断一次运行真的完整
 

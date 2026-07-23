@@ -10,6 +10,7 @@ from pathlib import Path
 from manim_quality.agents._runtime_models import AgentRunFailed
 from manim_quality.agents.profile import AgentProfile, AgentRole
 from manim_quality.agents.runtime import AgentRunRequest, AgentRuntime
+from manim_quality.agents.tool_policy import ToolInputPolicy
 from manim_quality.agents.usage import AgentCallRecord
 from manim_quality.contracts._json_values import thaw_json_object
 from manim_quality.revisions.fingerprint import code_hash
@@ -79,6 +80,7 @@ class LogicCoder:
             reserved_output_tokens=reserved_output_tokens,
             reserved_cache_read_tokens=reserved_cache_read_tokens,
             reserved_cache_write_tokens=reserved_cache_write_tokens,
+            tool_policies={"Read": ToolInputPolicy(max_calls=50)},
         )
         try:
             call = self._runtime.run(request)
@@ -89,7 +91,8 @@ class LogicCoder:
             if reason is not None:
                 raise LogicCoderError(reason, call_record=call.record)
         except AgentRunFailed as error:
-            _restore(candidate, before)
+            if _read_candidate(candidate) == before:
+                _restore(candidate, before)
             raise LogicCoderError(str(error), call_record=error.record) from error
         except Exception:
             _restore(candidate, before)

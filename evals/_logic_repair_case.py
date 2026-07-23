@@ -36,7 +36,7 @@ from ._logic_repair_metrics import (
 from ._logic_shadow_io import JsonSequenceUsageSink, write_json
 
 RESERVED_OUTPUT_TOKENS = 40_000
-CODER_MAX_TURNS = 7
+CODER_MAX_TURNS = 12
 
 
 @dataclass(frozen=True, slots=True)
@@ -61,6 +61,7 @@ def run_repair_case(
     target_restored: bool | None = None
     over_edit = False
     error: str | None = None
+    risk_reason: str | None = None
     try:
         report = _review_report(config.review_root, case.sample_id)
         decision = report.decision.value
@@ -101,8 +102,13 @@ def run_repair_case(
         )
         status = result.status.value
         attempts = result.attempt_count
+        if result.status is RepairFlowStatus.CANDIDATE_RISK:
+            risk_reason = result.reason
         patched = candidate.read_text(encoding="utf-8")
-        if result.status is RepairFlowStatus.CANDIDATE_READY:
+        if result.status in {
+            RepairFlowStatus.CANDIDATE_READY,
+            RepairFlowStatus.CANDIDATE_RISK,
+        }:
             shutil.copyfile(candidate, case_dir / "candidate_after.py")
         if case.truth.value == "known_bad":
             original = _required(case, "original_candidate.py", dataset_root)
@@ -129,6 +135,7 @@ def run_repair_case(
         verifier_sink,
         started,
         error,
+        risk_reason,
     )
     write_json(case_dir / "repair_result.json", metrics.to_dict())
     return metrics
@@ -146,7 +153,7 @@ def _flow(config, coder_sink, verifier_sink) -> LogicRepairFlow:
         ),
     )
     verifier = DirectedVerifier(
-        AgentRuntime(backend, verifier_sink, _limits(max_turns=4)),
+        AgentRuntime(backend, verifier_sink, _limits(max_turns=8)),
         verifier_profile(
             model=config.model,
             prompt_version="logic-verifier-v1",
@@ -176,6 +183,7 @@ def _metrics(
     verifier_sink,
     started,
     error,
+    risk_reason=None,
 ) -> RepairCaseMetrics:
     return RepairCaseMetrics(
         case.sample_id,
@@ -190,6 +198,7 @@ def _metrics(
         _role_usage(verifier_sink.records),
         int((time.monotonic() - started) * 1_000),
         error,
+        risk_reason,
     )
 
 
@@ -234,7 +243,7 @@ def _limits(*, max_turns: int) -> BudgetLimits:
     return BudgetLimits(
         max_context_bytes=250_000,
         max_turns=max_turns,
-        max_tool_calls=8,
+        max_tool_calls=64,
         max_elapsed_ms=240_000,
         max_input_tokens=80_000,
         max_output_tokens=50_000,

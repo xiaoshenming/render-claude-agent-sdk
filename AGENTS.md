@@ -35,8 +35,10 @@ vendor package to certify its own output.
 - Every edit creates an immutable child revision.
 - A failed candidate never overwrites a certified checkpoint.
 - External checks must independently rerender and revalidate Agent output.
-- SDK, checker, renderer, evidence, or budget failures fail closed into retry,
-  regenerate, or hold. They never become PASS.
+- SDK, checker, renderer, evidence, or budget failures never become PASS. Retry,
+  regenerate, or hold remains a certification decision; the failure must not
+  erase an earlier edited, executable best candidate. Preserve it as
+  `candidate_risk` evidence until external policy decides its final state.
 
 ## Required Quality Flow
 

@@ -173,7 +173,10 @@ def _geometry_read_tools(
     snapshot: GeometrySnapshot | None,
     expected_code_hash: str,
 ):
-    geometry_version = input_version is ReviewInputVersion.DIGEST_V2_2_GEOMETRY
+    geometry_version = input_version in {
+        ReviewInputVersion.DIGEST_V2_2_GEOMETRY,
+        ReviewInputVersion.FOCUSED_V2_3,
+    }
     if not geometry_version:
         if snapshot is not None:
             raise ValueError("geometry snapshot requires geometry review input version")
@@ -182,21 +185,18 @@ def _geometry_read_tools(
         raise ValueError("geometry review requires a geometry snapshot")
     if snapshot.code_hash != expected_code_hash:
         raise ValueError("geometry snapshot does not match candidate code")
+    if not any(item.status.value == "known" for item in snapshot.objects):
+        return ()
     return (geometry_inspector_tool(snapshot),)
 
 
 def _tool_policies(input_version: ReviewInputVersion):
-    if input_version is not ReviewInputVersion.DIGEST_V2_2_GEOMETRY:
+    if input_version not in {
+        ReviewInputVersion.DIGEST_V2_2_GEOMETRY,
+        ReviewInputVersion.FOCUSED_V2_3,
+    }:
         return {}
-    return {
-        "Read": ToolInputPolicy(
-            max_calls=2,
-            required_fields=("offset", "limit"),
-            integer_minimums={"offset": 1, "limit": 1},
-            integer_maximums={"limit": 160},
-            clamp_integer_maximums=True,
-        )
-    }
+    return {"Read": ToolInputPolicy(max_calls=2)}
 
 
 def _load_bound_files(

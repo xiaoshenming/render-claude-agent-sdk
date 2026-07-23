@@ -22,7 +22,7 @@ from manim_quality.logic.schemas import (
     LogicIssue,
 )
 from manim_quality.logic.validators.registry import validate_candidate
-from manim_quality.logic.verifier import DirectedVerifier, DirectedVerifierError
+from manim_quality.logic.verifier import DirectedVerifier
 from manim_quality.revisions.fingerprint import code_hash, sha256_text
 
 BEFORE = """from manim import *
@@ -207,7 +207,7 @@ def test_directed_verifier_accepts_multiple_bound_results_for_one_issue(
     assert verified.verified is True
     assert verified.resolved_issue_ids == ("I-1",)
 
-def test_directed_verifier_rejects_unbound_excerpt(tmp_path: Path) -> None:
+def test_directed_verifier_treats_unbound_excerpt_as_metadata(tmp_path: Path) -> None:
     payload = {
         "decision": "verified",
         "results": [
@@ -231,17 +231,18 @@ def test_directed_verifier_rejects_unbound_excerpt(tmp_path: Path) -> None:
     repair_plan = plan()
     diff, report = validation(repair_plan)
 
-    with pytest.raises(DirectedVerifierError, match="not present"):
-        DirectedVerifier(
-            runtime, verifier_profile(model="fake", prompt_version="verifier-v1")
-        ).verify(
-            run_id="verify-1",
-            plan=repair_plan,
-            diff=diff,
-            validation=report,
-            before_code=BEFORE,
-            workspace=tmp_path,
-            candidate_path=candidate,
-            estimated_input_tokens=100,
-            reserved_output_tokens=100,
-        )
+    result = DirectedVerifier(
+        runtime, verifier_profile(model="fake", prompt_version="verifier-v1")
+    ).verify(
+        run_id="verify-1",
+        plan=repair_plan,
+        diff=diff,
+        validation=report,
+        before_code=BEFORE,
+        workspace=tmp_path,
+        candidate_path=candidate,
+        estimated_input_tokens=100,
+        reserved_output_tokens=100,
+    )
+
+    assert result.verified is True

@@ -9,6 +9,7 @@ from pathlib import Path
 from manim_quality.geometry.schemas import GeometrySnapshot
 
 from .evidence import LogicEvidence
+from .focused_review_input import build_focused_review_input
 from .review_digest import build_review_digest
 
 
@@ -17,6 +18,7 @@ class ReviewInputVersion(StrEnum):
     DIGEST_V2 = "digest-v2"
     DIGEST_V2_1 = "digest-v2-1"
     DIGEST_V2_2_GEOMETRY = "digest-v2-2-geometry"
+    FOCUSED_V2_3 = "focused-v2-3"
 
 
 _PROMPTS = {
@@ -27,6 +29,8 @@ _PROMPTS = {
     / "reviewer_digest_v2_1.md",
     ReviewInputVersion.DIGEST_V2_2_GEOMETRY: Path(__file__).with_name("prompts")
     / "reviewer_geometry_v1.md",
+    ReviewInputVersion.FOCUSED_V2_3: Path(__file__).with_name("prompts")
+    / "reviewer_focused_v1.md",
 }
 
 
@@ -41,11 +45,12 @@ def build_review_prompt(
 ) -> str:
     if not isinstance(input_version, ReviewInputVersion):
         raise TypeError("input_version must be ReviewInputVersion")
-    body = (
-        evidence.to_prompt_dict()
-        if input_version is ReviewInputVersion.EVIDENCE_V1
-        else build_review_digest(evidence, candidate_code).to_prompt_dict()
-    )
+    if input_version is ReviewInputVersion.EVIDENCE_V1:
+        body = evidence.to_prompt_dict()
+    elif input_version is ReviewInputVersion.FOCUSED_V2_3:
+        body = build_focused_review_input(evidence, candidate_code)
+    else:
+        body = build_review_digest(evidence, candidate_code).to_prompt_dict()
     payload = _payload(
         candidate_path,
         manifest_path,
@@ -75,7 +80,10 @@ def _payload(
         _reject_unused_geometry(geometry_snapshot)
         return {**common, "evidence": body}
     payload = {**common, "input_version": input_version.value, "digest": body}
-    if input_version is ReviewInputVersion.DIGEST_V2_2_GEOMETRY:
+    if input_version in {
+        ReviewInputVersion.DIGEST_V2_2_GEOMETRY,
+        ReviewInputVersion.FOCUSED_V2_3,
+    }:
         if not isinstance(geometry_snapshot, GeometrySnapshot):
             raise ValueError("geometry review input requires a geometry snapshot")
         payload["geometry_index"] = _geometry_index(geometry_snapshot)
@@ -87,7 +95,19 @@ def _payload(
 def _geometry_index(snapshot: GeometrySnapshot) -> dict[str, object]:
     if len(snapshot.objects) > 160:
         raise ValueError("geometry snapshot exceeds compact object catalog limit")
+    known_objects = tuple(
+        item for item in snapshot.objects if item.status.value == "known"
+    )
+    if not known_objects:
+        return {
+            "status": "empty",
+            "reason": "no_known_objects",
+            "scene_id": snapshot.scene_id,
+            "checkpoint_id": snapshot.checkpoint_id,
+            "provenance": snapshot.provenance,
+        }
     return {
+        "status": "available",
         "scene_id": snapshot.scene_id,
         "checkpoint_id": snapshot.checkpoint_id,
         "provenance": snapshot.provenance,
@@ -99,7 +119,7 @@ def _geometry_index(snapshot: GeometrySnapshot) -> dict[str, object]:
                 "reason_code": item.reason_code,
                 "line_start": item.source.line_start,
             }
-            for item in snapshot.objects
+            for item in known_objects
         ],
     }
 

@@ -14,6 +14,11 @@ validates, accepts, rolls back, and publishes.
 No component may both produce a candidate change and grant final acceptance to
 that same change.
 
+Candidate retention and final certification are separate decisions. Once an
+Agent has produced an edited, executable candidate, SDK turn exhaustion,
+structured-output formatting, citation drift, or a later failed attempt may add
+risk evidence but must not erase the best previously observed candidate.
+
 ## Responsibilities
 
 ### Agent Runtime
@@ -50,8 +55,10 @@ that same change.
 
 Reviewer, Coder, and Verifier use separate stateless sessions. The Coder gets a
 frozen issue and edit scope, not the Reviewer's free-form reasoning history. A
-Verifier sees only the original requirement, frozen issue, candidate diff, and
-changed Scene evidence.
+Verifier sees the original requirement, frozen issue, complete candidate source,
+candidate diff, and changed Scene evidence. It reports every frozen issue as
+`resolved`, `unresolved`, or `unknown`; citation metadata helps diagnosis but is
+not an acceptance gate by itself.
 
 ## Tool Security
 
@@ -94,6 +101,11 @@ are reused.
    deterministic validators, and a changed-Scene risk scan.
 8. Use a directed read-only Verifier only when deterministic validation is not
    sufficient.
+9. Preserve the best edited candidate across attempts. A later SDK, parser,
+   citation, or Verifier failure marks risk and falls back to that candidate,
+   not automatically to the original known-bad source.
+10. Final certification still belongs to external policy. Preserving a
+    `candidate_risk` revision does not silently turn it into PASS.
 
 ## Layout Flow
 
@@ -110,6 +122,10 @@ Repair attempts are limited by role and job policy. The default architecture
 allows at most two logic repairs, two overlap repairs, and three Agent-generated
 revisions per job. The policy may be tightened by tenant or queue but not loosened
 inside prompts.
+
+The current MathPi logic replay profile uses 12 Coder turns, 8 Verifier turns,
+and 64 total tool calls as bounded soft budgets. Exhaustion stops further work
+and records risk; it does not discard an already edited best candidate.
 
 Persist a stage run ID, lease owner, heartbeat, deadline, retry budget, and
 terminal state. Infrastructure failures cannot cause infinite queue retries.

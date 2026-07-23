@@ -131,7 +131,10 @@ class ToolGuard:
             data.get("offset"),
             data.get("limit"),
         )
-        if signature in self._seen_reads:
+        policy = self._tool_policies.get("Read")
+        if signature in self._seen_reads and (
+            policy is None or policy.max_calls <= 1
+        ):
             raise DuplicateRead(f"duplicate Read call: {path}")
         self._seen_reads.add(signature)
 

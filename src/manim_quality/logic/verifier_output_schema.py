@@ -29,13 +29,14 @@ VERIFIER_OUTPUT_SCHEMA: dict[str, object] = {
                 "required": [
                     "issue_id",
                     "resolved",
-                    "candidate_evidence",
                     "reason",
                 ],
                 "properties": {
                     "issue_id": {"type": "string", "minLength": 1},
                     "resolved": {"type": "boolean"},
-                    "candidate_evidence": _EVIDENCE,
+                    "candidate_evidence": {
+                        "anyOf": [_EVIDENCE, {"type": "null"}],
+                    },
                     "reason": {"type": "string", "minLength": 1},
                 },
             },

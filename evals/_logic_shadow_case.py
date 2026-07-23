@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import ast
 import json
 import shutil
 import tempfile
@@ -26,8 +25,6 @@ from manim_quality.contracts import (
     RevisionCreator,
     RevisionStage,
 )
-from manim_quality.geometry.schemas import GeometrySnapshot
-from manim_quality.geometry.static_index import build_static_geometry_snapshot
 from manim_quality.logic.engine_adapter import build_engine_review_evidence
 from manim_quality.logic.eval_manifest import FrozenEvalCase
 from manim_quality.logic.evidence import build_logic_evidence
@@ -49,6 +46,11 @@ from ._logic_shadow_io import (
     write_json,
 )
 from ._logic_shadow_workspace import copy_scene_identity as _copy_scene_identity
+from .workbench_e2e.relation_context import (
+    load_or_build_relation_context,
+    relation_prompt_evidence,
+)
+from .workbench_e2e.runtime_geometry import geometry_snapshot_for_review
 
 QUALITY_RESERVED_OUTPUT_TOKENS = 40_000
 REVIEWER_PROMPT_VERSION = "logic-reviewer-v6"
@@ -57,6 +59,7 @@ REVIEWER_PROMPT_VERSIONS = {
     ReviewInputVersion.DIGEST_V2.value: "logic-reviewer-v7-digest",
     ReviewInputVersion.DIGEST_V2_1.value: "logic-reviewer-v7.1-digest",
     ReviewInputVersion.DIGEST_V2_2_GEOMETRY.value: "logic-reviewer-v8-geometry",
+    ReviewInputVersion.FOCUSED_V2_3.value: "logic-reviewer-v9-focused",
 }
 
 
@@ -66,6 +69,8 @@ class ShadowRunConfig:
     provider_env: Mapping[str, str]
     output_root: Path
     input_version: ReviewInputVersion = ReviewInputVersion.EVIDENCE_V1
+    runtime_python: str | None = None
+    probe_source: Path | None = None
 
 
 def run_shadow_case(
@@ -88,11 +93,28 @@ def run_shadow_case(
             (workspace / "problem_text.txt").write_text(problem, encoding="utf-8")
             _copy_scene_identity(case, dataset_root, workspace)
             expected = _optional_text(case, "expected_solution.txt", dataset_root)
+            planning = _optional_json(case, "planning.json", dataset_root)
+            planning = dict(planning or {})
             render_manifest = _render_manifest(case, code)
             manifest_path = workspace / "render_manifest.json"
             manifest_path.write_bytes(render_manifest)
+            relation = load_or_build_relation_context(
+                cache_path=dataset_root / "expected_actual_relations.cache.json",
+                sample_id=case.sample_id,
+                code=code,
+                problem=problem,
+                expected=expected,
+                planning=planning,
+                workspace=workspace,
+                model=config.model,
+                provider_env=config.provider_env,
+                output_dir=case_dir,
+            )
+            prompt_relation = relation_prompt_evidence(relation)
+            if prompt_relation is not None:
+                planning["expected_actual_relations"] = prompt_relation
             evidence = _evidence(
-                code, problem, expected, render_manifest, case, workspace
+                code, problem, expected, planning, render_manifest, case, workspace
             )
             runtime = AgentRuntime(
                 ClaudeSdkBackend(provider_env=config.provider_env),
@@ -119,8 +141,16 @@ def run_shadow_case(
                 reserved_output_tokens=QUALITY_RESERVED_OUTPUT_TOKENS,
                 reserved_cache_read_tokens=estimate,
                 reserved_cache_write_tokens=estimate,
-                geometry_snapshot=_geometry_snapshot(
-                    config.input_version, code, workspace
+                geometry_snapshot=(
+                    geometry_snapshot_for_review(
+                        code=code,
+                        candidate=candidate_source,
+                        runtime_python=config.runtime_python,
+                        probe_source=config.probe_source,
+                        output_dir=case_dir / "runtime_geometry",
+                    )
+                    if _uses_geometry(config.input_version)
+                    else None
                 ),
             )
         write_json(
@@ -144,6 +174,7 @@ def _evidence(
     code: str,
     problem: str,
     expected: str | None,
+    planning: dict[str, object] | None,
     manifest: bytes,
     case: FrozenEvalCase,
     workspace: Path,
@@ -153,7 +184,7 @@ def _evidence(
         tenant_id="offline-eval",
         candidate_code_ref="candidate.py",
         problem_text=problem,
-        planning={"review_scope": "logic_only"},
+        planning=planning or {"review_scope": "logic_only"},
         expected_answer=expected,
         render_manifest_ref="render_manifest.json",
         asset_manifest_ref=None,
@@ -197,39 +228,6 @@ def _render_manifest(case: FrozenEvalCase, code: str) -> bytes:
     return (json.dumps(data, sort_keys=True, separators=(",", ":")) + "\n").encode()
 
 
-def _geometry_snapshot(
-    input_version: ReviewInputVersion,
-    code: str,
-    workspace: Path,
-) -> GeometrySnapshot | None:
-    if input_version is not ReviewInputVersion.DIGEST_V2_2_GEOMETRY:
-        return None
-    return build_static_geometry_snapshot(code, scene_id=_scene_name(code, workspace))
-
-
-def _scene_name(code: str, workspace: Path) -> str:
-    manifest = workspace / "case_manifest.json"
-    if manifest.is_file():
-        try:
-            payload = json.loads(manifest.read_text(encoding="utf-8"))
-        except (OSError, UnicodeError, json.JSONDecodeError):
-            payload = None
-        if isinstance(payload, Mapping):
-            value = payload.get("scene_name")
-            if isinstance(value, str) and value.strip():
-                return value.strip()
-    tree = ast.parse(code)
-    for node in tree.body:
-        if not isinstance(node, ast.ClassDef):
-            continue
-        if any(
-            isinstance(item, ast.FunctionDef) and item.name == "construct"
-            for item in node.body
-        ):
-            return node.name
-    raise ValueError("geometry shadow candidate has no Scene construct")
-
-
 def _case_output_dir(output_root: Path, sample_id: str) -> Path:
     root = (Path(output_root).resolve() / "cases").resolve()
     path = (root / sample_id).resolve()
@@ -241,7 +239,7 @@ def _case_output_dir(output_root: Path, sample_id: str) -> Path:
 def _limits(
     input_version: ReviewInputVersion = ReviewInputVersion.EVIDENCE_V1,
 ) -> BudgetLimits:
-    geometry = input_version is ReviewInputVersion.DIGEST_V2_2_GEOMETRY
+    geometry = _uses_geometry(input_version)
     return BudgetLimits(
         max_context_bytes=250_000,
         max_turns=10 if geometry else 8,
@@ -253,6 +251,13 @@ def _limits(
         max_cache_write_tokens=200_000,
         max_total_tokens=400_000,
     )
+
+
+def _uses_geometry(input_version: ReviewInputVersion) -> bool:
+    return input_version in {
+        ReviewInputVersion.DIGEST_V2_2_GEOMETRY,
+        ReviewInputVersion.FOCUSED_V2_3,
+    }
 
 
 def _required(case: FrozenEvalCase, name: str, root: Path) -> Path:
@@ -267,3 +272,13 @@ def _optional_text(case: FrozenEvalCase, name: str, root: Path) -> str | None:
     if artifact is None:
         return None
     return artifact.resolve_verified(root).read_text(encoding="utf-8")
+
+
+def _optional_json(case: FrozenEvalCase, name: str, root: Path) -> dict[str, object] | None:
+    artifact = case.artifacts.get(name)
+    if artifact is None:
+        return None
+    value = json.loads(artifact.resolve_verified(root).read_text(encoding="utf-8"))
+    if not isinstance(value, dict):
+        raise ValueError(f"{name} must contain a JSON object")
+    return value

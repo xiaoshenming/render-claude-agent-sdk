@@ -101,6 +101,24 @@ def test_guard_detects_duplicate_reads_and_patches(tmp_path: Path) -> None:
         edit_guard.authorize("Edit", patch)
 
 
+def test_guard_allows_bounded_repeat_reads_when_explicit(tmp_path: Path) -> None:
+    candidate = tmp_path / "candidate.py"
+    candidate.write_text("value = 1\n", encoding="utf-8")
+    guard = ToolGuard(
+        workspace=tmp_path,
+        profile=reviewer_profile(model="test", prompt_version="v1"),
+        readable_paths=(candidate,),
+        editable_paths=(),
+        tool_policies={"Read": ToolInputPolicy(max_calls=2)},
+    )
+    read = {"file_path": str(candidate)}
+
+    guard.authorize("Read", read)
+    guard.authorize("Read", read)
+    with pytest.raises(ToolDenied, match="call limit"):
+        guard.authorize("Read", read)
+
+
 def test_guard_allows_one_fresh_read_after_edit(tmp_path: Path) -> None:
     candidate = tmp_path / "candidate.py"
     candidate.write_text("value = 1\n", encoding="utf-8")
