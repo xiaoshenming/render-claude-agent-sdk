@@ -12,9 +12,6 @@ REPO = Path(__file__).resolve().parents[1]
 
 def main() -> int:
     cwd = Path.cwd().resolve()
-    if not cwd.is_relative_to(REPO):
-        raise SystemExit(f"working directory is outside repository: {cwd}")
-
     command = [
         "docker",
         "run",
@@ -30,6 +27,8 @@ def main() -> int:
         "--workdir",
         str(cwd),
     ]
+    if not cwd.is_relative_to(REPO):
+        command.extend(("--volume", f"{cwd}:{cwd}"))
     for target in _argument_mounts(sys.argv[1:]):
         command.extend(("--volume", f"{target}:{target}"))
     for name in ("PYTHONPATH", "MATHPI_RENDER_ASSETS_DIR"):
