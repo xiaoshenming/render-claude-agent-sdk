@@ -55,7 +55,7 @@ def _edit_tools(handlers) -> tuple[ManagedToolGrant, ...]:
             RECORD_FINDINGS_SCHEMA,
             handlers.record_findings,
             ToolEffect.SESSION_MUTATION,
-            2,
+            3,
             12_000,
         ),
         _grant(

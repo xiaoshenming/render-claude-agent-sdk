@@ -115,7 +115,7 @@ class QualitySession:
             raise InvalidSessionTransition(
                 "read_solution must cover the current revision before findings"
             )
-        if self._finding_batches >= 2:
+        if self._finding_batches >= 3:
             raise InvalidSessionTransition("finding batch budget exhausted")
         if (
             self.current_revision.revision_id != "R0"
