@@ -124,6 +124,24 @@ async def retry_structured_output(
     }
 
 
+async def recover_managed_failure(state, data) -> dict[str, object]:
+    result = await state._finish_tool(data["tool_use_id"])
+    if result:
+        return result
+    detail = str(data.get("error", "invalid tool input"))[:1_000]
+    return {
+        "continue_": True,
+        "hookSpecificOutput": {
+            "hookEventName": "PostToolUseFailure",
+            "additionalContext": (
+                "The managed tool rejected this call. Use its error result to "
+                "correct the next call without repeating completed work. "
+                f"Error: {detail}"
+            ),
+        },
+    }
+
+
 def _prepare_structured_retry(state, tool_id: str, error_text: str):
     if tool_id not in state._pending_tools:
         error = ClaudeSdkProtocolError(

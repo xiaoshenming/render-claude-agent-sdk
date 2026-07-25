@@ -15,7 +15,11 @@ from ._claude_hook_values import (
     ClaudeSdkProtocolError as ClaudeSdkProtocolError,
 )
 from ._claude_hook_values import message_record, parse_token_usage, usage_delta
-from ._claude_tool_hooks import pre_tool, retry_structured_output
+from ._claude_tool_hooks import (
+    pre_tool,
+    recover_managed_failure,
+    retry_structured_output,
+)
 from ._runtime_models import BackendRequest
 from ._subagent_protocol import NativeSubagentProtocol
 from .runtime import RuntimeControls
@@ -68,6 +72,8 @@ class ClaudeHookState(ClaudeHookAccessors):
             return await self._retry_structured_output(
                 data["tool_use_id"], str(data.get("error", "schema mismatch"))
             )
+        if str(data.get("tool_name", "")).startswith("mcp__quality__"):
+            return await recover_managed_failure(self, data)
         error = RuntimeError(f"SDK tool failed: {data.get('error', 'unknown error')}")
         async with self._lock:
             self._failure = error
