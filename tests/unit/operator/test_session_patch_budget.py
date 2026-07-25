@@ -13,7 +13,7 @@ class Solution(BaseConfigScene):
 '''
 
 
-def test_third_patch_is_available_after_two_improving_validations() -> None:
+def test_fifth_patch_is_available_after_improving_validations() -> None:
     quality = QualitySession(problem_text=PROBLEM, candidate_code=BASELINE)
     quality.mark_solution_read("R0")
     quality.record_findings(
@@ -30,7 +30,12 @@ def test_third_patch_is_available_after_two_improving_validations() -> None:
 
     old_text = "Line(LEFT, RIGHT)"
     for index, new_text in enumerate(
-        ("Line(LEFT, 2 * RIGHT)", "Line(LEFT, 3 * RIGHT)"),
+        (
+            "Line(LEFT, 2 * RIGHT)",
+            "Line(LEFT, 3 * RIGHT)",
+            "Line(LEFT, 4 * RIGHT)",
+            "Line(LEFT, 5 * RIGHT)",
+        ),
         start=1,
     ):
         revision = quality.apply_patch(
@@ -51,8 +56,8 @@ def test_third_patch_is_available_after_two_improving_validations() -> None:
     revision = quality.apply_patch(
         scope=PatchScope.LOGIC,
         old_text=old_text,
-        new_text="Line(LEFT, 4 * RIGHT)",
+        new_text="Line(LEFT, 6 * RIGHT)",
         finding_ids=("logic-1",),
     )
 
-    assert revision.revision_id == "R3"
+    assert revision.revision_id == "R5"

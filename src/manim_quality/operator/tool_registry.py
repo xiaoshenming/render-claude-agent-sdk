@@ -64,7 +64,7 @@ def _edit_tools(handlers) -> tuple[ManagedToolGrant, ...]:
             APPLY_PATCH_SCHEMA,
             handlers.apply_patch,
             ToolEffect.REVISION_MUTATION,
-            3,
+            5,
             8_000,
             max_input_bytes=48_000,
         ),
@@ -88,7 +88,7 @@ def _validation_tools(handlers) -> tuple[ManagedToolGrant, ...]:
             REVISION_INPUT_SCHEMA,
             handlers.validate_revision,
             ToolEffect.VALIDATION,
-            3,
+            5,
             30_000,
         ),
     )

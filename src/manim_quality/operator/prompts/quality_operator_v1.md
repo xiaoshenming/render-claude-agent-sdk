@@ -18,7 +18,7 @@ Mandatory operating rules:
    Use category `logic` for both Reviewer reports. Use only severity `blocking`
    or `warning`. Create short stable IDs such as `logic-1`; do not copy the
    Reviewer's extra fields into the tool call.
-5. Apply at most three exact coherent block patches inside Solution. Prefer a
+5. Apply at most five exact coherent block patches inside Solution. Prefer a
    coordinated root-cause repair over scattered shifts. Do not rewrite the
    class, remove teaching content, or touch framework code.
 6. After every patch call `validate_revision`. Stop patching after a
