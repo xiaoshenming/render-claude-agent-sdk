@@ -30,6 +30,8 @@ def main() -> int:
         "--workdir",
         str(cwd),
     ]
+    for target in _argument_mounts(sys.argv[1:]):
+        command.extend(("--volume", f"{target}:{target}"))
     for name in ("PYTHONPATH", "MATHPI_RENDER_ASSETS_DIR"):
         value = os.environ.get(name)
         if not value:
@@ -42,6 +44,30 @@ def main() -> int:
             command.extend(("--volume", f"{target}:{target}:ro"))
     command.extend((IMAGE, *sys.argv[1:]))
     return subprocess.run(command, check=False).returncode
+
+
+def _argument_mounts(arguments: list[str]) -> tuple[Path, ...]:
+    mounts: set[Path] = set()
+    for raw in arguments:
+        target = Path(raw)
+        if not target.is_absolute() or target.is_relative_to(REPO):
+            continue
+        while not target.exists():
+            target = target.parent
+        mounts.add(target if target.is_dir() else target.parent)
+    return tuple(
+        sorted(
+            (
+                target
+                for target in mounts
+                if not any(
+                    target != other and target.is_relative_to(other)
+                    for other in mounts
+                )
+            ),
+            key=str,
+        )
+    )
 
 
 if __name__ == "__main__":
