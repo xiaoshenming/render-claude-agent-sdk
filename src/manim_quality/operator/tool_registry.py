@@ -79,7 +79,7 @@ def _validation_tools(handlers) -> tuple[ManagedToolGrant, ...]:
             REVISION_INPUT_SCHEMA,
             handlers.inspect_layout,
             ToolEffect.VALIDATION,
-            2,
+            3,
             30_000,
         ),
         _grant(
@@ -88,7 +88,7 @@ def _validation_tools(handlers) -> tuple[ManagedToolGrant, ...]:
             REVISION_INPUT_SCHEMA,
             handlers.validate_revision,
             ToolEffect.VALIDATION,
-            2,
+            3,
             30_000,
         ),
     )
