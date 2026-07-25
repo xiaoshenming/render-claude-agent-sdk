@@ -149,7 +149,7 @@ def _prepare_structured_retry(state, tool_id: str, error_text: str):
         )
         state._failure = error
         return error
-    if state._output_corrections != 0:
+    if state._output_corrections >= 2:
         error = ClaudeSdkProtocolError(
             "structured output correction limit exceeded"
         )

@@ -570,7 +570,7 @@ def test_sdk_backend_allows_only_schema_bound_structured_output(
     assert structured.allowed is True
 
 
-def test_sdk_backend_grants_only_one_concurrent_output_correction(
+def test_sdk_backend_bounds_concurrent_output_corrections_to_two(
     tmp_path: Path,
 ) -> None:
     candidate = tmp_path / "candidate.py"
@@ -628,7 +628,7 @@ def test_sdk_backend_grants_only_one_concurrent_output_correction(
 
     assert [call.name for call in sink.records[0].tool_calls].count(
         "StructuredOutputCorrection"
-    ) == 1
+    ) == 2
 
 
 def test_sdk_backend_requires_per_turn_usage(tmp_path: Path) -> None:
