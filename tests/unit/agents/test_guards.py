@@ -9,6 +9,7 @@ from manim_quality.agents.guards import (
     ToolDenied,
     ToolGuard,
 )
+from manim_quality.agents.managed_tools import ManagedToolGrant, ToolEffect
 from manim_quality.agents.profile import (
     coder_profile,
     operator_profile,
@@ -38,6 +39,29 @@ def geometry_grant() -> ReadonlyToolGrant:
         max_calls=2,
         timeout_ms=100,
         max_result_chars=200,
+    )
+
+
+async def _mutate(arguments):
+    return str(arguments["value"])
+
+
+def mutation_grant() -> ManagedToolGrant:
+    return ManagedToolGrant(
+        server_name="quality",
+        name="mutate",
+        description="Mutate one value.",
+        input_schema={
+            "type": "object",
+            "properties": {"value": {"type": "string"}},
+            "required": ["value"],
+            "additionalProperties": False,
+        },
+        handler=_mutate,
+        effect=ToolEffect.SESSION_MUTATION,
+        max_calls=1,
+        timeout_ms=1_000,
+        max_result_chars=100,
     )
 
 
@@ -295,6 +319,8 @@ def test_guard_enforces_foreground_named_reviewer_boundaries(
         prompt="Read once and report.",
         allowed_tools=(tool.sdk_name,),
     )
+
+
     guard = ToolGuard(
         workspace=tmp_path,
         profile=operator_profile(model="test", prompt_version="v1"),
@@ -364,3 +390,23 @@ def test_guard_rejects_background_or_implicit_reviewer(
 
     with pytest.raises(ToolDenied, match="foreground"):
         guard.authorize("Agent", value)
+
+
+def test_failed_parent_mutation_can_refund_per_tool_quota(tmp_path: Path) -> None:
+    tool = mutation_grant()
+    guard = ToolGuard(
+        workspace=tmp_path,
+        profile=operator_profile(model="test", prompt_version="v1"),
+        readable_paths=(),
+        editable_paths=(),
+        managed_tools=(tool,),
+    )
+    tool_input = {"value": "first"}
+
+    guard.authorize(tool.sdk_name, tool_input)
+    guard.claim_managed_tool(tool.sdk_name, tool_input)
+    guard.refund_parent_managed_tool(tool.sdk_name)
+
+    assert guard.authorize(tool.sdk_name, {"value": "corrected"}) == {
+        "value": "corrected"
+    }

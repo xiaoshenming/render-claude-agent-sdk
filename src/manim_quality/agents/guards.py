@@ -146,6 +146,13 @@ class ToolGuard:
         self._claim_pending_tool(tool, normalized)
         return grant
 
+    def refund_parent_managed_tool(self, tool: str) -> None:
+        call_key = ("parent", tool)
+        calls = self._read_tool_calls.get(call_key, 0)
+        if calls <= 0:
+            raise ToolDenied(f"managed tool has no call to refund: {tool}")
+        self._read_tool_calls[call_key] = calls - 1
+
     def _authorize_read_tool(
         self, tool: str, input_data: object, *, caller: str
     ) -> Mapping[str, object]:

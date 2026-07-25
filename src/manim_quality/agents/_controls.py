@@ -16,6 +16,7 @@ from ._runtime_models import (
 )
 from .budget import BudgetTracker
 from .guards import ToolGuard
+from .managed_tools import ManagedToolGrant, ToolEffect
 from .usage import TokenUsage, ToolCallRecord, recordable_tool_input
 
 
@@ -155,6 +156,11 @@ class RuntimeControls:
         try:
             result = await grant.execute(normalized)
         except Exception as error:
+            if (
+                isinstance(grant, ManagedToolGrant)
+                and grant.effect is not ToolEffect.READ_ONLY
+            ):
+                self._guard.refund_parent_managed_tool(name)
             error_fingerprint = f"{type(error).__name__}:{str(error)[:1_000]}"
             self._record_tool_result(
                 name,
