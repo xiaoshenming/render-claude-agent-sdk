@@ -217,7 +217,7 @@ def _limits(args: argparse.Namespace) -> BudgetLimits:
         max_context_bytes=2_000_000,
         max_turns=args.max_turns,
         max_tool_calls=args.max_tool_calls,
-        max_elapsed_ms=600_000,
+        max_elapsed_ms=900_000,
         max_input_tokens=200_000,
         max_output_tokens=20_000,
         max_cache_read_tokens=200_000,
