@@ -1,0 +1,351 @@
+class Solution(BaseConfigScene):
+    def get_intersection(self, p1, p2, p3, p4):
+        x1, y1 = p1[0], p1[1]
+        x2, y2 = p2[0], p2[1]
+        x3, y3 = p3[0], p3[1]
+        x4, y4 = p4[0], p4[1]
+        denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
+        if abs(denom) < 1e-6:
+            return (p1 + p2) / 2
+        px = ((x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4)) / denom
+        py = ((x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)) / denom
+        return np.array([px, py, 0])
+
+    def construct(self):
+        # ================= 图 1 原始坐标与定义 =================
+        A1 = np.array([-4.75, -1.5, 0])
+        B1 = np.array([-1.25, -1.5, 0])
+        C1 = np.array([-3.0, 1.53, 0])
+
+        edge_A1B1 = Line(A1, B1, color=BASE_COLOR)
+        edge_B1C1 = Line(B1, C1, color=BASE_COLOR)
+        edge_C1A1 = Line(C1, A1, color=BASE_COLOR)
+        diagram1 = VGroup(edge_A1B1, edge_B1C1, edge_C1A1)
+
+        # 适配左侧
+        self.fit_left(diagram1)
+
+        # 获取图 1 实时坐标
+        pt_A1 = edge_A1B1.get_start()
+        pt_B1 = edge_A1B1.get_end()
+        pt_C1 = edge_B1C1.get_end()
+        pt_D1 = edge_C1A1.point_from_proportion(0.4)
+        pt_P1 = edge_B1C1.point_from_proportion(0.4)
+        pt_Q1 = self.get_intersection(pt_A1, pt_P1, pt_B1, pt_D1)
+
+        # 创建图 1 其他元素
+        line_AP1 = Line(pt_A1, pt_P1, color=BASE_COLOR)
+        line_BD1 = Line(pt_B1, pt_D1, color=BASE_COLOR)
+        dot_A1 = Dot(pt_A1, radius=0.04, color=BASE_COLOR)
+        dot_B1 = Dot(pt_B1, radius=0.04, color=BASE_COLOR)
+        dot_C1 = Dot(pt_C1, radius=0.04, color=BASE_COLOR)
+        dot_D1 = Dot(pt_D1, radius=0.04, color=BASE_COLOR)
+        dot_P1 = Dot(pt_P1, radius=0.04, color=BASE_COLOR)
+        dot_Q1 = Dot(pt_Q1, radius=0.04, color=BASE_COLOR)
+
+        lbl_A1 = MathTex("A", color=TEXT_COLOR).next_to(dot_A1, DOWN + LEFT, buff=0.15)
+        lbl_B1 = MathTex("B", color=TEXT_COLOR).next_to(dot_B1, DOWN + RIGHT, buff=0.15)
+        lbl_C1 = MathTex("C", color=TEXT_COLOR).next_to(dot_C1, UP, buff=0.15)
+        lbl_D1 = MathTex("D", color=TEXT_COLOR).next_to(dot_D1, LEFT, buff=0.15)
+        lbl_P1 = MathTex("P", color=TEXT_COLOR).next_to(dot_P1, RIGHT, buff=0.15)
+        lbl_Q1 = MathTex("Q", color=TEXT_COLOR).next_to(dot_Q1, DOWN, buff=0.15)
+        lbl_fig1 = Text("图1", font_size=20, color=TEXT_COLOR).move_to(pt_A1 + DOWN * 0.8 + RIGHT * 1.5)
+
+        tick_CD1 = self.make_tick_mark(Line(pt_C1, pt_D1), n=1, color=KNOWN_COLOR)
+        tick_BP1 = self.make_tick_mark(Line(pt_B1, pt_P1), n=1, color=KNOWN_COLOR)
+
+        arc_ABP1 = self.make_angle_mark(pt_B1, pt_A1, pt_P1, radius=0.3, color=FOCUS_COLOR, fill_opacity=0.25)
+        arc_C1 = self.make_angle_mark(pt_C1, pt_A1, pt_B1, radius=0.3, color=FOCUS_COLOR, fill_opacity=0.25)
+
+        region_ABP1 = self.make_region_fill(pt_A1, pt_B1, pt_P1, color=PAIR_A_COLOR, opacity=0.18)
+        region_BCD1 = self.make_region_fill(pt_B1, pt_C1, pt_D1, color=PAIR_B_COLOR, opacity=0.18)
+
+        geometry_all1 = VGroup(
+            diagram1, line_AP1, line_BD1, dot_A1, dot_B1, dot_C1, dot_D1, dot_P1, dot_Q1,
+            lbl_A1, lbl_B1, lbl_C1, lbl_D1, lbl_P1, lbl_Q1, lbl_fig1,
+            tick_CD1, tick_BP1, arc_ABP1, arc_C1, region_ABP1, region_BCD1
+        )
+        self.fit_geometry_group(geometry_all1)
+
+        # ================= 图 2 原始坐标与定义 =================
+        A2 = np.array([1.8, -1.5, 0])
+        B2 = np.array([4.2, -1.5, 0])
+        C2 = np.array([3.0, 0.58, 0])
+        D2 = np.array([1.32, -2.332, 0])
+        P2 = np.array([2.52, 1.412, 0])
+
+        edge_A2B2 = Line(A2, B2, color=BASE_COLOR)
+        edge_B2C2 = Line(B2, C2, color=BASE_COLOR)
+        edge_C2A2 = Line(C2, A2, color=BASE_COLOR)
+        ext_AD = Line(A2, D2, color=BASE_COLOR)
+        ext_CP = Line(C2, P2, color=BASE_COLOR)
+        diagram2 = VGroup(edge_A2B2, edge_B2C2, edge_C2A2, ext_AD, ext_CP)
+
+        self.fit_left(diagram2)
+
+        # 获取图 2 实时坐标
+        pt_A2 = edge_A2B2.get_start()
+        pt_B2 = edge_A2B2.get_end()
+        pt_C2 = edge_B2C2.get_end()
+        pt_D2 = ext_AD.get_end()
+        pt_P2 = ext_CP.get_end()
+        pt_Q2 = self.get_intersection(pt_A2, pt_P2, pt_B2, pt_D2)
+
+        # 创建图 2 其他元素
+        line_AP2 = Line(pt_A2, pt_P2, color=BASE_COLOR)
+        line_BD2 = Line(pt_B2, pt_D2, color=BASE_COLOR)
+        dot_A2 = Dot(pt_A2, radius=0.04, color=BASE_COLOR)
+        dot_B2 = Dot(pt_B2, radius=0.04, color=BASE_COLOR)
+        dot_C2 = Dot(pt_C2, radius=0.04, color=BASE_COLOR)
+        dot_D2 = Dot(pt_D2, radius=0.04, color=BASE_COLOR)
+        dot_P2 = Dot(pt_P2, radius=0.04, color=BASE_COLOR)
+        dot_Q2 = Dot(pt_Q2, radius=0.04, color=BASE_COLOR)
+
+        lbl_A2 = MathTex("A", color=TEXT_COLOR).next_to(dot_A2, UP + LEFT, buff=0.15)
+        lbl_B2 = MathTex("B", color=TEXT_COLOR).next_to(dot_B2, DOWN + RIGHT, buff=0.15)
+        lbl_C2 = MathTex("C", color=TEXT_COLOR).next_to(dot_C2, RIGHT, buff=0.15)
+        lbl_D2 = MathTex("D", color=TEXT_COLOR).next_to(dot_D2, LEFT, buff=0.15)
+        lbl_P2 = MathTex("P", color=TEXT_COLOR).next_to(dot_P2, UP, buff=0.15)
+        lbl_Q2 = MathTex("Q", color=TEXT_COLOR).next_to(dot_Q2, DOWN, buff=0.15)
+        lbl_fig2 = Text("图2", font_size=20, color=TEXT_COLOR).move_to(pt_A2 + DOWN * 0.8 + RIGHT * 1.5)
+
+        tick_CD2 = self.make_tick_mark(Line(pt_C2, pt_D2), n=1, color=KNOWN_COLOR)
+        tick_BP2 = self.make_tick_mark(Line(pt_B2, pt_P2), n=1, color=KNOWN_COLOR)
+
+        arc_BQP2 = self.make_angle_mark(pt_Q2, pt_B2, pt_P2, radius=0.3, color=RESULT_COLOR, fill_opacity=0.25)
+        arc_ABP2 = self.make_angle_mark(pt_B2, pt_A2, pt_P2, radius=0.3, color=FOCUS_COLOR, fill_opacity=0.25)
+        arc_BCD2 = self.make_angle_mark(pt_C2, pt_B2, pt_D2, radius=0.3, color=FOCUS_COLOR, fill_opacity=0.25)
+
+        region_ABP2 = self.make_region_fill(pt_A2, pt_B2, pt_P2, color=PAIR_A_COLOR, opacity=0.18)
+        region_BCD2 = self.make_region_fill(pt_B2, pt_C2, pt_D2, color=PAIR_B_COLOR, opacity=0.18)
+
+        geometry_all2 = VGroup(
+            diagram2, line_AP2, line_BD2, dot_A2, dot_B2, dot_C2, dot_D2, dot_P2, dot_Q2,
+            lbl_A2, lbl_B2, lbl_C2, lbl_D2, lbl_P2, lbl_Q2, lbl_fig2,
+            tick_CD2, tick_BP2, arc_BQP2, arc_ABP2, arc_BCD2, region_ABP2, region_BCD2
+        )
+        self.fit_geometry_group(geometry_all2)
+
+        # ================= 动画播放：第一问 =================
+        base_geometry1 = VGroup(
+            diagram1, line_AP1, line_BD1, dot_A1, dot_B1, dot_C1, dot_D1, dot_P1, dot_Q1,
+            lbl_A1, lbl_B1, lbl_C1, lbl_D1, lbl_P1, lbl_Q1, lbl_fig1
+        )
+        self.add(base_geometry1)
+
+        with self.voiceover(text="同学们好！我们一起来看这道题。") as tracker:
+            pass
+
+        with self.voiceover(text="首先，题目给出三角形 ABC 是等边三角形。") as tracker:
+            self.play_after_speech([
+                self.highlight_edge(edge_A1B1),
+                self.highlight_edge(edge_B1C1),
+                self.highlight_edge(edge_C1A1)
+            ], tracker)
+
+        with self.voiceover(text="动点 D 在边 CA 上，动点 P 在边 BC 上。") as tracker:
+            self.play_after_speech([
+                self.highlight_point(lbl_D1),
+                self.highlight_point(lbl_P1)
+            ], tracker)
+
+        with self.voiceover(text="它们分别从 C 点和 B 点同时出发。") as tracker:
+            pass
+
+        with self.voiceover(text="并且以相同的速度进行运动。") as tracker:
+            pass
+
+        with self.voiceover(text="因为速度相同，所以它们运动的距离相等，也就是线段 CD 等于 BP。") as tracker:
+            self.play_after_speech([
+                FadeIn(tick_CD1),
+                FadeIn(tick_BP1)
+            ], tracker)
+
+        with self.voiceover(text="连接 AP 和 BD，它们相交于点 Q。") as tracker:
+            self.play_after_speech([
+                self.highlight_edge(line_AP1),
+                self.highlight_edge(line_BD1),
+                self.highlight_point(lbl_Q1)
+            ], tracker)
+
+        with self.voiceover(text="第一问要求证：线段 AP 等于 BD。") as tracker:
+            goal_panel = self.make_question_goal_panel(self.make_ctex_row(r"求证：$AP = BD$"))
+            self.play_after_speech([FadeIn(goal_panel)], tracker)
+
+        with self.voiceover(text="要证 AP 等于 BD，我们可以尝试寻找全等三角形。") as tracker:
+            self.play_steps_evenly([
+                self.reemphasize_stroke(line_AP1),
+                self.reemphasize_stroke(line_BD1)
+            ], tracker)
+
+        with self.voiceover(text="我们注意到，AP 在三角形 ABP 中。") as tracker:
+            self.play_steps_evenly([FadeIn(region_ABP1)], tracker)
+
+        with self.voiceover(text="而 BD 在三角形 BCD 中。") as tracker:
+            self.play_steps_evenly([FadeIn(region_BCD1)], tracker)
+
+        with self.voiceover(text="我们来看看这两个三角形有哪些相等的条件。") as tracker:
+            pass
+
+        with self.voiceover(text="首先，因为三角形 ABC 是等边三角形，所以 AB 等于 BC。") as tracker:
+            self.play_steps_evenly([
+                self.reemphasize_equal_segments(edge_A1B1, edge_B1C1)
+            ], tracker)
+
+        with self.voiceover(text="同时，等边三角形的每个内角都是六十度。") as tracker:
+            pass
+
+        with self.voiceover(text="所以角 ABP 等于角 C，都等于六十度。") as tracker:
+            self.play_steps_evenly([
+                FadeIn(arc_ABP1),
+                FadeIn(arc_C1)
+            ], tracker)
+
+        with self.voiceover(text="再加上已知条件中，BP 等于 CD。") as tracker:
+            self.play_steps_evenly([
+                self.reemphasize_equal_segments(Line(pt_B1, pt_P1), Line(pt_C1, pt_D1))
+            ], tracker)
+
+        with self.voiceover(text="这样，我们就可以用边角边定理，证明这两个三角形全等。") as tracker:
+            pass
+
+        step_panel1 = self.make_step_panel([
+            self.make_proof_because(r"\triangle ABC \text{ 是等边三角形}"),
+            self.make_proof_therefore(r"AB = BC, \angle ABP = \angle C = 60^\circ"),
+            self.make_proof_because(r"BP = CD"),
+            self.make_proof_therefore(r"\triangle ABP \cong \triangle BCD\ (SAS)"),
+            self.make_proof_therefore(r"AP = BD")
+        ])
+
+        with self.voiceover(text="因为三角形 ABC 是等边三角形，所以 AB 等于 BC，且角 ABP 等于角 C 等于六十度。") as tracker:
+            self.play_steps_evenly([
+                Write(step_panel1[0]),
+                Write(step_panel1[1])
+            ], tracker)
+
+        with self.voiceover(text="又因为已知条件中，BP 等于 CD。") as tracker:
+            self.play_steps_evenly([Write(step_panel1[2])], tracker)
+
+        with self.voiceover(text="所以，三角形 ABP 全等于三角形 BCD。") as tracker:
+            self.play_steps_evenly([Write(step_panel1[3])], tracker)
+
+        with self.voiceover(text="全等三角形的对应边相等，因此 AP 等于 BD。第一问得证。") as tracker:
+            self.play_steps_evenly([Write(step_panel1[4])], tracker)
+
+        # ================= 动画播放：第二问 =================
+        with self.voiceover(text="接下来我们看第二问。") as tracker:
+            self.play(
+                FadeOut(geometry_all1),
+                FadeOut(goal_panel),
+                FadeOut(step_panel1)
+            )
+
+        base_geometry2 = VGroup(
+            diagram2, line_AP2, line_BD2, dot_A2, dot_B2, dot_C2, dot_D2, dot_P2, dot_Q2,
+            lbl_A2, lbl_B2, lbl_C2, lbl_D2, lbl_P2, lbl_Q2, lbl_fig2
+        )
+
+        with self.voiceover(text="如果把动点 D 和 P 的范围，改为在射线 CA 和射线 BC 上运动。") as tracker:
+            self.play(FadeIn(base_geometry2))
+
+        with self.voiceover(text="此时，我们需要证明：角 BQP 的大小保持不变，且等于六十度。") as tracker:
+            goal_panel2 = self.make_question_goal_panel(self.make_ctex_row(r"求证：$\angle BQP = 60^\circ$"))
+            self.play_after_speech([FadeIn(goal_panel2)], tracker)
+
+        with self.voiceover(text="我们同样来寻找全等三角形。") as tracker:
+            pass
+
+        with self.voiceover(text="注意到此时 D 在 CA 延长线上，P 在 BC 延长线上。") as tracker:
+            self.play_steps_evenly([
+                self.reemphasize_stroke(ext_AD),
+                self.reemphasize_stroke(ext_CP)
+            ], tracker)
+
+        with self.voiceover(text="因为它们依然以相同的速度运动，所以 BP 仍然等于 CD。") as tracker:
+            self.play_steps_evenly([
+                FadeIn(tick_CD2),
+                FadeIn(tick_BP2)
+            ], tracker)
+
+        with self.voiceover(text="我们再次关注三角形 ABP 和三角形 BCD。") as tracker:
+            self.play_steps_evenly([
+                FadeIn(region_ABP2),
+                FadeIn(region_BCD2)
+            ], tracker)
+
+        with self.voiceover(text="此时，AB 依然等于 BC。") as tracker:
+            self.play_steps_evenly([
+                self.reemphasize_equal_segments(edge_A2B2, edge_B2C2)
+            ], tracker)
+
+        with self.voiceover(text="那它们的夹角呢？") as tracker:
+            pass
+
+        with self.voiceover(text="角 ABP 是等边三角形外角，等于一百二十度。") as tracker:
+            self.play_steps_evenly([FadeIn(arc_ABP2)], tracker)
+
+        with self.voiceover(text="角 BCD 也是外角，同样等于一百二十度。") as tracker:
+            self.play_steps_evenly([FadeIn(arc_BCD2)], tracker)
+
+        with self.voiceover(text="因此，角 ABP 等于角 BCD。") as tracker:
+            pass
+
+        step_panel2 = self.make_step_panel([
+            self.make_proof_because(r"\triangle ABC \text{ 是等边三角形}"),
+            self.make_proof_therefore(r"AB = BC, \angle ABP = \angle BCD = 120^\circ"),
+            self.make_proof_because(r"BP = CD"),
+            self.make_proof_therefore(r"\triangle ABP \cong \triangle BCD\ (SAS)")
+        ])
+
+        with self.voiceover(text="因为三角形 ABC 是等边三角形，所以 AB 等于 BC，且夹角 ABP 等于 BCD 等于一百二十度。") as tracker:
+            self.play_steps_evenly([
+                Write(step_panel2[0]),
+                Write(step_panel2[1])
+            ], tracker)
+
+        with self.voiceover(text="结合 BP 等于 CD，我们依然可以证明三角形 ABP 全等于三角形 BCD。") as tracker:
+            self.play_steps_evenly([
+                Write(step_panel2[2]),
+                Write(step_panel2[3])
+            ], tracker)
+
+        step_panel3 = self.make_step_panel([
+            self.make_proof_therefore(r"\angle BAP = \angle CBD"),
+            self.make_proof_because(r"\angle BQP = \angle BAP + \angle ABQ"),
+            self.make_proof_therefore(r"\angle BQP = \angle CBD + \angle ABQ = \angle ABC = 60^\circ")
+        ])
+
+        with self.voiceover(text="由全等三角形性质，我们得到对应角相等，即角 BAP 等于角 CBD。") as tracker:
+            self.play(FadeOut(step_panel2))
+            self.play_steps_evenly([Write(step_panel3[0])], tracker)
+
+        with self.voiceover(text="接下来，我们来看目标角 BQP。") as tracker:
+            self.play_steps_evenly([FadeIn(arc_BQP2)], tracker)
+
+        with self.voiceover(text="利用三角形外角性质，角 BQP 等于角 BAP 加上角 ABQ。") as tracker:
+            self.play_steps_evenly([Write(step_panel3[1])], tracker)
+
+        with self.voiceover(text="将角 BAP 替换为角 CBD，那么角 BQP 就等于角 CBD 加上角 ABQ。") as tracker:
+            pass
+
+        with self.voiceover(text="而角 CBD 加上角 ABQ，正好等于等边三角形的内角 ABC，也就是六十度。") as tracker:
+            self.play_steps_evenly([Write(step_panel3[2])], tracker)
+
+        # ================= 收尾与总结 =================
+        with self.voiceover(text="所以，无论动点如何运动，角 BQP 的大小都保持六十度不变。第二问得证。") as tracker:
+            self.play_steps_evenly([self.reemphasize_element(arc_BQP2)], tracker)
+
+        with self.voiceover(text="这道题的关键在于，通过等边三角形的对称性构造全等。") as tracker:
+            pass
+
+        with self.voiceover(text="进而实现边与角的等量转移。") as tracker:
+            pass
+
+        with self.voiceover(text="掌握了这种转化思想，类似的几何动点问题就能迎刃而解了。") as tracker:
+            pass
+
+        with self.voiceover(text="同学们，我们下期再见！") as tracker:
+            self.play(
+                FadeOut(step_panel3),
+                FadeOut(goal_panel2)
+            )

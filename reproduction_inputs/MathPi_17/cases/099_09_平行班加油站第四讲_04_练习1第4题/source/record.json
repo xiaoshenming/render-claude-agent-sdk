@@ -1,0 +1,21 @@
+{
+  "source_batch_id": "0489f6c00320",
+  "source_batch_name": "周日交付_81题_server6_20260704",
+  "source_item_id": "aa02439afe4e",
+  "title": "09_平行班加油站第四讲_04_练习1第4题",
+  "problem_text": "AD平分∠BAC，EF垂直平分AD，交BC延长线于F，∠FAC=55°，求∠B的度数。",
+  "solution_steps": "【读题展示阶段】\n先自然读题，不进入计算。题目给出：AD平分∠BAC，EF垂直平分AD，交BC延长线于F，∠FAC=55°，求∠B的度数。读到关键条件时高亮对应图形、线段、角、坐标或数值；最后读出要求：求AD平分∠BAC，EF垂直平分AD，交BC延长线于F，∠FAC=55°，求∠B的度数，只高亮最后要填写、证明或求出的对象。\n【思路切入阶段】\n本题同时出现角平分线和线段垂直平分线，核心是利用垂直平分线得到等腰三角形，再结合外角性质与角平分线的等角关系，通过等式消去相同角，最终得到∠B与∠FAC相等\n【满分答案阶段：必须完整展示的官方解题步骤】\n：∠B = 55°\n模块2 解析过程\n审题与切入\n本题同时出现角平分线和线段垂直平分线，核心是利用垂直平分线得到等腰三角形，再结合外角性质与角平分线的等角关系，通过等式消去相同角，最终得到∠B与∠FAC相等。\n解题思路（模型与定理）\n线段垂直平分线性质：得FA=FD，进而∠FAD=∠FDA。\n角平分线定义：∠BAD=∠CAD。\n三角形外角性质：∠FDA = ∠B + ∠BAD。\n角的和差：∠FAD = ∠FAC + ∠CAD。\n具体推导过程\n第一步：由垂直平分线得等角\nEF垂直平分AD，点F在AD的垂直平分线上，故\nFA = FD\n。\n由等边对等角得：∠FAD = ∠FDA。\n第二步：分别展开两个角\n∠FAD = ∠FAC + ∠CAD\n∠FDA是△ABD的外角，故 ∠FDA = ∠B + ∠BAD\n第三步：利用角平分线消元\n∵ AD平分∠BAC，∴ ∠CAD = ∠BAD。\n又 ∠FAD = ∠FDA，代入展开式：\n∠FAC + ∠CAD = ∠B + ∠BAD\n两边同时减去相等的∠CAD和∠BAD，可得：\n∠FAC = ∠B\n第四步：代入数值\n已知∠FAC=55°，故 ∠B = 55°\n最终答案（中考规范书写）\n解：\n∵ EF垂直平分AD\n∴ FA = FD（线段垂直平分线上的点到线段两端距离相等）\n∴ ∠FAD = ∠FDA（等边对等角）\n∵ ∠FAD = ∠FAC + ∠CAD\n  ∠FDA = ∠B + ∠BAD（三角形外角性质）\n又∵ AD平分∠BAC\n∴ ∠CAD = ∠BAD\n∴ ∠FAC = ∠B\n∵ ∠FAC = 55°\n∴ ∠B = 55°\n答：∠B的度数为55°。\n【结论收束阶段】\n最后收束结论：∠B = 55°。\n【技巧总结阶段】\n本题可迁移的方法是：（模型与定理） 线段垂直平分线性质：得FA=FD，进而∠FAD=∠FDA。 角平分线定义：∠BAD=∠CAD。 三角形外角性质：∠FDA = ∠B + ∠BAD。 角的和差：∠FAD = ∠FAC + ∠CAD。",
+  "figure_code": "",
+  "index": 99,
+  "status": "render_succeeded",
+  "scene_class": "Solution",
+  "llm_seconds": 78.455,
+  "llm_findings": [
+    "provider_output_sanitized"
+  ],
+  "code_sha256": "5ac8ef31850541b89ec5308fb68db90f8c8bef94c3f50a1e9d72a7e257956605",
+  "work_dir": "/opt/mathpi/batchops/benchmarks/geometry-drift-8797-20260724-1720/0099-aa02439afe4e",
+  "render_seconds": 317.349,
+  "video_path": "/opt/mathpi/batchops/benchmarks/geometry-drift-8797-20260724-1720/0099-aa02439afe4e/media/videos/480p15/video.mp4",
+  "video_bytes": 1055342
+}

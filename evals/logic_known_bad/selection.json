@@ -1,0 +1,16 @@
+{
+  "schema_version": "manim-quality.logic-bad-selection.v1",
+  "pack_id": "geo30_mutation_holdout_v2",
+  "primary_pack": "geo30_mutation_v5_blind",
+  "excluded_tuning_samples": [
+    {
+      "source_sample_id": "MUT001_expert_line_endpoint_swap",
+      "reason": "used during Task 6 schema and SDK smoke debugging"
+    }
+  ],
+  "replacement": {
+    "pack": "geo30_mutation_v4",
+    "sample_id": "BAD030_V4_MUT029_medium_chinese_line_relation_swap",
+    "source_sample_id": "MUT029_medium_chinese_line_relation_swap"
+  }
+}

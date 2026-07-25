@@ -1,0 +1,110 @@
+{
+  "schema_version": "mathpi-17-original-source-provenance-v1",
+  "case_count": 17,
+  "fact_source": "packed source/main.py bytes copied from the source bundle",
+  "record_hash_mismatch_count": 17,
+  "cases": [
+    {
+      "folder": "017_平行班第六讲_04_练习2_等边三角形基础计算与证明_第3题_角内等腰线段计算",
+      "packed_main_py_sha256": "99539854a0d1dbc66816b138aef8aceaff29c1a015ca9e5268ebb99053eaf0a4",
+      "record_declared_code_sha256": "bd9eed4e13b1c7e49464446d9ca1ff5d4e190884f3405ec68b4308ad37be4ed9",
+      "record_hash_matches_packed_file": false
+    },
+    {
+      "folder": "022_16_平行班第五讲_12_练习4第(3)题外角平分线的结论探究_纠错版",
+      "packed_main_py_sha256": "00165f4629d4436864afdeb88b07b1389ec2a231407f9c19e7018000960e5dc4",
+      "record_declared_code_sha256": "0768c637b595e6ea20a792e11fca37e0669709b75c93f1608ae02a4f26ee8220",
+      "record_hash_matches_packed_file": false
+    },
+    {
+      "folder": "030_平行班第三讲_练习4_角平分线双垂直综合题_综合题",
+      "packed_main_py_sha256": "60fc8907f47deebf97d96f22bd712ad93e9b3e51fe77ce7fcdf5ab6a6d7b47fd",
+      "record_declared_code_sha256": "464525f7d9cdb1fffe7cef6708536e2d30397eb2e9ccfd215f02baf3bea1b65b",
+      "record_hash_matches_packed_file": false
+    },
+    {
+      "folder": "035_16_平行班第五讲_04_练习1第(4)题腰上的高求底角",
+      "packed_main_py_sha256": "a2e7961c857c997ee1523b2a2c4f7e90094916700ac9c3f42bb8448243cf4e44",
+      "record_declared_code_sha256": "a25fcdbebf80b17715e6914bf5b4fca5a2b6089177030c7f72c3482990a66301",
+      "record_hash_matches_packed_file": false
+    },
+    {
+      "folder": "042_16_平行班第五讲_11_练习4第(2)题线段和差证明",
+      "packed_main_py_sha256": "fba43812a2adc58bb9bbc15955c9e5870467214f4bcf5e80ea91ca732c991c0f",
+      "record_declared_code_sha256": "50936fe249f51d7feb889c8a0d6084782016b76baab65d7316333ec8b9a4ab5f",
+      "record_hash_matches_packed_file": false
+    },
+    {
+      "folder": "045_12_春季班全等三角形综合（一）15_01_练习1",
+      "packed_main_py_sha256": "be968e1013f6cf82efcd35a913a5b9ef29a612d4e15190d6ab1bc79f4d325fd8",
+      "record_declared_code_sha256": "306a45a0ffcb66c932b1f908ac56dd9bdcb1a0fe79bf48f27eec4329347ace8d",
+      "record_hash_matches_packed_file": false
+    },
+    {
+      "folder": "047_12_春季班全等三角形综合（一）15_03_练习2",
+      "packed_main_py_sha256": "7fc288bdd9feb615c77713274f7f4938b663c7e6bdbacb2fb69953104afa59f5",
+      "record_declared_code_sha256": "f3209332487363e5bf6aeb12824474f587245b1baa46182ea3f76d5590b0fea3",
+      "record_hash_matches_packed_file": false
+    },
+    {
+      "folder": "054_11_春季班全等三角形综合（一）14_05_练习4",
+      "packed_main_py_sha256": "94ed2ae124e78ffbc7212cc026331ad69eb8067f70d64f111184d3417c1497e8",
+      "record_declared_code_sha256": "509daafe38d4cacdd05c9b142286e52d81ab6242c499128a0e7feae955a9f5ad",
+      "record_hash_matches_packed_file": false
+    },
+    {
+      "folder": "057_10_春季班全等三角形综合13_03_练习2",
+      "packed_main_py_sha256": "e2acf96619a71ca9e0682fb1ddd790c583654b54f878662bb71baddc50c19d2a",
+      "record_declared_code_sha256": "13fbacaa963e4c6bc54c3617bf97a2de4fcfaa445b9722e9964bac4650df0a68",
+      "record_hash_matches_packed_file": false
+    },
+    {
+      "folder": "058_10_春季班全等三角形综合13_04_练习3",
+      "packed_main_py_sha256": "bb4820f92c64606c060c943528970ff965f78ba91d383ecb3863f0920bb74c83",
+      "record_declared_code_sha256": "51f8163343d2b246debf07ef60ab150f8d8130654daf64c5da0efaf37aa2ad31",
+      "record_hash_matches_packed_file": false
+    },
+    {
+      "folder": "076_07_平行班加油站第二讲_02_练习2",
+      "packed_main_py_sha256": "c2a277229d8200ec407bf4a5cd4dc568bdc5ba1288a37cd20a9e26dec084163a",
+      "record_declared_code_sha256": "493ab52e3e85687b5db390b292cf456da42be1adb2c47227623e6b6829ffaf96",
+      "record_hash_matches_packed_file": false
+    },
+    {
+      "folder": "078_07_平行班加油站第二讲_04_练习4",
+      "packed_main_py_sha256": "37f172e4564a1603b092c395fdad664debafa32b6ca81bf8ea4c0dcc863da949",
+      "record_declared_code_sha256": "1237ecc3088db91724a16c1d20dd84fa1299c70c076223ae616ad3332d8f3353",
+      "record_hash_matches_packed_file": false
+    },
+    {
+      "folder": "080_06_平行班加油站第一讲_02_练习2微课脚本_三角形中线经典倍长中线模型",
+      "packed_main_py_sha256": "bdd6164e74e876be7ea296b85f65a24d38645e5f769da1386aba797774c4dc3a",
+      "record_declared_code_sha256": "fdd7a39d368576b5568062d2e743fd0e9fd2fceca2e32ed2d9fa2e0e106ec810",
+      "record_hash_matches_packed_file": false
+    },
+    {
+      "folder": "099_09_平行班加油站第四讲_04_练习1第4题",
+      "packed_main_py_sha256": "f8f7373baeea75f0e243ec55f63fd5ba0e4305709c62058e51c2b27f80126660",
+      "record_declared_code_sha256": "5ac8ef31850541b89ec5308fb68db90f8c8bef94c3f50a1e9d72a7e257956605",
+      "record_hash_matches_packed_file": false
+    },
+    {
+      "folder": "100_09_平行班加油站第四讲_05_练习2第1题",
+      "packed_main_py_sha256": "1c9f87f6c9a979d0383729edc5d85ba2dbbb0a666c06c3436c532fc54635b9c5",
+      "record_declared_code_sha256": "4f9d859ae7eb72a38362bc49cdb8ae54e1beab5c24d4c7565672a33bba12adf2",
+      "record_hash_matches_packed_file": false
+    },
+    {
+      "folder": "108_10_春季班全等三角形综合13_03_练习2",
+      "packed_main_py_sha256": "42808a2eb485cf832e4fd58087078823504a78edbc21470458985803f109cd89",
+      "record_declared_code_sha256": "c247ea53b726cac0a9b27834acac3033042d178a7c1bca914e231025366ee962",
+      "record_hash_matches_packed_file": false
+    },
+    {
+      "folder": "117_12_春季班全等三角形综合（一）15_02_第56题",
+      "packed_main_py_sha256": "679c727ff5659cc0e0d110a255210cf7e08a51d0176b5d4069541ccee46274cf",
+      "record_declared_code_sha256": "22999cf535ae5019692ed8737e737d9852caae74c465863d727a4e4ca4c414df",
+      "record_hash_matches_packed_file": false
+    }
+  ]
+}

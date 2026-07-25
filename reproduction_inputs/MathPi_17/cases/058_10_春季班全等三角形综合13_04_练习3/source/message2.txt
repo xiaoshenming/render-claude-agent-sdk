@@ -1,0 +1,125 @@
+## 题目文字
+
+在△ABC中，AD平分∠BAC，点D是BC的中点，
+DE⊥AB于点E，DF⊥AC于点F。求证：∠B=∠C。
+
+## 图形识别结果
+
+```python
+# PROBLEM_TEXT: 在△ABC中，AD平分∠BAC，点D是BC的中点，DE⊥AB于点E，DF⊥AC于点F。求证：∠B=∠C。
+# FIGURE_FACTS: AD平分∠BAC, D是BC中点, DE⊥AB于E, DF⊥AC于F, 证明∠B=∠C
+
+from manim import *
+import numpy as np
+
+class GeometricScene(Scene):
+    def construct(self):
+        # 定义顶点坐标
+        A = np.array([0, 2.25, 0])
+        B = np.array([-2.5, -1.25, 0])
+        C = np.array([2.5, -1.25, 0])
+        D = np.array([0, -1.25, 0])
+
+        # 投影函数，用于计算垂足
+        def project_point_on_line(p, a, b):
+            ap = p - a
+            ab = b - a
+            return a + np.dot(ap, ab) / np.dot(ab, ab) * ab
+
+        # 计算垂足 E 和 F
+        E = project_point_on_line(D, A, B)
+        F = project_point_on_line(D, A, C)
+
+        # 绘制主要线段
+        triangle = Polygon(A, B, C, stroke_width=3, color=WHITE)
+        line_AD = Line(A, D, stroke_width=3, color=WHITE)
+        line_DE = Line(D, E, stroke_width=3, color=WHITE)
+        line_DF = Line(D, F, stroke_width=3, color=WHITE)
+
+        # 绘制直角符号的辅助函数
+        def get_right_angle_symbol(vertex, p1, p2, size=0.2):
+            v1 = p1 - vertex
+            v2 = p2 - vertex
+            u1 = v1 / np.linalg.norm(v1)
+            u2 = v2 / np.linalg.norm(v2)
+            pt1 = vertex + size * u1
+            pt2 = vertex + size * u1 + size * u2
+            pt3 = vertex + size * u2
+            return VMobject().set_points_as_corners([pt1, pt2, pt3])
+
+        # 创建直角符号
+        rect_E = get_right_angle_symbol(E, A, D, size=0.2).set_stroke(color=WHITE, width=2)
+        rect_F = get_right_angle_symbol(F, A, D, size=0.2).set_stroke(color=WHITE, width=2)
+
+        # 标注字母
+        label_A = MathTex("A").next_to(A, UP, buff=0.15)
+        label_B = MathTex("B").next_to(B, DL, buff=0.1)
+        label_C = MathTex("C").next_to(C, DR, buff=0.1)
+        label_D = MathTex("D").next_to(D, DOWN, buff=0.15)
+        label_E = MathTex("E").next_to(E, LEFT, buff=0.15)
+        label_F = MathTex("F").next_to(F, RIGHT, buff=0.15)
+
+        # 组合所有图形元素
+        geometry_group = VGroup(
+            triangle, line_AD, line_DE, line_DF,
+            rect_E, rect_F,
+            label_A, label_B, label_C, label_D, label_E, label_F
+        )
+
+        # 渲染图形
+        self.add(geometry_group)
+```
+
+## 解题步骤
+
+【口播脚本执行规则】
+- 解题步骤是唯一口播母稿；必须按其中的内容顺序生成 `with self.voiceover(text=...)`，不得只按题意重新写一份短讲解。
+- 每个自然段、每个“审题/模型/推导/技巧”板块都要进入视频；长句可以拆成多句短口播，但不能改写成另一条解题路线。
+- 带有“【配音台词】”的内容优先作为口播内容来源；保持语义与顺序，只做 TTS 友好的处理，例如把数字、分数和运算关系改成中文读法、把长句拆短。
+- 正式证明/正式推导阶段的数学含义、证明顺序和结论必须保真；不得压缩、省略、重排或另写一套“因为所以”链。原稿中的 LaTeX 只是数学语义来源，不是可直接复制的显示代码。
+- 可见板书必须保留规范数学符号：三角形用 `△`、角用 `∠`、因为用 `∵`、所以用 `∴`；禁止把它们省略或把板书中的 `∵/∴` 改写成“因为/所以”。口播仍按自然中文朗读。
+- 可见证明板书必须使用 Header 的确定性接口：前提行调用 `self.make_proof_because(r"AB=AE")`，结论行调用 `self.make_proof_therefore(r"AB=EC")`。先判断该行是前提还是结论，再调用对应接口；不得自行拼接、猜测或省略逻辑前缀。
+- 任何证明前提行或结论行都禁止直接调用 `make_ctex_row("因为...")`、`make_ctex_row("所以...")` 或用省略号冒充逻辑符号；必须调用上述两个证明接口。角度板书使用标准正例 `self.make_ctex_row(r"$\angle ABC=30^\circ$")`，不得丢失 `\angle`、角顶点或度数角标。
+- `make_proof_because/therefore` 的参数只传公式正文，禁止传 `...`、`…`、中文省略号、`因为/所以`、`∵/∴` 或 `\because/\therefore` 前缀；可见前缀只能由 Header 生成标准三点符号。
+- 禁止照抄原稿中的裸 LaTeX 显示语法。所有可见板书行统一调用 `self.make_ctex_row(...)`；中文写在数学边界外，公式完整放入 `$...$`。例如 `self.make_ctex_row(r"又因为 $DF=EF$")`；纯公式写成 `self.make_ctex_row(r"$DF=EF$")`。
+- 函数图上的解析式标签必须调用 `make_function_label("y=2x+3", line)`，禁止相对整条直线调用 `make_label_text(..., line)`；内容只传 `y=2x+3`，禁止写成 `"$y=2x+3$"`、`"函数：$y=2x+3$"` 或任何带单个/不配对 `$` 的字符串；`$` 只是 CTeX 行内数学边界，绝不能成为图中可见字符。
+- 正文行统一不传自定义 `font_size`，全部使用 Header 的 `FS_BODY`；公式、分式、根式、方程组也保持同一正文基准字号。`construct()` 中禁止对正文行、正文组、公式组调用 `scale()`、`scale_to_fit_width()` 或 `scale_to_fit_height()`。如果内容放不下，只能拆成同字号的多行或切到下一屏。
+- 每条正文只承载“一个短句”或“一条公式”，禁止把“选项说明 + 推导公式 + 成立性结论”挤在同一行。正确示例是先写 `A. 两边减 $1$，不等号方向不变`，下一行单独写 `$a-1<b-1$（成立）`。方程组或大括号公式必须独占一行，解释文字另起同字号正文行；每屏最多 4 条正文。
+- 严禁文字“双闪”：同一个文字 Mobject 一生只能从不可见变为可见一次。任何父 `VGroup`/面板只要已经包含文字子项，就不得先整体 `FadeIn/Write/add` 后再对子项 `Write/FadeIn`；已经整体 `FadeIn` 的卡片，其子行以后只能高亮，不能再次显示。需要逐行出现时，面板背景与文字必须分开，所有未来行先设为不可见，再随对应口播逐行首次出现。
+- 数学字母、点名、线名和函数名必须保留原符号，例如 x、y、k、b、A、B、C、AC、OAC、OMC；不要改成中文谐音字。
+- 右侧板书可以提炼为短行，但口播必须忠实覆盖老师原始解题步骤的关键信息与顺序。
+- 禁止照抄 system prompt 或模板示例里的开场、题干、数值、推导和结论；模板示例只说明 API/版式，不是当前题内容。
+- 第一条 voiceover 必须对应老师原始解题步骤开头的【配音台词】或第一自然段，不能使用模板里的默认开场。
+- 主讲身份就是老师，口播对象是学生/同学。禁止向“老师”“各位老师”“老师们”问好；如果需要问候，只能面向学生，例如“同学们好”或“同学们，我们一起来看这道题”。如果原始脚本没有明确问候，不要自行添加问候。
+- 顶部题干由运行时根据 OCR 权威文本自动显示。题干只用于理解题意，禁止创建、抄写、移动、隐藏或播放任何题干面板。
+- `with self.voiceover(text=...)` 的 `text` 必须是可直接朗读的自然中文，严禁包含 `$`、反斜杠 LaTeX、花括号命令或公式源码；例如必须写“判别式德尔塔”“根号德尔塔”，不得写 `"$\Delta$"`、`"$\sqrt{\Delta}$"`。
+- 几何与函数路线没有 `make_rule_card` 接口，绝对禁止调用；只有计算路线可以按其专用合同使用规则卡。
+- 创建点名、端点名或坐标标签时，先构造 `MathTex("E", color=TEXT_COLOR)` 或 Header 的标签 helper，再调用 `.next_to(anchor, direction, buff=0.15)`。`color` 只能传颜色值，方向向量只能传给 `next_to`；`buff` 绝不能传入 `Text/MathTex` 构造器。
+- 几何路线的区域填色写成 `self.make_region_fill(p1, p2, p3, color=PAIR_A_COLOR, opacity=0.18)`；函数路线的坐标面积必须写成 `self.make_area_by_coords([(x1, y1), (x2, y2), (x3, y3)], color=PAIR_A_COLOR, opacity=0.18)`，禁止把坐标值直接交给几何区域接口。所有点坐标之后的 `color`、`opacity`、`stroke_width` 都是仅限关键字参数，绝对禁止写成 `self.make_region_fill(p1, p2, p3, PAIR_A_COLOR, 0.18)`，否则颜色字符串会被误当成坐标点。
+- `play_steps_evenly`、`play_after_speech` 与 `self.play` 的每一个实参都必须是 Animation，禁止直接传入 `Text`、`Tex`、`MathTex`、`VGroup`、`panel[i]` 或三元表达式返回的裸 Mobject。显示对象必须显式包装为 `Write(panel[i])`、`FadeIn(mob)` 或 `Create(shape)`；改变已有对象才使用 `mob.animate...`。严禁 `panel[i] if ... else panel[-1].animate...` 这种一边返回裸 Mobject、一边返回 Animation 的混合表达式。
+- 面板索引必须与实际行数一致；禁止猜测或硬编码不存在的 `panel[i]`。调用 `panel[i]` 前必须能从同一段代码中逐项数出第 `i+1` 行，行数不确定时直接保留已创建的行对象并播放它，不通过数字索引回取。
+【老师原始解题步骤】
+以下内容只保真数学内容、证明顺序和结论；其中旧式 LaTeX 包装不得直接复制为显示代码。
+【读题展示阶段】
+先自然读题，不进入证明。题目给出：1. 已知： AD 平分 ∠BAC ， DE⊥ AB 于 E ， DF⊥ AC 于 F ， D 为 BC 中点。 求证： ∠B=∠C。读到 DE⊥ AB 时高亮 DE⊥ AB；读到 DF⊥ AC 时高亮 DF⊥ AC；读到中点条件时高亮中点及所在的整条线段，并标出两段相等；读到角平分线条件时高亮被平分的角，并标出两个相等角。最后读出求证：∠B=∠C，只高亮结论中的关键线段或角。
+【思路切入阶段】
+本题最终要证明 ∠B=∠C，直接比较底角不方便。先利用 AD 平分 ∠BAC 与 DE⊥AB、DF⊥AC，证明点 D 到 AB、AC 的距离相等；再结合 D 是 BC 中点，把两侧三角形放到同一套全等关系里；最后用对应角相等得到 ∠B=∠C。
+【满分答案阶段：必须完整展示的官方解题步骤】
+证明：
+
+先证 △ADE ≌ △ADF ∵ AD 平分 ∠BAC ∴ ∠EAD=∠FAD ∵ DE⊥ AB,\ DF⊥ AC ∴ ∠AED=∠AFD=90°
+
+在 △ADE 和 △ADF 中：
+\begin{cases}∠AED=∠AFD \\∠EAD=∠FAD \\AD=AD\end{cases} ∴ △ADE ≌ △ADF\ (AAS) ∴ DE=DF （全等三角形对应边相等）
+
+再证 Rt△BDE ≌ Rt△CDF ∵ D 是 BC 中点
+∴ BD=CD 又 ∵ DE⊥ AB,\ DF⊥ AC ∴ ∠DEB=∠DFC=90°
+
+在 Rt△BDE 和 Rt△CDF 中：
+\begin{cases}BD=CD \\DE=DF\end{cases} ∴ Rt△BDE ≌ Rt△CDF\ (HL) ∴ ∠B=∠C （全等三角形对应角相等）
+
+【结论收束阶段】
+最后收束结论：∴ BD=CD 又 ∵ DE⊥ AB,\ DF⊥ AC ∴ ∠DEB=∠DFC=90° 在 Rt△BDE 和 Rt△CDF 中： \begin{cases}BD=CD \\DE=DF\end{cases} ∴ Rt△BDE ≌ Rt△CDF\ (HL) ∴ ∠B=∠C （全等三角形对应角相等）
+
+【技巧总结阶段】
+本题可迁移的方法是“见中点，优先构造全等”。通过延长、截取或连接辅助线，把分散条件转进同一组三角形。

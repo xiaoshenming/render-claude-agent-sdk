@@ -1,0 +1,21 @@
+{
+  "source_batch_id": "98f4a0a05ba7",
+  "source_batch_name": "木木1",
+  "source_item_id": "3d94d3760bef",
+  "title": "16_平行班第五讲_04_练习1第(4)题腰上的高求底角",
+  "problem_text": "(1) 已知一个等腰三角形的两条边分别为 3cm 和 4cm，则这个三角形的周长为 _______. (2) 等腰三角形的一个外角为 130°，则顶角为 _______. (3) 等腰三角形一腰上的中线将它们的周长分为 6 和 12 两部分，则腰长为 _______. (4) 等腰三角形一腰上的高与另一腰的夹角为 40°，则这个等腰三角形的底角为 _______.",
+  "solution_steps": "【读题展示阶段】\n展示题图并读题：等腰三角形一腰上的高与另一腰的夹角为 $40^\\circ$，求这个等腰三角形的底角。重点标出腰上的高、另一腰及它们的夹角。\n\n【思路切入阶段】\n腰上的高可能落在三角形内部，也可能落在腰的延长线上。两种图形对应锐角等腰三角形和钝角等腰三角形，需要分别利用直角三角形两锐角互余求顶角，再由两底角相等求底角。\n\n【满分答案阶段：必须完整展示的官方解题步骤】\n解：分两种情况讨论。\n① 当高在三角形内部时，顶角为\n$90^\\circ-40^\\circ=50^\\circ$，\n所以底角为\n$\\dfrac{180^\\circ-50^\\circ}{2}=65^\\circ$。\n② 当高在三角形外部时，顶角的邻补角为\n$90^\\circ-40^\\circ=50^\\circ$，\n所以顶角为 $180^\\circ-50^\\circ=130^\\circ$，底角为\n$\\dfrac{180^\\circ-130^\\circ}{2}=25^\\circ$。\n综上，等腰三角形的底角为 $65^\\circ$ 或 $25^\\circ$。\n\n【结论收束阶段】\n高的位置不同会形成锐角、钝角两种等腰三角形，因此底角为 $65^\\circ$ 或 $25^\\circ$。\n\n【技巧总结阶段】\n腰上高涉及夹角时，先判断垂足在边上还是延长线上，分类画图后再利用互余、互补和内角和计算。",
+  "figure_code": "# PROBLEM_TEXT: (1) 已知一个等腰三角形的两条边分别为 3cm 和 4cm，则这个三角形的周长为 _______. (2) 等腰三角形的一个外角为 130°，则顶角为 _______. (3) 等腰三角形一腰上的中线将它们的周长分为 6 和 12 两部分，则腰长为 _______. (4) 等腰三角形一腰上的高与另一腰的夹角为 40°，则这个等腰三角形的底角为 _______.\n# FIGURE_FACTS: 等腰三角形ABC，AB=AC，BD是腰AC上的高，角ABD=40度\n\nfrom manim import *\nimport numpy as np\n\nclass IsoscelesTriangleScene(Scene):\n    def construct(self):\n        # 定义顶点坐标\n        A = np.array([0, 2.4, 0])\n        B = np.array([-1.69, -1.225, 0])\n        C = np.array([1.69, -1.225, 0])\n        D = np.array([1.086, 0.07, 0])\n        \n        # 绘制三角形和高线\n        triangle = Polygon(A, B, C, stroke_width=3, color=WHITE)\n        height_line = Line(B, D, stroke_width=3, color=BLUE)\n        \n        # 标注字母\n        label_A = MathTex(\"A\").next_to(A, UP, buff=0.15)\n        label_B = MathTex(\"B\").next_to(B, DOWN + LEFT, buff=0.15)\n        label_C = MathTex(\"C\").next_to(C, DOWN + RIGHT, buff=0.15)\n        label_D = MathTex(\"D\").next_to(D, UP + RIGHT, buff=0.1)\n        \n        # 计算直角标记的顶点\n        u = (A - D) / np.linalg.norm(A - D)\n        v = (B - D) / np.linalg.norm(B - D)\n        s = 0.2\n        p1 = D + s * u\n        p3 = D + s * v\n        p2 = p1 + s * v\n        right_angle = VMobject()\n        right_angle.set_points_as_corners([p1, p2, p3])\n        right_angle.set_color(BLUE)\n        \n        # 夹角弧线和标注\n        angle_arc = Arc(radius=0.6, start_angle=25*DEGREES, angle=40*DEGREES, arc_center=B, color=YELLOW)\n        label_pos = B + 0.95 * np.array([np.cos(45*DEGREES), np.sin(45*DEGREES), 0])\n        label_40 = MathTex(\"40^\\\\circ\", color=YELLOW).move_to(label_pos).scale(0.8)\n        \n        # AB 的等腰标记\n        u_AB = (B - A) / np.linalg.norm(B - A)\n        w_AB = np.array([-u_AB[1], u_AB[0], 0])\n        m_AB = (A + B) / 2\n        mark1_ab = Line(m_AB - 0.05*u_AB - 0.08*w_AB, m_AB - 0.05*u_AB + 0.08*w_AB, stroke_width=1.5, color=WHITE)\n        mark2_ab = Line(m_AB + 0.05*u_AB - 0.08*w_AB, m_AB + 0.05*u_AB + 0.08*w_AB, stroke_width=1.5, color=WHITE)\n\n        # AC 的等腰标记\n        u_AC = (C - A) / np.linalg.norm(C - A)\n        w_AC = np.array([-u_AC[1], u_AC[0], 0])\n        m_AC = (A + C) / 2\n        mark1_ac = Line(m_AC - 0.05*u_AC - 0.08*w_AC, m_AC - 0.05*u_AC + 0.08*w_AC, stroke_width=1.5, color=WHITE)\n        mark2_ac = Line(m_AC + 0.05*u_AC - 0.08*w_AC, m_AC + 0.05*u_AC + 0.08*w_AC, stroke_width=1.5, color=WHITE)\n        \n        # 组合所有几何元素\n        geometry = VGroup(\n            triangle, height_line, right_angle, angle_arc, label_40,\n            label_A, label_B, label_C, label_D,\n            mark1_ab, mark2_ab, mark1_ac, mark2_ac\n        )\n        \n        self.add(geometry)",
+  "index": 35,
+  "status": "render_succeeded",
+  "scene_class": "Solution",
+  "llm_seconds": 50.331,
+  "llm_findings": [
+    "provider_output_raw_python"
+  ],
+  "code_sha256": "a25fcdbebf80b17715e6914bf5b4fca5a2b6089177030c7f72c3482990a66301",
+  "work_dir": "/opt/mathpi/batchops/benchmarks/geometry-drift-8797-20260724-1720/0035-3d94d3760bef",
+  "render_seconds": 107.539,
+  "video_path": "/opt/mathpi/batchops/benchmarks/geometry-drift-8797-20260724-1720/0035-3d94d3760bef/media/videos/480p15/video.mp4",
+  "video_bytes": 1174522
+}

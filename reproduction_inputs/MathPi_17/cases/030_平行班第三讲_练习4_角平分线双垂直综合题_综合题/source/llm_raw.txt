@@ -1,0 +1,280 @@
+class Solution(BaseConfigScene):
+    def construct(self):
+        # 1. 原始坐标定义
+        A = np.array([0, 3.25, 0])
+        D = np.array([0, -2.08, 0])
+        B = np.array([-2.6, 0, 0])
+        C = np.array([2.6, 0, 0])
+        E = A + 0.65 * (B - A)
+        F = A + 0.75 * (C - A)
+        
+        # 计算 G 的初始坐标
+        v = F - E
+        u = v / np.linalg.norm(v)
+        G = E + np.dot(D - E, u) * u
+        
+        # 2. 创建基础 diagram
+        line_AB = Line(A, B, stroke_width=2, color=BASE_COLOR)
+        line_AC = Line(A, C, stroke_width=2, color=BASE_COLOR)
+        line_BD = Line(B, D, stroke_width=2, color=BASE_COLOR)
+        line_CD = Line(C, D, stroke_width=2, color=BASE_COLOR)
+        line_ED = Line(E, D, stroke_width=2, color=BASE_COLOR)
+        line_FD = Line(F, D, stroke_width=2, color=BASE_COLOR)
+        line_EF = Line(E, F, stroke_width=2, color=BASE_COLOR)
+        diagram = VGroup(line_AB, line_AC, line_BD, line_CD, line_ED, line_FD, line_EF)
+        
+        # 3. 适配左侧
+        self.fit_left(diagram)
+        
+        # 4. 获取实时坐标
+        A_r = line_AB.get_start()
+        B_r = line_AB.get_end()
+        C_r = line_AC.get_end()
+        D_r = line_BD.get_end()
+        E_r = line_ED.get_start()
+        F_r = line_FD.get_start()
+        
+        # 重新计算 G_r
+        v_r = F_r - E_r
+        u_r = v_r / np.linalg.norm(v_r)
+        G_r = E_r + np.dot(D_r - E_r, u_r) * u_r
+        
+        # 5. 创建所有几何元素
+        lbl_A = MathTex("A", color=TEXT_COLOR).next_to(A_r, UP, buff=0.15)
+        lbl_B = MathTex("B", color=TEXT_COLOR).next_to(B_r, LEFT, buff=0.15)
+        lbl_C = MathTex("C", color=TEXT_COLOR).next_to(C_r, RIGHT, buff=0.15)
+        lbl_D = MathTex("D", color=TEXT_COLOR).next_to(D_r, DOWN, buff=0.15)
+        lbl_E = MathTex("E", color=TEXT_COLOR).next_to(E_r, UL, buff=0.1)
+        lbl_F = MathTex("F", color=TEXT_COLOR).next_to(F_r, UR, buff=0.1)
+        lbl_G = MathTex("G", color=TEXT_COLOR).next_to(G_r, UR, buff=0.1)
+        
+        right_angle_B = self.make_right_angle_mark_at(B_r, A_r, D_r, 0.2, BASE_COLOR, 0.25)
+        right_angle_C = self.make_right_angle_mark_at(C_r, A_r, D_r, 0.2, BASE_COLOR, 0.25)
+        right_angle_G = self.make_right_angle_mark_at(G_r, E_r, D_r, 0.2, DRAW_COLOR, 0.25)
+        
+        aux_DG = DashedLine(D_r, G_r, color=DRAW_COLOR)
+        aux_AD = DashedLine(A_r, D_r, color=DRAW_COLOR)
+        
+        tick_BD = self.make_tick_mark(line_BD, n=1, color=KNOWN_COLOR)
+        tick_CD = self.make_tick_mark(line_CD, n=1, color=KNOWN_COLOR)
+        
+        arc_BED = self.make_angle_mark(E_r, B_r, D_r, 0.3, KNOWN_COLOR, 0.25)
+        arc_FED = self.make_angle_mark(E_r, D_r, F_r, 0.3, KNOWN_COLOR, 0.25)
+        arc_EFD = self.make_angle_mark(F_r, E_r, D_r, 0.3, RESULT_COLOR, 0.25)
+        arc_CFD = self.make_angle_mark(F_r, D_r, C_r, 0.3, RESULT_COLOR, 0.25)
+        
+        seg_BE = Line(B_r, E_r, color=FOCUS_COLOR, stroke_width=4)
+        seg_GE = Line(G_r, E_r, color=FOCUS_COLOR, stroke_width=4)
+        seg_CF = Line(C_r, F_r, color=FOCUS_COLOR, stroke_width=4)
+        seg_GF = Line(G_r, F_r, color=FOCUS_COLOR, stroke_width=4)
+        
+        # 6. 整体适配
+        geometry_all = VGroup(
+            diagram, aux_DG, aux_AD, right_angle_B, right_angle_C, right_angle_G,
+            lbl_A, lbl_B, lbl_C, lbl_D, lbl_E, lbl_F, lbl_G,
+            tick_BD, tick_CD, arc_BED, arc_FED, arc_EFD, arc_CFD,
+            seg_BE, seg_GE, seg_CF, seg_GF
+        )
+        self.fit_geometry_group(geometry_all)
+        
+        # 7. 区域色块定义
+        region_BDE = self.make_region_fill(B_r, D_r, E_r, color=PAIR_A_COLOR, opacity=0.18)
+        region_GDE = self.make_region_fill(G_r, D_r, E_r, color=PAIR_A_COLOR, opacity=0.18)
+        region_CDF = self.make_region_fill(C_r, D_r, F_r, color=PAIR_B_COLOR, opacity=0.18)
+        region_GDF = self.make_region_fill(G_r, D_r, F_r, color=PAIR_B_COLOR, opacity=0.18)
+        region_ABD = self.make_region_fill(A_r, B_r, D_r, color=PAIR_A_COLOR, opacity=0.18)
+        region_ACD = self.make_region_fill(A_r, C_r, D_r, color=PAIR_B_COLOR, opacity=0.18)
+        
+        # 8. 初始显示
+        self.add(diagram, lbl_A, lbl_B, lbl_C, lbl_D, lbl_E, lbl_F)
+        
+        # ==================== 读题与切入 ====================
+        with self.voiceover(text="同学们好，我们一起来看这道几何题。") as tracker:
+            self.wait(0.1)
+            
+        with self.voiceover(text="题目给出已知条件，线段 BD 等于 CD。") as tracker:
+            self.play_after_speech([Create(tick_BD), Create(tick_CD)], tracker)
+            
+        with self.voiceover(text="并且角 ABD 和角 ACD 都是直角。") as tracker:
+            self.play_after_speech([Create(right_angle_B), Create(right_angle_C)], tracker)
+            
+        with self.voiceover(text="点 E 和点 F 分别在边 AB 和 AC 上。") as tracker:
+            self.reemphasize_element(lbl_E)
+            self.reemphasize_element(lbl_F)
+            
+        with self.voiceover(text="射线 ED 平分角 BEF。") as tracker:
+            self.play_after_speech([Create(arc_BED), Create(arc_FED)], tracker)
+            
+        # ==================== 第一问 ====================
+        goal_1 = self.make_question_goal_panel(self.make_ctex_row(r"求证：(1) $FD$ 平分 $\angle EFC$"))
+        with self.voiceover(text="我们来看第一问，求证 FD 平分角 EFC。") as tracker:
+            self.play_after_speech([FadeIn(goal_1)], tracker)
+            
+        with self.voiceover(text="要证明角平分线，我们需要证明点到角两边的距离相等。") as tracker:
+            self.wait(0.1)
+            
+        with self.voiceover(text="因此，我们过点 D 作 DG 垂直于 EF 于点 G。") as tracker:
+            self.play_after_speech([Create(aux_DG), FadeIn(lbl_G), Create(right_angle_G)], tracker)
+            
+        # 第一问板书第一屏
+        row1_1 = self.make_ctex_row(r"过点 $D$ 作 $DG \perp EF$ 于点 $G$")
+        row1_2 = self.make_proof_because(r"\text{ED平分}\angle BEF, DB \perp AB, DG \perp EF")
+        row1_3 = self.make_proof_therefore(r"DB = DG")
+        panel1_1 = self.make_step_panel([row1_1, row1_2, row1_3])
+        
+        with self.voiceover(text="我们先写下辅助线的作法。") as tracker:
+            self.play_steps_evenly([Write(row1_1)], tracker)
+            
+        with self.voiceover(text="因为角 ABD 是直角，所以 DB 垂直于 AB。") as tracker:
+            self.reemphasize_element(right_angle_B)
+            
+        with self.voiceover(text="又因为 ED 平分角 BEF，且 DG 垂直于 EF。") as tracker:
+            self.reemphasize_element(arc_BED)
+            self.reemphasize_element(arc_FED)
+            self.reemphasize_element(right_angle_G)
+            
+        with self.voiceover(text="根据角平分线的性质，我们可以得到 DB 等于 DG。") as tracker:
+            self.play_steps_evenly([Write(row1_2), Write(row1_3)], tracker)
+            
+        with self.voiceover(text="我们在图上高亮这两条相等的线段。") as tracker:
+            self.reemphasize_equal_segments(line_BD, aux_DG)
+            
+        # 第一问板书第二屏
+        row1_4 = self.make_proof_because(r"BD = CD \implies DG = CD")
+        row1_5 = self.make_proof_because(r"DG \perp EF, DC \perp AC")
+        row1_6 = self.make_proof_therefore(r"\text{FD平分}\angle EFC")
+        panel1_2 = self.make_step_panel([row1_4, row1_5, row1_6])
+        
+        with self.voiceover(text="题目中还告诉我们，线段 BD 等于 CD。") as tracker:
+            self.reemphasize_equal_segments(line_BD, line_CD)
+            
+        with self.voiceover(text="通过等量代换，我们就能得到 DG 等于 CD。") as tracker:
+            self.play(FadeOut(panel1_1))
+            self.play_steps_evenly([Write(row1_4)], tracker)
+            
+        with self.voiceover(text="我们同样在图上高亮这两条相等的线段。") as tracker:
+            self.reemphasize_equal_segments(aux_DG, line_CD)
+            
+        with self.voiceover(text="接着看，因为角 ACD 是直角，所以 DC 垂直于 AC。") as tracker:
+            self.reemphasize_element(right_angle_C)
+            
+        with self.voiceover(text="现在，点 D 到角 EFC 两边的距离 DG 和 CD 相等。") as tracker:
+            self.play_steps_evenly([Write(row1_5)], tracker)
+            
+        with self.voiceover(text="根据角平分线的判定定理，点 D 就在角的平分线上。") as tracker:
+            self.wait(0.1)
+            
+        with self.voiceover(text="所以，射线 FD 平分角 EFC。") as tracker:
+            self.play_steps_evenly([Write(row1_6), Create(arc_EFD), Create(arc_CFD)], tracker)
+            
+        with self.voiceover(text="第一问我们就顺利证明完毕了。") as tracker:
+            self.play(FadeOut(panel1_2), FadeOut(goal_1))
+            
+        # ==================== 第二问 ====================
+        goal_2 = self.make_question_goal_panel(self.make_ctex_row(r"求证：(2) $EF = BE + CF$"))
+        with self.voiceover(text="接下来我们看第二问，求证 EF 等于 BE 加上 CF。") as tracker:
+            self.play(FadeIn(goal_2))
+            
+        with self.voiceover(text="我们注意到，刚才作的垂足 G 刚好把 EF 分成了两段。") as tracker:
+            self.reemphasize_stroke(line_EF)
+            
+        with self.voiceover(text="所以我们只需要证明 BE 等于 GE，且 CF 等于 GF。") as tracker:
+            self.wait(0.1)
+            
+        with self.voiceover(text="我们先来看直角三角形 BDE 和直角三角形 GDE。") as tracker:
+            self.play_steps_evenly([FadeIn(region_BDE), FadeIn(region_GDE)], tracker)
+            
+        with self.voiceover(text="在这两个直角三角形中，斜边 DE 是它们的公共边。") as tracker:
+            self.reemphasize_stroke(line_ED)
+            
+        with self.voiceover(text="直角边 BD 等于 GD 是我们刚才已经证明的。") as tracker:
+            self.reemphasize_equal_segments(line_BD, aux_DG)
+            
+        # 第二问板书
+        row2_1 = self.make_proof_therefore(r"\text{Rt}\triangle BDE \cong \text{Rt}\triangle GDE\ (HL) \implies BE = GE")
+        row2_2 = self.make_proof_therefore(r"\text{Rt}\triangle CDF \cong \text{Rt}\triangle GDF\ (HL) \implies CF = GF")
+        row2_3 = self.make_proof_therefore(r"EF = GE + GF = BE + CF")
+        panel2 = self.make_step_panel([row2_1, row2_2, row2_3])
+        
+        with self.voiceover(text="根据斜边直角边定理，这两个直角三角形全等。") as tracker:
+            self.play_steps_evenly([Write(row2_1)], tracker)
+            
+        with self.voiceover(text="由此可以得到，对应边 BE 等于 GE。") as tracker:
+            self.reemphasize_equal_segments(seg_BE, seg_GE)
+            self.play(FadeOut(region_BDE), FadeOut(region_GDE))
+            
+        with self.voiceover(text="同理，在直角三角形 CDF 和直角三角形 GDF 中。") as tracker:
+            self.play_steps_evenly([FadeIn(region_CDF), FadeIn(region_GDF)], tracker)
+            
+        with self.voiceover(text="斜边 DF 是公共边，直角边 CD 等于 GD。") as tracker:
+            self.reemphasize_stroke(line_FD)
+            self.reemphasize_equal_segments(line_CD, aux_DG)
+            
+        with self.voiceover(text="所以这两个直角三角形也全等，得到 CF 等于 GF。") as tracker:
+            self.play_steps_evenly([Write(row2_2)], tracker)
+            
+        with self.voiceover(text="我们高亮这两条相等的线段。") as tracker:
+            self.reemphasize_equal_segments(seg_CF, seg_GF)
+            self.play(FadeOut(region_CDF), FadeOut(region_GDF))
+            
+        with self.voiceover(text="因为 EF 等于 GE 加上 GF。") as tracker:
+            self.reemphasize_stroke(line_EF)
+            
+        with self.voiceover(text="所以代换后就得到了 EF 等于 BE 加上 CF。") as tracker:
+            self.play_steps_evenly([Write(row2_3)], tracker)
+            
+        with self.voiceover(text="第二问也完成了，我们继续看第三问。") as tracker:
+            self.play(FadeOut(panel2), FadeOut(goal_2))
+            
+        # ==================== 第三问 ====================
+        goal_3 = self.make_question_goal_panel(self.make_ctex_row(r"求：(3) 若 $EF=4, AF=6, AE=5$，求 $BE$ 的长"))
+        with self.voiceover(text="第三问，若 EF 等于四，AF 等于六，AE 等于五。") as tracker:
+            self.play(FadeIn(goal_3))
+            
+        # 第三问板书第一屏
+        row3_1 = self.make_ctex_row(r"设 $BE = x, CF = y$")
+        row3_2 = self.make_ctex_row(r"由(2)得：$x + y = 4 \quad (1)$")
+        row3_3 = self.make_proof_therefore(r"\text{Rt}\triangle ABD \cong \text{Rt}\triangle ACD\ (HL) \implies AB = AC")
+        panel3_1 = self.make_step_panel([row3_1, row3_2, row3_3])
+        
+        with self.voiceover(text="我们设未知数，设 BE 等于 x，CF 等于 y。") as tracker:
+            self.play_steps_evenly([Write(row3_1)], tracker)
+            
+        with self.voiceover(text="根据第二问的结论，我们可以列出第一个方程。") as tracker:
+            self.play_steps_evenly([Write(row3_2)], tracker)
+            
+        with self.voiceover(text="为了列出第二个方程，我们需要证明 AB 等于 AC。") as tracker:
+            self.wait(0.1)
+            
+        with self.voiceover(text="我们来看直角三角形 ABD 和直角三角形 ACD。") as tracker:
+            self.play_steps_evenly([Create(aux_AD), FadeIn(region_ABD), FadeIn(region_ACD)], tracker)
+            
+        with self.voiceover(text="斜边 AD 是公共边，直角边 BD 等于 CD。") as tracker:
+            self.reemphasize_stroke(aux_AD)
+            self.reemphasize_equal_segments(line_BD, line_CD)
+            
+        with self.voiceover(text="所以这两个直角三角形全等，从而得到 AB 等于 AC。") as tracker:
+            self.play_steps_evenly([Write(row3_3)], tracker)
+            
+        # 第三问板书第二屏
+        row3_4 = self.make_ctex_row(r"即 $5 + x = 6 + y \implies x - y = 1 \quad (2)$")
+        row3_5 = self.make_ctex_row(r"联立(1)(2)解得：$x = 2.5, y = 1.5$")
+        row3_6 = self.make_ctex_row(r"所以 $BE$ 的长为 $2.5$")
+        panel3_2 = self.make_step_panel([row3_4, row3_5, row3_6])
+        
+        with self.voiceover(text="我们把 AB 和 AC 用含 x 和 y 的式子表示出来。") as tracker:
+            self.play(FadeOut(region_ABD), FadeOut(region_ACD), FadeOut(aux_AD))
+            
+        with self.voiceover(text="即五加 x 等于六加 y，整理得到第二个方程。") as tracker:
+            self.play(FadeOut(panel3_1))
+            self.play_steps_evenly([Write(row3_4)], tracker)
+            
+        with self.voiceover(text="联立这两个方程，我们就可以解出 x 和 y 的值。") as tracker:
+            self.play_steps_evenly([Write(row3_5)], tracker)
+            
+        with self.voiceover(text="解得 x 等于二点五，所以 BE 的长为二点五。") as tracker:
+            self.play_steps_evenly([Write(row3_6)], tracker)
+            
+        with self.voiceover(text="这道题我们就全部讲完了，同学们再见！") as tracker:
+            self.play(FadeOut(panel3_2), FadeOut(goal_3))
+            self.wait(1)

@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "frozen": true,
+  "corpus_role": "frozen_regression",
+  "dataset_name": "server1-layout-risk-20260615-002",
+  "dataset_manifest_sha256": "sha256:6b343f8fcd9d304b72d38d05adecf7d6a0a5a4965c46ad759a0562317fd6a582",
+  "selection_rule": "first 10 cases in frozen dataset manifest order before Task 8 evaluation",
+  "selection_count": 10,
+  "notes": "Known production risks; not claimed as an untouched holdout.",
+  "cases": [
+    {
+      "case_id": "01KT6ZNQKA5NGHE0CVS5H0FZRM__Scene_02_TrigramAssociations__20260604T113411_ef315a3c__af7b2dd810",
+      "code_sha256": "9e33e5629fc6f5559633ebbfb267dfa1d0e6f9902385edfa22c78b39d4da3d70",
+      "label": "known_bad"
+    },
+    {
+      "case_id": "01KT1PDCN8WZ4M54X1D1SVG0YA__Scene_02_Derivation__20260605T141933_1323fef8__fafeff201d",
+      "code_sha256": "98a9a1b096273a46250e912bbd45d2732cafe00dff8a579dc14b3c684e6344b7",
+      "label": "known_bad"
+    },
+    {
+      "case_id": "01KT5RB9NYX509AD9S3034C981__Scene_05_Example__20260603T113227_517c030e__659d210747",
+      "code_sha256": "15118c60ee1948ecd4cc2b81c24e22b29e67546c63d11f43864e248600ffbbdc",
+      "label": "known_bad"
+    },
+    {
+      "case_id": "01KTWZQF32B2NXBTN49MVM2PAE__Scene_02_FindMaxCube__20260612T120230_c8262174__dd14290eb2",
+      "code_sha256": "2f5dc490135f31fb22cb500733ec5c0abf63fc49bd1069b7a83518902181a905",
+      "label": "known_bad"
+    },
+    {
+      "case_id": "01KTGCXT1V2HDXRCBD24F47XJ3__Scene_03_ChainRuleFormula__20260607T145215_838b76d8__483267d710",
+      "code_sha256": "68a09dd515378fbe5fe5d3588dc8efa4fa178a48966e7a3df4c25ab03b5197e6",
+      "label": "known_bad"
+    },
+    {
+      "case_id": "01KT1TF46FP28CMZ4FCGR9XG6D__Scene_03_Equation_Setup__20260601T225736_d9ef9131__cb4baae638",
+      "code_sha256": "f3c5a62d1b6cc535a4716606fe45a3d74606eef58b9160913c11aabd4202e538",
+      "label": "known_bad"
+    },
+    {
+      "case_id": "01KT1TF46FP28CMZ4FCGR9XG6D__Scene_01_Intro__20260601T225736_b5f1d724__00da74d4ff",
+      "code_sha256": "9a3898bc0fe24ac0e23d82e09536c7cd488370ac78c5da059bfadeb4c7de4a78",
+      "label": "known_bad"
+    },
+    {
+      "case_id": "01KTDG9T25G11BP45TJFHC3RS5__Scene_03_Proof__20260606T114246_d59f1243__968f0145bd",
+      "code_sha256": "7f7979571f255ba8bfbefdd10c34c4a67cae5d472ef033e87cb5b98fe10a7237",
+      "label": "known_bad"
+    },
+    {
+      "case_id": "01KTT2VNTKAVYRKDMA0NC3NJTN__Scene_01_Intro__20260611T085750_529fa1dd__cd4c64364d",
+      "code_sha256": "746ab820b1943a51489086ca2e225148653f02dc44c5e148ef09cadc7d9cda0a",
+      "label": "known_bad"
+    },
+    {
+      "case_id": "01KT6JVY4SRT7P18RAY4WPRSFB__Scene_02_PathAnalysis__20260603T191743_7f8e0eb5__7d3fab8b80",
+      "code_sha256": "d9134e4d681aa75de25f41bba0d656dd86d0b7d7713cde0c53d584a32e5b85c6",
+      "label": "known_bad"
+    }
+  ]
+}

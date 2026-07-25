@@ -1,0 +1,21 @@
+{
+  "source_batch_id": "c373b16ce39b",
+  "source_batch_name": "07_平行班加油站第二讲",
+  "source_item_id": "bf58d22789ed",
+  "title": "07_平行班加油站第二讲_02_练习2",
+  "problem_text": "如图，在 △ABC 中， ∠B=2 ∠C ， AD ⊥ BC 于 D ，求证: CD=BD+AB，求CD=BD+AB。",
+  "solution_steps": "【读题展示阶段】\n先自然读题，不进入证明。题目给出：如图，在 △ABC 中， ∠B=2 ∠C ， AD ⊥ BC 于 D ，求证: CD=BD+AB。读到 CD=BD+AB 时高亮 CD、BD+AB；读到 AD ⊥ BC 时高亮 AD ⊥ BC。最后读出求证：CD=BD+AB，只高亮结论中的关键线段或角。\n【思路切入阶段】\n本题最终要证明 CD=BD+AB，直接证明线段和不方便。先把 ∠B=2∠C 和 AD⊥BC 结合起来，寻找能把 AB 平移或截取到 BD、CD 上的辅助构造；再用直角三角形全等转出对应线段；最后把 CD 拆成两段，得到 CD=BD+AB。\n【满分答案阶段：必须完整展示的官方解题步骤】\n证明：\n\n在 DC 上截取 DE=BD ，连接 AE 。\n\\because AD\\perp BC \\therefore \\angle ADB=\\angle ADE=90^\\circ\n\n在 \\triangle ABD 和 \\triangle AED 中：\n\\begin{cases}BD=ED \\\\\\angle ADB=\\angle ADE \\\\AD=AD\\end{cases} \\therefore \\triangle ABD \\cong \\triangle AED(\\text{SAS}) \\therefore AB=AE,\\,\\angle B=\\angle AEB\n\n\\because \\angle B=2\\angle C \\therefore \\angle AEB=2\\angle C\n\n又 \\because \\angle AEB 是 \\triangle AEC 的外角\n\\therefore \\angle AEB=\\angle C+\\angle EAC \\therefore 2\\angle C=\\angle C+\\angle EAC 化简得： \\angle C=\\angle EAC \\therefore AE=EC\n\n\\because AB=AE \\therefore AB=EC\n\n\\because CD=DE+EC ， DE=BD ， EC=AB \\therefore CD=BD+AB\n\n【结论收束阶段】\n最后收束结论：\\therefore \\angle AEB=\\angle C+\\angle EAC \\therefore 2\\angle C=\\angle C+\\angle EAC 化简得： \\angle C=\\angle EAC \\therefore AE=EC \\because AB=AE \\therefore AB=EC \\because CD=DE+EC ， DE=BD ， EC=AB \\therefore CD=BD+AB\n\n【技巧总结阶段】\n本题可迁移的方法是“见中点，优先构造全等”。通过延长、截取或连接辅助线，把分散条件转进同一组三角形。",
+  "figure_code": "# PROBLEM_TEXT: 如图，在 △ABC 中， ∠B=2 ∠C ， AD ⊥ BC 于 D ，求证: CD=BD+AB。\n# FIGURE_FACTS: 在三角形ABC中，D在BC上，AD垂直于BC。角B是角C的两倍。求证CD = BD + AB。\n\nfrom manim import *\n\nclass GeometryScene(Scene):\n    def construct(self):\n        # 定义顶点坐标，使图形完美居中并满足几何关系\n        A = np.array([-1.732, 1.5, 0.0])\n        B = np.array([-3.464, -1.5, 0.0])\n        C = np.array([3.464, -1.5, 0.0])\n        D = np.array([-1.732, -1.5, 0.0])\n\n        # 绘制三角形和高 AD\n        triangle = Polygon(A, B, C, color=WHITE, stroke_width=3)\n        ad_line = Line(A, D, color=WHITE, stroke_width=3)\n\n        # 标注字母\n        a_label = MathTex(\"A\").next_to(A, UP, buff=0.15)\n        b_label = MathTex(\"B\").next_to(B, DOWN, buff=0.15).shift(LEFT * 0.1)\n        c_label = MathTex(\"C\").next_to(C, RIGHT, buff=0.15)\n        d_label = MathTex(\"D\").next_to(D, DOWN, buff=0.15)\n\n        # 组合所有元素\n        geometry_group = VGroup(triangle, ad_line, a_label, b_label, c_label, d_label)\n\n        # 添加到场景中\n        self.add(geometry_group)",
+  "index": 76,
+  "status": "render_succeeded",
+  "scene_class": "Solution",
+  "llm_seconds": 77.211,
+  "llm_findings": [
+    "provider_output_raw_python"
+  ],
+  "code_sha256": "493ab52e3e85687b5db390b292cf456da42be1adb2c47227623e6b6829ffaf96",
+  "work_dir": "/opt/mathpi/batchops/benchmarks/geometry-drift-8797-20260724-1720/0076-bf58d22789ed",
+  "render_seconds": 252.818,
+  "video_path": "/opt/mathpi/batchops/benchmarks/geometry-drift-8797-20260724-1720/0076-bf58d22789ed/media/videos/480p15/video.mp4",
+  "video_bytes": 1948054
+}

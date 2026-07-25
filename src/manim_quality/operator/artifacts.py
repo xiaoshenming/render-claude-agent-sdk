@@ -1,0 +1,256 @@
+"""Deterministic artifact pack for one Quality Operator run."""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+from manim_quality.contracts._json_values import thaw_json_object
+
+from .agent import QualityOperatorResult
+from .gate import GateDecision, GateResult
+from .session import QualitySession
+
+_OWNED_RUNTIME_DIRECTORIES = {"agent_runtime", "acceptance_runtime"}
+
+
+def write_run_artifacts(
+    *,
+    root: Path,
+    session: QualitySession,
+    operator_result: QualityOperatorResult,
+    gate_result: GateResult,
+) -> None:
+    target = Path(root)
+    _validate_existing_root(target)
+    target.mkdir(parents=True, exist_ok=True)
+    for name in ("input", "revisions", "evidence", "logs", "output"):
+        (target / name).mkdir()
+    _write_inputs(target, session)
+    _write_revisions(target, session)
+    _write_evidence(target, session, gate_result)
+    _write_logs(target, operator_result, gate_result)
+    _write_output(target, gate_result)
+
+
+def _validate_existing_root(target: Path) -> None:
+    if not target.exists():
+        return
+    unknown = {
+        item.name
+        for item in target.iterdir()
+        if item.name not in _OWNED_RUNTIME_DIRECTORIES or not item.is_dir()
+    }
+    if unknown:
+        names = ", ".join(sorted(unknown))
+        raise ValueError(f"artifact root has unknown existing content: {names}")
+
+
+def _write_inputs(target: Path, session: QualitySession) -> None:
+    _write_text(target / "input" / "problem.snapshot", session.problem_text)
+    _write_text(target / "input" / "candidate.R0.py", session.baseline.code)
+
+
+def _write_revisions(target: Path, session: QualitySession) -> None:
+    for revision in session.attempts:
+        scope = "baseline" if revision.scope is None else revision.scope.value
+        _write_text(
+            target / "revisions" / f"{revision.revision_id}.{scope}.py",
+            revision.code,
+        )
+
+
+def _write_evidence(
+    target: Path,
+    session: QualitySession,
+    gate_result: GateResult,
+) -> None:
+    _write_json(
+        target / "evidence" / "findings.json",
+        {
+            "problem_hash": session.problem_hash,
+            "findings": [
+                {
+                    "finding_id": item.finding_id,
+                    "category": item.category.value,
+                    "severity": item.severity,
+                    "summary": item.summary,
+                    "acceptance_criteria": item.acceptance_criteria,
+                }
+                for item in session.findings
+            ],
+        },
+    )
+    _write_json(
+        target / "evidence" / "revisions.json",
+        {
+            "revisions": [
+                {
+                    "revision_id": item.revision_id,
+                    "parent_revision_id": item.parent_revision_id,
+                    "scope": None if item.scope is None else item.scope.value,
+                    "code_hash": item.code_hash,
+                    "patch_hash": item.patch_hash,
+                    "finding_ids": list(item.finding_ids),
+                }
+                for item in session.attempts
+            ]
+        },
+    )
+    revision_id = session.submitted_revision_id or session.current_revision.revision_id
+    if gate_result.validation is not None:
+        _write_json(
+            target / "evidence" / f"validation.{revision_id}.json",
+            _validation(gate_result.validation),
+        )
+    if gate_result.layout_report is not None:
+        _write_json(
+            target / "evidence" / f"layout.{revision_id}.json",
+            thaw_json_object(gate_result.layout_report),
+        )
+
+
+def _write_logs(
+    target: Path,
+    operator_result: QualityOperatorResult,
+    gate_result: GateResult,
+) -> None:
+    record = operator_result.call_record
+    _write_json(target / "logs" / "agent_call.json", _agent_call(record))
+    _write_jsonl(
+        target / "logs" / "tool_calls.jsonl",
+        [
+            {
+                "name": item.name,
+                "input": thaw_json_object(item.input),
+                "allowed": item.allowed,
+                "error": item.error,
+                "result_status": item.result_status,
+                "result_hash": item.result_hash,
+            }
+            for item in record.tool_calls
+        ],
+    )
+    _write_jsonl(
+        target / "logs" / "parent-sdk-messages.jsonl",
+        [thaw_json_object(item) for item in operator_result.sdk_messages],
+    )
+    _write_json(
+        target / "logs" / "subagent-results.json",
+        {
+            "results": [
+                thaw_json_object(item) for item in operator_result.subagent_results
+            ]
+        },
+    )
+    decision = _decision(operator_result, gate_result)
+    _write_json(target / "logs" / "run_summary.json", decision)
+    _write_json(target / "output" / "decision.json", decision)
+
+
+def _write_output(target: Path, gate_result: GateResult) -> None:
+    if gate_result.decision is GateDecision.PROPOSED:
+        assert gate_result.final_revision is not None
+        _write_text(
+            target / "output" / "proposed_candidate.py",
+            gate_result.final_revision.code,
+        )
+    else:
+        assert gate_result.rollback_revision is not None
+        rollback = gate_result.rollback_revision
+        _write_text(
+            target / "output" / f"rollback.{rollback.revision_id}.py",
+            rollback.code,
+        )
+
+
+def _agent_call(record) -> dict[str, object]:
+    usage = record.usage
+    return {
+        "run_id": record.run_id,
+        "role": record.role,
+        "model": record.model,
+        "prompt": record.prompt,
+        "prompt_version": record.prompt_version,
+        "schema_version": record.schema_version,
+        "tool_version": record.tool_version,
+        "structured_output": (
+            None
+            if record.structured_output is None
+            else thaw_json_object(record.structured_output)
+        ),
+        "usage": _usage(usage),
+        "turns": record.turns,
+        "observed_model_rounds": record.observed_model_rounds,
+        "elapsed_ms": record.elapsed_ms,
+        "error": record.error,
+    }
+
+
+def _decision(
+    operator_result: QualityOperatorResult,
+    gate_result: GateResult,
+) -> dict[str, object]:
+    record = operator_result.call_record
+    final = gate_result.final_revision
+    rollback = gate_result.rollback_revision
+    return {
+        "decision": gate_result.decision.value,
+        "submitted_revision_id": operator_result.revision.revision_id,
+        "final_revision_id": None if final is None else final.revision_id,
+        "rollback_revision_id": None if rollback is None else rollback.revision_id,
+        "reasons": list(gate_result.reasons),
+        "agent_summary": operator_result.summary,
+        "turns": record.turns,
+        "tool_calls": len(record.tool_calls),
+        "elapsed_ms": record.elapsed_ms,
+        "tokens": _usage(record.usage),
+        "layout_report": gate_result.layout_report,
+        "validation": _validation(gate_result.validation),
+    }
+
+
+def _validation(value) -> dict[str, object] | None:
+    if value is None:
+        return None
+    return {
+        "passed": value.passed,
+        "improved": value.improved,
+        "summary": value.summary,
+        "details": thaw_json_object(value.details),
+        "fingerprint": value.fingerprint,
+        "revision_id": value.revision_id,
+        "code_hash": value.code_hash,
+        "problem_hash": value.problem_hash,
+    }
+
+
+def _usage(value) -> dict[str, int]:
+    return {
+        "input_tokens": value.input_tokens,
+        "output_tokens": value.output_tokens,
+        "cache_read_tokens": value.cache_read_tokens,
+        "cache_write_tokens": value.cache_write_tokens,
+        "total_tokens": value.total_tokens,
+    }
+
+
+def _write_json(path: Path, value: object) -> None:
+    _write_text(
+        path,
+        json.dumps(value, ensure_ascii=False, indent=2) + "\n",
+    )
+
+
+def _write_jsonl(path: Path, values: list[object]) -> None:
+    lines = [
+        json.dumps(value, ensure_ascii=False, separators=(",", ":"))
+        for value in values
+    ]
+    _write_text(path, "\n".join(lines) + ("\n" if lines else ""))
+
+
+def _write_text(path: Path, value: str) -> None:
+    temporary = path.with_suffix(path.suffix + ".tmp")
+    temporary.write_text(value, encoding="utf-8")
+    temporary.replace(path)

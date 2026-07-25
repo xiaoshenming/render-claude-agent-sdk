@@ -1,0 +1,558 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Manim AI 视频质量交付平台</title>
+  <style>
+    :root {
+      --ink: #17212b;
+      --muted: #667481;
+      --line: #b9c4ce;
+      --page: #f4f7f9;
+      --panel: #ffffff;
+      --teal: #087f8c;
+      --teal-soft: #e6f5f6;
+      --green: #1b7f55;
+      --green-soft: #eaf6ef;
+      --amber: #b96812;
+      --amber-soft: #fff3e4;
+      --red: #b4232f;
+      --red-soft: #fdecef;
+      --blue: #2764a8;
+      --blue-soft: #eaf2fb;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      width: 1920px;
+      height: 1080px;
+      margin: 0;
+      overflow: hidden;
+      background: var(--page);
+      color: var(--ink);
+      font-family: "Microsoft YaHei", "Noto Sans SC", "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+
+    .canvas {
+      width: 1920px;
+      height: 1080px;
+      padding: 34px 40px 28px;
+      display: grid;
+      grid-template-rows: 72px 48px 1fr 236px 28px;
+      gap: 14px;
+    }
+
+    header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      border-bottom: 2px solid #d4dde4;
+      padding-bottom: 12px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 34px;
+      line-height: 1;
+      font-weight: 760;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .principle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid #94a4b2;
+      border-left: 7px solid var(--teal);
+      background: #eef3f6;
+      font-size: 19px;
+      font-weight: 720;
+    }
+
+    .main-grid {
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 260px 1fr 244px;
+      gap: 16px;
+    }
+
+    .group {
+      min-height: 0;
+      border: 1.5px solid var(--line);
+      background: var(--panel);
+      border-radius: 8px;
+      padding: 14px;
+    }
+
+    .group-title {
+      min-height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      font-size: 18px;
+      font-weight: 760;
+    }
+
+    .group-title small {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .external {
+      border-top: 5px solid var(--blue);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .external-flow {
+      flex: 1;
+      display: grid;
+      grid-template-rows: 1fr 24px 1fr 24px 1fr 24px 1fr;
+      align-items: stretch;
+    }
+
+    .node {
+      min-width: 0;
+      border: 1.5px solid #aab7c1;
+      border-radius: 7px;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 4px;
+      padding: 9px 10px;
+      font-size: 15px;
+      line-height: 1.3;
+      font-weight: 700;
+    }
+
+    .node small {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .node.blue { border-color: #78a3cf; background: var(--blue-soft); }
+    .node.teal { border-color: #52a6ae; background: var(--teal-soft); }
+    .node.green { border-color: #75ae91; background: var(--green-soft); }
+    .node.amber { border-color: #d39b5d; background: var(--amber-soft); }
+    .node.red { border-color: #d58a91; background: var(--red-soft); }
+    .node.dark { border-color: #6f7f8d; background: #edf1f4; }
+
+    .v-arrow, .arrow {
+      color: #70808e;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 23px;
+      font-weight: 700;
+    }
+
+    .platform {
+      border: 2px solid #6f8e9a;
+      border-top: 5px solid var(--teal);
+      padding: 12px 14px;
+      display: grid;
+      grid-template-rows: 34px 68px 1fr 1fr 78px;
+      gap: 8px;
+    }
+
+    .platform-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 20px;
+      font-weight: 800;
+    }
+
+    .path {
+      font-family: "Consolas", monospace;
+      font-size: 13px;
+      color: #51636f;
+      background: #edf2f4;
+      border: 1px solid #cbd5dc;
+      padding: 5px 9px;
+      border-radius: 5px;
+    }
+
+    .intake-flow {
+      display: grid;
+      grid-template-columns: 1fr 36px 1.2fr 36px 1fr;
+      min-height: 0;
+    }
+
+    .stage {
+      border: 1px solid #c3cdd5;
+      background: #fbfcfd;
+      border-radius: 7px;
+      padding: 8px 10px;
+      display: grid;
+      grid-template-rows: 24px 1fr;
+      gap: 6px;
+      min-height: 0;
+    }
+
+    .stage.logic { border-left: 5px solid var(--teal); }
+    .stage.layout { border-left: 5px solid var(--amber); }
+
+    .stage-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 16px;
+      font-weight: 780;
+    }
+
+    .mandatory {
+      color: var(--teal);
+      border: 1px solid #70b9bf;
+      background: var(--teal-soft);
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 12px;
+      font-weight: 760;
+    }
+
+    .conditional {
+      color: var(--amber);
+      border: 1px solid #d8a66f;
+      background: var(--amber-soft);
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 12px;
+      font-weight: 760;
+    }
+
+    .stage-flow {
+      display: grid;
+      grid-template-columns: 1.1fr 28px .78fr 28px 1.1fr 28px 1.22fr 28px .82fr;
+      min-height: 0;
+    }
+
+    .stage-flow.layout-flow {
+      grid-template-columns: 1.05fr 28px .75fr 28px 1.15fr 28px 1.28fr 28px .78fr;
+    }
+
+    .compact {
+      font-size: 13.5px;
+      padding: 7px 7px;
+    }
+
+    .decision {
+      border: 1.5px dashed #8f9da8;
+      border-radius: 7px;
+      background: #f5f7f9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 6px;
+      font-size: 13px;
+      line-height: 1.25;
+      font-weight: 760;
+    }
+
+    .decision small {
+      display: block;
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.25;
+      font-weight: 650;
+    }
+
+    .gate-row {
+      display: grid;
+      grid-template-columns: 1fr 36px 1.25fr 36px 1fr;
+      min-height: 0;
+    }
+
+    .retry {
+      position: relative;
+    }
+
+    .retry::after {
+      content: "最多 2 轮";
+      position: absolute;
+      right: 5px;
+      bottom: 3px;
+      color: var(--amber);
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .delivery {
+      border-top: 5px solid var(--green);
+      display: grid;
+      grid-template-rows: 34px 1fr 38px 1fr;
+      gap: 10px;
+    }
+
+    .outcomes {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .delivery-note {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+      text-align: center;
+    }
+
+    .support-grid {
+      display: grid;
+      grid-template-columns: 1.25fr 1.08fr .95fr;
+      gap: 16px;
+    }
+
+    .support {
+      border: 1.5px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 12px 14px;
+      min-width: 0;
+    }
+
+    .support.harness { border-top: 5px solid var(--teal); }
+    .support.evidence { border-top: 5px solid var(--green); }
+    .support.modify { border-top: 5px solid var(--amber); }
+
+    .support h2 {
+      margin: 0 0 10px;
+      font-size: 17px;
+      line-height: 1;
+    }
+
+    .chip-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .chip-grid.two { grid-template-columns: repeat(2, 1fr); }
+
+    .chip {
+      min-height: 50px;
+      border: 1px solid #c3ced5;
+      background: #f7f9fa;
+      border-radius: 6px;
+      padding: 7px 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-size: 13px;
+      line-height: 1.25;
+      font-weight: 690;
+    }
+
+    .modify-flow {
+      display: grid;
+      grid-template-columns: 1fr 20px 1fr 20px 1fr 20px 1fr;
+      align-items: stretch;
+      margin-bottom: 10px;
+    }
+
+    .mini {
+      min-height: 48px;
+      font-size: 12.5px;
+      padding: 6px;
+    }
+
+    .return-note {
+      border: 1px solid #d8a66f;
+      background: var(--amber-soft);
+      color: #7c470e;
+      border-radius: 6px;
+      padding: 8px;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 760;
+    }
+
+    footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: #6d7c88;
+      font-size: 12px;
+    }
+
+    .legend {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .legend span::before {
+      content: "";
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      margin-right: 5px;
+      border-radius: 2px;
+      vertical-align: -1px;
+    }
+
+    .legend .m::before { background: var(--teal); }
+    .legend .c::before { background: var(--amber); }
+    .legend .d::before { background: var(--green); }
+    .legend .f::before { background: var(--red); }
+  </style>
+</head>
+<body>
+  <main class="canvas">
+    <header>
+      <h1>Manim AI 视频质量交付平台</h1>
+      <div class="subtitle">版本化 · 有界循环 · 证据驱动 · 独立验收</div>
+    </header>
+
+    <div class="principle">Agent 负责理解和修改，Quality Orchestrator 独占验收、回滚和发布权</div>
+
+    <section class="main-grid">
+      <div class="group external">
+        <div class="group-title">外部生成系统 <small>不进入质量平台</small></div>
+        <div class="external-flow">
+          <div class="node blue">题目 / 知识点<small>教学规划与约束</small></div>
+          <div class="v-arrow">↓</div>
+          <div class="node blue">AI 生成 Manim 代码</div>
+          <div class="v-arrow">↓</div>
+          <div class="node dark">确定性报错修复<small>语法 · LaTeX · API</small></div>
+          <div class="v-arrow">↓</div>
+          <div class="node green">基线渲染<small>代码 · 切片 · manifest</small></div>
+        </div>
+      </div>
+
+      <div class="group platform">
+        <div class="platform-title">
+          <span>独立质量平台</span>
+          <span class="path">D:\manim_quality_platform</span>
+        </div>
+
+        <div class="intake-flow">
+          <div class="node teal compact">QualitySubmission</div>
+          <div class="arrow">→</div>
+          <div class="node dark compact">不可变 Baseline Revision</div>
+          <div class="arrow">→</div>
+          <div class="node teal compact">Quality Orchestrator</div>
+        </div>
+
+        <div class="stage logic">
+          <div class="stage-head"><span>逻辑质量链</span><span class="mandatory">所有任务必经</span></div>
+          <div class="stage-flow">
+            <div class="node teal compact">逻辑审查 Agent<br>只读 · 自主找错</div>
+            <div class="arrow">→</div>
+            <div class="decision"><span>发现逻辑问题？<small>否：直接签发证书<br>是：进入条件修复</small></span></div>
+            <div class="arrow">→</div>
+            <div class="node amber compact retry">逻辑修复 Agent<br>条件触发</div>
+            <div class="arrow">→</div>
+            <div class="node green compact">Diff / AST 检查<br>定向重渲染 + Validator</div>
+            <div class="arrow">→</div>
+            <div class="node green compact">逻辑证书</div>
+          </div>
+        </div>
+
+        <div class="stage layout">
+          <div class="stage-head"><span>布局质量链</span><span class="conditional">检测必经 · 修复条件触发</span></div>
+          <div class="stage-flow layout-flow">
+            <div class="node teal compact">重叠检测<br>确定性全量检查</div>
+            <div class="arrow">→</div>
+            <div class="decision"><span>存在阻断重叠？<small>否：直接签发证书<br>是：进入条件修复</small></span></div>
+            <div class="arrow">→</div>
+            <div class="node amber compact retry">重叠修复 Agent<br>条件触发</div>
+            <div class="arrow">→</div>
+            <div class="node green compact">外层重渲染<br>全量重叠复检</div>
+            <div class="arrow">→</div>
+            <div class="node green compact">布局证书</div>
+          </div>
+        </div>
+
+        <div class="gate-row">
+          <div class="node green compact">最终一致性门禁<small>无 LLM</small></div>
+          <div class="arrow">→</div>
+          <div class="node dark compact">核对代码 · Scene · 切片 · 证据 · 配置版本</div>
+          <div class="arrow">→</div>
+          <div class="node teal compact">最终质量决策</div>
+        </div>
+      </div>
+
+      <div class="group delivery">
+        <div class="group-title">交付结果 <small>一次发布</small></div>
+        <div class="outcomes">
+          <div class="node green compact">自动交付</div>
+          <div class="node blue compact">警告交付</div>
+          <div class="node amber compact">重新生成</div>
+          <div class="node red compact">HOLD</div>
+        </div>
+        <div class="delivery-note">失败、变差、越权或超预算<br>只能进入重新生成 / HOLD</div>
+        <div class="node dark">原系统继续交付<small>水印 · 上传 · 回调</small></div>
+      </div>
+    </section>
+
+    <section class="support-grid">
+      <div class="support harness">
+        <h2>共享 Claude Agent SDK Harness</h2>
+        <div class="chip-grid">
+          <div class="chip">Reviewer / Coder / Verifier<br>角色隔离</div>
+          <div class="chip">Read / Edit<br>精确白名单</div>
+          <div class="chip">Tokens / Turns / 时间<br>硬预算</div>
+          <div class="chip">单任务隔离工作区</div>
+          <div class="chip">Prompt / Diff / 工具调用<br>完整日志</div>
+          <div class="chip">重复 Patch / 无改善<br>立即熔断</div>
+        </div>
+      </div>
+
+      <div class="support evidence">
+        <h2>版本与证据层</h2>
+        <div class="chip-grid two">
+          <div class="chip">Immutable Revision Store</div>
+          <div class="chip">Artifact Store<br>代码 · 切片 · 视频</div>
+          <div class="chip">Evidence Store<br>Issue · 报告 · 证书</div>
+          <div class="chip">状态机 · 幂等 · 回滚</div>
+          <div class="chip">租约 · 心跳 · 截止时间</div>
+          <div class="chip">准确率 · Tokens · 延迟 · 单位良品成本</div>
+        </div>
+      </div>
+
+      <div class="support modify">
+        <h2>用户二次修改</h2>
+        <div class="modify-flow">
+          <div class="node amber mini">用户要求</div>
+          <div class="arrow">→</div>
+          <div class="node amber mini">修改 Agent</div>
+          <div class="arrow">→</div>
+          <div class="node amber mini">预览渲染</div>
+          <div class="arrow">→</div>
+          <div class="node green mini">用户批准</div>
+        </div>
+        <div class="return-note">发布前重新进入 QualitySubmission<br>完整执行逻辑审查、重叠检测和最终门禁</div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="legend">
+        <span class="m">必经审查/检测</span>
+        <span class="c">条件修复 Agent</span>
+        <span class="d">确定性验证/证书</span>
+        <span class="f">阻断/异常</span>
+      </div>
+      <div>Manim Quality Platform · Architecture Baseline</div>
+    </footer>
+  </main>
+</body>
+</html>

@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "source_commit": "645c873",
+  "source_tag": "unified-quality-agent-baseline-20260726",
+  "sample_archive_sha256": "ef973cb2763cc4835c733e65c62f7dfb95aa3da59113a78a7cb76d8b112cae04",
+  "configuration": {
+    "model": "gpt-5.6-sol",
+    "concurrency": 2,
+    "case_timeout_seconds": 900,
+    "max_turns": 16,
+    "max_tool_calls": 18
+  },
+  "totals": {
+    "cases": 17,
+    "proposed": 13,
+    "failed": 4,
+    "proposed_rate": 0.7647058824,
+    "reported_success_tokens": 994113,
+    "average_success_tokens": 76470,
+    "failed_usage_complete": false
+  },
+  "limitations": [
+    "PROPOSED does not include independent post-repair mathematical verification.",
+    "Failed Agent calls did not persist complete token usage.",
+    "The sample archive and rendered media are controlled external inputs."
+  ],
+  "cases": [
+    {"id": "017", "status": "PROPOSED", "revision": "R2", "tokens": 77058, "turns": 12, "tool_calls": 13, "blocking_count": 0},
+    {"id": "022", "status": "PROPOSED", "revision": "R2", "tokens": 76260, "turns": 12, "tool_calls": 17, "blocking_count": 0},
+    {"id": "030", "status": "PROPOSED", "revision": "R2", "tokens": 82608, "turns": 12, "tool_calls": 16, "blocking_count": 0},
+    {"id": "035", "status": "FAILED", "error": "tool_calls_exceed_hard_limit"},
+    {"id": "042", "status": "FAILED", "error": "blocking_findings_require_validated_revision"},
+    {"id": "045", "status": "FAILED", "error": "blocking_layout_issues_remaining"},
+    {"id": "047", "status": "PROPOSED", "revision": "R2", "tokens": 92986, "turns": 12, "tool_calls": 16, "blocking_count": 0},
+    {"id": "054", "status": "PROPOSED", "revision": "R1", "tokens": 60659, "turns": 10, "tool_calls": 13, "blocking_count": 0},
+    {"id": "057", "status": "PROPOSED", "revision": "R1", "tokens": 52859, "turns": 10, "tool_calls": 11, "blocking_count": 0},
+    {"id": "058", "status": "PROPOSED", "revision": "R1", "tokens": 60785, "turns": 10, "tool_calls": 11, "blocking_count": 0},
+    {"id": "076", "status": "PROPOSED", "revision": "R2", "tokens": 79816, "turns": 12, "tool_calls": 13, "blocking_count": 0},
+    {"id": "078", "status": "PROPOSED", "revision": "R2", "tokens": 85216, "turns": 12, "tool_calls": 18, "blocking_count": 0},
+    {"id": "080", "status": "PROPOSED", "revision": "R2", "tokens": 107103, "turns": 13, "tool_calls": 17, "blocking_count": 0},
+    {"id": "099", "status": "FAILED", "error": "blocking_findings_require_validated_revision"},
+    {"id": "100", "status": "PROPOSED", "revision": "R2", "tokens": 81773, "turns": 14, "tool_calls": 15, "blocking_count": 0},
+    {"id": "108", "status": "PROPOSED", "revision": "R1", "tokens": 48396, "turns": 10, "tool_calls": 11, "blocking_count": 0},
+    {"id": "117", "status": "PROPOSED", "revision": "R2", "tokens": 88594, "turns": 12, "tool_calls": 13, "blocking_count": 0}
+  ]
+}

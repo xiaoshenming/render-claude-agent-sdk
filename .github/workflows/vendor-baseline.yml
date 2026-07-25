@@ -1,0 +1,43 @@
+name: Vendor Baselines
+
+on:
+  pull_request:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Verify frozen identities
+        run: python3.11 scripts/verify_vendor_sources.py
+      - name: Materialize verified overlap baseline
+        run: >-
+          python3.11 scripts/materialize_quality_repair.py
+          --target "$RUNNER_TEMP/quality_repair"
+      - name: Install frozen test dependencies
+        run: >-
+          python3.11 -m pip install -e ".[dev]"
+          -r "$RUNNER_TEMP/quality_repair/requirements-handoff.txt"
+      - name: Test source provenance contracts
+        run: >-
+          python3.11 -m pytest -p no:cacheprovider
+          tests/unit/test_source_provenance.py
+          tests/unit/test_vendor_materialization.py -q
+      - name: Test logic baseline
+        run: >-
+          PYTHONPATH=vendor/logic_self_audit_baseline
+          python3.11 -m pytest -p no:cacheprovider
+          vendor/logic_self_audit_baseline/tests -q
+      - name: Verify overlap baseline
+        run: bash "$RUNNER_TEMP/quality_repair/verify_handoff.sh"

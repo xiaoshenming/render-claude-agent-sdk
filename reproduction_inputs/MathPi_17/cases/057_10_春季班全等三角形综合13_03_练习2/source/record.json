@@ -1,0 +1,21 @@
+{
+  "source_batch_id": "be50468bb541",
+  "source_batch_name": "10_春季班全等三角形综合13",
+  "source_item_id": "cace29e54dd7",
+  "title": "10_春季班全等三角形综合13_03_练习2",
+  "problem_text": "如图，∠ACB=90°，BF⊥AE，结合图中条件证明 CE=CD，求CE=CD。",
+  "solution_steps": "【读题展示阶段】\n先自然读题，不进入证明。题目给出：如图，∠ACB=90°，BF⊥AE，结合图中条件证明 CE=CD。读到 ∠ACB=90° 时高亮直角 C；读到 BF⊥AE 时高亮 BF、AE 和垂足；最后读出求证：CE=CD，只高亮 CE 和 CD。\n【思路切入阶段】\n本题最终要证明 CE=CD，直接证明线段相等不方便。先利用 ∠ACB=90° 和 BF⊥AE 找到两组直角关系，再把图中的已知边角放入相关直角三角形；证明全等后得到对应线段相等，最后把对应关系落到 CE 和 CD 上。\n【满分答案阶段：必须完整展示的官方解题步骤】\n证明：\n\\because \\angle ACB=90^\\circ ，\n\\therefore \\angle ACE=\\angle BCD=90^\\circ ，\n\\therefore \\angle CAE+\\angle E=90^\\circ 。\n\\because BF\\perp AE ，\n\\therefore \\angle BFE=90^\\circ ，\n\\therefore \\angle CBD+\\angle E=90^\\circ ，\n\\therefore \\angle CAE=\\angle CBD （同角的余角相等）。\n\n在 \\triangle CAE 和 \\triangle CBD 中：\n\\begin{cases}\\angle CAE=\\angle CBD \\\\CA=CB \\\\\\angle ACE=\\angle BCD\\end{cases} \\therefore \\triangle CAE\\cong\\triangle CBD （ASA），\n\\therefore CE=CD 。\n\n【结论收束阶段】\n最后收束结论：在 \\triangle CAE 和 \\triangle CBD 中： \\begin{cases}\\angle CAE=\\angle CBD \\\\CA=CB \\\\\\angle ACE=\\angle BCD\\end{cases} \\therefore \\triangle CAE\\cong\\triangle CBD （ASA）， \\therefore CE=CD 。\n\n【技巧总结阶段】\n本题可迁移的方法是先把目标拆成可证明或可计算的中间关系，再逐步回到题目要求。",
+  "figure_code": "# PROBLEM_TEXT: 如图，已知Rt△ABC中，∠ACB = 90°，CA = CB，E在BC的延长线上，过点B作BF ⊥ AE于点F，交AC于点D。求证：CE = CD。\n# FIGURE_FACTS: Rt\\triangle ABC, \\angle ACB = 90^\\circ, CA = CB, E on extension of BC, BF \\perp AE at F, BF intersects AC at D, CE = CD\n\nfrom manim import *\n\nclass GeometricScene(Scene):\n    def construct(self):\n        # Define coordinates based on geometric analysis\n        B = np.array([-3, -2.25, 0])\n        A = np.array([3, -2.25, 0])\n        C = np.array([0, 0.75, 0])\n        E = np.array([1.5, 2.25, 0])\n        D = np.array([1.5, -0.75, 0])\n        F = np.array([2.4, -0.45, 0])\n\n        # Create lines\n        line_AB = Line(B, A, stroke_width=2, color=WHITE)\n        line_BE = Line(B, E, stroke_width=2, color=WHITE)\n        line_AE = Line(A, E, stroke_width=2, color=WHITE)\n        line_AC = Line(A, C, stroke_width=2, color=WHITE)\n        line_BF = Line(B, F, stroke_width=2, color=WHITE)\n\n        # Create right angle mark at C\n        s = 0.25\n        dir_CB = np.array([-1, -1, 0]) / np.sqrt(2)\n        dir_CA = np.array([1, -1, 0]) / np.sqrt(2)\n        p1 = C + s * dir_CB\n        p2 = C + s * dir_CA\n        p3 = p1 + p2 - C\n        right_angle_C = VMobject(color=WHITE, stroke_width=1.5)\n        right_angle_C.set_points_as_corners([p1, p3, p2])\n\n        # Create dots for key points\n        dots = VGroup(*[Dot(p, radius=0.05, color=WHITE) for p in [A, B, C, D, E, F]])\n\n        # Create labels\n        label_A = MathTex(\"A\").next_to(A, DR, buff=0.1)\n        label_B = MathTex(\"B\").next_to(B, DL, buff=0.1)\n        label_C = MathTex(\"C\").next_to(C, UL, buff=0.1)\n        label_D = MathTex(\"D\").next_to(D, DOWN, buff=0.15)\n        label_E = MathTex(\"E\").next_to(E, UP, buff=0.1)\n        label_F = MathTex(\"F\").next_to(F, RIGHT, buff=0.1)\n        labels = VGroup(label_A, label_B, label_C, label_D, label_E, label_F)\n\n        # Add all elements to the scene\n        self.add(line_AB, line_BE, line_AE, line_AC, line_BF, right_angle_C, dots, labels)",
+  "index": 57,
+  "status": "render_succeeded",
+  "scene_class": "Solution",
+  "llm_seconds": 56.926,
+  "llm_findings": [
+    "provider_output_raw_python"
+  ],
+  "code_sha256": "13fbacaa963e4c6bc54c3617bf97a2de4fcfaa445b9722e9964bac4650df0a68",
+  "work_dir": "/opt/mathpi/batchops/benchmarks/geometry-drift-8797-20260724-1720/0057-cace29e54dd7",
+  "render_seconds": 193.615,
+  "video_path": "/opt/mathpi/batchops/benchmarks/geometry-drift-8797-20260724-1720/0057-cace29e54dd7/media/videos/480p15/video.mp4",
+  "video_bytes": 1173536
+}

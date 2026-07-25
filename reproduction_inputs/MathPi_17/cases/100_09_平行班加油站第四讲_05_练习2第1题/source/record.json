@@ -1,0 +1,21 @@
+{
+  "source_batch_id": "0489f6c00320",
+  "source_batch_name": "周日交付_81题_server6_20260704",
+  "source_item_id": "dbe48e6f39ac",
+  "title": "09_平行班加油站第四讲_05_练习2第1题",
+  "problem_text": "AB=AC=5，BC=3，MN是AB的垂直平分线，交AC于D，求△BDC的周长。",
+  "solution_steps": "【读题展示阶段】\n先自然读题，不进入计算。题目给出：AB=AC=5，BC=3，MN是AB的垂直平分线，交AC于D，求△BDC的周长。读到关键条件时高亮对应图形、线段、角、坐标或数值；最后读出要求：求AB=AC=5，BC=3，MN是AB的垂直平分线，交AC于D，求△BDC的周长，只高亮最后要填写、证明或求出的对象。\n【思路切入阶段】\n这是典型的垂直平分线周长转化题，和练习1第1题原理一致。通过垂直平分线将BD替换为AD，把△BDC的周长转化为AC+BC的和，直接代入计算即可\n【满分答案阶段：必须完整展示的官方解题步骤】\n：△BDC的周长为8\n模块2 解析过程\n审题与切入\n这是典型的垂直平分线周长转化题，和练习1第1题原理一致。通过垂直平分线将BD替换为AD，把△BDC的周长转化为AC+BC的和，直接代入计算即可。\n解题思路（模型与定理）\n线段垂直平分线性质定理：垂直平分线上的点到线段两端距离相等，得AD=BD。\n周长转化模型：将△BDC周长中的BD替换为AD，周长=AC+BC。\n具体推导过程\n第一步：由垂直平分线得相等线段\nMN是AB的垂直平分线，点D在MN上，根据垂直平分线性质，\nAD = BD\n。\n第二步：转化△BDC的周长\n△BDC的周长 = BD + DC + BC\n将BD替换为AD：\n周长 = AD + DC + BC\n其中AD + DC = AC，因此：\n△BDC的周长 = AC + BC\n第三步：代入数值计算\n已知AC=5，BC=3，\n周长 = 5 + 3 = 8\n最终答案（中考规范书写）\n解：\n∵ MN垂直平分AB\n∴ AD = BD（线段垂直平分线上的点到线段两端距离相等）\n∵ △BDC的周长 = BD + DC + BC\n∴ △BDC的周长 = AD + DC + BC = AC + BC\n∵ AC=5，BC=3\n∴ △BDC的周长 = 5 + 3 = 8\n答：△BDC的周长为8。\n【结论收束阶段】\n最后收束结论：△BDC的周长为8。\n【技巧总结阶段】\n本题可迁移的方法是：（模型与定理） 线段垂直平分线性质定理：垂直平分线上的点到线段两端距离相等，得AD=BD。 周长转化模型：将△BDC周长中的BD替换为AD，周长=AC+BC。",
+  "figure_code": "",
+  "index": 100,
+  "status": "render_succeeded",
+  "scene_class": "Solution",
+  "llm_seconds": 84.084,
+  "llm_findings": [
+    "provider_output_raw_python"
+  ],
+  "code_sha256": "4f9d859ae7eb72a38362bc49cdb8ae54e1beab5c24d4c7565672a33bba12adf2",
+  "work_dir": "/opt/mathpi/batchops/benchmarks/geometry-drift-8797-20260724-1720/0100-dbe48e6f39ac",
+  "render_seconds": 320.228,
+  "video_path": "/opt/mathpi/batchops/benchmarks/geometry-drift-8797-20260724-1720/0100-dbe48e6f39ac/media/videos/480p15/video.mp4",
+  "video_bytes": 1171043
+}

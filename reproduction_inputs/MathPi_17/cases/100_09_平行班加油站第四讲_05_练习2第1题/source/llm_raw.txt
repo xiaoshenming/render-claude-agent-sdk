@@ -1,0 +1,213 @@
+class Solution(BaseConfigScene):
+    def construct(self):
+        # 1. 目标面板
+        goal_panel = self.make_question_goal_panel(self.make_ctex_row(r"求 $\triangle BDC$ 的周长"))
+        self.add(goal_panel)
+
+        # 2. 静态点与原图创建
+        pt_A = np.array([0, 3.27, 0])
+        pt_B = np.array([-1.5, -1.5, 0])
+        pt_C = np.array([1.5, -1.5, 0])
+        pt_M = (pt_A + pt_B) / 2
+        pt_D = np.array([0.914, 0.364, 0])
+        v_norm = np.array([-0.954, 0.3, 0])
+        pt_N = pt_M + 1.0 * v_norm
+        pt_P = pt_D - 0.8 * v_norm
+
+        edge_AB = Line(pt_A, pt_B, color=BASE_COLOR)
+        edge_BC = Line(pt_B, pt_C, color=BASE_COLOR)
+        edge_AC = Line(pt_A, pt_C, color=BASE_COLOR)
+        line_MN = Line(pt_N, pt_P, color=BASE_COLOR)
+
+        diagram = VGroup(edge_AB, edge_BC, edge_AC, line_MN)
+        self.fit_left(diagram)
+
+        # 3. 获取实时坐标并创建几何元素
+        real_A = edge_AB.get_start()
+        real_B = edge_AB.get_end()
+        real_C = edge_BC.get_end()
+        real_M = edge_AB.point_from_proportion(0.5)
+        real_D = edge_AC.point_from_proportion(0.609)
+        real_N = line_MN.get_start()
+
+        lbl_A = MathTex("A", color=TEXT_COLOR).next_to(real_A, UP, buff=0.15)
+        lbl_B = MathTex("B", color=TEXT_COLOR).next_to(real_B, DL, buff=0.15)
+        lbl_C = MathTex("C", color=TEXT_COLOR).next_to(real_C, DR, buff=0.15)
+        lbl_D = MathTex("D", color=TEXT_COLOR).next_to(real_D, UR, buff=0.15)
+        lbl_M = MathTex("M", color=TEXT_COLOR).next_to(real_M, UL, buff=0.15)
+        lbl_N = MathTex("N", color=TEXT_COLOR).next_to(real_N, UL, buff=0.15)
+
+        right_angle = self.make_right_angle_mark_at(real_M, real_A, real_N, 0.2, KNOWN_COLOR, 0.25)
+        aux_BD = DashedLine(real_B, real_D, color=DRAW_COLOR)
+
+        tick_AM = self.make_tick_mark(Line(real_A, real_M), n=1, color=KNOWN_COLOR)
+        tick_BM = self.make_tick_mark(Line(real_B, real_M), n=1, color=KNOWN_COLOR)
+        tick_AD = self.make_tick_mark(Line(real_A, real_D), n=2, color=KNOWN_COLOR)
+        tick_BD = self.make_tick_mark(aux_BD, n=2, color=KNOWN_COLOR)
+
+        region_BDC = self.make_region_fill(real_B, real_D, real_C, color=PAIR_A_COLOR, opacity=0.18)
+        region_ABD = self.make_region_fill(real_A, real_B, real_D, color=PAIR_B_COLOR, opacity=0.18)
+
+        geometry_all = VGroup(
+            diagram,
+            lbl_A, lbl_B, lbl_C, lbl_D, lbl_M, lbl_N,
+            right_angle,
+            aux_BD,
+            tick_AM, tick_BM,
+            tick_AD, tick_BD,
+            region_BDC, region_ABD
+        )
+        self.fit_geometry_group(geometry_all)
+
+        # 初始只显示原图和标签
+        self.add(diagram, lbl_A, lbl_B, lbl_C, lbl_D, lbl_M, lbl_N)
+
+        # 4. 逐句高亮与音画同步
+        # 【读题展示阶段】
+        with self.voiceover(text="同学们好，我们一起来看这道题。") as tracker:
+            self.play_after_speech([], tracker)
+
+        with self.voiceover(text="已知，线段 AB 等于五。") as tracker:
+            self.play_after_speech([self.highlight_edge(edge_AB, FOCUS_COLOR)], tracker)
+
+        with self.voiceover(text="同时，线段 AC 也等于五。") as tracker:
+            self.play_after_speech([self.highlight_edge(edge_AC, FOCUS_COLOR)], tracker)
+
+        with self.voiceover(text="另外，线段 BC 的长度等于三。") as tracker:
+            self.play_after_speech([self.highlight_edge(edge_BC, FOCUS_COLOR)], tracker)
+
+        with self.voiceover(text="这里还有一条线，MN 是 AB 的垂直平分线。") as tracker:
+            self.play_after_speech([self.highlight_edge(line_MN, FOCUS_COLOR), Create(right_angle), Create(tick_AM), Create(tick_BM)], tracker)
+
+        with self.voiceover(text="它与线段 AC 相交于点 D。") as tracker:
+            self.play_after_speech([self.highlight_point(lbl_D, FOCUS_COLOR)], tracker)
+
+        with self.voiceover(text="题目要求我们计算的是，三角形 BDC 的周长。") as tracker:
+            self.play_after_speech([Create(aux_BD), FadeIn(region_BDC)], tracker)
+
+        # 【思路切入阶段】
+        with self.voiceover(text="我们先来分析一下这道题的突破口。") as tracker:
+            self.play_steps_evenly([], tracker)
+
+        with self.voiceover(text="这是一道非常典型的，垂直平分线周长转化问题。") as tracker:
+            self.play_steps_evenly([self.reemphasize_stroke(line_MN)], tracker)
+
+        with self.voiceover(text="它的核心在于利用垂直平分线的性质进行线段替换。") as tracker:
+            self.play_steps_evenly([], tracker)
+
+        with self.voiceover(text="也就是，将线段 BD 替换为 AD。") as tracker:
+            self.play_steps_evenly([self.reemphasize_equal_segments(aux_BD, Line(real_A, real_D))], tracker)
+
+        with self.voiceover(text="这样一来，三角形 BDC 的周长就发生了变化。") as tracker:
+            self.play_steps_evenly([], tracker)
+
+        with self.voiceover(text="它被转化为了线段 AC 与 BC 的和。") as tracker:
+            self.play_steps_evenly([self.reemphasize_stroke(edge_AC), self.reemphasize_stroke(edge_BC)], tracker)
+
+        with self.voiceover(text="最后，我们只需要直接代入数值计算即可。") as tracker:
+            self.play_steps_evenly([], tracker)
+
+        with self.voiceover(text="下面，我们来规范地写出解题步骤。") as tracker:
+            self.play_steps_evenly([], tracker)
+
+        # 【正式推导阶段 - 第一屏】
+        panel1 = self.make_step_panel([
+            self.make_ctex_row(r"解："),
+            self.make_proof_because(r"MN \text{ 垂直平分 } AB"),
+            self.make_proof_therefore(r"AD = BD"),
+            self.make_ctex_row(r"（垂直平分线上的点到两端距离相等）")
+        ])
+
+        with self.voiceover(text="第一步，因为 MN 垂直平分线段 AB。") as tracker:
+            self.play_steps_evenly([Write(panel1[0]), Write(panel1[1])], tracker)
+
+        with self.voiceover(text="并且，点 D 在这条垂直平分线上。") as tracker:
+            self.play_steps_evenly([self.reemphasize_element(lbl_D)], tracker)
+
+        with self.voiceover(text="所以，根据垂直平分线的性质定理。") as tracker:
+            self.play_steps_evenly([Write(panel1[3])], tracker)
+
+        with self.voiceover(text="我们可以得到，线段 AD 等于 BD。") as tracker:
+            self.play_steps_evenly([Write(panel1[2])], tracker)
+
+        with self.voiceover(text="我们在图形中，把这两条相等的线段标记出来。") as tracker:
+            self.play_steps_evenly([Create(tick_AD), Create(tick_BD)], tracker)
+
+        # 【正式推导阶段 - 第二屏】
+        panel2 = self.make_step_panel([
+            self.make_proof_because(r"\triangle BDC \text{ 的周长} = BD + DC + BC"),
+            self.make_proof_therefore(r"\triangle BDC \text{ 的周长} = AD + DC + BC"),
+            self.make_ctex_row(r"因为 $AD + DC = AC$"),
+            self.make_ctex_row(r"所以 $\triangle BDC \text{ 的周长} = AC + BC$")
+        ])
+
+        with self.voiceover(text="第二步，我们来写出三角形 BDC 的周长表达式。") as tracker:
+            self.play_steps_evenly([FadeOut(panel1)], tracker)
+
+        with self.voiceover(text="三角形 BDC 的周长，等于 BD 加 DC 再加 BC。") as tracker:
+            self.play_steps_evenly([Write(panel2[0]), self.reemphasize_region(region_BDC)], tracker)
+
+        with self.voiceover(text="此时，我们可以利用刚才得到的相等关系。") as tracker:
+            self.play_steps_evenly([], tracker)
+
+        with self.voiceover(text="将周长公式中的 BD，替换为 AD。") as tracker:
+            self.play_steps_evenly([Write(panel2[1]), self.reemphasize_equal_segments(aux_BD, Line(real_A, real_D))], tracker)
+
+        with self.voiceover(text="于是，周长就等于 AD 加 DC 再加 BC。") as tracker:
+            self.play_steps_evenly([], tracker)
+
+        with self.voiceover(text="仔细观察图形，AD 加 DC 正好组成了线段 AC。") as tracker:
+            self.play_steps_evenly([Write(panel2[2]), self.reemphasize_stroke(edge_AC)], tracker)
+
+        with self.voiceover(text="因此，周长公式可以简化为 AC 加 BC。") as tracker:
+            self.play_steps_evenly([Write(panel2[3]), self.reemphasize_stroke(edge_AC), self.reemphasize_stroke(edge_BC)], tracker)
+
+        # 【正式推导阶段 - 第三屏】
+        panel3 = self.make_step_panel([
+            self.make_proof_because(r"AC = 5, BC = 3"),
+            self.make_proof_therefore(r"\triangle BDC \text{ 的周长} = 5 + 3 = 8"),
+            self.make_ctex_row(r"答：$\triangle BDC$ 的周长为 $8$。")
+        ])
+
+        with self.voiceover(text="第三步，我们代入题目中给出的已知数值。") as tracker:
+            self.play_steps_evenly([FadeOut(panel2)], tracker)
+
+        with self.voiceover(text="因为，AC 的长度等于五。") as tracker:
+            self.play_steps_evenly([Write(panel3[0]), self.reemphasize_stroke(edge_AC)], tracker)
+
+        with self.voiceover(text="而 BC 的长度等于三。") as tracker:
+            self.play_steps_evenly([self.reemphasize_stroke(edge_BC)], tracker)
+
+        with self.voiceover(text="所以，三角形 BDC 的周长就等于五加三。") as tracker:
+            self.play_steps_evenly([Write(panel3[1])], tracker)
+
+        with self.voiceover(text="计算得出，最终结果等于八。") as tracker:
+            self.play_steps_evenly([], tracker)
+
+        with self.voiceover(text="最后，我们写出结论，答，三角形 BDC 的周长为八。") as tracker:
+            self.play_steps_evenly([Write(panel3[2])], tracker)
+
+        with self.voiceover(text="这道题就完美解决啦。") as tracker:
+            self.play_steps_evenly([], tracker)
+
+        # 【结论收束与技巧总结】
+        with self.voiceover(text="我们最后来总结一下，这道题用到的关键方法。") as tracker:
+            self.play_steps_evenly([FadeOut(panel3)], tracker)
+
+        with self.voiceover(text="第一，是线段垂直平分线的性质定理。") as tracker:
+            self.play_steps_evenly([], tracker)
+
+        with self.voiceover(text="它能帮我们实现线段 of 等量代换，即 AD 等于 BD。") as tracker:
+            self.play_steps_evenly([self.reemphasize_equal_segments(Line(real_A, real_D), aux_BD)], tracker)
+
+        with self.voiceover(text="第二，是周长转化模型。") as tracker:
+            self.play_steps_evenly([], tracker)
+
+        with self.voiceover(text="通过将目标三角形的某条边进行转移，转化为已知线段的和。") as tracker:
+            self.play_steps_evenly([self.reemphasize_region(region_BDC), self.reemphasize_stroke(edge_AC), self.reemphasize_stroke(edge_BC)], tracker)
+
+        with self.voiceover(text="掌握了这两个核心要点，以后遇到类似的垂直平分线问题，就能迎刃而解了。") as tracker:
+            self.play_steps_evenly([], tracker)
+
+        with self.voiceover(text="同学们学会了吗？我们下期视频再见！") as tracker:
+            self.play_steps_evenly([], tracker)

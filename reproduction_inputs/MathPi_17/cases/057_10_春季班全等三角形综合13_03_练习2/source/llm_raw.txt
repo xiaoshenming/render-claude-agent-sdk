@@ -1,0 +1,257 @@
+class Solution(BaseConfigScene):
+    def construct(self):
+        # 1. 定义原始坐标
+        B = np.array([-3, -2.25, 0])
+        A = np.array([3, -2.25, 0])
+        C = np.array([0, 0.75, 0])
+        E = np.array([1.5, 2.25, 0])
+        D = np.array([1.5, -0.75, 0])
+        F = np.array([2.4, -0.45, 0])
+
+        # 2. 创建原始黑色原图
+        line_AB = Line(B, A, stroke_width=2, color=BASE_COLOR)
+        line_BE = Line(B, E, stroke_width=2, color=BASE_COLOR)
+        line_AE = Line(A, E, stroke_width=2, color=BASE_COLOR)
+        line_AC = Line(A, C, stroke_width=2, color=BASE_COLOR)
+        line_BF = Line(B, F, stroke_width=2, color=BASE_COLOR)
+        dot_A = Dot(A, radius=0.05, color=BASE_COLOR)
+        dot_B = Dot(B, radius=0.05, color=BASE_COLOR)
+        dot_C = Dot(C, radius=0.05, color=BASE_COLOR)
+        dot_D = Dot(D, radius=0.05, color=BASE_COLOR)
+        dot_E = Dot(E, radius=0.05, color=BASE_COLOR)
+        dot_F = Dot(F, radius=0.05, color=BASE_COLOR)
+        diagram = VGroup(line_AB, line_BE, line_AE, line_AC, line_BF, dot_A, dot_B, dot_C, dot_D, dot_E, dot_F)
+
+        # 3. 适配左侧
+        self.fit_left(diagram)
+
+        # 4. 获取实时坐标
+        pt_A = dot_A.get_center()
+        pt_B = dot_B.get_center()
+        pt_C = dot_C.get_center()
+        pt_D = dot_D.get_center()
+        pt_E = dot_E.get_center()
+        pt_F = dot_F.get_center()
+
+        # 5. 创建标签和边
+        lbl_A = MathTex("A", color=TEXT_COLOR).next_to(pt_A, DR, buff=0.15)
+        lbl_B = MathTex("B", color=TEXT_COLOR).next_to(pt_B, DL, buff=0.15)
+        lbl_C = MathTex("C", color=TEXT_COLOR).next_to(pt_C, UL, buff=0.15)
+        lbl_D = MathTex("D", color=TEXT_COLOR).next_to(pt_D, DOWN, buff=0.15)
+        lbl_E = MathTex("E", color=TEXT_COLOR).next_to(pt_E, UP, buff=0.15)
+        lbl_F = MathTex("F", color=TEXT_COLOR).next_to(pt_F, RIGHT, buff=0.15)
+
+        edge_CA = Line(pt_C, pt_A, stroke_width=2, color=BASE_COLOR)
+        edge_CB = Line(pt_C, pt_B, stroke_width=2, color=BASE_COLOR)
+        edge_CE = Line(pt_C, pt_E, stroke_width=2, color=BASE_COLOR)
+        edge_CD = Line(pt_C, pt_D, stroke_width=2, color=BASE_COLOR)
+        edge_BF = Line(pt_B, pt_F, stroke_width=2, color=BASE_COLOR)
+        edge_AE = Line(pt_A, pt_E, stroke_width=2, color=BASE_COLOR)
+
+        # 6. 创建直角、刻痕、区域
+        right_angle_C = self.make_right_angle_mark_at(pt_C, pt_A, pt_B, 0.2, KNOWN_COLOR, 0.25)
+        right_angle_F = self.make_right_angle_mark_at(pt_F, pt_B, pt_A, 0.2, KNOWN_COLOR, 0.25)
+        tick_CA = self.make_tick_mark(edge_CA, n=1, color=KNOWN_COLOR)
+        tick_CB = self.make_tick_mark(edge_CB, n=1, color=KNOWN_COLOR)
+        region_CAE = self.make_region_fill(pt_C, pt_A, pt_E, color=PAIR_A_COLOR, opacity=0.18)
+        region_CBD = self.make_region_fill(pt_C, pt_B, pt_D, color=PAIR_B_COLOR, opacity=0.18)
+
+        # 7. 整体适配
+        geometry_all = VGroup(
+            diagram, lbl_A, lbl_B, lbl_C, lbl_D, lbl_E, lbl_F,
+            edge_CA, edge_CB, edge_CE, edge_CD,
+            right_angle_C, right_angle_F, tick_CA, tick_CB,
+            region_CAE, region_CBD
+        )
+        self.fit_geometry_group(geometry_all)
+
+        # 8. 初始添加
+        self.add(diagram, lbl_A, lbl_B, lbl_C, lbl_D, lbl_E, lbl_F, edge_CA, edge_CB, edge_CE, edge_CD)
+
+        # 9. 创建板书行
+        # 第一屏
+        row1 = self.make_proof_because(r"\angle ACB = 90^\circ")
+        row2_1 = self.make_proof_therefore(r"\angle ACE = 90^\circ")
+        row2_2 = self.make_proof_therefore(r"\angle BCD = 90^\circ")
+        row3 = self.make_proof_therefore(r"\angle CAE + \angle E = 90^\circ")
+        panel1 = self.make_step_panel([row1, row2_1, row2_2, row3])
+
+        # 第二屏
+        row4 = self.make_proof_because(r"BF \perp AE")
+        row5 = self.make_proof_therefore(r"\angle BFE = 90^\circ")
+        row6 = self.make_proof_therefore(r"\angle CBD + \angle E = 90^\circ")
+        row7 = self.make_proof_therefore(r"\angle CAE = \angle CBD")
+        panel2 = self.make_step_panel([row4, row5, row6, row7])
+
+        # 第三屏
+        row8 = self.make_ctex_row(r"在 $\triangle CAE$ 和 $\triangle CBD$ 中：")
+        row9 = self.make_ctex_row(r"$\begin{cases} \angle CAE = \angle CBD \\ CA = CB \\ \angle ACE = \angle BCD \end{cases}$")
+        row10 = self.make_proof_therefore(r"\triangle CAE \cong \triangle CBD \ (\text{ASA})")
+        row11 = self.make_proof_therefore(r"CE = CD")
+        panel3 = self.make_step_panel([row8, row9, row10, row11])
+
+        # 总结屏
+        summary_row1 = self.make_ctex_row(r"利用余角关系转移角")
+        summary_row2 = self.make_ctex_row(r"构造全等三角形证线段相等")
+        summary_panel = self.make_step_panel([summary_row1, summary_row2])
+
+        # 10. 播放动画与口播
+        # 读题阶段
+        with self.voiceover(text="同学们好，我们一起来看这道题。") as tracker:
+            self.play_after_speech([], tracker)
+
+        with self.voiceover(text="已知在直角三角形 ABC 中。") as tracker:
+            self.play_after_speech([], tracker)
+
+        with self.voiceover(text="角 ACB 等于九十度。") as tracker:
+            self.play_after_speech([Create(right_angle_C)], tracker)
+
+        with self.voiceover(text="边 CA 等于边 CB。") as tracker:
+            self.play_after_speech([
+                Create(tick_CA), Create(tick_CB),
+                self.highlight_edge(edge_CA, color=KNOWN_COLOR),
+                self.highlight_edge(edge_CB, color=KNOWN_COLOR)
+            ], tracker)
+
+        with self.voiceover(text="点 E 在 BC 的延长线上。") as tracker:
+            self.play_after_speech([], tracker)
+
+        with self.voiceover(text="过点 B 作 BF 垂直于 AE。") as tracker:
+            self.play_after_speech([
+                self.highlight_edge(edge_BF, color=FOCUS_COLOR),
+                self.highlight_edge(edge_AE, color=FOCUS_COLOR)
+            ], tracker)
+
+        with self.voiceover(text="垂足为点 F。") as tracker:
+            self.play_after_speech([Create(right_angle_F)], tracker)
+
+        with self.voiceover(text="BF 交 AC 于点 D。") as tracker:
+            self.play_after_speech([self.highlight_point(lbl_D, color=FOCUS_COLOR)], tracker)
+
+        with self.voiceover(text="求证：线段 CE 等于 CD。") as tracker:
+            self.play_after_speech([
+                self.highlight_edge(edge_CE, color=RESULT_COLOR),
+                self.highlight_edge(edge_CD, color=RESULT_COLOR)
+            ], tracker)
+
+        # 思路切入阶段
+        with self.voiceover(text="我们要证明线段 CE 等于 CD。") as tracker:
+            self.play_after_speech([self.reemphasize_equal_segments(edge_CE, edge_CD)], tracker)
+
+        with self.voiceover(text="直接证明这两条线段相等并不容易。") as tracker:
+            self.play_after_speech([], tracker)
+
+        with self.voiceover(text="我们可以尝试寻找包含这两条线段的三角形。") as tracker:
+            self.play_after_speech([], tracker)
+
+        with self.voiceover(text="看看它们是否全等。") as tracker:
+            self.play_after_speech([], tracker)
+
+        with self.voiceover(text="比如，我们可以关注三角形 CAE。") as tracker:
+            self.play_after_speech([FadeIn(region_CAE)], tracker)
+
+        with self.voiceover(text="和三角形 CBD。") as tracker:
+            self.play_after_speech([FadeIn(region_CBD)], tracker)
+
+        with self.voiceover(text="如果能证明这两个三角形全等，问题就迎刃而解了。") as tracker:
+            self.play_after_speech([
+                self.reemphasize_region(region_CAE),
+                self.reemphasize_region(region_CBD)
+            ], tracker)
+
+        # 第一屏板书
+        with self.voiceover(text="我们开始书写证明过程。") as tracker:
+            self.play_steps_evenly([], tracker)
+
+        with self.voiceover(text="因为角 ACB 等于九十度。") as tracker:
+            self.play_steps_evenly([Write(row1)], tracker)
+
+        with self.voiceover(text="所以角 ACE 等于九十度。") as tracker:
+            self.play_steps_evenly([Write(row2_1)], tracker)
+
+        with self.voiceover(text="同时角 BCD 也等于九十度。") as tracker:
+            self.play_steps_evenly([Write(row2_2)], tracker)
+
+        with self.voiceover(text="在直角三角形 ACE 中，两个锐角互余。") as tracker:
+            self.play_steps_evenly([], tracker)
+
+        with self.voiceover(text="所以角 CAE 加上角 E 等于九十度。") as tracker:
+            self.play_steps_evenly([Write(row3)], tracker)
+
+        # 第二屏板书
+        with self.voiceover(text="接下来，我们看另一条垂直条件。") as tracker:
+            self.play_steps_evenly([FadeOut(panel1)], tracker)
+
+        with self.voiceover(text="因为 BF 垂直于 AE。") as tracker:
+            self.play_steps_evenly([Write(row4)], tracker)
+
+        with self.voiceover(text="所以角 BFE 等于九十度。") as tracker:
+            self.play_steps_evenly([Write(row5)], tracker)
+
+        with self.voiceover(text="在直角三角形 BFE 中。") as tracker:
+            self.play_steps_evenly([], tracker)
+
+        with self.voiceover(text="同理可得，角 CBD 加上角 E 也等于九十度。") as tracker:
+            self.play_steps_evenly([Write(row6)], tracker)
+
+        with self.voiceover(text="根据同角的余角相等。") as tracker:
+            self.play_steps_evenly([], tracker)
+
+        with self.voiceover(text="我们就可以得到角 CAE 等于角 CBD。") as tracker:
+            self.play_steps_evenly([Write(row7)], tracker)
+
+        # 第三屏板书
+        with self.voiceover(text="现在，我们回到这两个三角形中。") as tracker:
+            self.play_steps_evenly([FadeOut(panel2), Write(row8)], tracker)
+
+        with self.voiceover(text="在三角形 CAE 和三角形 CBD 中。") as tracker:
+            self.play_steps_evenly([
+                self.reemphasize_region(region_CAE),
+                self.reemphasize_region(region_CBD)
+            ], tracker)
+
+        with self.voiceover(text="我们已经找到了三组对应相等的条件。") as tracker:
+            self.play_steps_evenly([], tracker)
+
+        with self.voiceover(text="分别是角相等，边相等，以及另一组角相等。") as tracker:
+            self.play_steps_evenly([], tracker)
+
+        with self.voiceover(text="列出这三组条件。") as tracker:
+            self.play_steps_evenly([Write(row9)], tracker)
+
+        with self.voiceover(text="因此，根据角边角判定定理。") as tracker:
+            self.play_steps_evenly([], tracker)
+
+        with self.voiceover(text="这两个三角形全等。") as tracker:
+            self.play_steps_evenly([Write(row10)], tracker)
+
+        with self.voiceover(text="即三角形 CAE 全等于三角形 CBD。") as tracker:
+            self.play_steps_evenly([], tracker)
+
+        with self.voiceover(text="既然三角形全等，它们的对应边自然相等。") as tracker:
+            self.play_steps_evenly([], tracker)
+
+        with self.voiceover(text="从而证明了 CE 等于 CD。") as tracker:
+            self.play_steps_evenly([Write(row11), self.reemphasize_equal_segments(edge_CE, edge_CD)], tracker)
+
+        # 收尾与技巧总结
+        with self.voiceover(text="这道题到这里就证明完成了。") as tracker:
+            self.play_after_speech([], tracker)
+
+        with self.voiceover(text="我们来总结一下这道题的解题技巧。") as tracker:
+            self.play_after_speech([FadeOut(panel3)], tracker)
+
+        with self.voiceover(text="关键在于，通过直角三角形的余角关系。") as tracker:
+            self.play_after_speech([Write(summary_row1)], tracker)
+
+        with self.voiceover(text="实现了角相等的转移。") as tracker:
+            self.play_after_speech([], tracker)
+
+        with self.voiceover(text="进而为证明三角形全等创造了条件。") as tracker:
+            self.play_after_speech([Write(summary_row2)], tracker)
+
+        with self.voiceover(text="最后顺利得出线段相等的结论。") as tracker:
+            self.play_after_speech([], tracker)
+
+        with self.voiceover(text="同学们，你们学会了吗？") as tracker:
+            self.play_after_speech([], tracker)

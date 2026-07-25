@@ -1,0 +1,212 @@
+```python
+class Solution(BaseConfigScene):
+    def construct(self):
+        # 1. 原始几何坐标定义
+        A = np.array([-0.76, 1.8, 0])
+        B = np.array([-3, -1, 0])
+        C = np.array([-1, -1, 0])
+        D = np.array([-1.8, -1, 0])
+        F = np.array([2.5, -1, 0])
+        E = np.array([-1.28, 0.4, 0])
+
+        # 2. 创建基础图形并进行左侧适配
+        edge_AB = Line(B, A, color=BASE_COLOR)
+        edge_BF = Line(B, F, color=BASE_COLOR)
+        edge_AC = Line(A, C, color=BASE_COLOR)
+        edge_AD = Line(A, D, color=BASE_COLOR)
+        diagram = VGroup(edge_AB, edge_BF, edge_AC, edge_AD)
+        self.fit_left(diagram)
+
+        # 3. 获取适配后的真实坐标
+        pt_A = edge_AB.get_end()
+        pt_B = edge_AB.get_start()
+        pt_F = edge_BF.get_end()
+        pt_D = edge_BF.point_from_proportion(1.2 / 5.5)
+        pt_C = edge_BF.point_from_proportion(2.0 / 5.5)
+        pt_E = (pt_A + pt_D) / 2
+
+        # 4. 创建其他几何元素（使用真实坐标）
+        aux_EF = DashedLine(pt_E, pt_F, color=DRAW_COLOR)
+        aux_AF = DashedLine(pt_A, pt_F, color=DRAW_COLOR)
+        edge_FD = Line(pt_D, pt_F, color=BASE_COLOR)
+
+        lbl_A = MathTex("A", color=TEXT_COLOR).next_to(pt_A, UP, buff=0.15)
+        lbl_B = MathTex("B", color=TEXT_COLOR).next_to(pt_B, DOWN + LEFT, buff=0.1)
+        lbl_C = MathTex("C", color=TEXT_COLOR).next_to(pt_C, DOWN + LEFT, buff=0.1)
+        lbl_D = MathTex("D", color=TEXT_COLOR).next_to(pt_D, DOWN, buff=0.15)
+        lbl_E = MathTex("E", color=TEXT_COLOR).next_to(pt_E, UP + LEFT, buff=0.1)
+        lbl_F = MathTex("F", color=TEXT_COLOR).next_to(pt_F, DOWN, buff=0.15)
+
+        right_angle = self.make_right_angle_mark_at(pt_E, pt_A, pt_F, size=0.2, color=DRAW_COLOR)
+
+        arc_B = self.make_angle_mark(pt_B, pt_C, pt_A, radius=0.4, color=KNOWN_COLOR)
+        lbl_val_B = MathTex("?", color=FOCUS_COLOR).next_to(arc_B, UP + RIGHT, buff=0.05).scale(0.8)
+
+        arc_FAC = self.make_angle_mark(pt_A, pt_C, pt_F, radius=0.4, color=KNOWN_COLOR)
+        lbl_val_FAC = MathTex("55^\\circ", color=KNOWN_COLOR).next_to(arc_FAC, DOWN + RIGHT, buff=0.05).scale(0.8)
+
+        arc_BAD = self.make_angle_mark(pt_A, pt_D, pt_B, radius=0.3, color=KNOWN_COLOR)
+        arc_CAD = self.make_angle_mark(pt_A, pt_C, pt_D, radius=0.3, color=KNOWN_COLOR)
+
+        arc_FAD = self.make_angle_mark(pt_A, pt_D, pt_F, radius=0.5, color=FOCUS_COLOR)
+        arc_FDA = self.make_angle_mark(pt_D, pt_F, pt_A, radius=0.5, color=FOCUS_COLOR)
+
+        tick_FA = self.make_tick_mark(aux_AF, n=1, color=KNOWN_COLOR)
+        tick_FD = self.make_tick_mark(edge_FD, n=1, color=KNOWN_COLOR)
+
+        region_FAD = self.make_region_fill(pt_F, pt_A, pt_D, color=PAIR_A_COLOR, opacity=0.15)
+        region_ABD = self.make_region_fill(pt_A, pt_B, pt_D, color=PAIR_B_COLOR, opacity=0.15)
+
+        # 5. 整体适配几何组
+        geometry_all = VGroup(
+            diagram, aux_EF, aux_AF, right_angle,
+            arc_B, lbl_val_B, arc_FAC, lbl_val_FAC,
+            arc_BAD, arc_CAD, arc_FAD, arc_FDA,
+            lbl_A, lbl_B, lbl_C, lbl_D, lbl_E, lbl_F,
+            tick_FA, tick_FD, region_FAD, region_ABD
+        )
+        self.fit_geometry_group(geometry_all)
+
+        # 6. 右侧板书面板定义
+        panel_1 = self.make_step_panel([
+            self.make_proof_because(r"EF \text{垂直平分} AD"),
+            self.make_proof_therefore(r"FA = FD"),
+            self.make_proof_therefore(r"\angle FAD = \angle FDA"),
+            self.make_ctex_row(r"$\angle FAD = \angle FAC + \angle CAD$")
+        ])
+
+        panel_2 = self.make_step_panel([
+            self.make_ctex_row(r"$\angle FDA = \angle B + \angle BAD$"),
+            self.make_proof_because(r"AD \text{平分} \angle BAC"),
+            self.make_proof_therefore(r"\angle CAD = \angle BAD"),
+            self.make_ctex_row(r"$\angle FAC + \angle CAD = \angle B + \angle BAD$")
+        ])
+
+        panel_3 = self.make_step_panel([
+            self.make_proof_therefore(r"\angle FAC = \angle B"),
+            self.make_proof_because(r"\angle FAC = 55^\circ"),
+            self.make_proof_therefore(r"\angle B = 55^\circ")
+        ])
+
+        # 7. 动画播放与口播同步
+        # Voiceover 1: 读题
+        with self.voiceover(text="同学们好，我们一起来看这道几何题。已知，AD平分角BAC。") as tracker:
+            self.play_after_speech([
+                FadeIn(diagram),
+                FadeIn(VGroup(lbl_A, lbl_B, lbl_C, lbl_D)),
+                Create(arc_BAD),
+                Create(arc_CAD),
+                self.reemphasize_stroke(edge_AD)
+            ], tracker)
+
+        # Voiceover 2: 读题
+        with self.voiceover(text="EF垂直平分AD，交BC延长线于F。") as tracker:
+            self.play_after_speech([
+                Create(aux_EF),
+                FadeIn(right_angle),
+                FadeIn(VGroup(lbl_E, lbl_F))
+            ], tracker)
+
+        # Voiceover 3: 读题
+        with self.voiceover(text="角FAC等于55度，求角B的度数。") as tracker:
+            self.play_after_speech([
+                Create(arc_FAC),
+                FadeIn(lbl_val_FAC),
+                Create(arc_B),
+                FadeIn(lbl_val_B)
+            ], tracker)
+
+        # Voiceover 4: 思路切入
+        with self.voiceover(text="这道题同时出现了角平分线和线段垂直平分线。我们的核心思路是利用垂直平分线构造等腰三角形。") as tracker:
+            self.play_after_speech([
+                Create(aux_AF)
+            ], tracker)
+
+        # Voiceover 5: 思路切入2
+        with self.voiceover(text="再结合三角形外角性质和角平分线进行等量代换，最后求出角B。") as tracker:
+            self.play_after_speech([
+                self.reemphasize_stroke(edge_AD),
+                self.reemphasize_stroke(aux_EF)
+            ], tracker)
+
+        # Voiceover 6: 第一步
+        with self.voiceover(text="首先，因为 EF 垂直平分 AD，根据垂直平分线的性质，我们可以得到 FA 等于 FD。") as tracker:
+            self.play_steps_evenly([
+                Write(panel_1[0]),
+                Write(panel_1[1]),
+                self.reemphasize_equal_segments(aux_AF, edge_FD),
+                FadeIn(tick_FA),
+                FadeIn(tick_FD)
+            ], tracker)
+
+        # Voiceover 7: 第一步2
+        with self.voiceover(text="既然 FA 等于 FD，那么三角形 FAD 就是等腰三角形，所以底角相等，即角 FAD 等于角 FDA。") as tracker:
+            self.play_steps_evenly([
+                Write(panel_1[2]),
+                FadeIn(region_FAD),
+                Create(arc_FAD),
+                Create(arc_FDA)
+            ], tracker)
+
+        # Voiceover 8: 第二步
+        with self.voiceover(text="接下来，我们把这两个相等的角分别展开。看左边，角 FAD 可以写成角 FAC 加上角 CAD。") as tracker:
+            self.play_steps_evenly([
+                Write(panel_1[3]),
+                FadeOut(region_FAD),
+                self.reemphasize_element(arc_FAC),
+                self.reemphasize_element(arc_CAD)
+            ], tracker)
+
+        # Voiceover 9: 第二步2
+        with self.voiceover(text="再看右边，角 FDA 是三角形 ABD 的外角。根据三角形外角定理，角 FDA 等于角 B 加上角 BAD。") as tracker:
+            self.play_steps_evenly([
+                FadeOut(panel_1),
+                Write(panel_2[0]),
+                FadeIn(region_ABD),
+                self.reemphasize_element(arc_B),
+                self.reemphasize_element(arc_BAD)
+            ], tracker)
+
+        # Voiceover 10: 第三步
+        with self.voiceover(text="因为 AD 平分角 BAC，所以角 CAD 等于角 BAD。") as tracker:
+            self.play_steps_evenly([
+                Write(panel_2[1]),
+                Write(panel_2[2]),
+                FadeOut(region_ABD),
+                self.reemphasize_element(arc_BAD),
+                self.reemphasize_element(arc_CAD)
+            ], tracker)
+
+        # Voiceover 11: 第三步2
+        with self.voiceover(text="我们把这个等量关系代入到刚才的两个展开式中，就可以得到角 FAC 加上角 CAD 等于角 B 加上角 BAD。") as tracker:
+            self.play_steps_evenly([
+                Write(panel_2[3])
+            ], tracker)
+
+        # Voiceover 12: 第三步3
+        with self.voiceover(text="两边同时减去相等的角 CAD 和角 BAD，我们就可以把它们消去，从而得到角 FAC 等于角 B。") as tracker:
+            self.play_steps_evenly([
+                FadeOut(panel_2),
+                Write(panel_3[0]),
+                self.reemphasize_element(arc_FAC),
+                self.reemphasize_element(arc_B)
+            ], tracker)
+
+        # Voiceover 13: 第四步
+        lbl_val_B_final = MathTex("55^\\circ", color=RESULT_COLOR).next_to(arc_B, UP + RIGHT, buff=0.05).scale(0.8)
+        with self.voiceover(text="已知角 FAC 等于 55 度，所以角 B 也等于 55 度。") as tracker:
+            self.play_steps_evenly([
+                Write(panel_3[1]),
+                Write(panel_3[2]),
+                Transform(lbl_val_B, lbl_val_B_final)
+            ], tracker)
+
+        # Voiceover 14: 总结与收尾
+        with self.voiceover(text="最后我们总结一下。这道题的突破口在于利用垂直平分线构造等腰三角形，将相等的角进行展开，再结合角平分线和外角性质进行消元。这种角的值的转移在几何证明中非常常见。") as tracker:
+            self.play_after_speech([
+                self.reemphasize_stroke(aux_EF),
+                self.reemphasize_stroke(edge_AD),
+                self.reemphasize_element(arc_FAC),
+                self.reemphasize_element(arc_B)
+            ], tracker)
+```

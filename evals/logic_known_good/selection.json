@@ -1,0 +1,40 @@
+{
+  "schema_version": "manim-quality.logic-good-selection.v1",
+  "pack_id": "geo30_no_error_holdout_v3",
+  "excluded_tuning_samples": [
+    {
+      "source_sample_id": "MTT01_BASE_r7219_q497",
+      "reason": "used repeatedly during Task 6 smoke debugging"
+    },
+    {
+      "source_sample_id": "MTT04_BASE_r7216_q495",
+      "reason": "used during Task 6 schema and SDK smoke debugging"
+    }
+  ],
+  "samples": [
+    {
+      "sample_id": "GOOD001_MTT02_BASE_r7218_q494",
+      "source_sample_id": "MTT02_BASE_r7218_q494"
+    },
+    {
+      "sample_id": "GOOD002_MTT03_BASE_r7217_q496",
+      "source_sample_id": "MTT03_BASE_r7217_q496"
+    },
+    {
+      "sample_id": "GOOD003_MTT05_BASE_r7212_q484",
+      "source_sample_id": "MTT05_BASE_r7212_q484"
+    },
+    {
+      "sample_id": "GOOD004_MTT21_GEO_r6707_q421",
+      "source_sample_id": "MTT21_GEO_r6707_q421"
+    },
+    {
+      "sample_id": "GOOD005_MTT24_GEO_r6692_q423",
+      "source_sample_id": "MTT24_GEO_r6692_q423"
+    },
+    {
+      "sample_id": "GOOD006_MTT30_GEO_r6742_q424",
+      "source_sample_id": "MTT30_GEO_r6742_q424"
+    }
+  ]
+}

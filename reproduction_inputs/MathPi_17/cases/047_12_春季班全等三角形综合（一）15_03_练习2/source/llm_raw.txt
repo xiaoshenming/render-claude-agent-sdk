@@ -1,0 +1,370 @@
+class Solution(BaseConfigScene):
+    def construct(self):
+        # ==================== 图1 初始化与适配 ====================
+        A1 = np.array([-5.0, -1.5, 0])
+        B1 = np.array([-1.0, -1.5, 0])
+        C1 = np.array([-5.0, 1.5, 0])
+        D1 = np.array([-1.0, 1.5, 0])
+        P1 = np.array([-3.8, -1.5, 0])
+        Q1 = np.array([-1.0, -0.3, 0])
+
+        line_AB1 = Line(A1, B1, color=BASE_COLOR)
+        line_AC1 = Line(A1, C1, color=BASE_COLOR)
+        line_BD1 = Line(B1, D1, color=BASE_COLOR)
+        line_CP1 = Line(C1, P1, color=BASE_COLOR)
+        line_PQ1 = Line(P1, Q1, color=BASE_COLOR)
+        diagram1 = VGroup(line_AB1, line_AC1, line_BD1, line_CP1, line_PQ1)
+
+        self.fit_left(diagram1)
+
+        # 获取图1实时坐标
+        pt_A1 = line_AB1.get_start()
+        pt_B1 = line_AB1.get_end()
+        pt_C1 = line_AC1.get_end()
+        pt_D1 = line_BD1.get_end()
+        pt_P1 = line_CP1.get_end()
+        pt_Q1 = line_PQ1.get_end()
+
+        lbl_A1 = MathTex("A", color=TEXT_COLOR).next_to(pt_A1, DOWN, buff=0.15)
+        lbl_B1 = MathTex("B", color=TEXT_COLOR).next_to(pt_B1, DOWN, buff=0.15)
+        lbl_C1 = MathTex("C", color=TEXT_COLOR).next_to(pt_C1, UP, buff=0.15)
+        lbl_D1 = MathTex("D", color=TEXT_COLOR).next_to(pt_D1, UP, buff=0.15)
+        lbl_P1 = MathTex("P", color=TEXT_COLOR).next_to(pt_P1, DOWN, buff=0.15)
+        lbl_Q1 = MathTex("Q", color=TEXT_COLOR).next_to(pt_Q1, RIGHT, buff=0.15)
+
+        rt_A1 = self.make_right_angle_mark_at(pt_A1, pt_C1, pt_B1, size=0.2, color=KNOWN_COLOR, fill_opacity=0.25)
+        rt_B1 = self.make_right_angle_mark_at(pt_B1, pt_A1, pt_D1, size=0.2, color=KNOWN_COLOR, fill_opacity=0.25)
+
+        tick_AC1 = self.make_tick_mark(line_AC1, n=1, color=KNOWN_COLOR)
+        tick_BD1 = self.make_tick_mark(line_BD1, n=1, color=KNOWN_COLOR)
+        tick_AP1 = self.make_tick_mark(Line(pt_A1, pt_P1), n=2, color=KNOWN_COLOR)
+        tick_BQ1 = self.make_tick_mark(Line(pt_B1, pt_Q1), n=2, color=KNOWN_COLOR)
+
+        region_ACP1 = self.make_region_fill(pt_A1, pt_C1, pt_P1, color=PAIR_A_COLOR, opacity=0.18)
+        region_BPQ1 = self.make_region_fill(pt_B1, pt_P1, pt_Q1, color=PAIR_B_COLOR, opacity=0.18)
+
+        geometry_all1 = VGroup(
+            diagram1, lbl_A1, lbl_B1, lbl_C1, lbl_D1, lbl_P1, lbl_Q1,
+            rt_A1, rt_B1, tick_AC1, tick_BD1, tick_AP1, tick_BQ1,
+            region_ACP1, region_BPQ1
+        )
+        self.fit_geometry_group(geometry_all1)
+
+        # ==================== 图2 初始化与适配 ====================
+        A2 = np.array([1.0, -1.5, 0])
+        B2 = np.array([5.0, -1.5, 0])
+        C2 = np.array([2.026, 1.32, 0])
+        D2 = np.array([3.974, 1.32, 0])
+        P2 = np.array([2.2, -1.5, 0])
+        Q2 = np.array([4.487, -0.09, 0])
+
+        line_AB2 = Line(A2, B2, color=BASE_COLOR)
+        line_AC2 = Line(A2, C2, color=BASE_COLOR)
+        line_BD2 = Line(B2, D2, color=BASE_COLOR)
+        line_CP2 = Line(C2, P2, color=BASE_COLOR)
+        line_PQ2 = Line(P2, Q2, color=BASE_COLOR)
+        diagram2 = VGroup(line_AB2, line_AC2, line_BD2, line_CP2, line_PQ2)
+
+        self.fit_left(diagram2)
+
+        # 获取图2实时坐标
+        pt_A2 = line_AB2.get_start()
+        pt_B2 = line_AB2.get_end()
+        pt_C2 = line_AC2.get_end()
+        pt_D2 = line_BD2.get_end()
+        pt_P2 = line_CP2.get_end()
+        pt_Q2 = line_PQ2.get_end()
+
+        lbl_A2 = MathTex("A", color=TEXT_COLOR).next_to(pt_A2, DOWN, buff=0.15)
+        lbl_B2 = MathTex("B", color=TEXT_COLOR).next_to(pt_B2, DOWN, buff=0.15)
+        lbl_C2 = MathTex("C", color=TEXT_COLOR).next_to(pt_C2, UP, buff=0.15)
+        lbl_D2 = MathTex("D", color=TEXT_COLOR).next_to(pt_D2, UP, buff=0.15)
+        lbl_P2 = MathTex("P", color=TEXT_COLOR).next_to(pt_P2, DOWN, buff=0.15)
+        lbl_Q2 = MathTex("Q", color=TEXT_COLOR).next_to(pt_Q2, RIGHT, buff=0.15)
+
+        arc_A2 = self.make_angle_mark(pt_A2, pt_B2, pt_C2, radius=0.3, color=KNOWN_COLOR, fill_opacity=0.25)
+        arc_B2 = self.make_angle_mark(pt_B2, pt_D2, pt_A2, radius=0.3, color=KNOWN_COLOR, fill_opacity=0.25)
+
+        region_ACP2 = self.make_region_fill(pt_A2, pt_C2, pt_P2, color=PAIR_A_COLOR, opacity=0.18)
+        region_BPQ2 = self.make_region_fill(pt_B2, pt_P2, pt_Q2, color=PAIR_B_COLOR, opacity=0.18)
+
+        geometry_all2 = VGroup(
+            diagram2, lbl_A2, lbl_B2, lbl_C2, lbl_D2, lbl_P2, lbl_Q2,
+            arc_A2, arc_B2, region_ACP2, region_BPQ2
+        )
+        self.fit_geometry_group(geometry_all2)
+
+        # ==================== 目标面板定义 ====================
+        goal_panel1 = self.make_question_goal_panel(self.make_ctex_row(r"判断当 $t=1$ 秒时，$\triangle ACP \cong \triangle BPQ$ 是否成立"))
+        goal_panel2 = self.make_question_goal_panel(self.make_ctex_row(r"判断此时线段 $PC$ 和 $PQ$ 的位置关系"))
+        goal_panel3 = self.make_question_goal_panel(self.make_ctex_row(r"探究是否存在实数 $x$ 使得 $\triangle ACP \cong \triangle BPQ$"))
+
+        # ==================== 读题展示阶段 ====================
+        with self.voiceover(text="同学们好，我们一起来看这道几何动点问题。") as tracker:
+            self.play_after_speech([
+                FadeIn(diagram1),
+                FadeIn(lbl_A1), FadeIn(lbl_B1), FadeIn(lbl_C1), FadeIn(lbl_D1), FadeIn(lbl_P1), FadeIn(lbl_Q1)
+            ], tracker)
+
+        with self.voiceover(text="已知线段 AB 等于十，线段 AC 和 BD 都等于七。") as tracker:
+            self.play_after_speech([
+                self.highlight_edge(line_AB1),
+                self.highlight_edge(line_AC1),
+                self.highlight_edge(line_BD1)
+            ], tracker)
+
+        with self.voiceover(text="并且 AC 垂直于 AB，BD 也垂直于 AB。") as tracker:
+            self.play_after_speech([
+                Create(rt_A1),
+                Create(rt_B1)
+            ], tracker)
+
+        with self.voiceover(text="动点 P 从 A 向 B 运动，速度为每秒三个单位；同时点 Q 从 B 向 D 运动。") as tracker:
+            self.play_after_speech([
+                self.highlight_point(lbl_P1),
+                self.highlight_point(lbl_Q1)
+            ], tracker)
+
+        with self.voiceover(text="第一问要求，当 t 等于一秒，且 Q 的速度与 P 相等时，判断三角形 ACP 与三角形 BPQ 是否全等。") as tracker:
+            self.play_after_speech([
+                FadeIn(goal_panel1)
+            ], tracker)
+
+        # ==================== 思路切入阶段 ====================
+        with self.voiceover(text="我们先来捋一下这道题告诉我们的线索。") as tracker:
+            self.play_after_speech([], tracker)
+
+        with self.voiceover(text="既然时间 t 等于一秒，我们可以先求出此时各线段的长度。") as tracker:
+            self.play_after_speech([], tracker)
+
+        # ==================== 第一问解答阶段 ====================
+        panel1 = self.make_step_panel([
+            self.make_ctex_row(r"当 $t=1$ 时，$AP = 3 \times 1 = 3$，$BQ = 3 \times 1 = 3$"),
+            self.make_proof_therefore(r"AP = BQ"),
+            self.make_proof_because(r"AC \perp AB, BD \perp AB"),
+            self.make_proof_therefore(r"\angle A = \angle B = 90^\circ")
+        ])
+
+        with self.voiceover(text="当 t 等于一秒时，点 P 运动的距离 AP 等于三，点 Q 运动的距离 BQ 也等于三。") as tracker:
+            self.play_steps_evenly([
+                Write(panel1[0]),
+                self.highlight_edge(Line(pt_A1, pt_P1)),
+                self.highlight_edge(Line(pt_B1, pt_Q1))
+            ], tracker)
+
+        with self.voiceover(text="所以，线段 AP 等于 BQ。") as tracker:
+            self.play_steps_evenly([
+                Write(panel1[1]),
+                Create(tick_AP1),
+                Create(tick_BQ1)
+            ], tracker)
+
+        with self.voiceover(text="因为 AC 垂直于 AB，BD 垂直于 AB。") as tracker:
+            self.play_steps_evenly([
+                Write(panel1[2]),
+                self.reemphasize_element(rt_A1),
+                self.reemphasize_element(rt_B1)
+            ], tracker)
+
+        with self.voiceover(text="所以角 A 等于角 B，都等于九十度。") as tracker:
+            self.play_steps_evenly([
+                Write(panel1[3])
+            ], tracker)
+
+        with self.voiceover(text="接下来，我们再来看剩下的边。") as tracker:
+            self.play_steps_evenly([
+                FadeOut(panel1)
+            ], tracker)
+
+        panel2 = self.make_step_panel([
+            self.make_ctex_row(r"因为 $AB = 10$，所以 $BP = AB - AP = 10 - 3 = 7$"),
+            self.make_ctex_row(r"又因为 $AC = 7$，所以 $AC = BP$"),
+            self.make_proof_because(r"AC = BP, \angle A = \angle B, AP = BQ"),
+            self.make_proof_therefore(r"\triangle ACP \cong \triangle BPQ\ (SAS)")
+        ])
+
+        with self.voiceover(text="因为总长 AB 等于十，所以 BP 等于 AB 减去 AP，也就是七。") as tracker:
+            self.play_steps_evenly([
+                Write(panel2[0]),
+                self.highlight_edge(Line(pt_B1, pt_P1))
+            ], tracker)
+
+        with self.voiceover(text="又因为已知 AC 等于七，所以 AC 等于 BP。") as tracker:
+            self.play_steps_evenly([
+                Write(panel2[1]),
+                Create(tick_AC1),
+                Create(tick_BD1)
+            ], tracker)
+
+        with self.voiceover(text="在三角形 ACP 和三角形 BPQ 中，我们已经找到了两组对应边和它们的夹角相等。") as tracker:
+            self.play_steps_evenly([
+                Write(panel2[2]),
+                FadeIn(region_ACP1),
+                FadeIn(region_BPQ1)
+            ], tracker)
+
+        with self.voiceover(text="根据边角边判定定理，这两个三角形全等。") as tracker:
+            self.play_steps_evenly([
+                Write(panel2[3]),
+                self.reemphasize_region(region_ACP1),
+                self.reemphasize_region(region_BPQ1)
+            ], tracker)
+
+        # ==================== 第二问解答阶段 ====================
+        with self.voiceover(text="第二问要求判断此时线段 PC 和 PQ 的位置关系。") as tracker:
+            self.play_steps_evenly([
+                FadeOut(panel2),
+                FadeOut(goal_panel1),
+                FadeIn(goal_panel2)
+            ], tracker)
+
+        panel3 = self.make_step_panel([
+            self.make_proof_because(r"\triangle ACP \cong \triangle BPQ"),
+            self.make_proof_therefore(r"\angle ACP = \angle BPQ"),
+            self.make_ctex_row(r"在 $\text{Rt}\triangle ACP$ 中，$\angle ACP + \angle APC = 90^\circ$"),
+            self.make_proof_therefore(r"\angle BPQ + \angle APC = 90^\circ")
+        ])
+
+        with self.voiceover(text="因为刚才证明了三角形 ACP 全等于三角形 BPQ。") as tracker:
+            self.play_steps_evenly([
+                Write(panel3[0]),
+                self.reemphasize_region(region_ACP1),
+                self.reemphasize_region(region_BPQ1)
+            ], tracker)
+
+        with self.voiceover(text="所以它们的对应角相等，即角 ACP 等于角 BPQ。") as tracker:
+            self.play_steps_evenly([
+                Write(panel3[1])
+            ], tracker)
+
+        with self.voiceover(text="在直角三角形 ACP 中，两个锐角互余，即角 ACP 加角 APC 等于九十度。") as tracker:
+            self.play_steps_evenly([
+                Write(panel3[2])
+            ], tracker)
+
+        with self.voiceover(text="等量代换一下，角 BPQ 加角 APC 也等于九十度。") as tracker:
+            self.play_steps_evenly([
+                Write(panel3[3])
+            ], tracker)
+
+        with self.voiceover(text="我们继续往下推导。") as tracker:
+            self.play_steps_evenly([
+                FadeOut(panel3)
+            ], tracker)
+
+        panel4 = self.make_step_panel([
+            self.make_ctex_row(r"所以 $\angle CPQ = 180^\circ - (\angle BPQ + \angle APC) = 90^\circ$"),
+            self.make_proof_therefore(r"PC \perp PQ")
+        ])
+
+        with self.voiceover(text="因为平角是一百八十度，所以角 CPQ 等于一百八十度减去这两个角的和，等于九十度。") as tracker:
+            self.play_steps_evenly([
+                Write(panel4[0])
+            ], tracker)
+
+        with self.voiceover(text="因此，线段 PC 垂直于 PQ。") as tracker:
+            self.play_steps_evenly([
+                Write(panel4[1]),
+                self.highlight_edge(line_CP1),
+                self.highlight_edge(line_PQ1)
+            ], tracker)
+
+        # ==================== 第三问解答阶段 ====================
+        with self.voiceover(text="现在来看第三问，条件发生了改变。") as tracker:
+            self.play_steps_evenly([
+                FadeOut(panel4),
+                FadeOut(geometry_all1),
+                FadeOut(goal_panel2),
+                FadeIn(goal_panel3)
+            ], tracker)
+
+        with self.voiceover(text="夹角改为了七十度，其他条件不变。设 Q 的速度为 x，是否存在实数 x 使得这两个三角形全等？") as tracker:
+            self.play_steps_evenly([
+                FadeIn(diagram2),
+                FadeIn(lbl_A2), FadeIn(lbl_B2), FadeIn(lbl_C2), FadeIn(lbl_D2), FadeIn(lbl_P2), FadeIn(lbl_Q2),
+                FadeIn(arc_A2), FadeIn(arc_B2)
+            ], tracker)
+
+        with self.voiceover(text="要使这两个三角形全等，我们需要分两种情况进行讨论。") as tracker:
+            self.play_steps_evenly([], tracker)
+
+        panel5 = self.make_step_panel([
+            self.make_ctex_row(r"情况一：$\triangle ACP \cong \triangle BPQ$"),
+            self.make_proof_therefore(r"AC = BP \text{ 且 } AP = BQ"),
+            self.make_ctex_row(r"列方程组：$\begin{cases} 7 = 10 - 3t \\ 3t = xt \end{cases}$"),
+            self.make_proof_therefore(r"t = 1,\ x = 3")
+        ])
+
+        with self.voiceover(text="第一种情况，当三角形 ACP 全等于三角形 BPQ 时。") as tracker:
+            self.play_steps_evenly([
+                Write(panel5[0]),
+                FadeIn(region_ACP2),
+                FadeIn(region_BPQ2)
+            ], tracker)
+
+        with self.voiceover(text="此时对应边相等，即 AC 等于 BP 且 AP 等于 BQ。") as tracker:
+            self.play_steps_evenly([
+                Write(panel5[1]),
+                self.reemphasize_equal_segments(line_AC2, Line(pt_B2, pt_P2))
+            ], tracker)
+
+        with self.voiceover(text="代入含 t 和 x 的表达式，列出方程组：七等于十减三 t，且三 t 等于 xt。") as tracker:
+            self.play_steps_evenly([
+                Write(panel5[2])
+            ], tracker)
+
+        with self.voiceover(text="解这个方程组，可以得到 t 等于一，x 等于三。") as tracker:
+            self.play_steps_evenly([
+                Write(panel5[3])
+            ], tracker)
+
+        with self.voiceover(text="我们再来看第二种情况。") as tracker:
+            self.play_steps_evenly([
+                FadeOut(panel5)
+            ], tracker)
+
+        panel6 = self.make_step_panel([
+            self.make_ctex_row(r"情况二：$\triangle ACP \cong \triangle BQP$"),
+            self.make_proof_therefore(r"AC = BQ \text{ 且 } AP = BP"),
+            self.make_ctex_row(r"列方程组：$\begin{cases} 7 = xt \\ 3t = 10 - 3t \end{cases}$"),
+            self.make_proof_therefore(r"t = \frac{5}{3},\ x = \frac{21}{5}")
+        ])
+
+        with self.voiceover(text="第二种情况，当三角形 ACP 全等于三角形 BQP 时。") as tracker:
+            self.play_steps_evenly([
+                Write(panel6[0]),
+                self.reemphasize_region(region_ACP2),
+                self.reemphasize_region(region_BPQ2)
+            ], tracker)
+
+        with self.voiceover(text="此时对应关系发生改变，即 AC 等于 BQ 且 AP 等于 BP。") as tracker:
+            self.play_steps_evenly([
+                Write(panel6[1]),
+                self.reemphasize_equal_segments(line_AC2, Line(pt_B2, pt_Q2))
+            ], tracker)
+
+        with self.voiceover(text="同样列出方程组：七等于 xt，且三 t 等于十减三 t。") as tracker:
+            self.play_steps_evenly([
+                Write(panel6[2])
+            ], tracker)
+
+        with self.voiceover(text="解得 t 等于三分之五，x 等于五分之二十一。") as tracker:
+            self.play_steps_evenly([
+                Write(panel6[3])
+            ], tracker)
+
+        # ==================== 结论收束与总结阶段 ====================
+        panel_final = self.make_step_panel([
+            self.make_ctex_row(r"综上所述，存在实数 $x$ 的值为 $3$ 或 $\frac{21}{5}$")
+        ])
+
+        with self.voiceover(text="综上所述，存在实数 x 等于三或五分之二十一，使得这两个三角形全等。") as tracker:
+            self.play_steps_evenly([
+                FadeOut(panel6),
+                Write(panel_final[0])
+            ], tracker)
+
+        with self.voiceover(text="这道题的关键在于分类讨论，理清对应边关系，利用方程思想求解。") as tracker:
+            self.play_steps_evenly([
+                panel_final[0].animate.set_color(RESULT_COLOR)
+            ], tracker)

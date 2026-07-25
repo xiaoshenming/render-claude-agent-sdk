@@ -1,0 +1,23 @@
+{
+  "schema_version": "manim-quality-agent-handoff.v1",
+  "package_name": "ManimQualityAgent_20260726",
+  "source_repository": "unified-quality-agent-mvp",
+  "baseline_commit": "8efca2a",
+  "handoff_commit": "4f237dd",
+  "baseline_tag": "unified-quality-agent-baseline-20260726",
+  "handoff_scope": [
+    "complete_agent_source",
+    "native_dual_reviewer_prompts",
+    "seven_controlled_tools",
+    "revision_harness",
+    "real_manim_runtime_adapters",
+    "bbox_probe",
+    "frozen_overlap_detector_archive",
+    "independent_acceptance_gate",
+    "17_case_reproduction_inputs",
+    "windows_setup_and_runbook"
+  ],
+  "credentials_included": false,
+  "python_requirement": ">=3.11,<3.12",
+  "known_boundary": "PROPOSED verifies rendering and layout independently but is not an independent mathematical correctness proof"
+}

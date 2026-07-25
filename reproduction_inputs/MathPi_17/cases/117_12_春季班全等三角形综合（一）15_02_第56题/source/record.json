@@ -1,0 +1,21 @@
+{
+  "source_batch_id": "0489f6c00320",
+  "source_batch_name": "周日交付_81题_server6_20260704",
+  "source_item_id": "c36117a1e4a6",
+  "title": "12_春季班全等三角形综合（一）15_02_第56题",
+  "problem_text": "(1) 已知： △ABC 中， ∠BAC=90° ， AB=AC ，直线 m 过 A ， BD⊥ m ， CE⊥ m ，求证： DE=BD+CE，求DE=BD+CE。",
+  "solution_steps": "【读题展示阶段】\n先自然读题，不进入证明。题目给出：(1) 已知： △ABC 中， ∠BAC=90° ， AB=AC ，直线 m 过 A ， BD⊥ m ， CE⊥ m ，求证： DE=BD+CE。读到 AB=AC 时高亮 AB、AC；读到 DE=BD+CE 时高亮 DE、BD+CE。最后读出求证：DE=BD+CE，只高亮结论中的关键线段或角。\n【思路切入阶段】\n本题最终要证明 DE=BD+CE，直接证明线段和不方便。先抓住 △ABC 是等腰直角三角形，直线 m 过 A 且 BD、CE 都垂直于 m；再用互余角关系证明两个直角三角形全等，把 BD、CE 转成同一直线上的两段；最后用线段加法得到 DE=BD+CE。\n【满分答案阶段：必须完整展示的官方解题步骤】\n结论成立，证明如下：\n\\because \\angle BDA=\\angle BAC=\\alpha ，\n\\therefore \\angle ABD+\\angle BAD=180^\\circ-\\alpha ， \\angle BAD+\\angle CAE=180^\\circ-\\alpha ，\n\\therefore \\angle ABD=\\angle CAE 。\n\n在 \\triangle ABD 和 \\triangle CAE 中：\n\\begin{cases}\\angle BDA=\\angle CEA \\\\\\angle ABD=\\angle CAE \\\\AB=CA\\end{cases} \\therefore \\triangle ABD\\cong\\triangle CAE （AAS），\n\\therefore BD=AE ， AD=CE ，\n\\therefore DE=AD+AE=BD+CE 。\n\n(3) 拓展：点 F 在 \\angle BAC 平分线上， \\triangle ABF 、 \\triangle ACF 均为等边三角形，若 \\angle BDA=\\angle AEC=\\angle BAC ，判断 \\triangle DEF 的形状。解： \\triangle DEF 为等边三角形，理由如下：\n由(2)知 \\triangle ABD\\cong\\triangle CAE ，\n\\therefore BD=AE ， \\angle ABD=\\angle CAE 。\n\\because \\triangle ABF 、 \\triangle ACF 均为等边三角形，\n\\therefore AB=AF ， \\angle ABF=\\angle BAF=\\angle CAF=60^\\circ ，\n\\therefore \\angle ABD+\\angle ABF=\\angle CAE+\\angle CAF ，\n即 \\angle DBF=\\angle EAF 。\n\n在 \\triangle DBF 和 \\triangle EAF 中：\n\\begin{cases}BD=AE \\\\\\angle DBF=\\angle EAF \\\\BF=AF\\end{cases} \\therefore \\triangle DBF\\cong\\triangle EAF （SAS），\n\\therefore DF=EF ， \\angle BFD=\\angle AFE 。\n\\therefore \\angle DFE=\\angle DFA+\\angle AFE=\\angle DFA+\\angle BFD=\\angle BFA=60^\\circ 。\n又 \\because DF=EF ，\n\\therefore \\triangle DEF 为等边三角形（有一个角是 60^\\circ 的等腰三角形是等边三角形）。\n\n【结论收束阶段】\n最后收束结论：\\therefore \\angle DFE=\\angle DFA+\\angle AFE=\\angle DFA+\\angle BFD=\\angle BFA=60^\\circ 。 又 \\because DF=EF ， \\therefore \\triangle DEF 为等边三角形（有一个角是 60^\\circ 的等腰三角形是等边三角形）。\n\n【技巧总结阶段】\n本题可迁移的方法是“先全等造条件，再用对应关系证目标”。证明时要写清三角形、条件和判定依据。",
+  "figure_code": "",
+  "index": 117,
+  "status": "render_succeeded",
+  "scene_class": "Solution",
+  "llm_seconds": 111.866,
+  "llm_findings": [
+    "provider_output_sanitized"
+  ],
+  "code_sha256": "22999cf535ae5019692ed8737e737d9852caae74c465863d727a4e4ca4c414df",
+  "work_dir": "/opt/mathpi/batchops/benchmarks/geometry-drift-8797-20260724-1720/0117-c36117a1e4a6",
+  "render_seconds": 392.528,
+  "video_path": "/opt/mathpi/batchops/benchmarks/geometry-drift-8797-20260724-1720/0117-c36117a1e4a6/media/videos/480p15/video.mp4",
+  "video_bytes": 1682343
+}

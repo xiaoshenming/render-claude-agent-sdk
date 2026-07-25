@@ -1,0 +1,385 @@
+class Solution(BaseConfigScene):
+    def construct(self):
+        # 1. 定义初始静态坐标
+        A = np.array([-1.732, 1.5, 0.0])
+        B = np.array([-3.464, -1.5, 0.0])
+        C = np.array([3.464, -1.5, 0.0])
+        D = np.array([-1.732, -1.5, 0.0])
+
+        # 2. 绘制初始几何图形
+        edge_AB = Line(A, B, color=BASE_COLOR, stroke_width=3)
+        edge_AC = Line(A, C, color=BASE_COLOR, stroke_width=3)
+        edge_BD = Line(B, D, color=BASE_COLOR, stroke_width=3)
+        edge_DC = Line(D, C, color=BASE_COLOR, stroke_width=3)
+        line_AD = Line(A, D, color=BASE_COLOR, stroke_width=3)
+        diagram = VGroup(edge_AB, edge_AC, edge_BD, edge_DC, line_AD)
+
+        # 3. 首次适配左侧图形区
+        self.fit_left(diagram)
+
+        # 4. 获取适配后的实时坐标
+        pt_A = line_AD.get_start()
+        pt_D = line_AD.get_end()
+        pt_B = edge_BD.get_start()
+        pt_C = edge_DC.get_end()
+
+        # 计算 E 点的实时坐标 (在 DC 上截取 DE = BD)
+        len_BD = np.linalg.norm(pt_D - pt_B)
+        len_DC = np.linalg.norm(pt_C - pt_D)
+        pt_E = pt_D + (len_BD / len_DC) * (pt_C - pt_D)
+
+        # 5. 用实时坐标创建其他几何元素
+        lbl_A = MathTex("A", color=TEXT_COLOR).next_to(pt_A, UP, buff=0.15)
+        lbl_B = MathTex("B", color=TEXT_COLOR).next_to(pt_B, DL, buff=0.15)
+        lbl_C = MathTex("C", color=TEXT_COLOR).next_to(pt_C, DR, buff=0.15)
+        lbl_D = MathTex("D", color=TEXT_COLOR).next_to(pt_D, DOWN, buff=0.15)
+        lbl_E = MathTex("E", color=TEXT_COLOR).next_to(pt_E, DOWN, buff=0.15)
+
+        aux_AE = DashedLine(pt_A, pt_E, color=DRAW_COLOR, stroke_width=3)
+
+        # 分段线段用于刻痕
+        edge_DE = Line(pt_D, pt_E, color=BASE_COLOR, stroke_width=3)
+        edge_EC = Line(pt_E, pt_C, color=BASE_COLOR, stroke_width=3)
+        edge_AE = Line(pt_A, pt_E, color=BASE_COLOR, stroke_width=3)
+
+        # 直角标记
+        rt_ADC = self.make_right_angle_mark_at(pt_D, pt_A, pt_C, size=0.2, color=KNOWN_COLOR)
+
+        # 刻痕
+        tick_BD = self.make_tick_mark(edge_BD, n=1, color=KNOWN_COLOR)
+        tick_DE = self.make_tick_mark(edge_DE, n=1, color=KNOWN_COLOR)
+        tick_AB = self.make_tick_mark(edge_AB, n=2, color=KNOWN_COLOR)
+        tick_AE = self.make_tick_mark(edge_AE, n=2, color=KNOWN_COLOR)
+        tick_EC = self.make_tick_mark(edge_EC, n=2, color=KNOWN_COLOR)
+
+        # 区域色块
+        region_ABD = self.make_region_fill(pt_A, pt_B, pt_D, color=PAIR_A_COLOR, opacity=0.18)
+        region_AED = self.make_region_fill(pt_A, pt_E, pt_D, color=PAIR_B_COLOR, opacity=0.18)
+        region_AEC = self.make_region_fill(pt_A, pt_E, pt_C, color=RESULT_COLOR, opacity=0.18)
+
+        # 角弧
+        arc_B = self.make_angle_mark(pt_B, pt_A, pt_D, radius=0.3, color=KNOWN_COLOR)
+        arc_C = self.make_angle_mark(pt_C, pt_A, pt_D, radius=0.4, color=KNOWN_COLOR)
+        arc_AEB = self.make_angle_mark(pt_E, pt_A, pt_B, radius=0.3, color=KNOWN_COLOR)
+        arc_EAC = self.make_angle_mark(pt_A, pt_E, pt_C, radius=0.3, color=KNOWN_COLOR)
+
+        # 6. 整体适配
+        geometry_all = VGroup(
+            diagram, lbl_A, lbl_B, lbl_C, lbl_D,
+            aux_AE, lbl_E, rt_ADC,
+            tick_BD, tick_DE, tick_AB, tick_AE, tick_EC,
+            region_ABD, region_AED, region_AEC,
+            arc_B, arc_C, arc_AEB, arc_EAC
+        )
+        self.fit_geometry_group(geometry_all)
+
+        # ==================== 读题展示阶段 ====================
+
+        with self.voiceover(text="同学们好，我们一起来看这道题。") as tracker:
+            self.play_after_speech([
+                FadeIn(edge_AB), FadeIn(edge_AC), FadeIn(edge_BD), FadeIn(edge_DC),
+                FadeIn(lbl_A), FadeIn(lbl_B), FadeIn(lbl_C)
+            ], tracker)
+
+        with self.voiceover(text="如图，在三角形 A B C 中。") as tracker:
+            self.play_after_speech([
+                self.reemphasize_stroke(edge_AB),
+                self.reemphasize_stroke(edge_AC)
+            ], tracker)
+
+        with self.voiceover(text="已知角 B 等于两倍的角 C。") as tracker:
+            self.play_after_speech([
+                Create(arc_B),
+                Create(arc_C)
+            ], tracker)
+
+        with self.voiceover(text="A D 垂直于 B C 于点 D。") as tracker:
+            self.play_after_speech([
+                FadeIn(line_AD),
+                FadeIn(lbl_D),
+                Create(rt_ADC)
+            ], tracker)
+
+        with self.voiceover(text="我们需要求证：C D 等于 B D 加上 A B。") as tracker:
+            self.play_after_speech([
+                self.reemphasize_stroke(edge_DC)
+            ], tracker)
+
+        with self.voiceover(text="读到 C D 等于 B D 加上 A B 时，我们先来观察一下这三条线段。") as tracker:
+            self.play_after_speech([
+                self.reemphasize_stroke(edge_BD)
+            ], tracker)
+
+        with self.voiceover(text="C D 是底边右侧的这一段。") as tracker:
+            self.play_after_speech([
+                self.reemphasize_stroke(edge_DC)
+            ], tracker)
+
+        with self.voiceover(text="而 B D 是底边左侧的这一段，A B 是左侧的腰。") as tracker:
+            self.play_after_speech([
+                self.reemphasize_stroke(edge_BD),
+                self.reemphasize_stroke(edge_AB)
+            ], tracker)
+
+        with self.voiceover(text="我们要证明的是，右边这一长段，等于左边这两短段的和。") as tracker:
+            self.play_after_speech([
+                self.reemphasize_stroke(edge_DC)
+            ], tracker)
+
+        # ==================== 思路切入阶段 ====================
+
+        with self.voiceover(text="本题最终要证明 C D 等于 B D 加上 A B。") as tracker:
+            self.play_after_speech([
+                self.reemphasize_stroke(edge_DC)
+            ], tracker)
+
+        with self.voiceover(text="直接证明两条线段的和等于另一条线段，通常不太方便。") as tracker:
+            self.play_after_speech([
+                self.reemphasize_stroke(edge_BD)
+            ], tracker)
+
+        with self.voiceover(text="我们需要想办法把它们转化到同一条直线上，或者构造相等的线段。") as tracker:
+            self.play_after_speech([
+                self.reemphasize_stroke(edge_AB)
+            ], tracker)
+
+        with self.voiceover(text="注意到题目中给出了角 B 等于两倍的角 C，以及 A D 垂直于 B C。") as tracker:
+            self.play_after_speech([
+                self.reemphasize_element(arc_B),
+                self.reemphasize_element(rt_ADC)
+            ], tracker)
+
+        with self.voiceover(text="我们可以把这两个条件结合起来考虑。") as tracker:
+            self.play_after_speech([
+                self.reemphasize_stroke(line_AD)
+            ], tracker)
+
+        with self.voiceover(text="寻找能够把线段 A B 转移到底边上的辅助构造。") as tracker:
+            self.play_after_speech([
+                self.reemphasize_stroke(edge_AB)
+            ], tracker)
+
+        with self.voiceover(text="最直接的想法是，在 C D 上截取一段等于 B D。") as tracker:
+            self.play_after_speech([
+                self.reemphasize_stroke(edge_BD)
+            ], tracker)
+
+        with self.voiceover(text="这样，如果能证明剩下的部分等于 A B，问题就迎刃而解了。") as tracker:
+            self.play_after_speech([
+                self.reemphasize_stroke(edge_AB)
+            ], tracker)
+
+        with self.voiceover(text="所以，我们尝试在 D C 上截取 D E 等于 B D，并连接 A E。") as tracker:
+            self.play_after_speech([
+                self.reemphasize_stroke(edge_DC)
+            ], tracker)
+
+        # ==================== 证明阶段 ====================
+
+        # 第一屏板书
+        row1 = self.make_ctex_row(r"在 $DC$ 上截取 $DE=BD$，连接 $AE$")
+        row2 = self.make_proof_because(r"AD \perp BC")
+        row3 = self.make_proof_therefore(r"\angle ADB = \angle ADE = 90^\circ")
+        panel1 = self.make_step_panel([row1, row2, row3])
+
+        with self.voiceover(text="我们在 D C 上截取 D E 等于 B D，并连接 A E。") as tracker:
+            self.play_steps_evenly([
+                Create(aux_AE),
+                FadeIn(lbl_E),
+                Write(row1)
+            ], tracker)
+
+        with self.voiceover(text="因为 A D 垂直于 B C。") as tracker:
+            self.play_steps_evenly([
+                self.reemphasize_stroke(line_AD),
+                Write(row2)
+            ], tracker)
+
+        with self.voiceover(text="所以角 A D B 等于角 A D E，都等于九十度。") as tracker:
+            self.play_steps_evenly([
+                Write(row3)
+            ], tracker)
+
+        # 第二屏板书
+        row4 = self.make_ctex_row(r"在 $\triangle ABD$ 和 $\triangle AED$ 中")
+        row5 = self.make_proof_because(r"BD=ED, \angle ADB=\angle ADE, AD=AD")
+        row6 = self.make_proof_therefore(r"\triangle ABD \cong \triangle AED\ (SAS)")
+        panel2 = self.make_step_panel([row4, row5, row6])
+
+        with self.voiceover(text="接下来，我们看三角形 A B D 和三角形 A E D。") as tracker:
+            self.play_steps_evenly([
+                FadeOut(row1), FadeOut(row2), FadeOut(row3),
+                Write(row4),
+                FadeIn(region_ABD),
+                FadeIn(region_AED)
+            ], tracker)
+
+        with self.voiceover(text="在这两个三角形中，B D 等于 E D。") as tracker:
+            self.play_steps_evenly([
+                Create(tick_BD),
+                Create(tick_DE)
+            ], tracker)
+
+        with self.voiceover(text="角 A D B 等于角 A D E。") as tracker:
+            self.play_steps_evenly([
+                self.reemphasize_element(rt_ADC)
+            ], tracker)
+
+        with self.voiceover(text="并且 A D 是它们的公共边。") as tracker:
+            self.play_steps_evenly([
+                self.reemphasize_stroke(line_AD),
+                Write(row5)
+            ], tracker)
+
+        with self.voiceover(text="因此，三角形 A B D 全等于三角形 A E D，依据是边角边判定。") as tracker:
+            self.play_steps_evenly([
+                Write(row6)
+            ], tracker)
+
+        # 第三屏板书
+        row7 = self.make_proof_therefore(r"AB=AE, \angle B=\angle AEB")
+        row8 = self.make_proof_because(r"\angle B=2\angle C")
+        row9 = self.make_proof_therefore(r"\angle AEB=2\angle C")
+        panel3 = self.make_step_panel([row7, row8, row9])
+
+        with self.voiceover(text="由全等三角形的性质，我们可以得到对应边 A B 等于 A E。") as tracker:
+            self.play_steps_evenly([
+                FadeOut(row4), FadeOut(row5), FadeOut(row6),
+                Write(row7),
+                Create(tick_AB),
+                Create(tick_AE),
+                FadeOut(region_ABD),
+                FadeOut(region_AED)
+            ], tracker)
+
+        with self.voiceover(text="同时，对应角角 B 等于角 A E B。") as tracker:
+            self.play_steps_evenly([
+                Create(arc_AEB)
+            ], tracker)
+
+        with self.voiceover(text="又因为题目已知，角 B 等于两倍的角 C。") as tracker:
+            self.play_steps_evenly([
+                Write(row8),
+                self.reemphasize_element(arc_B),
+                self.reemphasize_element(arc_C)
+            ], tracker)
+
+        with self.voiceover(text="所以，角 A E B 也等于两倍的角 C。") as tracker:
+            self.play_steps_evenly([
+                Write(row9),
+                self.reemphasize_element(arc_AEB)
+            ], tracker)
+
+        # 第四屏板书
+        row10 = self.make_proof_because(r"\angle AEB = \angle C + \angle EAC")
+        row11 = self.make_proof_therefore(r"2\angle C = \angle C + \angle EAC")
+        row12 = self.make_ctex_row(r"化简得 $\angle C = \angle EAC$")
+        row13 = self.make_proof_therefore(r"AE=EC")
+        panel4 = self.make_step_panel([row10, row11, row12, row13])
+
+        with self.voiceover(text="我们再来看三角形 A E C，角 A E B 是它的一个外角。") as tracker:
+            self.play_steps_evenly([
+                FadeOut(row7), FadeOut(row8), FadeOut(row9),
+                Write(row10),
+                FadeIn(region_AEC)
+            ], tracker)
+
+        with self.voiceover(text="根据三角形外角定理，外角角 A E B 等于不相邻的两个内角之和。") as tracker:
+            self.play_steps_evenly([
+                self.reemphasize_element(arc_AEB)
+            ], tracker)
+
+        with self.voiceover(text="也就是角 C 加上角 E A C。") as tracker:
+            self.play_steps_evenly([
+                self.reemphasize_element(arc_C)
+            ], tracker)
+
+        with self.voiceover(text="代入前面的关系，得到两倍的角 C 等于角 C 加上角 E A C。") as tracker:
+            self.play_steps_evenly([
+                Write(row11)
+            ], tracker)
+
+        with self.voiceover(text="两边同时减去角 C，化简就得到角 C 等于角 E A C。") as tracker:
+            self.play_steps_evenly([
+                Write(row12),
+                Create(arc_EAC)
+            ], tracker)
+
+        with self.voiceover(text="在三角形 A E C 中，因为角 C 等于角 E A C，所以它是等腰三角形。") as tracker:
+            self.play_steps_evenly([
+                self.reemphasize_region(region_AEC)
+            ], tracker)
+
+        with self.voiceover(text="从而得到 A E 等于 E C。") as tracker:
+            self.play_steps_evenly([
+                Write(row13),
+                Create(tick_EC),
+                FadeOut(region_AEC)
+            ], tracker)
+
+        # 第五屏板书
+        row14 = self.make_proof_because(r"AB=AE")
+        row15 = self.make_proof_therefore(r"AB=EC")
+        row16 = self.make_proof_because(r"CD=DE+EC, DE=BD")
+        row17 = self.make_proof_therefore(r"CD=BD+AB")
+        panel5 = self.make_step_panel([row14, row15, row16, row17])
+
+        with self.voiceover(text="刚才我们已经证明了 A B 等于 A E。") as tracker:
+            self.play_steps_evenly([
+                FadeOut(row10), FadeOut(row11), FadeOut(row12), FadeOut(row13),
+                Write(row14),
+                self.reemphasize_equal_segments(edge_AB, edge_AE)
+            ], tracker)
+
+        with self.voiceover(text="结合 A E 等于 E C，通过等量代换，就可以得到 A B 等于 E C。") as tracker:
+            self.play_steps_evenly([
+                Write(row15),
+                self.reemphasize_equal_segments(edge_AB, edge_EC)
+            ], tracker)
+
+        with self.voiceover(text="因为线段 C D 可以写成 D E 加上 E C，而 D E 等于 B D。") as tracker:
+            self.play_steps_evenly([
+                Write(row16),
+                self.reemphasize_stroke(edge_DC)
+            ], tracker)
+
+        with self.voiceover(text="把 D E 替换为 B D，把 E C 替换为 A B。") as tracker:
+            self.play_steps_evenly([
+                self.reemphasize_element(tick_BD),
+                self.reemphasize_element(tick_AB)
+            ], tracker)
+
+        with self.voiceover(text="最终就证明了 C D 等于 B D 加上 A B。") as tracker:
+            self.play_steps_evenly([
+                Write(row17),
+                self.reemphasize_stroke(edge_DC)
+            ], tracker)
+
+        # ==================== 结论收束与技巧总结 ====================
+
+        with self.voiceover(text="最后我们来总结一下这道题的解题技巧。") as tracker:
+            self.play_after_speech([
+                FadeOut(row14), FadeOut(row15), FadeOut(row16), FadeOut(row17)
+            ], tracker)
+
+        with self.voiceover(text="本题可迁移的方法是，见中点或对称结构，优先构造全等。") as tracker:
+            self.play_after_speech([
+                self.reemphasize_region(region_ABD),
+                self.reemphasize_region(region_AED)
+            ], tracker)
+
+        with self.voiceover(text="通过截取辅助线，把分散的条件转进同一组三角形中。") as tracker:
+            self.play_after_speech([
+                self.reemphasize_stroke(aux_AE)
+            ], tracker)
+
+        with self.voiceover(text="从而利用全等和等腰三角形的性质，顺利完成了线段的转移。") as tracker:
+            self.play_after_speech([
+                self.reemphasize_element(tick_EC),
+                self.reemphasize_element(tick_AB)
+            ], tracker)
+
+        with self.voiceover(text="这种截长补短的方法非常经典，希望同学们能够熟练掌握。") as tracker:
+            self.play_after_speech([
+                self.reemphasize_stroke(edge_AC)
+            ], tracker)

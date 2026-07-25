@@ -1,0 +1,17 @@
+{
+  "schema_version": "manim-quality.production-relation-selection.v1",
+  "pack_id": "production-relation-probe-v1",
+  "source_dataset": "prod_hard_logic_fixable_50_v1",
+  "sample_ids": [
+    "PLOGIC-005",
+    "PLOGIC-010",
+    "PLOGIC-021",
+    "PLOGIC-023",
+    "PLOGIC-024",
+    "PLOGIC-027",
+    "PLOGIC-031",
+    "PLOGIC-032",
+    "PLOGIC-038",
+    "PLOGIC-039"
+  ]
+}

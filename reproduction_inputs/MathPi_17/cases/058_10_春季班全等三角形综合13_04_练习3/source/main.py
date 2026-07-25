@@ -1,0 +1,1707 @@
+from manim import *
+from manim_voiceover import VoiceoverScene
+from custom_services.system_tts_service import create_system_tts_service
+import numpy as np
+import os
+import re
+from pathlib import Path
+
+# MATHPI_ENTERPRISE_SLIM_HEADER_V1
+
+ENTERPRISE_BACKGROUND_ENABLED = True
+ENTERPRISE_BACKGROUND_ASSET = "reference_bg_02.png"
+ENTERPRISE_BACKGROUND_OPACITY = 0.62
+ENTERPRISE_LOGO_ENABLED = True
+ENTERPRISE_LOGO_ASSET = "logo_text_trim.png"
+TTS_SPEECH_RATE = float(os.environ.get("MATHPI_TTS_SPEECH_RATE", "0.8"))
+
+# render_canvas_profile: {"aspect_ratio": "16:9", "layout_rule": "Use layout_canvas()/layout_zones returned by the project runtime. Do not invent unsupported zone aliases. Fit or clamp durable objects inside safe_box after arrange/scale/next_to/transform.", "manim_frame": {"frame_height": 8.0, "frame_width": 14.222222, "x_range": [-7.111111, 7.111111], "y_range": [-4.0, 4.0]}, "pixel_size": [1920, 1080], "profile_name": "landscape_16_9_server_v1", "reserved_bands": {"caption_band_height": 0.65, "title_band_height": 0.95}, "safe_box": {"x_range": [-6.661111, 6.661111], "y_range": [-3.65, 3.65]}, "version": "2026-06-11"}
+config.pixel_width = 1920
+config.pixel_height = 1080
+config.frame_width = 14.222222
+config.frame_height = 8.0
+
+BG = "#F5F5F0"
+PRIMARY = "#2E86AB"
+SECONDARY = "#A23B72"
+ACCENT = "#F18F01"
+SUCCESS = "#2A9D8F"
+TEXT_1 = "#264653"
+
+class GlobalConfig:
+    BG_COLOR = BG
+    TEXT_COLOR = TEXT_1
+    TITLE_COLOR = TEXT_1
+    MAIN_COLOR = PRIMARY
+    LINE_COLOR = MAIN_COLOR
+    POINT_COLOR = ACCENT
+    LABEL_COLOR = TEXT_COLOR
+    AUX_LINE_COLOR = SECONDARY
+    HIGHLIGHT_COLOR = ACCENT
+    FORMULA_COLOR = PRIMARY
+    SECONDARY = SECONDARY
+    SECONDARY_COLOR = SECONDARY
+    GRID_COLOR = SECONDARY_COLOR
+    AXIS_COLOR = MAIN_COLOR
+    ACCENT_COLOR = ACCENT
+    SUCCESS = SUCCESS
+    CJK_TEXT_FONT = 'AR PL KaitiM GB'
+    FONT_TITLE = 40
+    FONT_BODY = 28
+    FONT_FORMULA = 32
+    FONT_LABEL = 22
+
+    # 兼容 FS_ 前缀的字号命名（支持版式三层面板参数与 LLM 常规写法）
+    FS_TITLE = FONT_TITLE
+    FS_BODY = FONT_BODY
+    FS_FORMULA = FONT_FORMULA
+    FS_LABEL = FONT_LABEL
+    FS_RESULT = FONT_FORMULA
+
+    # 骨架提示词用到的语义颜色别名
+    BASE_COLOR = TEXT_COLOR        # 原图黑色线条
+    DRAW_COLOR = AUX_LINE_COLOR    # 辅助线蓝色
+    KNOWN_COLOR = SUCCESS          # 持续已知绿色
+    FOCUS_COLOR = HIGHLIGHT_COLOR  # 默认焦点：琥珀橙 #F18F01
+    FOCUS_COLOR_1 = HIGHLIGHT_COLOR
+    FOCUS_COLOR_2 = "#00B4D8"      # 焦点2：宝石蓝 (用于对比或第二组)
+    FOCUS_COLOR_3 = "#8338EC"      # 焦点3：皇家紫 (高饱和紫色，非常醒目)
+    FOCUS_COLOR_4 = "#FF006E"      # 焦点4：玫瑰红 (极强强调)
+    FOCUS_COLOR_5 = "#38B000"      # 焦点5：荧光绿 (清新醒目)
+
+    # 专门用于“对应相等”或“全等”的多组对比色对
+    PAIR_A_COLOR = "#E76F51"       # 珊瑚红
+    PAIR_B_COLOR = "#2A9D8F"       # 翡翠绿
+    PAIR_C_COLOR = "#457B9D"       # 冰川蓝
+
+    TEXT_MUTED_COLOR = "#A0A4A8"   # 已讲过内容淡化灰色
+    RESULT_COLOR = ACCENT  # 结论红色
+    # 右侧面板物理坐标与版式定义
+    RIGHT_X = 1.05
+    RIGHT_W = 5.0
+    RIGHT_H = 5.85
+    RIGHT_CENTER_Y = 0.05
+    PROBLEM_SAFE_LEFT = -6.50
+    PROBLEM_SAFE_BOTTOM = 1.35
+    PROBLEM_LOGO_GAP = 0.22
+    PROBLEM_FALLBACK_RIGHT = 4.95
+    PROBLEM_BORDER_BUFF = 0.08
+    PROBLEM_X = (PROBLEM_SAFE_LEFT + PROBLEM_FALLBACK_RIGHT) / 2
+    PROBLEM_Y = 3.16
+    PROBLEM_W = PROBLEM_FALLBACK_RIGHT - PROBLEM_SAFE_LEFT - 2 * PROBLEM_BORDER_BUFF
+    PROBLEM_MAX_TOP = 3.62
+    PROBLEM_MAX_RIGHT = PROBLEM_FALLBACK_RIGHT
+    QUESTION_Y = 1.72
+    QUESTION_MAX_TOP = 1.94
+    QUESTION_MIN_BOTTOM = 1.40
+    STEP_MAX_TOP = 1.22
+    STEP_MIN_BOTTOM = -3.05
+    STEP_CENTER_Y = -0.35
+
+    PROBLEM_FS = 32
+    PROBLEM_FS_LONG = 26
+    PROBLEM_FS_DENSE = 20
+    PROBLEM_FS_EXTRA_DENSE = 16
+    PROBLEM_WEIGHT = BOLD
+    QUESTION_FS = 22
+    Z_PANEL = 10
+    Z_REGION = -1
+
+    PROBLEM_COLOR = "#426B85"
+    PROBLEM_BORDER_COLOR = "#8DB9D7"
+
+    RANDOM_SEED = 42
+
+# ── 导出语义常量到模块级（让 LLM 直接写 BASE_COLOR 而非 GlobalConfig.BASE_COLOR）──
+BASE_COLOR = GlobalConfig.BASE_COLOR
+DRAW_COLOR = GlobalConfig.DRAW_COLOR
+KNOWN_COLOR = GlobalConfig.KNOWN_COLOR
+FOCUS_COLOR = GlobalConfig.FOCUS_COLOR
+FOCUS_COLOR_1 = GlobalConfig.FOCUS_COLOR_1
+FOCUS_COLOR_2 = GlobalConfig.FOCUS_COLOR_2
+FOCUS_COLOR_3 = GlobalConfig.FOCUS_COLOR_3
+RESULT_COLOR = GlobalConfig.RESULT_COLOR
+PAIR_A_COLOR = GlobalConfig.PAIR_A_COLOR
+PAIR_B_COLOR = GlobalConfig.PAIR_B_COLOR
+TEXT_COLOR = GlobalConfig.TEXT_COLOR
+TEXT_MUTED_COLOR = GlobalConfig.TEXT_MUTED_COLOR
+
+# --- 1a. 企业视觉包运行时覆盖（普通主题无这些变量时无效果）---
+if bool(globals().get("ENTERPRISE_BACKGROUND_ENABLED", False)):
+    _enterprise_font_name = str(globals().get("ENTERPRISE_CJK_TEXT_FONT", "") or "").strip()
+    if _enterprise_font_name:
+        GlobalConfig.CJK_TEXT_FONT = _enterprise_font_name
+    _enterprise_font_asset = str(globals().get("ENTERPRISE_CJK_FONT_ASSET", "") or "").strip()
+    if _enterprise_font_asset and "register_font" in globals():
+        try:
+            _enterprise_font_rel = Path(_enterprise_font_asset)
+            if (
+                not _enterprise_font_rel.is_absolute()
+                and ".." not in _enterprise_font_rel.parts
+                and _enterprise_font_rel.suffix.lower() in {".ttf", ".otf", ".ttc"}
+            ):
+                _enterprise_assets_dir = Path(os.environ.get("MATHPI_RENDER_ASSETS_DIR", "assets")).resolve()
+                _enterprise_font_path = (_enterprise_assets_dir / _enterprise_font_rel).resolve()
+                if _enterprise_assets_dir in _enterprise_font_path.parents and _enterprise_font_path.exists():
+                    _enterprise_font_context = register_font(str(_enterprise_font_path))
+                    _enterprise_font_context.__enter__()
+                    globals()["_mathpi_enterprise_cjk_font_context"] = _enterprise_font_context
+        except Exception:
+            pass
+
+# --- Stable module-level tokens for generated Manim primitives ---
+TEXT_COLOR = GlobalConfig.TEXT_COLOR
+TITLE_COLOR = GlobalConfig.TITLE_COLOR
+FORMULA_COLOR = GlobalConfig.FORMULA_COLOR
+LINE_COLOR = GlobalConfig.LINE_COLOR
+POINT_COLOR = GlobalConfig.POINT_COLOR
+LABEL_COLOR = GlobalConfig.LABEL_COLOR
+AUX_LINE_COLOR = GlobalConfig.AUX_LINE_COLOR
+HIGHLIGHT_COLOR = GlobalConfig.HIGHLIGHT_COLOR
+ACCENT_COLOR = GlobalConfig.ACCENT_COLOR
+SECONDARY_COLOR = GlobalConfig.SECONDARY_COLOR
+FONT_TITLE = GlobalConfig.FONT_TITLE
+FONT_BODY = GlobalConfig.FONT_BODY
+FONT_FORMULA = GlobalConfig.FONT_FORMULA
+FONT_LABEL = GlobalConfig.FONT_LABEL
+FS_TITLE = GlobalConfig.FS_TITLE
+FS_BODY = GlobalConfig.FS_BODY
+FS_FORMULA = GlobalConfig.FS_FORMULA
+FS_LABEL = GlobalConfig.FS_LABEL
+FS_RESULT = GlobalConfig.FS_RESULT
+_mathpi_cjk_text_font = GlobalConfig.CJK_TEXT_FONT
+
+class BaseConfigScene(VoiceoverScene):
+    TITLE_COLOR = GlobalConfig.TITLE_COLOR
+    TEXT_COLOR = GlobalConfig.TEXT_COLOR
+    FORMULA_COLOR = GlobalConfig.FORMULA_COLOR
+    LINE_COLOR = GlobalConfig.LINE_COLOR
+    POINT_COLOR = GlobalConfig.POINT_COLOR
+    LABEL_COLOR = GlobalConfig.LABEL_COLOR
+    AUX_LINE_COLOR = GlobalConfig.AUX_LINE_COLOR
+    HIGHLIGHT_COLOR = GlobalConfig.HIGHLIGHT_COLOR
+    ACCENT_COLOR = GlobalConfig.ACCENT_COLOR
+    SECONDARY_COLOR = GlobalConfig.SECONDARY_COLOR
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        template = TexTemplateLibrary.ctex
+        template.add_to_preamble(r"\usepackage{amssymb}")
+        template.add_to_preamble(r"\usepackage{unicode-math}")
+        Tex.set_default(tex_template=template, color=GlobalConfig.TEXT_COLOR)
+        MathTex.set_default(tex_template=template, color=GlobalConfig.FORMULA_COLOR)
+        Text.set_default(font=GlobalConfig.CJK_TEXT_FONT, color=GlobalConfig.TEXT_COLOR)
+        if "MarkupText" in globals() and hasattr(MarkupText, "set_default"):
+            MarkupText.set_default(font=GlobalConfig.CJK_TEXT_FONT)
+        if "Paragraph" in globals() and hasattr(Paragraph, "set_default"):
+            Paragraph.set_default(font=GlobalConfig.CJK_TEXT_FONT)
+        Mobject.set_default(color=GlobalConfig.TEXT_COLOR)
+        VMobject.set_default(color=GlobalConfig.LINE_COLOR)
+        self.camera.background_color = GlobalConfig.BG_COLOR
+        np.random.seed(GlobalConfig.RANDOM_SEED)
+
+    def wait(self, duration=DEFAULT_WAIT_TIME, *args, **kwargs):
+        if float(duration) <= 0:
+            return self
+        return super().wait(duration, *args, **kwargs)
+
+    def play(self, *animations, **kwargs):
+        if float(kwargs.get("run_time", 1)) <= 0:
+            return self
+        return super().play(*animations, **kwargs)
+
+    def setup(self):
+        super().setup()
+        self.setup_layout()
+
+    def setup_layout(self):
+        service = create_system_tts_service()
+        self.set_speech_service(service)
+        self._add_enterprise_background()
+        self._add_enterprise_logo()
+        self.mount_authoritative_problem_panel()
+
+    def mount_authoritative_problem_panel(self):
+        """Mount the externally recognized problem once; generated code never owns it."""
+        existing = getattr(self, "_authoritative_problem_panel", None)
+        if existing is not None:
+            return existing
+        text = str(globals().get("AUTHORITATIVE_PROBLEM_TEXT", "") or "").strip()
+        if not text:
+            return None
+        panel = self.make_problem_panel(text.splitlines())
+        self.add(panel)
+        self._authoritative_problem_panel = panel
+        return panel
+
+    def _tts_int_to_cn(self, value):
+        value = int(value)
+        digits = "零一二三四五六七八九"
+        if value < 0:
+            return "负" + self._tts_int_to_cn(-value)
+        if value < 10:
+            return digits[value]
+        if value < 20:
+            return "十" + (digits[value % 10] if value % 10 else "")
+        if value < 100:
+            return digits[value // 10] + "十" + (digits[value % 10] if value % 10 else "")
+        return "".join(digits[int(ch)] for ch in str(value))
+
+    def normalize_tts_text(self, text):
+        content = str(text)
+
+        def decimal_text(match):
+            integer = self._tts_int_to_cn(match.group(1))
+            decimals = "".join(self._tts_int_to_cn(ch) for ch in match.group(2))
+            return f"负{integer}点{decimals}"
+
+        def fraction_text(match):
+            numerator = self._tts_int_to_cn(match.group(1))
+            denominator = self._tts_int_to_cn(match.group(2))
+            return f"负{denominator}分之{numerator}"
+
+        def negative_text(match):
+            return "负" + self._tts_int_to_cn(match.group(1))
+
+        content = re.sub(r"负\s*(\d+)\.(\d+)", decimal_text, content)
+        content = re.sub(r"(?<![A-Za-z0-9_\u4e00-\u9fff)])-\s*(\d+)\.(\d+)", decimal_text, content)
+        content = re.sub(r"负\s*(\d+)\s*/\s*(\d+)", fraction_text, content)
+        content = re.sub(r"(?<![A-Za-z0-9_\u4e00-\u9fff)])-\s*(\d+)\s*/\s*(\d+)", fraction_text, content)
+        content = re.sub(r"负\s*(\d+)", negative_text, content)
+        content = re.sub(r"(?<![A-Za-z0-9_\u4e00-\u9fff)])-\s*(\d+)", negative_text, content)
+        for old, new in [
+            ("欧埃姆希", "OMC"),
+            ("欧埃希", "OAC"),
+            ("埃贝希", "ABC"),
+            ("贝希", "BC"),
+            ("埃希", "AC"),
+            ("埃西", "AC"),
+            ("欧希", "OC"),
+            ("埃姆", "M"),
+            ("埃克斯", "x"),
+            ("瓦伊", "y"),
+        ]:
+            content = content.replace(old, new)
+        for old, new in [
+            ("刻", "k"),
+            ("必", "b"),
+            ("埃", "A"),
+            ("贝", "B"),
+            ("希", "C"),
+            ("迪", "D"),
+            ("欧", "O"),
+        ]:
+            content = re.sub(rf"(?<![\u4e00-\u9fff]){old}(?![\u4e00-\u9fff])", new, content)
+        return content
+
+    def voiceover(self, text=None, **kwargs):
+        if text is not None:
+            text = self.normalize_tts_text(text)
+        return super().voiceover(text=text, **kwargs)
+
+    @staticmethod
+    def _enterprise_background_asset_path():
+        if not bool(globals().get("ENTERPRISE_BACKGROUND_ENABLED", False)):
+            return None
+        asset = str(globals().get("ENTERPRISE_BACKGROUND_ASSET", "") or "").strip()
+        if not asset:
+            return None
+        rel_path = Path(asset)
+        if rel_path.is_absolute() or ".." in rel_path.parts or rel_path.suffix.lower() not in {".jpg", ".jpeg", ".png"}:
+            raise ValueError(f"Unsafe enterprise background asset path: {asset}")
+        assets_dir = Path(os.environ.get("MATHPI_RENDER_ASSETS_DIR", "assets")).resolve()
+        background_path = (assets_dir / rel_path).resolve()
+        if assets_dir not in background_path.parents:
+            raise ValueError(f"Enterprise background path escapes assets root: {asset}")
+        if not background_path.exists():
+            raise RuntimeError(f"MATHPI_ENTERPRISE_BACKGROUND_MISSING: {background_path}")
+        return background_path
+
+    @staticmethod
+    def _enterprise_background_opacity():
+        raw = os.environ.get("MATHPI_BACKGROUND_OPACITY", globals().get("ENTERPRISE_BACKGROUND_OPACITY", 0.62))
+        try:
+            opacity = float(raw)
+        except (TypeError, ValueError):
+            opacity = 0.62
+        return max(0.0, min(1.0, opacity))
+
+    def _add_enterprise_background(self):
+        existing = getattr(self, "_mathpi_enterprise_background_mobject", None)
+        if existing is not None and existing in getattr(self, "mobjects", []):
+            return existing
+        background_path = self._enterprise_background_asset_path()
+        if background_path is None:
+            return None
+        background = ImageMobject(str(background_path))
+        background.stretch_to_fit_width(config.frame_width)
+        background.stretch_to_fit_height(config.frame_height)
+        background.move_to(ORIGIN)
+        background.set_opacity(self._enterprise_background_opacity())
+        background.set_z_index(-1000)
+        self.add(background)
+        self._mathpi_enterprise_background_mobject = background
+        return background
+
+    @staticmethod
+    def _enterprise_logo_asset_path():
+        if not bool(globals().get("ENTERPRISE_LOGO_ENABLED", False)):
+            return None
+        asset = str(globals().get("ENTERPRISE_LOGO_ASSET", "") or "").strip()
+        if not asset:
+            return None
+        rel_path = Path(asset)
+        if rel_path.is_absolute() or ".." in rel_path.parts or rel_path.suffix.lower() not in {".png", ".jpg", ".jpeg"}:
+            raise ValueError(f"Unsafe enterprise logo asset path: {asset}")
+        assets_dir = Path(os.environ.get("MATHPI_RENDER_ASSETS_DIR", "assets")).resolve()
+        logo_path = (assets_dir / rel_path).resolve()
+        if assets_dir not in logo_path.parents:
+            raise ValueError(f"Enterprise logo path escapes assets root: {asset}")
+        if not logo_path.exists():
+            raise RuntimeError(f"MATHPI_ENTERPRISE_LOGO_MISSING: {logo_path}")
+        return logo_path
+
+    def _add_enterprise_logo(self):
+        existing = getattr(self, "_mathpi_enterprise_logo_mobject", None)
+        if existing is not None and existing in getattr(self, "mobjects", []):
+            return existing
+        logo_path = self._enterprise_logo_asset_path()
+        if logo_path is None:
+            return None
+        logo = ImageMobject(str(logo_path))
+        logo.set_height(float(globals().get("ENTERPRISE_LOGO_HEIGHT", 0.52) or 0.52))
+        logo.to_corner(UR, buff=float(globals().get("ENTERPRISE_LOGO_CORNER_BUFF", 0.30) or 0.30))
+        logo.set_z_index(1000)
+        self._enterprise_logo = logo
+        self.add(logo)
+        self._mathpi_enterprise_logo_mobject = logo
+        return logo
+
+    def play_steps_evenly(self, animations, tracker, active_fraction=0.85, default_run_time=0.7, **kwargs):
+        if "spread_fraction" in kwargs:
+            active_fraction = kwargs["spread_fraction"]
+        if "min_run_time" in kwargs:
+            default_run_time = kwargs["min_run_time"]
+        raw = [animations] if isinstance(animations, Animation) else list(animations or [])
+        items = [
+            FadeIn(animation) if isinstance(animation, Mobject) else animation
+            for animation in raw
+            if animation is not None
+        ]
+        if not items:
+            return
+        duration = max(0.0, float(getattr(tracker, "duration", 0.0)))
+        window = max(float(default_run_time) * len(items), duration * float(active_fraction))
+        run_time = max(0.35, min(1.2, window / max(1, len(items))))
+        for animation in items:
+            self.play(animation, run_time=run_time)
+
+    def play_after_speech(self, animations, tracker, default_run_time=0.45, max_run_time=0.8):
+        raw = [animations] if isinstance(animations, Animation) else list(animations or [])
+        items = [animation for animation in raw if animation is not None]
+        if not items:
+            return
+        duration = max(0.0, float(getattr(tracker, "duration", 0.0)))
+        if duration > 0:
+            self.wait(duration)
+        run_time = max(0.25, min(float(max_run_time), float(default_run_time)))
+        for animation in items:
+            self.play(animation, run_time=run_time)
+
+    # ── 几何布局辅助 ──────────────────────────────────
+
+    def _fit_mobject_to_box(self, mobject, x_range, y_range, buff=0.25):
+        """将对象按整体包围盒缩放并居中到指定区域。"""
+        target_w = (x_range[1] - x_range[0]) - 2 * buff
+        target_h = (y_range[1] - y_range[0]) - 2 * buff
+        center_x = (x_range[0] + x_range[1]) / 2
+        center_y = (y_range[0] + y_range[1]) / 2
+        if target_w <= 0 or target_h <= 0:
+            return mobject
+        if mobject.width > 0 and mobject.height > 0:
+            scale = min(target_w / mobject.width, target_h / mobject.height)
+            if scale < 1:
+                mobject.scale(scale)
+        mobject.move_to(np.array([center_x, center_y, 0]))
+        return mobject
+
+    def fit_left(self, mobject, x_range=(-6.25, -0.45), y_range=(-3.05, 1.92), buff=0.25):
+        """将几何图形整体缩放+居中到左侧区域。"""
+        return self._fit_mobject_to_box(mobject, x_range, y_range, buff)
+
+    def fit_geometry_group(self, *mobjects, x_range=(-6.25, -0.45), y_range=(-3.05, 1.92), buff=0.25):
+        """将原图、辅助线、角标、刻痕、标签作为一个整体重新适配左侧图形区。"""
+        if len(mobjects) == 1 and isinstance(mobjects[0], (list, tuple)):
+            mobjects = tuple(mobjects[0])
+        items = [mob for mob in mobjects if mob is not None]
+        if not items:
+            return Group()
+        group = items[0] if len(items) == 1 else Group(*items)
+        return self._fit_mobject_to_box(group, x_range, y_range, buff)
+
+    def make_text(self, text, font_size=24, color=None, **kwargs):
+        """创建 Text 对象，自动套用项目中文字体和颜色。"""
+        text_color = color or getattr(self, "TEXT_COLOR", WHITE)
+        max_width = kwargs.pop("max_width", None)
+        mob = Text(str(text), font_size=font_size, color=text_color, **kwargs)
+        if max_width and mob.width > float(max_width):
+            mob.scale_to_fit_width(float(max_width))
+        return mob
+
+    def make_formula(self, tex, font_size=None, color=None):
+        """Render a pure mathematical expression with MathTex."""
+        font_size = font_size or GlobalConfig.FS_FORMULA
+        raw = str(tex).replace('\x0c', '\\f').replace('\x08', '\\b').replace('\x09', '\\t')
+        mob = MathTex(raw, font_size=font_size, color=color or GlobalConfig.FORMULA_COLOR)
+        if mob.width > GlobalConfig.RIGHT_W:
+            mob.scale_to_fit_width(GlobalConfig.RIGHT_W)
+        return mob
+
+    def make_ctex_row(self, content, font_size=None, color=None, max_width=None):
+        """Render one complete Chinese/formula/unit row through Tex + ctex."""
+        value = str(content or "").strip()
+        if not value:
+            return VGroup()
+        if "$" not in value and not re.search(r"[\u4e00-\u9fff]", value):
+            value = f"${value}$"
+        value = re.sub(
+            r"(?<!\\)\\\\(?=(?:implies|Rightarrow|frac|dfrac|sqrt|times|cdot|pm|neq|leq|geq|triangle|angle|perp|cong|boldsymbol|quad|Delta|left|right|binom)\b)",
+            r"\\",
+            value,
+        )
+        row = Tex(
+            value,
+            tex_template=TexTemplateLibrary.ctex,
+            font_size=font_size or GlobalConfig.FS_BODY,
+            color=color or GlobalConfig.TEXT_COLOR,
+        )
+        limit = GlobalConfig.RIGHT_W if max_width is None else max_width
+        if limit is not False and limit and row.width > float(limit):
+            row.scale_to_fit_width(float(limit))
+        return row
+
+    def make_tex_row(self, content, font_size=None, color=None, max_width=None):
+        """Compatibility alias for historical generated code."""
+        return self.make_ctex_row(content, font_size=font_size, color=color, max_width=max_width)
+
+    def make_formula_row(self, content, **kwargs):
+        """Compatibility alias for one complete ctex row."""
+        return self.make_ctex_row(content, font_size=kwargs.get("font_size"), color=kwargs.get("color"), max_width=kwargs.get("max_width"))
+
+    # ── 逐句高亮便捷方法 ──────────────────────────────────
+
+    def _resolve_highlight_color(self, color=None):
+        allowed_color_types = (str, int, list, tuple)
+        if color is None:
+            return GlobalConfig.FOCUS_COLOR
+        if isinstance(color, allowed_color_types):
+            return color
+        return GlobalConfig.FOCUS_COLOR
+
+    def highlight_edge(self, edge_mob, color=None):
+        """讲到某条边时：变色"""
+        c = self._resolve_highlight_color(color)
+        return edge_mob.animate.set_color(c)
+
+    def highlight_angle(self, arc_mob, color=None):
+        """讲到某个角时：闪烁膨胀"""
+        c = self._resolve_highlight_color(color)
+        return Indicate(arc_mob, color=c, scale_factor=1.3)
+
+    def highlight_point(self, mob, color=None):
+        """讲到某个点时：Flash 闪光"""
+        c = self._resolve_highlight_color(color)
+        return Flash(mob, color=c, flash_radius=0.3)
+
+    def highlight_aux(self, aux_mob, color=None):
+        """讲到辅助线时：变色 + 扫线"""
+        c = self._resolve_highlight_color(color)
+        return AnimationGroup(
+            aux_mob.animate.set_color(c),
+            ShowPassingFlash(
+                aux_mob.copy().set_color(c).set_stroke(width=6, opacity=0.8),
+                time_width=0.6
+            ),
+            lag_ratio=0
+        )
+
+    def highlight_element(self, mob, color=None):
+        """通用元素高亮"""
+        c = self._resolve_highlight_color(color)
+        return Indicate(mob, color=c, scale_factor=1.08)
+
+    def _stroke_width_of(self, mob, fallback=3):
+        """Best-effort stroke width lookup for a VMobject or VGroup."""
+        candidates = [mob, *list(getattr(mob, "submobjects", []) or [])]
+        for item in candidates:
+            try:
+                width = item.get_stroke_width()
+                if isinstance(width, (list, tuple, np.ndarray)):
+                    width = np.array(width, dtype=float).flatten()[0]
+                width = float(width)
+                if width > 0:
+                    return width
+            except Exception:
+                continue
+        return fallback
+
+    def _stroke_color_of(self, mob, fallback=None):
+        """Best-effort stroke color lookup for restoring compact marks."""
+        candidates = [mob, *list(getattr(mob, "submobjects", []) or [])]
+        for item in candidates:
+            try:
+                color = item.get_stroke_color()
+                if color:
+                    return color
+            except Exception:
+                continue
+        return fallback
+
+    def _is_compact_mark_group(self, mob):
+        """刻痕、平行标记这类小 VGroup 只做细线强调，避免三条线糊成色块。"""
+        subs = list(getattr(mob, "submobjects", []) or [])
+        if not subs:
+            return False
+        try:
+            max_extent = max(float(getattr(mob, "width", 0) or 0), float(getattr(mob, "height", 0) or 0))
+        except Exception:
+            max_extent = 0
+        if max_extent > 0.65:
+            return False
+        short_children = 0
+        for item in subs:
+            try:
+                child_extent = max(float(getattr(item, "width", 0) or 0), float(getattr(item, "height", 0) or 0))
+                if child_extent <= 0.45:
+                    short_children += 1
+            except Exception:
+                continue
+        return short_children >= 1
+
+    def reemphasize_element(self, mob, color=None, scale_factor=1.13):
+        """后文再次提到同一线索时：轻微膨胀。适合点、标签、角弧。"""
+        c = color or "#2563EB"
+        return Indicate(mob, color=c, scale_factor=scale_factor)
+
+    def _reemphasis_overlay(self, mob, color, stroke_width=5, opacity=0.82):
+        overlay = mob.copy()
+        try:
+            overlay.set_color(color)
+            overlay.set_stroke(color=color, width=stroke_width, opacity=opacity)
+        except Exception:
+            pass
+        overlay.set_z_index(900)
+        return overlay
+
+    def _reemphasize_compact_mark(self, mob, color):
+        base_width = self._stroke_width_of(mob, fallback=2)
+        base_color = self._stroke_color_of(mob, fallback=None)
+        pulse_width = min(max(base_width + 0.8, 2.6), 3.8)
+        restore_kwargs = {"width": base_width}
+        if base_color is not None:
+            restore_kwargs["color"] = base_color
+        return AnimationGroup(
+            Succession(
+                mob.animate.set_stroke(color=color, width=pulse_width, opacity=1),
+                Wait(run_time=0.32),
+                mob.animate.set_stroke(**restore_kwargs),
+            ),
+            Indicate(mob, color=color, scale_factor=1.08),
+            lag_ratio=0,
+        )
+
+    def reemphasize_stroke(self, mob, color=None, stroke_width=5, scale_factor=1.03):
+        """后文再次提到线索时：边线扫线；刻痕/平行标记只做细线脉冲。"""
+        c = color or "#2563EB"
+        if self._is_compact_mark_group(mob):
+            return self._reemphasize_compact_mark(mob, c)
+        base_width = self._stroke_width_of(mob, fallback=3)
+        overlay_width = min(max(base_width + 1.4, 4.0), stroke_width)
+        sweep_width = overlay_width + 1.0
+        overlay = self._reemphasis_overlay(mob, c, stroke_width=overlay_width, opacity=0.78)
+        sweep = self._reemphasis_overlay(mob, c, stroke_width=sweep_width, opacity=0.62)
+        return AnimationGroup(
+            Succession(
+                FadeIn(overlay, run_time=0.12),
+                Wait(run_time=0.48),
+                FadeOut(overlay, run_time=0.18),
+            ),
+            ShowPassingFlash(sweep, time_width=0.55),
+            Indicate(mob, color=c, scale_factor=scale_factor),
+            lag_ratio=0,
+        )
+
+    def reemphasize_equal_segments(self, *edge_mobs, color=None):
+        """二次强调线段相等：强调真实线段，不强调刻痕或右侧等号。"""
+        c = color or "#2563EB"
+        animations = []
+        for mob in edge_mobs:
+            if mob is None:
+                continue
+            if isinstance(mob, (list, tuple)):
+                for item in mob:
+                    if item is not None and not self._is_compact_mark_group(item):
+                        animations.append(self.reemphasize_stroke(item, color=c))
+                continue
+            if self._is_compact_mark_group(mob):
+                continue
+            animations.append(self.reemphasize_stroke(mob, color=c))
+        if not animations:
+            return Wait(run_time=0.01)
+        return AnimationGroup(*animations, lag_ratio=0)
+
+    def _normalize_region_points(self, *points):
+        if len(points) == 1 and isinstance(points[0], (list, tuple, VGroup)):
+            points = tuple(points[0])
+        normalized = []
+        for point in points:
+            if isinstance(point, Mobject):
+                normalized.append(point.get_center())
+            else:
+                coords = np.asarray(point, dtype=float).reshape(-1)
+                if coords.size == 2:
+                    coords = np.append(coords, 0.0)
+                if coords.size != 3:
+                    raise ValueError("区域顶点必须是二维或三维坐标")
+                normalized.append(coords)
+        return normalized
+
+    def make_region_fill(self, *points, color=None, opacity=0.18, stroke_width=0):
+        """几何区域半透明色块。传入缩放后的实际点坐标，如 A, B, C。"""
+        pts = self._normalize_region_points(*points)
+        region = Polygon(
+            *pts,
+            fill_color=color or GlobalConfig.FOCUS_COLOR,
+            fill_opacity=opacity,
+            stroke_width=stroke_width,
+        )
+        return region.set_z_index(GlobalConfig.Z_REGION)
+
+    def make_area_fill(self, *points, color=None, opacity=0.18, stroke_width=0):
+        """历史代码兼容别名；新生成的几何代码使用 make_region_fill。"""
+        return self.make_region_fill(*points, color=color, opacity=opacity, stroke_width=stroke_width)
+
+    def make_triangle_region(self, p1, p2, p3, color=None, opacity=0.18):
+        """历史代码兼容别名；新生成的几何代码使用 make_region_fill。"""
+        return self.make_region_fill(p1, p2, p3, color=color, opacity=opacity)
+
+    def highlight_region(self, region_mob, color=None, opacity=0.28):
+        """讲到三角形/四边形区域时：提高填充透明度并轻微强调。"""
+        c = color or GlobalConfig.FOCUS_COLOR
+        return AnimationGroup(
+            region_mob.animate.set_fill(color=c, opacity=opacity),
+            Indicate(region_mob, color=c, scale_factor=1.04),
+            lag_ratio=0,
+        )
+
+    def reemphasize_region(self, region_mob, color=None, opacity=0.26, rest_opacity=0.18, scale_factor=1.05):
+        """后文再次提到同一区域时：临时色块层并行出现和淡出，避免串行闪烁。"""
+        c = color or "#3F7ECF"
+        overlay = region_mob.copy()
+        try:
+            overlay.set_fill(color=c, opacity=opacity)
+            overlay.set_stroke(width=0, opacity=0)
+        except Exception:
+            pass
+        overlay.set_z_index(899)
+        return AnimationGroup(
+            Succession(
+                FadeIn(overlay, run_time=0.12),
+                Wait(run_time=0.48),
+                FadeOut(overlay, run_time=0.18),
+            ),
+            Indicate(region_mob, color=c, scale_factor=scale_factor),
+            lag_ratio=0,
+        )
+
+    def make_right_angle_at(self, vertex, p1, p2, size=0.25, color=None, stroke_width=2):
+        """在 vertex 处画直角标记（小方块），p1/p2 是两条射线上的点。"""
+        angle_color = color or getattr(self, "LINE_COLOR", WHITE)
+        v = np.array(vertex, dtype=float)
+        d1 = np.array(p1, dtype=float) - v
+        d2 = np.array(p2, dtype=float) - v
+        n1 = d1 / max(np.linalg.norm(d1), 1e-9)
+        n2 = d2 / max(np.linalg.norm(d2), 1e-9)
+        corner1 = v + size * n1
+        mid = v + size * n1 + size * n2
+        corner2 = v + size * n2
+        mark = VGroup(
+            Line(corner1, mid, stroke_width=stroke_width, color=angle_color),
+            Line(mid, corner2, stroke_width=stroke_width, color=angle_color),
+        )
+        return mark
+
+    def make_tick_mark(self, edge_mob, n=1, size=0.12, gap=0.08, color=None, stroke_width=2):
+        """在一条边（Line mobject）的中点画 n 条垂直短刻痕，表示等边关系。
+        n=1 一杠，n=2 二杠，n=3 三杠。"""
+        if color is None and not isinstance(size, (int, float, np.number)):
+            color, size = size, 0.12
+        c = color or getattr(self, "LINE_COLOR", WHITE)
+        mid = edge_mob.get_center()
+        direction = edge_mob.get_end() - edge_mob.get_start()
+        length = np.linalg.norm(direction)
+        if length < 1e-9:
+            return VGroup()
+        tangent = direction / length
+        normal = np.array([-tangent[1], tangent[0], 0])
+
+        ticks = VGroup()
+        offsets = [(i - (n - 1) / 2) * gap for i in range(n)]
+        for off in offsets:
+            center = mid + off * tangent
+            p1 = center + size * normal
+            p2 = center - size * normal
+            ticks.add(Line(p1, p2, stroke_width=stroke_width, color=c))
+        return ticks
+
+    def make_angle_mark(self, vertex, p1, p2, radius=0.4, color=None, fill_opacity=0.3, stroke_width=2):
+        """在 vertex 处，由 p1 和 p2 两条射线夹角确定的正确角度标记（包含扇形色块与圆弧边缘）"""
+        v = np.array(vertex, dtype=float)
+        d1 = np.array(p1, dtype=float) - v
+        d2 = np.array(p2, dtype=float) - v
+
+        theta1 = np.arctan2(d1[1], d1[0])
+        theta2 = np.arctan2(d2[1], d2[0])
+
+        angle_diff = (theta2 - theta1 + np.pi) % (2 * np.pi) - np.pi
+
+        if angle_diff < 0:
+            start_angle = theta2
+            angle = -angle_diff
+        else:
+            start_angle = theta1
+            angle = angle_diff
+
+        mark_color = color or getattr(self, "LINE_COLOR", WHITE)
+
+        sector = Sector(
+            radius=radius,
+            start_angle=start_angle,
+            angle=angle,
+            fill_opacity=fill_opacity,
+            fill_color=mark_color,
+            stroke_width=0,
+        )
+        sector.shift(v)
+
+        arc = Arc(
+            radius=radius,
+            start_angle=start_angle,
+            angle=angle,
+            color=mark_color,
+            stroke_width=stroke_width,
+        )
+        arc.shift(v)
+
+        return VGroup(sector, arc)
+
+    def make_right_angle_mark_at(self, vertex, p1, p2, size=0.25, color=None, fill_opacity=0.3, stroke_width=2):
+        """在 vertex 处画直角标记（包含方形色块与两条直角线）"""
+        v = np.array(vertex, dtype=float)
+        d1 = np.array(p1, dtype=float) - v
+        d2 = np.array(p2, dtype=float) - v
+        n1 = d1 / max(np.linalg.norm(d1), 1e-9)
+        n2 = d2 / max(np.linalg.norm(d2), 1e-9)
+
+        corner1 = v + size * n1
+        mid = v + size * n1 + size * n2
+        corner2 = v + size * n2
+
+        mark_color = color or getattr(self, "LINE_COLOR", WHITE)
+
+        square = Polygon(
+            v, corner1, mid, corner2,
+            fill_color=mark_color,
+            fill_opacity=fill_opacity,
+            stroke_width=0,
+        )
+
+        lines = VGroup(
+            Line(corner1, mid, stroke_width=stroke_width, color=mark_color),
+            Line(mid, corner2, stroke_width=stroke_width, color=mark_color),
+        )
+
+        return VGroup(square, lines)
+
+    def place_panel(self, obj, center_y=None):
+        """历史代码兼容定位器；make_step_panel 已自动定位。"""
+        role = getattr(obj, "_layout_role", "body")
+        if role == "problem":
+            return self._place_problem_panel(obj)
+        if role == "question_goal":
+            return self._place_question_goal_panel(obj)
+        if obj.width > GlobalConfig.RIGHT_W and obj.width > 0:
+            obj.scale_to_fit_width(GlobalConfig.RIGHT_W)
+        if obj.height > GlobalConfig.RIGHT_H and obj.height > 0:
+            obj.scale_to_fit_height(GlobalConfig.RIGHT_H)
+        y = GlobalConfig.RIGHT_CENTER_Y if center_y is None else center_y
+        x = GlobalConfig.RIGHT_X + obj.width / 2
+        obj.move_to(np.array([x, y, 0]))
+        return obj
+
+    def make_panel_lines(self, lines, font_size=None, color=None, line_buff=0.12, max_width=None, weight=None):
+        if isinstance(lines, str):
+            lines = [line.strip() for line in lines.splitlines() if line.strip()]
+        mobs = VGroup()
+        for line in lines:
+            fs = font_size or GlobalConfig.FS_BODY
+            c = color or GlobalConfig.TEXT_COLOR
+            limit = max_width or GlobalConfig.RIGHT_W
+            # Mobject panel lines must stay as Manim objects; converting them
+            # to str() renders object repr text like "Text('...')" on screen.
+            if isinstance(line, Mobject):
+                mob = line
+                if font_size is not None:
+                    try:
+                        ref = self.make_text("参", font_size=fs, color=c)
+                        max_height = ref.height * 1.45
+                        if mob.height > max_height and mob.height > 0:
+                            mob.scale(max_height / mob.height)
+                    except Exception:
+                        pass
+            else:
+                raw_line = str(line)
+                # P0-A: 控制字符清理
+                raw_line = raw_line.replace('\x0c', '\\f').replace('\x08', '\\b').replace('\x09', '\\t')
+                mob = self.make_ctex_row(raw_line, font_size=fs, color=c, max_width=limit)
+            mobs.add(mob)
+        mobs.arrange(DOWN, aligned_edge=LEFT, buff=line_buff)
+        limit = max_width or GlobalConfig.RIGHT_W
+        if mobs.width > limit and mobs.width > 0:
+            mobs.scale_to_fit_width(limit)
+        return mobs
+
+    def _is_panel_latex_line(self, line):
+        """Only explicit LaTeX fragments should enter MathTex; panel prose stays Text."""
+        raw = str(line)
+        if re.search(r"[\u4e00-\u9fff]", raw):
+            return False
+        if re.search(r"_{2,}", raw):
+            return False
+        # P0-A: 独立 LaTeX 命令不能单独渲染
+        stripped = raw.strip()
+        if re.match(r'^\\[A-Za-z]+$', stripped) and stripped in (
+            r'\implies', r'\Rightarrow', r'\therefore', r'\because',
+            r'\quad', r'\qquad', r'\cdot', r'\pm', r'\mp',
+        ):
+            return False
+        return bool(
+            re.search(r"\\(?:frac|dfrac|triangle|sqrt|times|cdot|div|pm|mp|geq|leq|neq|angle|parallel|perp|sim|cong|approx|equiv|infty|sum|prod|int|lim|log|ln|sin|cos|tan|alpha|beta|gamma|delta|theta|pi|phi|lambda|mu|sigma|omega|mathrm|overline|underline|vec|hat|bar|dot|left|right)", raw)
+            or re.search(r"(?<!_)_[A-Za-z0-9{]|\\[A-Za-z]+|\\{|\\}|\\^|\^[A-Za-z0-9{]", raw)
+        )
+
+    def _escape_problem_panel_text(self, text):
+        content = str(text)
+        if "$" not in content and re.search(r"\\[A-Za-z]+", content):
+            return content
+        segments = re.split(r"((?<!\\)\$(?:\\.|[^$])*(?<!\\)\$)", content)
+        visible_math = {
+            "△": r"$\triangle$", "∠": r"$\angle$",
+            "∵": r"$\because$", "∴": r"$\therefore$",
+            "⊥": r"$\perp$", "∥": r"$\parallel$",
+        }
+        for index in range(0, len(segments), 2):
+            segment = re.sub(r"(?<!\\)([_%&#])", r"\\\1", segments[index])
+            for symbol, tex in visible_math.items():
+                segment = segment.replace(symbol, tex)
+            segments[index] = segment
+        return "".join(segments)
+
+    def make_problem_panel(self, lines):
+        import re as _re
+        lines = list(lines)
+        logo = getattr(self, "_enterprise_logo", None)
+        problem_right = GlobalConfig.PROBLEM_FALLBACK_RIGHT
+        if logo is not None:
+            problem_right = min(problem_right, logo.get_left()[0] - GlobalConfig.PROBLEM_LOGO_GAP)
+        line_count = sum(
+            1 for line in lines if isinstance(line, Mobject) or str(line).strip()
+        )
+        if line_count <= 3:
+            problem_font_size = GlobalConfig.PROBLEM_FS
+        elif line_count <= 4:
+            problem_font_size = GlobalConfig.PROBLEM_FS_LONG
+        elif line_count <= 5:
+            problem_font_size = GlobalConfig.PROBLEM_FS_DENSE
+        else:
+            problem_font_size = GlobalConfig.PROBLEM_FS_EXTRA_DENSE
+        clean_lines = []
+        for line in lines:
+            if isinstance(line, Mobject):
+                clean_lines.append(line)
+            else:
+                content = _re.sub(r"^\s*\d+\.\s*", "", str(line)).strip()
+                content = self._escape_problem_panel_text(content)
+                clean_lines.append(self.make_ctex_row(r"\mbox{" + content + "}", font_size=problem_font_size, color=GlobalConfig.PROBLEM_COLOR, max_width=False))
+        body = VGroup(*clean_lines).arrange(DOWN, aligned_edge=LEFT, buff=0.07)
+        box = SurroundingRectangle(body, color=GlobalConfig.PROBLEM_BORDER_COLOR, stroke_width=1.1, buff=GlobalConfig.PROBLEM_BORDER_BUFF)
+        box.set_fill(WHITE, opacity=0.04)
+        box.set_z_index(GlobalConfig.Z_PANEL)
+        panel = VGroup(box, body)
+        panel.set_z_index(GlobalConfig.Z_PANEL)
+        panel._layout_role = "problem"
+        return self._place_problem_panel(panel)
+
+    def _place_problem_panel(self, panel):
+        logo = getattr(self, "_enterprise_logo", None)
+        problem_right = GlobalConfig.PROBLEM_FALLBACK_RIGHT
+        problem_top = GlobalConfig.PROBLEM_MAX_TOP
+        if logo is not None:
+            problem_right = min(problem_right, logo.get_left()[0] - GlobalConfig.PROBLEM_LOGO_GAP)
+            problem_top = logo.get_top()[1]
+        available_w = max(0.1, problem_right - GlobalConfig.PROBLEM_SAFE_LEFT)
+        available_h = min(
+            1.45,
+            max(0.1, problem_top - GlobalConfig.PROBLEM_SAFE_BOTTOM),
+        )
+        if panel.width > available_w:
+            panel.scale_to_fit_width(available_w)
+        if panel.height > available_h:
+            panel.scale_to_fit_height(available_h)
+        if panel.width < available_w * 0.8:
+            panel_x = (GlobalConfig.PROBLEM_SAFE_LEFT + problem_right) / 2
+        else:
+            panel_x = GlobalConfig.PROBLEM_SAFE_LEFT + panel.width / 2
+        panel.move_to(np.array([panel_x, problem_top - panel.height / 2, 0]))
+        if panel.get_right()[0] > problem_right:
+            panel.shift(LEFT * (panel.get_right()[0] - problem_right))
+        if panel.get_left()[0] < GlobalConfig.PROBLEM_SAFE_LEFT:
+            panel.shift(RIGHT * (GlobalConfig.PROBLEM_SAFE_LEFT - panel.get_left()[0]))
+        if panel.get_top()[1] > problem_top:
+            panel.shift(DOWN * (panel.get_top()[1] - problem_top))
+        if panel.get_bottom()[1] < GlobalConfig.PROBLEM_SAFE_BOTTOM:
+            panel.shift(UP * (GlobalConfig.PROBLEM_SAFE_BOTTOM - panel.get_bottom()[1]))
+        return panel
+
+    def make_question_goal_panel(self, text):
+        panel = VGroup(text) if isinstance(text, Mobject) else VGroup(
+            self.make_ctex_row(str(text), font_size=GlobalConfig.QUESTION_FS, color=GlobalConfig.FOCUS_COLOR)
+        )
+        reference = self.make_text("参", font_size=GlobalConfig.QUESTION_FS, color=GlobalConfig.FOCUS_COLOR)
+        if panel.height > 0:
+            panel.scale(reference.height / panel.height)
+        panel._layout_role = "question_goal"
+        return self._place_question_goal_panel(panel)
+
+    def _place_question_goal_panel(self, panel):
+        panel.move_to(np.array([GlobalConfig.RIGHT_X + panel.width / 2, GlobalConfig.QUESTION_Y, 0]))
+        if panel.get_top()[1] > GlobalConfig.QUESTION_MAX_TOP:
+            panel.shift(DOWN * (panel.get_top()[1] - GlobalConfig.QUESTION_MAX_TOP))
+        if panel.get_bottom()[1] < GlobalConfig.QUESTION_MIN_BOTTOM:
+            panel.shift(UP * (GlobalConfig.QUESTION_MIN_BOTTOM - panel.get_bottom()[1]))
+        return panel
+
+    def keep_step_panel_below_goal(self, panel):
+        """Keep right-side derivation text below the yellow question goal area."""
+        available_h = GlobalConfig.STEP_MAX_TOP - GlobalConfig.STEP_MIN_BOTTOM
+        if panel.height > available_h and panel.height > 0:
+            panel.scale_to_fit_height(available_h)
+            panel.move_to(np.array([GlobalConfig.RIGHT_X + panel.width / 2, (GlobalConfig.STEP_MAX_TOP + GlobalConfig.STEP_MIN_BOTTOM) / 2, 0]))
+        if panel.get_top()[1] > GlobalConfig.STEP_MAX_TOP:
+            panel.shift(DOWN * (panel.get_top()[1] - GlobalConfig.STEP_MAX_TOP))
+        if panel.get_bottom()[1] < GlobalConfig.STEP_MIN_BOTTOM:
+            panel.shift(UP * (GlobalConfig.STEP_MIN_BOTTOM - panel.get_bottom()[1]))
+        return panel
+
+    def make_step_panel(self, lines, center_y=None):
+        import re as _re
+        clean_lines = []
+        for line in lines:
+            if isinstance(line, Mobject):
+                clean_lines.append(line)
+            else:
+                # 过滤常见的行首数字/带圆圈数字序号，如 "1. ", "1、", "(1) ", "① "
+                cleaned = _re.sub(r"^\s*(?:\d+[\.、]|\(\d+\)|[①②③④⑤⑥⑦⑧⑨⑩])\s*", "", str(line))
+                clean_lines.append(cleaned)
+        panel = self.make_panel_lines(clean_lines, font_size=GlobalConfig.FS_BODY, color=GlobalConfig.TEXT_COLOR, line_buff=0.16)
+        self.place_panel(panel, center_y=GlobalConfig.STEP_CENTER_Y if center_y is None else center_y)
+        self.keep_step_panel_below_goal(panel)
+        return panel
+
+
+# ── 兼容旧版 Manim 的动画别名容灾 ──────────────────
+ShowCreation = Create
+
+class ShowCreationThenFadeOut(Succession):
+    def __init__(self, mobject, **kwargs):
+        super().__init__(Create(mobject), FadeOut(mobject), **kwargs)
+
+# BatchOps runtime contract: keep visible math symbols stable even when a
+# tenant template still contains an older Header implementation.
+def _batchops_escape_problem_panel_text(self, text):
+    content = str(text)
+    if "$" not in content and re.search(r"\\[A-Za-z]+", content):
+        return content
+    segments = re.split(r"((?<!\\)\$(?:\\.|[^$])*(?<!\\)\$)", content)
+    visible_math = {
+        "△": r"$\triangle$", "∠": r"$\angle$",
+        "∵": r"$\because$", "∴": r"$\therefore$",
+        "⊥": r"$\perp$", "∥": r"$\parallel$",
+    }
+    for index in range(0, len(segments), 2):
+        segment = re.sub(r"(?<!\\)([_%&#])", r"\\\1", segments[index])
+        for symbol, tex in visible_math.items():
+            segment = segment.replace(symbol, tex)
+        segments[index] = segment
+    return "".join(segments)
+
+BaseConfigScene._escape_problem_panel_text = _batchops_escape_problem_panel_text
+
+def _batchops_clean_proof_formula(formula):
+    """Remove guessed prefixes so the Header owns the only visible connector."""
+    content = str(formula).strip().lstrip("$").rstrip("$").strip()
+    content = re.sub(
+        r"^(?:(?:\.{3}|…+|∵|∴|\\because|\\therefore|因为|所以)\s*)+",
+        "",
+        content,
+    )
+    return content.strip()
+
+def _batchops_make_proof_because(self, formula):
+    """Create a premise row without asking generated code to choose a prefix."""
+    content = _batchops_clean_proof_formula(formula)
+    return self.make_ctex_row(r"$\because " + content + "$")
+
+def _batchops_make_proof_therefore(self, formula):
+    """Create a conclusion row without asking generated code to choose a prefix."""
+    content = _batchops_clean_proof_formula(formula)
+    return self.make_ctex_row(r"$\therefore " + content + "$")
+
+BaseConfigScene.make_proof_because = _batchops_make_proof_because
+BaseConfigScene.make_proof_therefore = _batchops_make_proof_therefore
+
+_batchops_original_make_label_text = getattr(
+    BaseConfigScene, "make_label_text", None
+)
+_batchops_original_make_axes_manual = getattr(
+    BaseConfigScene, "make_axes_manual", None
+)
+
+def _batchops_make_axes_manual(self, *args, **kwargs):
+    axes = _batchops_original_make_axes_manual(self, *args, **kwargs)
+    self._batchops_latest_axes = axes
+    return axes
+
+def _batchops_bbox_overlap(first, second, margin=0.08):
+    return not (
+        first.get_right()[0] + margin < second.get_left()[0]
+        or first.get_left()[0] - margin > second.get_right()[0]
+        or first.get_top()[1] + margin < second.get_bottom()[1]
+        or first.get_bottom()[1] - margin > second.get_top()[1]
+    )
+
+def _batchops_place_function_label(self, label, anchor, buff=0.12):
+    """Choose a stable position beside a graph, away from axes and labels."""
+    axes = getattr(self, "_batchops_latest_axes", None)
+    if axes is None or not hasattr(anchor, "point_from_proportion"):
+        label.next_to(anchor, UR, buff=buff)
+        return label
+    obstacles = [
+        getattr(axes, name, None)
+        for name in ("x_axis", "y_axis", "x_label", "y_label")
+    ]
+    obstacles.extend(getattr(self, "_batchops_function_labels", []))
+    obstacles = [item for item in obstacles if item is not None]
+    best = None
+    for proportion in (0.25, 0.75, 0.4, 0.6):
+        point = anchor.point_from_proportion(proportion)
+        for direction in (UR, DR, UL, DL):
+            candidate = label.copy().next_to(point, direction, buff=buff)
+            collisions = sum(
+                _batchops_bbox_overlap(candidate, item) for item in obstacles
+            )
+            frame_penalty = int(
+                candidate.get_left()[0] < -6.75
+                or candidate.get_right()[0] > 6.75
+                or candidate.get_bottom()[1] < -3.75
+                or candidate.get_top()[1] > 3.75
+            )
+            score = collisions * 100 + frame_penalty * 1000
+            if best is None or score < best[0]:
+                best = (score, candidate)
+            if score == 0:
+                label.move_to(candidate)
+                self._batchops_function_labels = [
+                    *getattr(self, "_batchops_function_labels", []), label
+                ]
+                return label
+    if best is not None:
+        label.move_to(best[1])
+    self._batchops_function_labels = [
+        *getattr(self, "_batchops_function_labels", []), label
+    ]
+    return label
+
+def _batchops_make_label_text(self, text, *args, **kwargs):
+    """Normalize and safely place every label anchored to a graph."""
+    value = str(text).strip()
+    if len(value) >= 2 and value.startswith("$") and value.endswith("$"):
+        value = value[1:-1].strip()
+    anchor = args[0] if args else kwargs.get("anchor")
+    if (
+        anchor is not None
+        and hasattr(anchor, "point_from_proportion")
+    ):
+        clean_kwargs = dict(kwargs)
+        clean_kwargs.pop("anchor", None)
+        direction = clean_kwargs.pop("direction", UR)
+        buff = clean_kwargs.pop("buff", 0.12)
+        clean_args = args[1:] if args else ()
+        label = _batchops_original_make_label_text(
+            self, value, None, *clean_args, direction=direction, buff=buff,
+            **clean_kwargs
+        )
+        return _batchops_place_function_label(self, label, anchor, buff=buff)
+    return _batchops_original_make_label_text(self, value, *args, **kwargs)
+
+def _batchops_make_function_label(self, text, graph, **kwargs):
+    """Public ABI for collision-aware function-expression labels."""
+    return _batchops_make_label_text(self, text, graph, **kwargs)
+
+if _batchops_original_make_axes_manual is not None:
+    BaseConfigScene.make_axes_manual = _batchops_make_axes_manual
+if _batchops_original_make_label_text is not None:
+    BaseConfigScene.make_label_text = _batchops_make_label_text
+    BaseConfigScene.make_function_label = _batchops_make_function_label
+
+# BatchOps typography/lifecycle contract. Keep this patch after tenant Headers
+# so old database templates cannot silently restore body shrinking or pre-reveal.
+BATCHOPS_BODY_FONT_SIZE = 36
+GlobalConfig.FONT_BODY = BATCHOPS_BODY_FONT_SIZE
+GlobalConfig.FS_BODY = BATCHOPS_BODY_FONT_SIZE
+GlobalConfig.FONT_FORMULA = BATCHOPS_BODY_FONT_SIZE
+GlobalConfig.FS_FORMULA = BATCHOPS_BODY_FONT_SIZE
+GlobalConfig.FS_RESULT = BATCHOPS_BODY_FONT_SIZE
+
+_batchops_original_make_ctex_row = BaseConfigScene.make_ctex_row
+_batchops_original_make_panel_lines = BaseConfigScene.make_panel_lines
+
+def _batchops_make_ctex_row_uniform(
+    self, content, font_size=None, color=None, max_width=None
+):
+    """Make every board row use the one authoritative body size."""
+    requested_size = GlobalConfig.FS_BODY
+    effective_width = float("inf") if max_width is None else max_width
+    row = _batchops_original_make_ctex_row(
+        self,
+        content,
+        font_size=requested_size,
+        color=color,
+        max_width=effective_width,
+    )
+    row._mathpi_typography_role = "body_row"
+    row._mathpi_nominal_font_size = GlobalConfig.FS_BODY
+    return row
+
+def _batchops_make_panel_lines_uniform(
+    self,
+    lines,
+    font_size=None,
+    color=None,
+    line_buff=0.12,
+    max_width=None,
+    weight=None,
+):
+    """Arrange FS_BODY rows without shrinking rows or their whole group."""
+    source_lines = (
+        [line.strip() for line in lines.splitlines() if line.strip()]
+        if isinstance(lines, str)
+        else list(lines or [])
+    )
+    rows = VGroup()
+    for line in source_lines:
+        row = (
+            line
+            if isinstance(line, Mobject)
+            else self.make_ctex_row(
+                str(line),
+                font_size=GlobalConfig.FS_BODY,
+                color=color or GlobalConfig.TEXT_COLOR,
+                max_width=None,
+            )
+        )
+        row._mathpi_typography_role = "body_row"
+        row._mathpi_nominal_font_size = GlobalConfig.FS_BODY
+        rows.add(row)
+    rows.arrange(DOWN, aligned_edge=LEFT, buff=line_buff)
+    rows._mathpi_typography_role = "body_rows"
+    return rows
+
+BaseConfigScene.make_ctex_row = _batchops_make_ctex_row_uniform
+BaseConfigScene.make_panel_lines = _batchops_make_panel_lines_uniform
+
+def _batchops_make_problem_panel_readable(self, lines):
+    """Render mixed problem text directly; never nest math inside one mbox."""
+    clean_lines = []
+    problem_font_size = GlobalConfig.FS_BODY
+    for line in list(lines or []):
+        if isinstance(line, Mobject):
+            row = line
+        else:
+            content = re.sub(r"^\s*\d+\.\s*", "", str(line)).strip()
+            if not content:
+                continue
+            row = self.make_ctex_row(
+                self._escape_problem_panel_text(content),
+                font_size=problem_font_size,
+                color=GlobalConfig.PROBLEM_COLOR,
+                max_width=float("inf"),
+            )
+        row._mathpi_typography_role = "problem_row"
+        row._mathpi_nominal_font_size = problem_font_size
+        clean_lines.append(row)
+    body = VGroup(*clean_lines).arrange(
+        DOWN, aligned_edge=LEFT, buff=0.07
+    )
+    box = SurroundingRectangle(
+        body,
+        color=GlobalConfig.PROBLEM_BORDER_COLOR,
+        stroke_width=1.1,
+        buff=GlobalConfig.PROBLEM_BORDER_BUFF,
+    )
+    box.set_fill(WHITE, opacity=0.04)
+    box.set_z_index(GlobalConfig.Z_PANEL)
+    panel = VGroup(box, body)
+    panel.set_z_index(GlobalConfig.Z_PANEL)
+    panel._layout_role = "problem"
+    return self._place_problem_panel(panel)
+
+BaseConfigScene.make_problem_panel = _batchops_make_problem_panel_readable
+
+if hasattr(BaseConfigScene, "make_formula_stack"):
+    def _batchops_make_formula_stack_uniform(
+        self, steps=None, line_buff=0.22, max_width=None, max_height=None
+    ):
+        """Register a stable stack without progressively shrinking its rows."""
+        rows = VGroup(*list(steps or []))
+        rows.arrange(DOWN, aligned_edge=LEFT, buff=line_buff)
+        rows.move_to(
+            np.array([GlobalConfig.CALC_MAIN_X, GlobalConfig.CALC_REGION_Y, 0])
+        )
+        rows._calculation_row_scale = 1.0
+        rows._mathpi_typography_role = "body_rows"
+        self.add(rows)
+        return rows
+
+    def _batchops_push_formula_step_uniform(
+        self, stack, step, mute_history=True, muted_color=None, line_buff=0.22
+    ):
+        """Hide a future row before attaching it; caller reveals it exactly once."""
+        if mute_history:
+            history_color = muted_color or GlobalConfig.TEXT_MUTED_COLOR
+            for row in stack:
+                row.set_color(history_color)
+        step.set_opacity(0)
+        step._mathpi_typography_role = "body_row"
+        step._mathpi_nominal_font_size = GlobalConfig.FS_BODY
+        stack.add(step)
+        stack.arrange(DOWN, aligned_edge=LEFT, buff=line_buff)
+        stack.move_to(
+            np.array([GlobalConfig.CALC_MAIN_X, GlobalConfig.CALC_REGION_Y, 0])
+        )
+        stack._calculation_row_scale = 1.0
+        return step
+
+    BaseConfigScene.make_formula_stack = _batchops_make_formula_stack_uniform
+    BaseConfigScene.push_formula_step = _batchops_push_formula_step_uniform
+
+
+class Solution(BaseConfigScene):
+    def construct(self):
+        # 投影函数，用于计算垂足
+        def project_point_on_line(p, a, b):
+            ap = p - a
+            ab = b - a
+            return a + np.dot(ap, ab) / np.dot(ab, ab) * ab
+
+        # 定义顶点坐标
+        A = np.array([0, 2.25, 0])
+        B = np.array([-2.5, -1.25, 0])
+        C = np.array([2.5, -1.25, 0])
+        D = np.array([0, -1.25, 0])
+
+        # 计算垂足 E 和 F
+        E = project_point_on_line(D, A, B)
+        F = project_point_on_line(D, A, C)
+
+        # 绘制主要线段
+        triangle_ABC = Polygon(A, B, C, stroke_width=3, color=BASE_COLOR)
+        edge_AD = Line(A, D, stroke_width=3, color=BASE_COLOR)
+        edge_DE = Line(D, E, stroke_width=3, color=BASE_COLOR)
+        edge_DF = Line(D, F, stroke_width=3, color=BASE_COLOR)
+
+        # 组合初始黑色原图
+        diagram = VGroup(triangle_ABC, edge_AD, edge_DE, edge_DF)
+
+        # 几何图形整体放左侧适配
+        self.fit_left(diagram)
+
+        # 获取适配后的实时坐标
+        pts = triangle_ABC.get_vertices()
+        A_fit = pts[0]
+        B_fit = pts[1]
+        C_fit = pts[2]
+        D_fit = edge_AD.get_end()
+        E_fit = edge_DE.get_end()
+        F_fit = edge_DF.get_end()
+
+        # 创建点标签
+        lbl_A = MathTex("A", color=TEXT_COLOR).next_to(A_fit, UP, buff=0.15)
+        lbl_B = MathTex("B", color=TEXT_COLOR).next_to(B_fit, DL, buff=0.1)
+        lbl_C = MathTex("C", color=TEXT_COLOR).next_to(C_fit, DR, buff=0.1)
+        lbl_D = MathTex("D", color=TEXT_COLOR).next_to(D_fit, DOWN, buff=0.15)
+        lbl_E = MathTex("E", color=TEXT_COLOR).next_to(E_fit, LEFT, buff=0.15)
+        lbl_F = MathTex("F", color=TEXT_COLOR).next_to(F_fit, RIGHT, buff=0.15)
+
+        # 创建直角标记
+        rect_E = self.make_right_angle_mark_at(E_fit, A_fit, D_fit, size=0.2, color=BASE_COLOR, fill_opacity=0.25)
+        rect_F = self.make_right_angle_mark_at(F_fit, A_fit, D_fit, size=0.2, color=BASE_COLOR, fill_opacity=0.25)
+        rect_E2 = self.make_right_angle_mark_at(E_fit, B_fit, D_fit, size=0.2, color=BASE_COLOR, fill_opacity=0.25)
+        rect_F2 = self.make_right_angle_mark_at(F_fit, C_fit, D_fit, size=0.2, color=BASE_COLOR, fill_opacity=0.25)
+
+        # 创建角弧
+        arc_BAD = self.make_angle_mark(A_fit, B_fit, D_fit, radius=0.4, color=BASE_COLOR, fill_opacity=0.25)
+        arc_CAD = self.make_angle_mark(A_fit, D_fit, C_fit, radius=0.4, color=BASE_COLOR, fill_opacity=0.25)
+        arc_B = self.make_angle_mark(B_fit, C_fit, A_fit, radius=0.4, color=BASE_COLOR, fill_opacity=0.25)
+        arc_C = self.make_angle_mark(C_fit, A_fit, B_fit, radius=0.4, color=BASE_COLOR, fill_opacity=0.25)
+
+        # 创建刻痕
+        tick_BD = self.make_tick_mark(Line(B_fit, D_fit), n=1, color=BASE_COLOR)
+        tick_CD = self.make_tick_mark(Line(D_fit, C_fit), n=1, color=BASE_COLOR)
+
+        # 区域色块
+        region_ADE = self.make_region_fill(A_fit, D_fit, E_fit, color=PAIR_A_COLOR, opacity=0.18)
+        region_ADF = self.make_region_fill(A_fit, D_fit, F_fit, color=PAIR_B_COLOR, opacity=0.18)
+        region_BDE = self.make_region_fill(B_fit, D_fit, E_fit, color=PAIR_A_COLOR, opacity=0.18)
+        region_CDF = self.make_region_fill(C_fit, D_fit, F_fit, color=PAIR_B_COLOR, opacity=0.18)
+
+        # 整体适配
+        geometry_all = VGroup(
+            diagram, rect_E, rect_F, rect_E2, rect_F2,
+            arc_BAD, arc_CAD, arc_B, arc_C,
+            tick_BD, tick_CD,
+            lbl_A, lbl_B, lbl_C, lbl_D, lbl_E, lbl_F
+        )
+        self.fit_geometry_group(geometry_all)
+
+        # ==================== 读题展示阶段 ====================
+
+        with self.voiceover(text="同学们好！今天我们一起来看这道几何证明题。") as tracker:
+            self.play_after_speech([
+                Create(diagram),
+                FadeIn(lbl_A), FadeIn(lbl_B), FadeIn(lbl_C),
+                FadeIn(lbl_D), FadeIn(lbl_E), FadeIn(lbl_F)
+            ], tracker)
+
+        with self.voiceover(text="在三角形 ABC 中，已知 AD 平分角 BAC。") as tracker:
+            arc_BAD.set_color(KNOWN_COLOR)
+            arc_CAD.set_color(KNOWN_COLOR)
+            self.play_after_speech([
+                Create(arc_BAD), Create(arc_CAD),
+                self.reemphasize_stroke(edge_AD)
+            ], tracker)
+
+        with self.voiceover(text="同时，点 D 是底边 BC 的中点。") as tracker:
+            tick_BD.set_color(KNOWN_COLOR)
+            tick_CD.set_color(KNOWN_COLOR)
+            self.play_after_speech([
+                Create(tick_BD), Create(tick_CD),
+                self.reemphasize_element(lbl_D)
+            ], tracker)
+
+        with self.voiceover(text="题目还给出了垂直条件：DE 垂直于 AB 于点 E。") as tracker:
+            rect_E.set_color(KNOWN_COLOR)
+            self.play_after_speech([
+                Create(rect_E),
+                self.reemphasize_stroke(edge_DE)
+            ], tracker)
+
+        with self.voiceover(text="以及 DF 垂直于 AC 于点 F。") as tracker:
+            rect_F.set_color(KNOWN_COLOR)
+            self.play_after_speech([
+                Create(rect_F),
+                self.reemphasize_stroke(edge_DF)
+            ], tracker)
+
+        with self.voiceover(text="我们最终需要求证的是，角 B 等于角 C。") as tracker:
+            arc_B.set_color(RESULT_COLOR)
+            arc_C.set_color(RESULT_COLOR)
+            self.play_after_speech([
+                Create(arc_B), Create(arc_C)
+            ], tracker)
+
+        # ==================== 思路切入阶段 ====================
+
+        with self.voiceover(text="拿到这道题，我们先来理清解题的思路。") as tracker:
+            self.play_steps_evenly([], tracker)
+
+        with self.voiceover(text="要求证角 B 等于角 C，直接去证明它们相等并不容易。") as tracker:
+            self.play_steps_evenly([
+                self.reemphasize_element(arc_B),
+                self.reemphasize_element(arc_C)
+            ], tracker)
+
+        with self.voiceover(text="但是，我们注意到题目中给出了角平分线和垂直的条件。") as tracker:
+            self.play_steps_evenly([
+                self.reemphasize_stroke(edge_AD),
+                self.reemphasize_stroke(edge_DE),
+                self.reemphasize_stroke(edge_DF)
+            ], tracker)
+
+        with self.voiceover(text="根据角平分线上的点到角两边的距离相等，我们可以联想到 DE 等于 DF。") as tracker:
+            self.play_steps_evenly([
+                self.reemphasize_stroke(edge_DE),
+                self.reemphasize_stroke(edge_DF)
+            ], tracker)
+
+        with self.voiceover(text="这可以通过证明三角形 ADE 全等于三角形 ADF 来实现。") as tracker:
+            self.play_steps_evenly([
+                FadeIn(region_ADE),
+                FadeIn(region_ADF)
+            ], tracker)
+
+        with self.voiceover(text="接着，再结合中点条件，也就是 BD 等于 CD。") as tracker:
+            self.play_steps_evenly([
+                FadeOut(region_ADE), FadeOut(region_ADF),
+                self.reemphasize_equal_segments(Line(B_fit, D_fit), Line(D_fit, C_fit))
+            ], tracker)
+
+        with self.voiceover(text="我们就可以把 DE 和 DF 放入两侧的直角三角形中。") as tracker:
+            self.play_steps_evenly([
+                self.reemphasize_stroke(edge_DE),
+                self.reemphasize_stroke(edge_DF)
+            ], tracker)
+
+        with self.voiceover(text="通过证明这两个直角三角形全等，就能得到最终的结论。") as tracker:
+            self.play_steps_evenly([
+                FadeIn(region_BDE),
+                FadeIn(region_CDF)
+            ], tracker)
+
+        # ==================== 证明阶段 ====================
+
+        with self.voiceover(text="下面我们来写出规范的证明过程。") as tracker:
+            self.play_steps_evenly([
+                FadeOut(region_BDE),
+                FadeOut(region_CDF)
+            ], tracker)
+
+        with self.voiceover(text="第一步，我们先来证明第一组三角形全等。") as tracker:
+            panel1 = self.make_step_panel([
+                self.make_ctex_row(r"证明："),
+                self.make_proof_because(r"AD \text{ 平分 } \angle BAC"),
+                self.make_proof_therefore(r"\angle EAD = \angle FAD"),
+                self.make_proof_because(r"DE \perp AB, DF \perp AC")
+            ])
+            for row in panel1:
+                row.set_opacity(0)
+            self.add(panel1)
+            self.play_steps_evenly([panel1[0].animate.set_opacity(1)], tracker)
+
+        with self.voiceover(text="因为 AD 平分角 BAC。") as tracker:
+            self.play_steps_evenly([
+                panel1[1].animate.set_opacity(1),
+                self.reemphasize_stroke(edge_AD)
+            ], tracker)
+
+        with self.voiceover(text="所以角 EAD 等于角 FAD。") as tracker:
+            self.play_steps_evenly([
+                panel1[2].animate.set_opacity(1),
+                self.reemphasize_element(arc_BAD),
+                self.reemphasize_element(arc_CAD)
+            ], tracker)
+
+        with self.voiceover(text="又因为 DE 垂直于 AB，DF 垂直于 AC。") as tracker:
+            self.play_steps_evenly([
+                panel1[3].animate.set_opacity(1),
+                self.reemphasize_stroke(edge_DE),
+                self.reemphasize_stroke(edge_DF)
+            ], tracker)
+
+        with self.voiceover(text="由此可以得到，角 AED 等于角 AFD，它们都是直角。") as tracker:
+            panel2 = self.make_step_panel([
+                self.make_proof_therefore(r"\angle AED = \angle AFD = 90^\circ"),
+                self.make_ctex_row(r"在 $\triangle ADE$ 和 $\triangle ADF$ 中，有："),
+                self.make_ctex_row(r"$\begin{cases} \angle AED = \angle AFD \\ \angle EAD = \angle FAD \\ AD = AD \end{cases}$"),
+                self.make_proof_therefore(r"\triangle ADE \cong \triangle ADF\ (AAS)")
+            ])
+            for row in panel2:
+                row.set_opacity(0)
+            self.add(panel2)
+            self.play_steps_evenly([
+                FadeOut(panel1),
+                panel2[0].animate.set_opacity(1),
+                self.reemphasize_element(rect_E),
+                self.reemphasize_element(rect_F)
+            ], tracker)
+
+        with self.voiceover(text="现在，我们关注三角形 ADE 和三角形 ADF。") as tracker:
+            self.play_steps_evenly([
+                panel2[1].animate.set_opacity(1),
+                FadeIn(region_ADE),
+                FadeIn(region_ADF)
+            ], tracker)
+
+        with self.voiceover(text="在这两个三角形中，有两组角对应相等。") as tracker:
+            self.play_steps_evenly([
+                self.reemphasize_element(arc_BAD),
+                self.reemphasize_element(arc_CAD),
+                self.reemphasize_element(rect_E),
+                self.reemphasize_element(rect_F)
+            ], tracker)
+
+        with self.voiceover(text="并且，它们共享公共边 AD 等于 AD。") as tracker:
+            self.play_steps_evenly([
+                panel2[2].animate.set_opacity(1),
+                self.reemphasize_stroke(edge_AD)
+            ], tracker)
+
+        with self.voiceover(text="所以，根据角角边判定定理，三角形 ADE 全等于三角形 ADF。") as tracker:
+            self.play_steps_evenly([
+                panel2[3].animate.set_opacity(1),
+                self.reemphasize_region(region_ADE),
+                self.reemphasize_region(region_ADF)
+            ], tracker)
+
+        with self.voiceover(text="从而，我们可以得出对应边 DE 等于 DF。") as tracker:
+            panel3 = self.make_step_panel([
+                self.make_proof_therefore(r"DE = DF"),
+                self.make_proof_because(r"D \text{ 是 } BC \text{ 的中点}"),
+                self.make_proof_therefore(r"BD = CD"),
+                self.make_proof_because(r"DE \perp AB, DF \perp AC")
+            ])
+            for row in panel3:
+                row.set_opacity(0)
+            self.add(panel3)
+            tick_DE = self.make_tick_mark(edge_DE, n=2, color=KNOWN_COLOR)
+            tick_DF = self.make_tick_mark(edge_DF, n=2, color=KNOWN_COLOR)
+            self.play_steps_evenly([
+                FadeOut(panel2), FadeOut(region_ADE), FadeOut(region_ADF),
+                panel3[0].animate.set_opacity(1),
+                Create(tick_DE), Create(tick_DF),
+                self.reemphasize_stroke(edge_DE), self.reemphasize_stroke(edge_DF)
+            ], tracker)
+
+        with self.voiceover(text="这为我们接下来的证明做好了铺垫。") as tracker:
+            self.play_steps_evenly([], tracker)
+
+        with self.voiceover(text="第二步，我们来证明第二组直角三角形全等。") as tracker:
+            self.play_steps_evenly([], tracker)
+
+        with self.voiceover(text="因为点 D 是 BC 的中点。") as tracker:
+            self.play_steps_evenly([
+                panel3[1].animate.set_opacity(1),
+                self.reemphasize_element(lbl_D)
+            ], tracker)
+
+        with self.voiceover(text="所以，线段 BD 等于 CD。") as tracker:
+            self.play_steps_evenly([
+                panel3[2].animate.set_opacity(1),
+                self.reemphasize_equal_segments(Line(B_fit, D_fit), Line(D_fit, C_fit))
+            ], tracker)
+
+        with self.voiceover(text="又因为 DE 垂直于 AB，DF 垂直于 AC。") as tracker:
+            self.play_steps_evenly([
+                panel3[3].animate.set_opacity(1),
+                self.reemphasize_stroke(edge_DE),
+                self.reemphasize_stroke(edge_DF)
+            ], tracker)
+
+        with self.voiceover(text="所以，角 DEB 和角 DFC 都是直角。") as tracker:
+            panel4 = self.make_step_panel([
+                self.make_proof_therefore(r"\angle DEB = \angle DFC = 90^\circ"),
+                self.make_ctex_row(r"在 $\text{Rt}\triangle BDE$ 和 $\text{Rt}\triangle CDF$ 中，有："),
+                self.make_ctex_row(r"$\begin{cases} BD = CD \\ DE = DF \end{cases}$"),
+                self.make_proof_therefore(r"\text{Rt}\triangle BDE \cong \text{Rt}\triangle CDF\ (HL)")
+            ])
+            for row in panel4:
+                row.set_opacity(0)
+            self.add(panel4)
+            rect_E2.set_color(KNOWN_COLOR)
+            rect_F2.set_color(KNOWN_COLOR)
+            self.play_steps_evenly([
+                FadeOut(panel3), panel4[0].animate.set_opacity(1),
+                Create(rect_E2), Create(rect_F2)
+            ], tracker)
+
+        with self.voiceover(text="现在，我们来看直角三角形 BDE 和直角三角形 CDF。") as tracker:
+            self.play_steps_evenly([
+                panel4[1].animate.set_opacity(1),
+                FadeIn(region_BDE),
+                FadeIn(region_CDF)
+            ], tracker)
+
+        with self.voiceover(text="在这两个直角三角形中，斜边 BD 等于 CD。") as tracker:
+            self.play_steps_evenly([
+                self.reemphasize_equal_segments(Line(B_fit, D_fit), Line(D_fit, C_fit))
+            ], tracker)
+
+        with self.voiceover(text="直角边 DE 等于 DF。") as tracker:
+            self.play_steps_evenly([
+                panel4[2].animate.set_opacity(1),
+                self.reemphasize_equal_segments(edge_DE, edge_DF)
+            ], tracker)
+
+        with self.voiceover(text="根据斜边直角边定理，也就是 HL 定理，这两个直角三角形全等。") as tracker:
+            self.play_steps_evenly([
+                panel4[3].animate.set_opacity(1),
+                self.reemphasize_region(region_BDE),
+                self.reemphasize_region(region_CDF)
+            ], tracker)
+
+        with self.voiceover(text="最后，由全等三角形的对应角相等，我们就可以得出，角 B 等于角 C。") as tracker:
+            panel5 = self.make_step_panel([
+                self.make_proof_therefore(r"\angle B = \angle C")
+            ])
+            for row in panel5:
+                row.set_opacity(0)
+            self.add(panel5)
+            self.play_steps_evenly([
+                FadeOut(panel4), FadeOut(region_BDE), FadeOut(region_CDF),
+                panel5[0].animate.set_opacity(1),
+                arc_B.animate.set_color(RESULT_COLOR), arc_C.animate.set_color(RESULT_COLOR),
+                self.reemphasize_element(arc_B), self.reemphasize_element(arc_C)
+            ], tracker)
+
+        # ==================== 收束与总结阶段 ====================
+
+        with self.voiceover(text="这样，我们就完成了这道题的完整证明。") as tracker:
+            self.play_steps_evenly([FadeOut(panel5)], tracker)
+
+        with self.voiceover(text="回顾整道题，我们来总结一下关键的几何技巧。") as tracker:
+            panel_tips = self.make_step_panel([
+                self.make_ctex_row(r"几何技巧总结："),
+                self.make_ctex_row(r"见中点，优先构造全等"),
+                self.make_ctex_row(r"通过距离与边角关系进行转移")
+            ])
+            for row in panel_tips:
+                row.set_opacity(0)
+            self.add(panel_tips)
+            self.play_steps_evenly([panel_tips[0].animate.set_opacity(1)], tracker)
+
+        with self.voiceover(text="那就是：见中点，优先构造或寻找全等三角形。") as tracker:
+            self.play_steps_evenly([panel_tips[1].animate.set_opacity(1)], tracker)
+
+        with self.voiceover(text="通过全等三角形，我们可以实现线段和角的关系转移。") as tracker:
+            self.play_steps_evenly([panel_tips[2].animate.set_opacity(1)], tracker)
+
+        with self.voiceover(text="同学们，这个方法你们掌握了吗？") as tracker:
+            self.play_steps_evenly([], tracker)
+
+        with self.voiceover(text="好，今天的讲解就到这里，我们下期视频再见！") as tracker:
+            self.play_steps_evenly([
+                FadeOut(panel_tips),
+                FadeOut(geometry_all),
+                FadeOut(tick_DE),
+                FadeOut(tick_DF)
+            ], tracker)
+
+if __name__ == "__main__":
+    from pathlib import Path as _Path
+    from manim import config as _config
+    _config.pixel_width = 854
+    _config.pixel_height = 480
+    _config.frame_rate = 15
+    _config.media_dir = "/work/output"
+    _config.output_file = "video"
+    Solution().render()

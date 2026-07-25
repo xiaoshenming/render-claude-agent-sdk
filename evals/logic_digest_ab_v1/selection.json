@@ -1,0 +1,26 @@
+{
+  "schema_version": "manim-quality.logic-digest-ab-selection.v1",
+  "frozen": true,
+  "corpus_role": "diagnostic_regression",
+  "notes": "Used to compare evidence-v1 with digest-v2. This is not a locked holdout and must not support commercial quality claims.",
+  "known_bad": [
+    "MUT002_expert_point_coordinate_shift",
+    "MUT003_expert_point_coordinate_shift",
+    "MUT004_expert_line_endpoint_swap",
+    "MUT005_expert_circle_line_type_swap",
+    "MUT006_medium_chinese_line_relation_swap",
+    "MUT007_hard_proof_method_mismatch",
+    "MUT008_hard_ratio_factor_error",
+    "MUT009_expert_point_coordinate_shift",
+    "MUT010_medium_line_relation_swap",
+    "MUT011_expert_axes_point_shift"
+  ],
+  "known_good": [
+    "GOOD001_MTT02_BASE_r7218_q494",
+    "GOOD002_MTT03_BASE_r7217_q496",
+    "GOOD003_MTT05_BASE_r7212_q484",
+    "GOOD004_MTT21_GEO_r6707_q421",
+    "GOOD005_MTT24_GEO_r6692_q423",
+    "GOOD006_MTT30_GEO_r6742_q424"
+  ]
+}

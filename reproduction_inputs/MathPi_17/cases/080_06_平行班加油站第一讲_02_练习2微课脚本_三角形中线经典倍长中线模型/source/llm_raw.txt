@@ -1,0 +1,314 @@
+class Solution(BaseConfigScene):
+    def construct(self):
+        # ==========================================
+        # 1. 初始化图1
+        # ==========================================
+        A1 = np.array([-2.4, 1.58, 0])
+        B1 = np.array([-4.2, -0.4, 0])
+        C1 = np.array([-1.8, -0.4, 0])
+        D1 = np.array([-3.0, -0.4, 0])
+
+        line_AB1 = Line(A1, B1, stroke_width=3, color=BASE_COLOR)
+        line_AC1 = Line(A1, C1, stroke_width=3, color=BASE_COLOR)
+        line_BC1 = Line(B1, C1, stroke_width=3, color=BASE_COLOR)
+        line_AD1 = Line(A1, D1, stroke_width=3, color=BASE_COLOR)
+        diagram1_base = VGroup(line_AB1, line_AC1, line_BC1, line_AD1)
+
+        # 整体适配左侧
+        self.fit_left(diagram1_base)
+
+        # 获取实时坐标
+        pA1 = line_AB1.get_start()
+        pB1 = line_AB1.get_end()
+        pC1 = line_AC1.get_end()
+        pD1 = line_AD1.get_end()
+        pE1 = pD1 + (pD1 - pA1)
+
+        # 创建标签
+        lbl_A1 = MathTex("A", color=TEXT_COLOR).next_to(pA1, UP, buff=0.15)
+        lbl_B1 = MathTex("B", color=TEXT_COLOR).next_to(pB1, DL, buff=0.15)
+        lbl_C1 = MathTex("C", color=TEXT_COLOR).next_to(pC1, DR, buff=0.15)
+        lbl_D1 = MathTex("D", color=TEXT_COLOR).next_to(pD1, DOWN, buff=0.15)
+        lbl_E1 = MathTex("E", color=TEXT_COLOR).next_to(pE1, DOWN, buff=0.15)
+
+        # 辅助线
+        aux_DE1 = DashedLine(pD1, pE1, stroke_width=3, color=DRAW_COLOR)
+        aux_BE1 = DashedLine(pB1, pE1, stroke_width=3, color=DRAW_COLOR)
+
+        # 刻痕
+        tick_BD1 = self.make_tick_mark(Line(pB1, pD1), n=1, color=KNOWN_COLOR)
+        tick_CD1 = self.make_tick_mark(Line(pC1, pD1), n=1, color=KNOWN_COLOR)
+        tick_AD1 = self.make_tick_mark(line_AD1, n=2, color=KNOWN_COLOR)
+        tick_DE1 = self.make_tick_mark(aux_DE1, n=2, color=KNOWN_COLOR)
+
+        # 角弧
+        arc_ADC1 = self.make_angle_mark(pD1, pC1, pA1, radius=0.3, color=KNOWN_COLOR, fill_opacity=0.25)
+        arc_EDB1 = self.make_angle_mark(pD1, pB1, pE1, radius=0.3, color=KNOWN_COLOR, fill_opacity=0.25)
+
+        # 区域色块
+        region_ADC1 = self.make_region_fill(pA1, pD1, pC1, color=PAIR_A_COLOR, opacity=0.18)
+        region_EDB1 = self.make_region_fill(pE1, pD1, pB1, color=PAIR_B_COLOR, opacity=0.18)
+        region_ABE1 = self.make_region_fill(pA1, pB1, pE1, color=RESULT_COLOR, opacity=0.18)
+
+        # 整体适配总组
+        geometry_all1 = VGroup(
+            diagram1_base, lbl_A1, lbl_B1, lbl_C1, lbl_D1, lbl_E1,
+            aux_DE1, aux_BE1, tick_BD1, tick_CD1, tick_AD1, tick_DE1,
+            arc_ADC1, arc_EDB1, region_ADC1, region_EDB1, region_ABE1
+        )
+        self.fit_geometry_group(geometry_all1)
+
+        # ==========================================
+        # 2. 读题与切入阶段
+        # ==========================================
+        with self.voiceover(text="同学们好，我们一起来看这道题。在三角形 ABC 中，已知 AB 等于八，AC 等于六。") as tracker:
+            self.play_after_speech([FadeIn(diagram1_base), FadeIn(lbl_A1), FadeIn(lbl_B1), FadeIn(lbl_C1), FadeIn(lbl_D1)], tracker)
+
+        with self.voiceover(text="题目要求我们求 BC 边上的中线 AD 的取值范围。") as tracker:
+            self.play_after_speech([self.highlight_edge(line_AD1, FOCUS_COLOR)], tracker)
+
+        with self.voiceover(text="小明的方法是：延长 AD 到点 E，使 DE 等于 AD。") as tracker:
+            self.play_after_speech([Create(aux_DE1), FadeIn(lbl_E1), Create(tick_AD1), Create(tick_DE1)], tracker)
+
+        with self.voiceover(text="连接 BE。我们来看第一问：由已知和作图能得到三角形 ADC 全等于三角形 EDB 的理由是什么。") as tracker:
+            self.play_after_speech([Create(aux_BE1), FadeIn(region_ADC1), FadeIn(region_EDB1)], tracker)
+
+        with self.voiceover(text="第二问：求得 AD 的取值范围是多少。") as tracker:
+            self.play_after_speech([self.reemphasize_stroke(line_AD1)], tracker)
+
+        with self.voiceover(text="第三问：如图二，AD 是三角形 ABC 的中线，BE 交 AC 于 E，交 AD 于 F，且 AE 等于 EF。求证 AC 等于 BF。") as tracker:
+            # 仅口播，不操作图2
+            self.play_after_speech([], tracker)
+
+        # ==========================================
+        # 3. 思路切入阶段
+        # ==========================================
+        with self.voiceover(text="本题最终要确定 BC 边上中线 AD 的取值范围，直接在原三角形里看 AD 并不方便。") as tracker:
+            self.play_after_speech([self.reemphasize_stroke(line_AD1)], tracker)
+
+        with self.voiceover(text="我们先按照题目把 AD 延长到 E，并利用 D 是 BC 中点和 DE 等于 AD。") as tracker:
+            self.play_after_speech([self.reemphasize_equal_segments(line_AD1, aux_DE1)], tracker)
+
+        with self.voiceover(text="把三角形 ADC 与三角形 EDB 做全等，从而把线段 AC 转移到 BE。") as tracker:
+            self.play_after_speech([self.reemphasize_region(region_ADC1), self.reemphasize_region(region_EDB1)], tracker)
+
+        with self.voiceover(text="这样，三条线段就全部进入了三角形 ABE 中。") as tracker:
+            self.play_after_speech([FadeIn(region_ABE1)], tracker)
+
+        with self.voiceover(text="再利用三角形三边关系夹住 AE，最后把 AE 等于两倍 AD 换回 AD 的范围。") as tracker:
+            self.play_after_speech([FadeIn(tick_BD1), FadeIn(tick_CD1)], tracker)
+
+        # ==========================================
+        # 4. 第一问解答
+        # ==========================================
+        row1_1 = self.make_ctex_row(r"因为 $AD$ 是 $\triangle ABC$ 的中线")
+        row1_2 = self.make_ctex_row(r"所以 $BD=CD$")
+        row1_3 = self.make_ctex_row(r"由作图知 $AD=ED$")
+        row1_4 = self.make_ctex_row(r"对顶角 $\angle ADC = \angle EDB$")
+        row1_5 = self.make_ctex_row(r"所以 $\triangle ADC \cong \triangle EDB\ (SAS)$")
+        row1_6 = self.make_ctex_row(r"第一问答案：B", color=RESULT_COLOR)
+        panel1 = self.make_step_panel([row1_1, row1_2, row1_3, row1_4, row1_5, row1_6])
+
+        with self.voiceover(text="我们来写第一问的分析。因为 AD 是中线，所以 BD 等于 CD。") as tracker:
+            self.play_steps_evenly([Write(row1_1), Write(row1_2), self.reemphasize_equal_segments(Line(pB1, pD1), Line(pC1, pD1))], tracker)
+
+        with self.voiceover(text="又因为延长 AD 使 DE 等于 AD，这是作图条件。") as tracker:
+            self.play_steps_evenly([Write(row1_3), self.reemphasize_equal_segments(line_AD1, aux_DE1)], tracker)
+
+        with self.voiceover(text="再加上对顶角角 ADC 等于角 EDB。") as tracker:
+            self.play_steps_evenly([Write(row1_4), Create(arc_ADC1), Create(arc_EDB1)], tracker)
+
+        with self.voiceover(text="根据边角边判定定理，两边夹一角，三角形 ADC 全等于三角形 EDB。") as tracker:
+            self.play_steps_evenly([Write(row1_5), self.reemphasize_region(region_ADC1), self.reemphasize_region(region_EDB1)], tracker)
+
+        with self.voiceover(text="所以第一问的理由是边角边，也就是 SAS，选 B。") as tracker:
+            self.play_steps_evenly([Write(row1_6)], tracker)
+
+        # ==========================================
+        # 5. 第二问解答
+        # ==========================================
+        row2_1 = self.make_ctex_row(r"由全等得 $BE = AC = 6$")
+        row2_2 = self.make_ctex_row(r"且 $AE = 2AD$")
+        row2_3 = self.make_ctex_row(r"在 $\triangle ABE$ 中：$AB - BE < AE < AB + BE$")
+        row2_4 = self.make_ctex_row(r"即 $8 - 6 < 2AD < 8 + 6$")
+        row2_5 = self.make_ctex_row(r"解得 $1 < AD < 7$")
+        row2_6 = self.make_ctex_row(r"第二问答案：C", color=RESULT_COLOR)
+        panel2 = self.make_step_panel([row2_1, row2_2, row2_3, row2_4, row2_5, row2_6])
+
+        with self.voiceover(text="接下来看第二问。由刚才证得的三角形全等，我们可以得到对应边 BE 等于 AC。") as tracker:
+            self.play_steps_evenly([FadeOut(panel1), Write(row2_1), self.reemphasize_equal_segments(line_AC1, aux_BE1)], tracker)
+
+        with self.voiceover(text="因为 AC 等于六，所以 BE 也等于六。而 AE 等于两倍的 AD。") as tracker:
+            self.play_steps_evenly([Write(row2_2), self.reemphasize_stroke(line_AD1)], tracker)
+
+        with self.voiceover(text="在三角形 ABE 中，根据三角形三边关系，两边之差小于第三边，小于两边之和。") as tracker:
+            self.play_steps_evenly([Write(row2_3), self.reemphasize_region(region_ABE1)], tracker)
+
+        with self.voiceover(text="我们将数值代入，得到八减六小于两倍 AD，小于八加六。") as tracker:
+            self.play_steps_evenly([Write(row2_4)], tracker)
+
+        with self.voiceover(text="化简得到两倍 AD 在二到十四之间，从而求得 AD 在一到七之间。") as tracker:
+            self.play_steps_evenly([Write(row2_5)], tracker)
+
+        with self.voiceover(text="所以第二问的答案是 C。") as tracker:
+            self.play_steps_evenly([Write(row2_6)], tracker)
+
+        # ==========================================
+        # 6. 初始化图2
+        # ==========================================
+        A2 = np.array([3.6, 1.58, 0])
+        B2 = np.array([1.8, -0.4, 0])
+        C2 = np.array([4.2, -0.4, 0])
+        D2 = np.array([3.0, -0.4, 0])
+        E2 = np.array([3.75, 1.085, 0])
+
+        line_AB2 = Line(A2, B2, stroke_width=3, color=BASE_COLOR)
+        line_AC2 = Line(A2, C2, stroke_width=3, color=BASE_COLOR)
+        line_BC2 = Line(B2, C2, stroke_width=3, color=BASE_COLOR)
+        line_AD2 = Line(A2, D2, stroke_width=3, color=BASE_COLOR)
+        line_BE2 = Line(B2, E2, stroke_width=3, color=BASE_COLOR)
+        diagram2_base = VGroup(line_AB2, line_AC2, line_BC2, line_AD2, line_BE2)
+
+        self.fit_left(diagram2_base)
+
+        pA2 = line_AB2.get_start()
+        pB2 = line_AB2.get_end()
+        pC2 = line_AC2.get_end()
+        pD2 = line_AD2.get_end()
+        pE2 = line_BE2.get_end()
+        pF2 = line_AD2.point_from_proportion(0.4)
+        pM2 = pD2 + (pD2 - pA2)
+
+        lbl_A2 = MathTex("A", color=TEXT_COLOR).next_to(pA2, UP, buff=0.15)
+        lbl_B2 = MathTex("B", color=TEXT_COLOR).next_to(pB2, DL, buff=0.15)
+        lbl_C2 = MathTex("C", color=TEXT_COLOR).next_to(pC2, DR, buff=0.15)
+        lbl_D2 = MathTex("D", color=TEXT_COLOR).next_to(pD2, DOWN, buff=0.15)
+        lbl_E2 = MathTex("E", color=TEXT_COLOR).next_to(pE2, UR, buff=0.15)
+        lbl_F2 = MathTex("F", color=TEXT_COLOR).next_to(pF2, LEFT, buff=0.15)
+        lbl_M2 = MathTex("M", color=TEXT_COLOR).next_to(pM2, DOWN, buff=0.15)
+
+        aux_DM2 = DashedLine(pD2, pM2, stroke_width=3, color=DRAW_COLOR)
+        aux_BM2 = DashedLine(pB2, pM2, stroke_width=3, color=DRAW_COLOR)
+
+        tick_BD2 = self.make_tick_mark(Line(pB2, pD2), n=1, color=KNOWN_COLOR)
+        tick_CD2 = self.make_tick_mark(Line(pC2, pD2), n=1, color=KNOWN_COLOR)
+        tick_AD2 = self.make_tick_mark(line_AD2, n=2, color=KNOWN_COLOR)
+        tick_MD2 = self.make_tick_mark(aux_DM2, n=2, color=KNOWN_COLOR)
+        tick_AE2 = self.make_tick_mark(Line(pA2, pE2), n=3, color=KNOWN_COLOR)
+        tick_EF2 = self.make_tick_mark(Line(pE2, pF2), n=3, color=KNOWN_COLOR)
+
+        arc_ADC2 = self.make_angle_mark(pD2, pC2, pA2, radius=0.3, color=KNOWN_COLOR, fill_opacity=0.25)
+        arc_MDB2 = self.make_angle_mark(pD2, pB2, pM2, radius=0.3, color=KNOWN_COLOR, fill_opacity=0.25)
+        arc_CAD2 = self.make_angle_mark(pA2, pC2, pD2, radius=0.3, color=KNOWN_COLOR, fill_opacity=0.25)
+        arc_M2 = self.make_angle_mark(pM2, pB2, pD2, radius=0.3, color=KNOWN_COLOR, fill_opacity=0.25)
+        arc_AFE2 = self.make_angle_mark(pF2, pA2, pE2, radius=0.3, color=KNOWN_COLOR, fill_opacity=0.25)
+        arc_BFM2 = self.make_angle_mark(pF2, pB2, pM2, radius=0.3, color=KNOWN_COLOR, fill_opacity=0.25)
+
+        region_ADC2 = self.make_region_fill(pA2, pD2, pC2, color=PAIR_A_COLOR, opacity=0.18)
+        region_MDB2 = self.make_region_fill(pM2, pD2, pB2, color=PAIR_B_COLOR, opacity=0.18)
+
+        geometry_all2 = VGroup(
+            diagram2_base, lbl_A2, lbl_B2, lbl_C2, lbl_D2, lbl_E2, lbl_F2, lbl_M2,
+            aux_DM2, aux_BM2, tick_BD2, tick_CD2, tick_AD2, tick_MD2, tick_AE2, tick_EF2,
+            arc_ADC2, arc_MDB2, arc_CAD2, arc_M2, arc_AFE2, arc_BFM2, region_ADC2, region_MDB2
+        )
+        self.fit_geometry_group(geometry_all2)
+
+        # ==========================================
+        # 7. 第三问解答
+        # ==========================================
+        with self.voiceover(text="现在我们来看第三问。如图二，AD 是三角形 ABC 的中线。") as tracker:
+            self.play_after_speech([
+                FadeOut(geometry_all1),
+                FadeOut(panel2),
+                FadeIn(diagram2_base),
+                FadeIn(lbl_A2),
+                FadeIn(lbl_B2),
+                FadeIn(lbl_C2),
+                FadeIn(lbl_D2),
+                FadeIn(lbl_E2),
+                FadeIn(lbl_F2)
+            ], tracker)
+
+        with self.voiceover(text="已知条件还有 AE 等于 EF，求证 AC 等于 BF。") as tracker:
+            self.play_after_speech([
+                FadeIn(tick_AE2),
+                FadeIn(tick_EF2),
+                self.highlight_edge(line_AC2, FOCUS_COLOR),
+                self.highlight_edge(Line(pB2, pF2), FOCUS_COLOR_2)
+            ], tracker)
+
+        with self.voiceover(text="我们同样采用倍长中线的方法。延长 AD 到点 M，使 DM 等于 AD，连接 BM。") as tracker:
+            self.play_after_speech([
+                Create(aux_DM2),
+                Create(aux_BM2),
+                FadeIn(lbl_M2),
+                FadeIn(tick_AD2),
+                FadeIn(tick_MD2)
+            ], tracker)
+
+        # 面板3A
+        row3_1 = self.make_proof_because(r"AD\text{ 是 }\triangle ABC\text{ 的中线}")
+        row3_2 = self.make_proof_therefore(r"BD=CD")
+        row3_3 = self.make_proof_therefore(r"\triangle ADC \cong \triangle MDB\ (SAS)")
+        row3_4 = self.make_proof_therefore(r"AC=BM,\ \angle CAD=\angle M")
+        panel3A = self.make_step_panel([row3_1, row3_2, row3_3, row3_4])
+
+        with self.voiceover(text="因为 AD 是中线，所以 BD 等于 CD。") as tracker:
+            self.play_steps_evenly([Write(row3_1), Write(row3_2), FadeIn(tick_BD2), FadeIn(tick_CD2)], tracker)
+
+        with self.voiceover(text="在三角形 ADC 和三角形 MDB 中，有两组对应边相等，且对顶角相等。") as tracker:
+            self.play_steps_evenly([FadeIn(region_ADC2), FadeIn(region_MDB2), Create(arc_ADC2), Create(arc_MDB2)], tracker)
+
+        with self.voiceover(text="所以三角形 ADC 全等于三角形 MDB，理由是 SAS。") as tracker:
+            self.play_steps_evenly([Write(row3_3), self.reemphasize_region(region_ADC2), self.reemphasize_region(region_MDB2)], tracker)
+
+        with self.voiceover(text="由此全等，我们可以得到对应边 AC 等于 BM，对应角角 CAD 等于角 M。") as tracker:
+            self.play_steps_evenly([Write(row3_4), self.reemphasize_equal_segments(line_AC2, aux_BM2), Create(arc_CAD2), Create(arc_M2)], tracker)
+
+        # 面板3B
+        row3_5 = self.make_proof_because(r"AE=EF")
+        row3_6 = self.make_proof_therefore(r"\angle CAD=\angle AFE = \angle BFM")
+        row3_7 = self.make_proof_therefore(r"\angle M=\angle BFM")
+        row3_8 = self.make_proof_therefore(r"BM=BF")
+        row3_9 = self.make_proof_therefore(r"AC=BF")
+        panel3B = self.make_step_panel([row3_5, row3_6, row3_7, row3_8, row3_9])
+
+        with self.voiceover(text="又因为已知条件中 AE 等于 EF，所以在三角形 AEF 中，角 CAD 等于角 AFE。") as tracker:
+            self.play_steps_evenly([FadeOut(panel3A), Write(row3_5), Write(row3_6), Create(arc_AFE2)], tracker)
+
+        with self.voiceover(text="而角 AFE 与角 BFM 是一对对顶角，所以它们相等。") as tracker:
+            self.play_steps_evenly([Create(arc_BFM2)], tracker)
+
+        with self.voiceover(text="通过等量代换，我们可以得到角 M 等于角 BFM。") as tracker:
+            self.play_steps_evenly([Write(row3_7), self.reemphasize_element(arc_M2), self.reemphasize_element(arc_BFM2)], tracker)
+
+        with self.voiceover(text="在三角形 BFM 中，因为两个底角相等，所以它是一个等腰三角形，BM 等于 BF。") as tracker:
+            self.play_steps_evenly([Write(row3_8), self.reemphasize_stroke(aux_BM2), self.reemphasize_stroke(Line(pB2, pF2))], tracker)
+
+        with self.voiceover(text="最后，因为 AC 等于 BM，而 BM 又等于 BF，所以 AC 等于 BF。得证。") as tracker:
+            self.play_steps_evenly([Write(row3_9), self.reemphasize_equal_segments(line_AC2, Line(pB2, pF2))], tracker)
+
+        # ==========================================
+        # 8. 专属解题技巧与方法
+        # ==========================================
+        row4_1 = self.make_ctex_row(r"1. 见中线，必倍长，造全等，移边角")
+        row4_2 = self.make_ctex_row(r"2. 中线范围利用三边关系，不含等号")
+        row4_3 = self.make_ctex_row(r"3. 边角转化：通过全等平移")
+        row4_4 = self.make_ctex_row(r"4. 等腰倒角：线段相等化为角相等")
+        panel4 = self.make_step_panel([row4_1, row4_2, row4_3, row4_4])
+
+        with self.voiceover(text="总结一下这道题的专属解题技巧。第一，倍长中线模型口诀：见中线，必倍长，造全等，移边角。") as tracker:
+            self.play_steps_evenly([FadeOut(panel3B), Write(row4_1)], tracker)
+
+        with self.voiceover(text="第二，中线取值范围的固定套路是利用三边关系求解，注意取值范围永远不包含等号。") as tracker:
+            self.play_steps_evenly([Write(row4_2)], tracker)
+
+        with self.voiceover(text="第三，线段和角度不在一起时，全部通过中线全等进行位置的平移转化。") as tracker:
+            self.play_steps_evenly([Write(row4_3)], tracker)
+
+        with self.voiceover(text="第四，等腰倒角技巧：题目出现线段相等，立刻转化为角度相等，这是几何证明的高频手段。") as tracker:
+            self.play_steps_evenly([Write(row4_4)], tracker)
+
+        with self.voiceover(text="本题可迁移的方法是先构造模型，再转化边角。遇到中点时，优先想到倍长中线辅助线。") as tracker:
+            self.play_steps_evenly([self.reemphasize_stroke(line_AB2)], tracker)

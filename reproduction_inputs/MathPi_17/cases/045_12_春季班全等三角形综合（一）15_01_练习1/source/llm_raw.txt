@@ -1,0 +1,380 @@
+class Solution(BaseConfigScene):
+    def construct(self):
+        # 定义顶点坐标
+        A = np.array([-3.0, -1.5, 0.0])
+        B = np.array([3.0, -1.5, 0.0])
+        P = np.array([0.0, 2.0, 0.0])
+        
+        # 计算 M, N, K 的位置
+        K = A + 0.6 * (B - A)
+        
+        len_AB = np.linalg.norm(B - A)
+        len_PA = np.linalg.norm(P - A)
+        len_BK = np.linalg.norm(B - K)
+        M = A + (len_BK / len_PA) * (P - A)
+        
+        len_AK = np.linalg.norm(K - A)
+        N = B + (len_AK / len_PA) * (P - B)
+        
+        # 创建线段
+        line_AB = Line(A, B, stroke_width=2.5, color=BASE_COLOR)
+        line_AP = Line(A, P, stroke_width=2.5, color=BASE_COLOR)
+        line_BP = Line(B, P, stroke_width=2.5, color=BASE_COLOR)
+        line_MK = Line(M, K, stroke_width=2.5, color=BASE_COLOR)
+        line_NK = Line(N, K, stroke_width=2.5, color=BASE_COLOR)
+        
+        diagram = VGroup(line_AB, line_AP, line_BP, line_MK, line_NK)
+        
+        # 第一次适配，获取真实坐标
+        self.fit_left(diagram)
+        
+        pt_A = line_AB.get_start()
+        pt_B = line_AB.get_end()
+        pt_P = line_AP.get_end()
+        pt_M = line_MK.get_start()
+        pt_K = line_MK.get_end()
+        pt_N = line_NK.get_start()
+        
+        # 创建点和标签
+        dot_A = Dot(pt_A, radius=0.06, color=BASE_COLOR)
+        dot_B = Dot(pt_B, radius=0.06, color=BASE_COLOR)
+        dot_P = Dot(pt_P, radius=0.06, color=BASE_COLOR)
+        dot_M = Dot(pt_M, radius=0.06, color=BASE_COLOR)
+        dot_N = Dot(pt_N, radius=0.06, color=BASE_COLOR)
+        dot_K = Dot(pt_K, radius=0.06, color=BASE_COLOR)
+        dots = VGroup(dot_A, dot_B, dot_P, dot_M, dot_N, dot_K)
+        
+        lbl_P = MathTex("P", color=TEXT_COLOR).next_to(pt_P, UP, buff=0.15)
+        lbl_A = MathTex("A", color=TEXT_COLOR).next_to(pt_A, DL, buff=0.15)
+        lbl_B = MathTex("B", color=TEXT_COLOR).next_to(pt_B, DR, buff=0.15)
+        lbl_M = MathTex("M", color=TEXT_COLOR).next_to(pt_M, LEFT, buff=0.15)
+        lbl_N = MathTex("N", color=TEXT_COLOR).next_to(pt_N, RIGHT, buff=0.15)
+        lbl_K = MathTex("K", color=TEXT_COLOR).next_to(pt_K, DOWN, buff=0.15)
+        labels = VGroup(lbl_P, lbl_A, lbl_B, lbl_M, lbl_N, lbl_K)
+        
+        # 创建虚拟线段用于刻痕
+        seg_AM = Line(pt_A, pt_M)
+        seg_BK = Line(pt_B, pt_K)
+        seg_BN = Line(pt_B, pt_N)
+        seg_AK = Line(pt_A, pt_K)
+        
+        # 创建刻痕
+        tick_PA = self.make_tick_mark(line_AP, n=2, color=KNOWN_COLOR)
+        tick_PB = self.make_tick_mark(line_BP, n=2, color=KNOWN_COLOR)
+        tick_AM = self.make_tick_mark(seg_AM, n=1, color=KNOWN_COLOR)
+        tick_BK = self.make_tick_mark(seg_BK, n=1, color=KNOWN_COLOR)
+        tick_BN = self.make_tick_mark(seg_BN, n=3, color=KNOWN_COLOR)
+        tick_AK = self.make_tick_mark(seg_AK, n=3, color=KNOWN_COLOR)
+        
+        # 创建角弧
+        arc_MKN = self.make_angle_mark(pt_K, pt_M, pt_N, radius=0.4, color=KNOWN_COLOR, fill_opacity=0.25)
+        arc_P = self.make_angle_mark(pt_P, pt_A, pt_B, radius=0.4, color=FOCUS_COLOR, fill_opacity=0.25)
+        arc_A = self.make_angle_mark(pt_A, pt_K, pt_M, radius=0.4, color=FOCUS_COLOR, fill_opacity=0.25)
+        arc_B = self.make_angle_mark(pt_B, pt_N, pt_K, radius=0.4, color=FOCUS_COLOR, fill_opacity=0.25)
+        arc_AMK = self.make_angle_mark(pt_M, pt_A, pt_K, radius=0.3, color=FOCUS_COLOR_2, fill_opacity=0.25)
+        arc_BKN = self.make_angle_mark(pt_K, pt_B, pt_N, radius=0.3, color=FOCUS_COLOR_2, fill_opacity=0.25)
+        
+        # 创建区域色块
+        region_AMK = self.make_region_fill(pt_A, pt_M, pt_K, color=PAIR_A_COLOR, opacity=0.18)
+        region_BKN = self.make_region_fill(pt_B, pt_K, pt_N, color=PAIR_B_COLOR, opacity=0.18)
+        region_PAB = self.make_region_fill(pt_P, pt_A, pt_B, color=RESULT_COLOR, opacity=0.1)
+        
+        # 整体适配
+        geometry_all = VGroup(
+            diagram, dots, labels,
+            tick_PA, tick_PB, tick_AM, tick_BK, tick_BN, tick_AK,
+            arc_MKN, arc_P, arc_A, arc_B, arc_AMK, arc_BKN,
+            region_AMK, region_BKN, region_PAB
+        )
+        self.fit_geometry_group(geometry_all)
+        
+        # 准备右侧板书
+        # 第一屏
+        row1 = self.make_proof_because(r"PA=PB")
+        row2 = self.make_proof_therefore(r"\angle A=\angle B")
+        panel1 = self.make_step_panel([row1, row2])
+        
+        # 第二屏
+        row3 = self.make_ctex_row(r"在 $\triangle AMK$ 和 $\triangle BKN$ 中：")
+        row4 = self.make_ctex_row(r"$\begin{cases} AM=BK \\ \angle A=\angle B \\ AK=BN \end{cases}$")
+        row5 = self.make_proof_therefore(r"\triangle AMK \cong \triangle BKN\ (\text{SAS})")
+        row6 = self.make_proof_therefore(r"\angle AMK=\angle BKN")
+        panel2 = self.make_step_panel([row3, row4, row5, row6])
+        
+        # 第三屏
+        row7 = self.make_proof_because(r"\angle AMK+\angle A+\angle AKM=180^\circ")
+        row8 = self.make_ctex_row(r"且 $\angle BKN+\angle MKN+\angle AKM=180^\circ$")
+        row9 = self.make_proof_therefore(r"\angle MKN=\angle A=40^\circ")
+        row10 = self.make_proof_therefore(r"\angle A=\angle B=40^\circ")
+        panel3 = self.make_step_panel([row7, row8, row9, row10])
+        
+        # 第四屏
+        row11 = self.make_ctex_row(r"在 $\triangle PAB$ 中：")
+        row12 = self.make_proof_therefore(r"\angle P=180^\circ-\angle A-\angle B")
+        row13 = self.make_ctex_row(r"$\angle P=180^\circ-40^\circ-40^\circ=100^\circ$")
+        panel4 = self.make_step_panel([row11, row12, row13])
+        
+        # 开始播放
+        self.add(diagram, dots, labels)
+        
+        # 1. “同学们好，我们一起来看这道题。”
+        with self.voiceover(text="同学们好，我们一起来看这道题。") as tracker:
+            self.play_after_speech([], tracker)
+            
+        # 2. “在三角形 PAB 中，已知边 PA 等于 PB。”
+        with self.voiceover(text="在三角形 PAB 中，已知边 PA 等于 PB。") as tracker:
+            self.play_after_speech([
+                self.highlight_edge(line_AP, color=KNOWN_COLOR),
+                self.highlight_edge(line_BP, color=KNOWN_COLOR),
+                Create(tick_PA),
+                Create(tick_PB)
+            ], tracker)
+            
+        # 3. “点 M、N、K 分别在边 PA、PB、AB 上。”
+        with self.voiceover(text="点 M、N、K 分别在边 PA、PB、AB 上。") as tracker:
+            self.play_after_speech([
+                self.reemphasize_element(lbl_M),
+                self.reemphasize_element(lbl_N),
+                self.reemphasize_element(lbl_K)
+            ], tracker)
+            
+        # 4. “题目还告诉我们，线段 AM 等于 BK。”
+        with self.voiceover(text="题目还告诉我们，线段 AM 等于 BK。") as tracker:
+            self.play_after_speech([
+                Create(tick_AM),
+                Create(tick_BK)
+            ], tracker)
+            
+        # 5. “同时，线段 BN 等于 AK。”
+        with self.voiceover(text="同时，线段 BN 等于 AK。") as tracker:
+            self.play_after_speech([
+                Create(tick_BN),
+                Create(tick_AK)
+            ], tracker)
+            
+        # 6. “另外，角 MKN 的度数是四十度。”
+        with self.voiceover(text="另外，角 MKN 的度数是四十度。") as tracker:
+            self.play_after_speech([
+                Create(arc_MKN)
+            ], tracker)
+            
+        # 7. “我们需要求出角 P 的度数。”
+        with self.voiceover(text="我们需要求出角 P 的度数。") as tracker:
+            self.play_after_speech([
+                Create(arc_P),
+                self.reemphasize_element(lbl_P)
+            ], tracker)
+            
+        # 8. “我们先来分析一下这道题的切入点。”
+        with self.voiceover(text="我们先来分析一下这道题的切入点。") as tracker:
+            self.play_after_speech([], tracker)
+            
+        # 9. “要求角 P 的度数，直接求并不容易。”
+        with self.voiceover(text="要求角 P 的度数，直接求并不容易。") as tracker:
+            self.play_after_speech([], tracker)
+            
+        # 10. “我们可以先利用 PA 等于 PB 这个条件。”
+        with self.voiceover(text="我们可以先利用 PA 等于 PB 这个条件。") as tracker:
+            self.play_after_speech([
+                self.reemphasize_equal_segments(line_AP, line_BP)
+            ], tracker)
+            
+        # 11. “根据等边对等角，可以得到角 A 等于角 B。”
+        with self.voiceover(text="根据等边对等角，可以得到角 A 等于角 B。") as tracker:
+            self.play_after_speech([
+                Create(arc_A),
+                Create(arc_B)
+            ], tracker)
+            
+        # 12. “接下来，我们把目光投向三角形 AMK 和三角形 BKN。”
+        with self.voiceover(text="接下来，我们把目光投向三角形 AMK 和三角形 BKN。") as tracker:
+            self.play_after_speech([
+                FadeIn(region_AMK),
+                FadeIn(region_BKN)
+            ], tracker)
+            
+        # 13. “看看这两个三角形之间有什么特殊的关系。”
+        with self.voiceover(text="看看这两个三角形之间有什么特殊的关系。") as tracker:
+            self.play_after_speech([], tracker)
+            
+        # 14. “已知条件里有 AM 等于 BK，这是第一组对应边。”
+        with self.voiceover(text="已知条件里有 AM 等于 BK，这是第一组对应边。") as tracker:
+            self.play_after_speech([
+                self.reemphasize_equal_segments(seg_AM, seg_BK)
+            ], tracker)
+            
+        # 15. “还有 BN 等于 AK，这是第二组对应边。”
+        with self.voiceover(text="还有 BN 等于 AK，这是第二组对应边。") as tracker:
+            self.play_after_speech([
+                self.reemphasize_equal_segments(seg_BN, seg_AK)
+            ], tracker)
+            
+        # 16. “再加上我们刚刚推导出的夹角，角 A 等于角 B。”
+        with self.voiceover(text="再加上我们刚刚推导出的夹角，角 A 等于角 B。") as tracker:
+            self.play_after_speech([
+                self.reemphasize_element(arc_A),
+                self.reemphasize_element(arc_B)
+            ], tracker)
+            
+        # 17. “因此，这两个三角形是全等的。”
+        with self.voiceover(text="因此，这两个三角形是全等的。") as tracker:
+            self.play_after_speech([
+                self.reemphasize_region(region_AMK),
+                self.reemphasize_region(region_BKN)
+            ], tracker)
+            
+        # 18. “通过全等，我们就可以得到对应角相等，即角 AMK 等于角 BKN。”
+        with self.voiceover(text="通过全等，我们就可以得到对应角相等，即角 AMK 等于角 BKN。") as tracker:
+            self.play_after_speech([
+                Create(arc_AMK),
+                Create(arc_BKN)
+            ], tracker)
+            
+        # 19. “这样就把角进行了转移。”
+        with self.voiceover(text="这样就把角进行了转移。") as tracker:
+            self.play_after_speech([], tracker)
+            
+        # 20. “最后，利用平角关系和三角形内角和，就能求出角 A 的度数。”
+        with self.voiceover(text="最后，利用平角关系 and 三角形内角和，就能求出角 A 的度数。") as tracker:
+            self.play_after_speech([
+                self.reemphasize_element(arc_MKN)
+            ], tracker)
+            
+        # 21. “进而就能顺利求出角 P 了。”
+        with self.voiceover(text="进而就能顺利求出角 P 了。") as tracker:
+            self.play_after_speech([
+                self.reemphasize_element(arc_P)
+            ], tracker)
+            
+        # 22. “下面我们来写出严谨的证明步骤。”
+        with self.voiceover(text="下面我们来写出严谨的证明步骤。") as tracker:
+            self.play_after_speech([], tracker)
+            
+        # 23. “第一步，因为 PA 等于 PB，”
+        with self.voiceover(text="第一步，因为 PA 等于 PB，") as tracker:
+            self.play_steps_evenly([
+                Write(panel1[0]),
+                self.reemphasize_equal_segments(line_AP, line_BP)
+            ], tracker)
+            
+        # 24. “所以角 A 等于角 B。”
+        with self.voiceover(text="所以角 A 等于角 B。") as tracker:
+            self.play_steps_evenly([
+                Write(panel1[1]),
+                self.reemphasize_element(arc_A),
+                self.reemphasize_element(arc_B)
+            ], tracker)
+            
+        # 25. “第二步，在三角形 AMK 和三角形 BKN 中，”
+        with self.voiceover(text="第二步，在三角形 AMK 和三角形 BKN 中，") as tracker:
+            self.play_steps_evenly([
+                FadeOut(panel1),
+                Write(panel2[0]),
+                self.reemphasize_region(region_AMK),
+                self.reemphasize_region(region_BKN)
+            ], tracker)
+            
+        # 26. “因为 AM 等于 BK，角 A 等于角 B，AK 等于 BN，”
+        with self.voiceover(text="因为 AM 等于 BK，角 A 等于角 B，AK 等于 BN，") as tracker:
+            self.play_steps_evenly([
+                Write(panel2[1]),
+                self.reemphasize_equal_segments(seg_AM, seg_BK),
+                self.reemphasize_equal_segments(seg_AK, seg_BN)
+            ], tracker)
+            
+        # 27. “所以三角形 AMK 全等于三角形 BKN，依据是边角边。”
+        with self.voiceover(text="所以三角形 AMK 全等于三角形 BKN，依据是边角边。") as tracker:
+            self.play_steps_evenly([
+                Write(panel2[2])
+            ], tracker)
+            
+        # 28. “从而得到角 AMK 等于角 BKN。”
+        with self.voiceover(text="从而得到角 AMK 等于角 BKN。") as tracker:
+            self.play_steps_evenly([
+                Write(panel2[3]),
+                self.reemphasize_element(arc_AMK),
+                self.reemphasize_element(arc_BKN)
+            ], tracker)
+            
+        # 29. “第三步，因为三角形 AMK 的内角和是一百八十度，”
+        with self.voiceover(text="第三步，因为三角形 AMK 的内角和是一百八十度，") as tracker:
+            self.play_steps_evenly([
+                FadeOut(panel2),
+                Write(panel3[0]),
+                self.reemphasize_region(region_AMK)
+            ], tracker)
+            
+        # 30. “所以角 AMK 加角 A 加角 AKM 等于一百八十度。”
+        with self.voiceover(text="所以角 AMK 加角 A 加角 AKM 等于一百八十度。") as tracker:
+            self.play_steps_evenly([
+                self.reemphasize_element(arc_AMK),
+                self.reemphasize_element(arc_A)
+            ], tracker)
+            
+        # 31. “又因为角 BKN 加角 MKN 加角 AKM 组成一个平角，也是一百八十度。”
+        with self.voiceover(text="又因为角 BKN 加角 MKN 加角 AKM 组成一个平角，也是一百八十度。") as tracker:
+            self.play_steps_evenly([
+                Write(panel3[1])
+            ], tracker)
+            
+        # 32. “结合角 AMK 等于角 BKN，我们可以推出角 MKN 等于角 A，都等于四十度。”
+        with self.voiceover(text="结合角 AMK 等于角 BKN，我们可以推出角 MKN 等于角 A，都等于四十度。") as tracker:
+            self.play_steps_evenly([
+                Write(panel3[2]),
+                self.reemphasize_element(arc_MKN),
+                self.reemphasize_element(arc_A)
+            ], tracker)
+            
+        # 33. “所以角 A 等于角 B，都等于四十度。”
+        with self.voiceover(text="所以角 A 等于角 B，都等于四十度。") as tracker:
+            self.play_steps_evenly([
+                Write(panel3[3]),
+                self.reemphasize_element(arc_B)
+            ], tracker)
+            
+        # 34. “最后，在三角形 PAB 中，”
+        with self.voiceover(text="最后，在三角形 PAB 中，") as tracker:
+            self.play_steps_evenly([
+                FadeOut(panel3),
+                Write(panel4[0]),
+                FadeIn(region_PAB)
+            ], tracker)
+            
+        # 35. “角 P 等于一百八十度减去角 A 再减去角 B。”
+        with self.voiceover(text="角 P 等于一百八十度减去角 A 再减去角 B。") as tracker:
+            self.play_steps_evenly([
+                Write(panel4[1])
+            ], tracker)
+            
+        # 36. “代入数值，也就是一百八十度减去四十度再减去四十度。”
+        with self.voiceover(text="代入数值，也就是一百八十度减去四十度再减去四十度。") as tracker:
+            self.play_steps_evenly([], tracker)
+            
+        # 37. “计算得出，角 P 的度数是一百度。”
+        with self.voiceover(text="计算得出，角 P 的度数是一百度。") as tracker:
+            self.play_steps_evenly([
+                Write(panel4[2]),
+                self.reemphasize_element(arc_P)
+            ], tracker)
+            
+        # 38. “我们来总结一下这道题的解题技巧。”
+        with self.voiceover(text="我们来总结一下这道题的解题技巧。") as tracker:
+            self.play_steps_evenly([
+                FadeOut(panel4),
+                FadeOut(region_PAB)
+            ], tracker)
+            
+        # 39. “本题的关键在于利用全等三角形进行角的等量代换。”
+        with self.voiceover(text="本题的关键在于利用全等三角形进行角的等量代换。") as tracker:
+            self.play_steps_evenly([
+                self.reemphasize_region(region_AMK),
+                self.reemphasize_region(region_BKN)
+            ], tracker)
+            
+        # 40. “将未知的角与已知角联系起来，从而实现角度的转移。”
+        with self.voiceover(text="将未知的角与已知角联系起来，从而实现角度的转移。") as tracker:
+            self.play_steps_evenly([], tracker)
+            
+        # 41. “这种转化思想在几何证明中非常常见，大家一定要掌握。这道题就讲到这里，我们下次再见！”
+        with self.voiceover(text="这种转化思想在几何证明中非常常见，大家一定要掌握。这道题就讲到这里，我们下次再见！") as tracker:
+            self.play_steps_evenly([], tracker)

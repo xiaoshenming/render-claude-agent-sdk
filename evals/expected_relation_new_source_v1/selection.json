@@ -1,0 +1,8 @@
+{
+  "schema_version": "manim-quality.expected-relation-selection.v1",
+  "pack_id": "expected-relation-new-source-v1",
+  "source_pack": "expected_relation_new_source_probe_20260712",
+  "sample_ids": [
+    "MUTNEW001_line_endpoint_swap"
+  ]
+}

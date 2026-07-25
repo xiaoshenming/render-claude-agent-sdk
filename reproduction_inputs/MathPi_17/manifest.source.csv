@@ -1,0 +1,18 @@
+﻿index,title,source_batch,source_item_id,status,has_figure_code,source_dir,folder
+17,平行班第六讲_04_练习2_等边三角形基础计算与证明_第3题_角内等腰线段计算,,39fcfef8c572,render_succeeded,True,/opt/mathpi/batchops/benchmarks/geometry-drift-8797-20260724-1720/0017-39fcfef8c572,017_平行班第六讲_04_练习2_等边三角形基础计算与证明_第3题_角内等腰线段计算
+22,16_平行班第五讲_12_练习4第(3)题外角平分线的结论探究_纠错版,,53519c06eda5,render_succeeded,False,/opt/mathpi/batchops/benchmarks/geometry-drift-8797-20260724-1720/0022-53519c06eda5,022_16_平行班第五讲_12_练习4第(3)题外角平分线的结论探究_纠错版
+30,平行班第三讲_练习4 角平分线双垂直综合题_综合题,,b2bbc0c24310,render_succeeded,True,/opt/mathpi/batchops/benchmarks/geometry-drift-8797-20260724-1720/0030-b2bbc0c24310,030_平行班第三讲_练习4_角平分线双垂直综合题_综合题
+35,16_平行班第五讲_04_练习1第(4)题腰上的高求底角,,3d94d3760bef,render_succeeded,True,/opt/mathpi/batchops/benchmarks/geometry-drift-8797-20260724-1720/0035-3d94d3760bef,035_16_平行班第五讲_04_练习1第(4)题腰上的高求底角
+42,16_平行班第五讲_11_练习4第(2)题线段和差证明,,f95fbed9b869,render_succeeded,True,/opt/mathpi/batchops/benchmarks/geometry-drift-8797-20260724-1720/0042-f95fbed9b869,042_16_平行班第五讲_11_练习4第(2)题线段和差证明
+45,12_春季班全等三角形综合（一）15_01_练习1,,6223b9bf28f1,render_succeeded,True,/opt/mathpi/batchops/benchmarks/geometry-drift-8797-20260724-1720/0045-6223b9bf28f1,045_12_春季班全等三角形综合（一）15_01_练习1
+47,12_春季班全等三角形综合（一）15_03_练习2,,24672be159d6,render_succeeded,True,/opt/mathpi/batchops/benchmarks/geometry-drift-8797-20260724-1720/0047-24672be159d6,047_12_春季班全等三角形综合（一）15_03_练习2
+54,11_春季班全等三角形综合（一）14_05_练习4,,6e05fa715c77,render_succeeded,True,/opt/mathpi/batchops/benchmarks/geometry-drift-8797-20260724-1720/0054-6e05fa715c77,054_11_春季班全等三角形综合（一）14_05_练习4
+57,10_春季班全等三角形综合13_03_练习2,,cace29e54dd7,render_succeeded,True,/opt/mathpi/batchops/benchmarks/geometry-drift-8797-20260724-1720/0057-cace29e54dd7,057_10_春季班全等三角形综合13_03_练习2
+58,10_春季班全等三角形综合13_04_练习3,,959e31d409d8,render_succeeded,True,/opt/mathpi/batchops/benchmarks/geometry-drift-8797-20260724-1720/0058-959e31d409d8,058_10_春季班全等三角形综合13_04_练习3
+76,07_平行班加油站第二讲_02_练习2,,bf58d22789ed,render_succeeded,True,/opt/mathpi/batchops/benchmarks/geometry-drift-8797-20260724-1720/0076-bf58d22789ed,076_07_平行班加油站第二讲_02_练习2
+78,07_平行班加油站第二讲_04_练习4,,9747036b963e,render_succeeded,True,/opt/mathpi/batchops/benchmarks/geometry-drift-8797-20260724-1720/0078-9747036b963e,078_07_平行班加油站第二讲_04_练习4
+80,06_平行班加油站第一讲_02_练习2微课脚本_三角形中线经典倍长中线模型,,b779b7261894,render_succeeded,True,/opt/mathpi/batchops/benchmarks/geometry-drift-8797-20260724-1720/0080-b779b7261894,080_06_平行班加油站第一讲_02_练习2微课脚本_三角形中线经典倍长中线模型
+99,09_平行班加油站第四讲_04_练习1第4题,,aa02439afe4e,render_succeeded,False,/opt/mathpi/batchops/benchmarks/geometry-drift-8797-20260724-1720/0099-aa02439afe4e,099_09_平行班加油站第四讲_04_练习1第4题
+100,09_平行班加油站第四讲_05_练习2第1题,,dbe48e6f39ac,render_succeeded,False,/opt/mathpi/batchops/benchmarks/geometry-drift-8797-20260724-1720/0100-dbe48e6f39ac,100_09_平行班加油站第四讲_05_练习2第1题
+108,10_春季班全等三角形综合13_03_练习2,,e8350834ecaa,render_succeeded,False,/opt/mathpi/batchops/benchmarks/geometry-drift-8797-20260724-1720/0108-e8350834ecaa,108_10_春季班全等三角形综合13_03_练习2
+117,12_春季班全等三角形综合（一）15_02_第56题,,c36117a1e4a6,render_succeeded,False,/opt/mathpi/batchops/benchmarks/geometry-drift-8797-20260724-1720/0117-c36117a1e4a6,117_12_春季班全等三角形综合（一）15_02_第56题

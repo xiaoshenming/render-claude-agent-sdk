@@ -1,0 +1,150 @@
+## 题目文字
+
+如图，BD = CD, ∠ABD = ∠ACD = 90^\circ, 点 E, F
+分别在 AB, AC 上，若 ED 平分 ∠BEF. (1) 求证：
+FD 平分 ∠EFC; (2) 求证：EF = BE + CF. (3) 若
+EF = 4, AF = 6, AE = 5, 则 BE = \_\_\_\_\_\_\_.
+
+## 图形识别结果
+
+```python
+# PROBLEM_TEXT: 如图，BD = CD, ∠ABD = ∠ACD = 90°, 点 E, F 分别在 AB, AC 上，若 ED 平分 ∠BEF. (1) 求证：FD 平分 ∠EFC; (2) 求证：EF = BE + CF. (3) 若 EF = 4, AF = 6, AE = 5, 则 BE = _______.
+# FIGURE_FACTS: BD = CD, ∠ABD = ∠ACD = 90°, E is on AB, F is on AC, ED bisects ∠BEF
+
+from manim import *
+
+class GeometryScene(Scene):
+    def construct(self):
+        # Define key points
+        A = np.array([0, 3.25, 0])
+        D = np.array([0, -2.08, 0])
+        B = np.array([-2.6, 0, 0])
+        C = np.array([2.6, 0, 0])
+        
+        # E is on AB, F is on AC
+        E = A + 0.65 * (B - A)
+        F = A + 0.75 * (C - A)
+
+        # Draw lines
+        line_AB = Line(A, B, stroke_width=2, color=WHITE)
+        line_AC = Line(A, C, stroke_width=2, color=WHITE)
+        line_BD = Line(B, D, stroke_width=2, color=WHITE)
+        line_CD = Line(C, D, stroke_width=2, color=WHITE)
+        line_ED = Line(E, D, stroke_width=2, color=WHITE)
+        line_FD = Line(F, D, stroke_width=2, color=WHITE)
+        line_EF = Line(E, F, stroke_width=2, color=WHITE)
+
+        # Right angle mark at B
+        u1 = (A - B) / np.linalg.norm(A - B)
+        u2 = (D - B) / np.linalg.norm(D - B)
+        s = 0.25
+        p1 = B + s * u1
+        p2 = B + s * u1 + s * u2
+        p3 = B + s * u2
+        right_angle_B = VMobject(color=WHITE, stroke_width=1.5)
+        right_angle_B.set_points_as_corners([p1, p2, p3])
+
+        # Right angle mark at C
+        v1 = (A - C) / np.linalg.norm(A - C)
+        v2 = (D - C) / np.linalg.norm(D - C)
+        q1 = C + s * v1
+        q2 = C + s * v1 + s * v2
+        q3 = C + s * v2
+        right_angle_C = VMobject(color=WHITE, stroke_width=1.5)
+        right_angle_C.set_points_as_corners([q1, q2, q3])
+
+        # Labels
+        label_A = MathTex("A").next_to(A, UP, buff=0.15)
+        label_B = MathTex("B").next_to(B, LEFT, buff=0.15)
+        label_C = MathTex("C").next_to(C, RIGHT, buff=0.15)
+        label_D = MathTex("D").next_to(D, DOWN, buff=0.15)
+        label_E = MathTex("E").next_to(E, UL, buff=0.1)
+        label_F = MathTex("F").next_to(F, UR, buff=0.1)
+
+        # Group all elements
+        geometry_group = VGroup(
+            line_AB, line_AC, line_BD, line_CD, line_ED, line_FD, line_EF,
+            right_angle_B, right_angle_C,
+            label_A, label_B, label_C, label_D, label_E, label_F
+        )
+
+        # Add to scene
+        self.add(geometry_group)
+```
+
+## 解题步骤
+
+【口播脚本执行规则】
+- 解题步骤是唯一口播母稿；必须按其中的内容顺序生成 `with self.voiceover(text=...)`，不得只按题意重新写一份短讲解。
+- 每个自然段、每个“审题/模型/推导/技巧”板块都要进入视频；长句可以拆成多句短口播，但不能改写成另一条解题路线。
+- 带有“【配音台词】”的内容优先作为口播内容来源；保持语义与顺序，只做 TTS 友好的处理，例如把数字、分数和运算关系改成中文读法、把长句拆短。
+- 正式证明/正式推导阶段的数学含义、证明顺序和结论必须保真；不得压缩、省略、重排或另写一套“因为所以”链。原稿中的 LaTeX 只是数学语义来源，不是可直接复制的显示代码。
+- 可见板书必须保留规范数学符号：三角形用 `△`、角用 `∠`、因为用 `∵`、所以用 `∴`；禁止把它们省略或把板书中的 `∵/∴` 改写成“因为/所以”。口播仍按自然中文朗读。
+- 可见证明板书必须使用 Header 的确定性接口：前提行调用 `self.make_proof_because(r"AB=AE")`，结论行调用 `self.make_proof_therefore(r"AB=EC")`。先判断该行是前提还是结论，再调用对应接口；不得自行拼接、猜测或省略逻辑前缀。
+- 任何证明前提行或结论行都禁止直接调用 `make_ctex_row("因为...")`、`make_ctex_row("所以...")` 或用省略号冒充逻辑符号；必须调用上述两个证明接口。角度板书使用标准正例 `self.make_ctex_row(r"$\angle ABC=30^\circ$")`，不得丢失 `\angle`、角顶点或度数角标。
+- `make_proof_because/therefore` 的参数只传公式正文，禁止传 `...`、`…`、中文省略号、`因为/所以`、`∵/∴` 或 `\because/\therefore` 前缀；可见前缀只能由 Header 生成标准三点符号。
+- 禁止照抄原稿中的裸 LaTeX 显示语法。所有可见板书行统一调用 `self.make_ctex_row(...)`；中文写在数学边界外，公式完整放入 `$...$`。例如 `self.make_ctex_row(r"又因为 $DF=EF$")`；纯公式写成 `self.make_ctex_row(r"$DF=EF$")`。
+- 函数图上的解析式标签必须调用 `make_function_label("y=2x+3", line)`，禁止相对整条直线调用 `make_label_text(..., line)`；内容只传 `y=2x+3`，禁止写成 `"$y=2x+3$"`、`"函数：$y=2x+3$"` 或任何带单个/不配对 `$` 的字符串；`$` 只是 CTeX 行内数学边界，绝不能成为图中可见字符。
+- 正文行统一不传自定义 `font_size`，全部使用 Header 的 `FS_BODY`；公式、分式、根式、方程组也保持同一正文基准字号。`construct()` 中禁止对正文行、正文组、公式组调用 `scale()`、`scale_to_fit_width()` 或 `scale_to_fit_height()`。如果内容放不下，只能拆成同字号的多行或切到下一屏。
+- 每条正文只承载“一个短句”或“一条公式”，禁止把“选项说明 + 推导公式 + 成立性结论”挤在同一行。正确示例是先写 `A. 两边减 $1$，不等号方向不变`，下一行单独写 `$a-1<b-1$（成立）`。方程组或大括号公式必须独占一行，解释文字另起同字号正文行；每屏最多 4 条正文。
+- 严禁文字“双闪”：同一个文字 Mobject 一生只能从不可见变为可见一次。任何父 `VGroup`/面板只要已经包含文字子项，就不得先整体 `FadeIn/Write/add` 后再对子项 `Write/FadeIn`；已经整体 `FadeIn` 的卡片，其子行以后只能高亮，不能再次显示。需要逐行出现时，面板背景与文字必须分开，所有未来行先设为不可见，再随对应口播逐行首次出现。
+- 数学字母、点名、线名和函数名必须保留原符号，例如 x、y、k、b、A、B、C、AC、OAC、OMC；不要改成中文谐音字。
+- 右侧板书可以提炼为短行，但口播必须忠实覆盖老师原始解题步骤的关键信息与顺序。
+- 禁止照抄 system prompt 或模板示例里的开场、题干、数值、推导和结论；模板示例只说明 API/版式，不是当前题内容。
+- 第一条 voiceover 必须对应老师原始解题步骤开头的【配音台词】或第一自然段，不能使用模板里的默认开场。
+- 主讲身份就是老师，口播对象是学生/同学。禁止向“老师”“各位老师”“老师们”问好；如果需要问候，只能面向学生，例如“同学们好”或“同学们，我们一起来看这道题”。如果原始脚本没有明确问候，不要自行添加问候。
+- 顶部题干由运行时根据 OCR 权威文本自动显示。题干只用于理解题意，禁止创建、抄写、移动、隐藏或播放任何题干面板。
+- `with self.voiceover(text=...)` 的 `text` 必须是可直接朗读的自然中文，严禁包含 `$`、反斜杠 LaTeX、花括号命令或公式源码；例如必须写“判别式德尔塔”“根号德尔塔”，不得写 `"$\Delta$"`、`"$\sqrt{\Delta}$"`。
+- 几何与函数路线没有 `make_rule_card` 接口，绝对禁止调用；只有计算路线可以按其专用合同使用规则卡。
+- 创建点名、端点名或坐标标签时，先构造 `MathTex("E", color=TEXT_COLOR)` 或 Header 的标签 helper，再调用 `.next_to(anchor, direction, buff=0.15)`。`color` 只能传颜色值，方向向量只能传给 `next_to`；`buff` 绝不能传入 `Text/MathTex` 构造器。
+- 几何路线的区域填色写成 `self.make_region_fill(p1, p2, p3, color=PAIR_A_COLOR, opacity=0.18)`；函数路线的坐标面积必须写成 `self.make_area_by_coords([(x1, y1), (x2, y2), (x3, y3)], color=PAIR_A_COLOR, opacity=0.18)`，禁止把坐标值直接交给几何区域接口。所有点坐标之后的 `color`、`opacity`、`stroke_width` 都是仅限关键字参数，绝对禁止写成 `self.make_region_fill(p1, p2, p3, PAIR_A_COLOR, 0.18)`，否则颜色字符串会被误当成坐标点。
+- `play_steps_evenly`、`play_after_speech` 与 `self.play` 的每一个实参都必须是 Animation，禁止直接传入 `Text`、`Tex`、`MathTex`、`VGroup`、`panel[i]` 或三元表达式返回的裸 Mobject。显示对象必须显式包装为 `Write(panel[i])`、`FadeIn(mob)` 或 `Create(shape)`；改变已有对象才使用 `mob.animate...`。严禁 `panel[i] if ... else panel[-1].animate...` 这种一边返回裸 Mobject、一边返回 Animation 的混合表达式。
+- 面板索引必须与实际行数一致；禁止猜测或硬编码不存在的 `panel[i]`。调用 `panel[i]` 前必须能从同一段代码中逐项数出第 `i+1` 行，行数不确定时直接保留已创建的行对象并播放它，不通过数字索引回取。
+【老师原始解题步骤】
+以下内容只保真数学内容、证明顺序和结论；其中旧式 LaTeX 包装不得直接复制为显示代码。
+题目
+如图，BD=CD，∠ABD=∠ACD=90°，ED平分∠BEF。 (1) 求证：FD平分∠EFC； (2) 求证：EF=BE+CF； (3) 若EF=4，AF=6，AE=5，求BE的长。
+(1) 求证：FD平分∠EFC
+模块1 答案解析
+作DG⊥EF，利用角平分线性质和等量代换，证明D到EF与D到FC的距离相等，从而证得FD平分∠EFC。
+模块2 解析过程
+审题与切入
+要证角平分线，根据角平分线的判定定理，只需证明点D到∠EFC两边的距离相等。题目给出ED平分角和两个直角，因此过D作EF的垂线，作为桥梁联系两条距离。
+解题思路与核心定理
+角平分线的性质：角平分线上的点到角两边的距离相等； 角平分线的判定：角的内部到角两边距离相等的点，在角的平分线上。 核心辅助线：过D作DG⊥EF于G。
+具体推导过程
+第一步：作辅助线 过点D作DG⊥EF于点G。
+第二步：由角平分线性质得DB=DG ∵ ∠ABD=90°，∴ DB⊥AB。 ∵ ED平分∠BEF，DB⊥AB，DG⊥EF， ∴ DB = DG（角平分线上的点到角两边的距离相等）。
+第三步：等量代换得DG=CD 已知BD=CD， ∴ DG = CD。
+第四步：用判定定理证平分线 ∵ ∠ACD=90°，∴ DC⊥AC。 ∵ DG⊥EF，DC⊥AC，且DG=CD， ∴ 点D在∠EFC的平分线上，即FD平分∠EFC。
+中考规范最终答案
+证明：过点D作DG⊥EF于G。 ∵ ∠ABD=90°，∴ DB⊥AB。 ∵ ED平分∠BEF，DB⊥AB，DG⊥EF， ∴ DB = DG。 又∵ BD=CD，∴ DG = CD。 ∵ ∠ACD=90°，∴ DC⊥AC。 ∵ DG⊥EF，DC⊥AC，DG=CD， ∴ FD平分∠EFC。
+(2) 求证：EF=BE+CF
+模块1 答案解析
+通过HL证明两组直角三角形全等，将BE转化为EG，CF转化为GF，从而EF=EG+GF=BE+CF。
+模块2 解析过程
+审题与切入
+证明一条线段等于两条线段之和，常用“截长补短”。这里作了DG⊥EF，刚好把EF分成EG和GF两段，只需证明EG=BE、GF=CF，用HL证明直角三角形全等即可。
+解题思路与核心定理
+直角三角形全等判定HL：斜边和一条直角边对应相等的两个直角三角形全等； 全等三角形对应边相等。
+具体推导过程
+第一步：证Rt△BDE ≌ Rt△GDE 在Rt△BDE和Rt△GDE中： ​ $\begin{cases} DE = DE \quad (公共边) \\ BD = GD \quad (已证) \end{cases}$ ∴ Rt△BDE ≌ Rt△GDE（HL）， ∴ BE = GE（全等三角形对应边相等）。
+第二步：证Rt△CDF ≌ Rt△GDF 在Rt△CDF和Rt△GDF中： ​ $\begin{cases} DF = DF \quad (公共边) \\ CD = GD \quad (已证) \end{cases}$ ∴ Rt△CDF ≌ Rt△GDF（HL）， ∴ CF = GF（全等三角形对应边相等）。
+第三步：线段和差代换 ∵ EF = GE + GF， 代入BE=GE、CF=GF得： EF = BE + CF。
+中考规范最终答案
+证明： 在Rt△BDE和Rt△GDE中： ​ $\begin{cases} DE=DE \\ BD=GD \end{cases}$ ∴ Rt△BDE ≌ Rt△GDE（HL），∴ BE=GE。 同理可证Rt△CDF ≌ Rt△GDF（HL），∴ CF=GF。 ∵ EF = GE + GF， ∴ EF = BE + CF。
+(3) 求BE的长
+模块1 答案解析
+BE的长为 $\boldsymbol{2.5}$ （或 $\boldsymbol{\dfrac{5}{2}}$ ）。
+模块2 解析过程
+审题与切入
+已有EF=BE+CF这个关系式，再找到BE与CF的另一个等量关系，联立方程组即可求解。另一个关系来自AB=AC，可通过HL证明Rt△ABD≌Rt△ACD得到。
+解题思路与核心定理
+HL证明直角三角形全等； 二元一次方程组求解线段长度。
+具体推导过程
+第一步：设未知数，列第一个方程 设BE = x，CF = y。 由(2)的结论：EF = BE + CF = 4， 即 $x + y = 4$ ①。
+第二步：证AB=AC，列第二个方程 在Rt△ABD和Rt△ACD中： ​ $\begin{cases} BD = CD \\ AD = AD \quad (公共边) \end{cases}$ ∴ Rt△ABD ≌ Rt△ACD（HL）， ∴ AB = AC。
+∵ AB = AE + BE = 5 + x， AC = AF + CF = 6 + y， ∴ 5 + x = 6 + y， 整理得： $x - y = 1$ ②。
+第三步：解方程组 联立①②： ​ $\begin{cases} x + y = 4 \\ x - y = 1 \end{cases}$ 两式相加： $2x = 5$ ，解得 $x = 2.5$ ， 代入得 $y = 1.5$ 。 因此BE = 2.5。
+中考规范最终答案
+解：设BE=x，CF=y。 由(2)得： $x + y = 4$ ①。 在Rt△ABD和Rt△ACD中： ​ $\begin{cases} BD=CD \\ AD=AD \end{cases}$ ∴ Rt△ABD ≌ Rt△ACD（HL），∴ AB=AC。 ∵ AB=5+x，AC=6+y， ∴ 5+x = 6+y，即 $x - y = 1$ ②。 联立①②解得： $x=2.5$ ， $y=1.5$ 。 答：BE的长为2.5。

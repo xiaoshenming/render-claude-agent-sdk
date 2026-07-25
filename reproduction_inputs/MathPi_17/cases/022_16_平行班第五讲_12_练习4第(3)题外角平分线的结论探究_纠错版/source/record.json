@@ -1,0 +1,21 @@
+{
+  "source_batch_id": "f765ecfb6fe2",
+  "source_batch_name": "平行班第五讲_两题纠错_1080P_mumu_20260713",
+  "source_item_id": "53519c06eda5",
+  "title": "16_平行班第五讲_12_练习4第(3)题外角平分线的结论探究_纠错版",
+  "problem_text": "如图1，在三角形ABC中，∠BAC=75°，∠ACB=35°，∠ABC的平分线BD交边AC于点D。(3) 若∠BAC外角的平分线AE交CB延长线于点E，请探究(2)中的结论BD+AD=AB+BE是否仍然成立，并证明你的结论。",
+  "solution_steps": "【读题展示阶段】\n展示完整题干并明确本题只研究第(3)问：AE是∠BAC外角的平分线，交CB的延长线于E，判断上一问的等式是否仍成立。\n\n【思路切入阶段】\n上一问已经得到BD=DC。先利用角度证明△ABD与△ACB相似，得到边长比例；再用外角平分线定理求出BE与AB、AC的关系，最后用AC=AD+BD完成线段代换。\n\n【满分答案阶段：必须完整展示的官方解题步骤】\n解：(2)中的结论不成立，正确关系为 BE=AB+AD+BD。\n证明：因为∠ABC=180°-75°-35°=70°，BD平分∠ABC，所以∠ABD=35°=∠ACB。\n又∠BAD=∠BAC=75°，所以△ABD相似于△ACB。\n设AB=c，AC=b，BC=a，AD=y，BD=x。\n由相似三角形得 AB/AC=AD/AB=BD/BC，即c²=by，且x/a=c/b。\n由第(1)问BD=DC，所以b=AC=AD+DC=y+x。\n于是x=b-y=b-c²/b=(b²-c²)/b。\n再由x/a=c/b，得a=(b²-c²)/c，即ac=(b-c)(b+c)。\n因为AE是∠BAC的外角平分线，且E在CB的延长线上，由外角平分线定理得BE/CE=AB/AC=c/b。\n又CE=CB+BE=a+BE，所以BE/(a+BE)=c/b，即(b-c)BE=ac。\n代入ac=(b-c)(b+c)，得BE=b+c=AC+AB。\n最后，由BD=DC，得AC=AD+DC=AD+BD。\n因此BE=AB+AD+BD。\n\n【结论收束阶段】\n上一问的等式不再成立；正确关系是BE=AB+AD+BD。\n\n【技巧总结阶段】\n外角平分线题要先确认点在线段还是延长线上，再使用外角平分线定理。线段位置关系CE=CB+BE不能写反。",
+  "figure_code": "",
+  "index": 22,
+  "status": "render_succeeded",
+  "scene_class": "Solution",
+  "llm_seconds": 22.128,
+  "llm_findings": [
+    "provider_output_sanitized"
+  ],
+  "code_sha256": "0768c637b595e6ea20a792e11fca37e0669709b75c93f1608ae02a4f26ee8220",
+  "work_dir": "/opt/mathpi/batchops/benchmarks/geometry-drift-8797-20260724-1720/0022-53519c06eda5",
+  "render_seconds": 75.241,
+  "video_path": "/opt/mathpi/batchops/benchmarks/geometry-drift-8797-20260724-1720/0022-53519c06eda5/media/videos/480p15/video.mp4",
+  "video_bytes": 812071
+}

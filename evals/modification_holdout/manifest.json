@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "frozen": true,
+  "corpus_role": "contract_regression",
+  "sample_count": 10,
+  "source": {
+    "path": "tests/e2e/test_modification_preview_publish.py",
+    "sha256": "sha256:4eaba0394d36a969990caefc91408db488f4eca85f814505af5c755e32174d95"
+  },
+  "notes": "Generic workflow scenarios, not an independent production-video holdout.",
+  "cases": [
+    "stable_scene_targeting",
+    "all_requested_scenes_change",
+    "unrequested_scene_change_rejected",
+    "shared_helper_change_rejected",
+    "scene_reorder_rejected",
+    "approval_is_atomic",
+    "approval_failure_rolls_back",
+    "preview_is_targeted",
+    "silent_partial_rejected",
+    "approved_revision_reenters_full_quality"
+  ]
+}

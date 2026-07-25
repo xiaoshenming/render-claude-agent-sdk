@@ -1,0 +1,21 @@
+{
+  "source_batch_id": "0489f6c00320",
+  "source_batch_name": "周日交付_81题_server6_20260704",
+  "source_item_id": "e8350834ecaa",
+  "title": "10_春季班全等三角形综合13_03_练习2",
+  "problem_text": "如图，∠ACB=90°，BF⊥AE，结合图中条件证明 CE=CD，求CE=CD。",
+  "solution_steps": "【读题展示阶段】\n先自然读题，不进入证明。题目给出：如图，∠ACB=90°，BF⊥AE，结合图中条件证明 CE=CD。读到 ∠ACB=90° 时高亮直角 C；读到 BF⊥AE 时高亮 BF、AE 和垂足；最后读出求证：CE=CD，只高亮 CE 和 CD。\n【思路切入阶段】\n本题最终要证明 CE=CD，直接证明线段相等不方便。先利用 ∠ACB=90° 和 BF⊥AE 找到两组直角关系，再把图中的已知边角放入相关直角三角形；证明全等后得到对应线段相等，最后把对应关系落到 CE 和 CD 上。\n【满分答案阶段：必须完整展示的官方解题步骤】\n证明：\n\\because \\angle ACB=90^\\circ ，\n\\therefore \\angle ACE=\\angle BCD=90^\\circ ，\n\\therefore \\angle CAE+\\angle E=90^\\circ 。\n\\because BF\\perp AE ，\n\\therefore \\angle BFE=90^\\circ ，\n\\therefore \\angle CBD+\\angle E=90^\\circ ，\n\\therefore \\angle CAE=\\angle CBD （同角的余角相等）。\n\n在 \\triangle CAE 和 \\triangle CBD 中：\n\\begin{cases}\\angle CAE=\\angle CBD \\\\CA=CB \\\\\\angle ACE=\\angle BCD\\end{cases} \\therefore \\triangle CAE\\cong\\triangle CBD （ASA），\n\\therefore CE=CD 。\n\n【结论收束阶段】\n最后收束结论：在 \\triangle CAE 和 \\triangle CBD 中： \\begin{cases}\\angle CAE=\\angle CBD \\\\CA=CB \\\\\\angle ACE=\\angle BCD\\end{cases} \\therefore \\triangle CAE\\cong\\triangle CBD （ASA）， \\therefore CE=CD 。\n\n【技巧总结阶段】\n本题可迁移的方法是先把目标拆成可证明或可计算的中间关系，再逐步回到题目要求。",
+  "figure_code": "",
+  "index": 108,
+  "status": "render_succeeded",
+  "scene_class": "Solution",
+  "llm_seconds": 95.342,
+  "llm_findings": [
+    "provider_output_raw_python"
+  ],
+  "code_sha256": "c247ea53b726cac0a9b27834acac3033042d178a7c1bca914e231025366ee962",
+  "work_dir": "/opt/mathpi/batchops/benchmarks/geometry-drift-8797-20260724-1720/0108-e8350834ecaa",
+  "render_seconds": 349.068,
+  "video_path": "/opt/mathpi/batchops/benchmarks/geometry-drift-8797-20260724-1720/0108-e8350834ecaa/media/videos/480p15/video.mp4",
+  "video_bytes": 1425022
+}

@@ -1,0 +1,956 @@
+[07/24/26 09:33:57] WARNING  Generated silent MP3 cosyvoice_manim_service.py:778
+                             fallback:                                          
+                             /work/output/voiceov                               
+                             ers/tong-xue-men-hao                               
+                             -wo-men-yi-qi-lai-ka                               
+                             n-zhe-dao-ti-718d117                               
+                             9.mp3                                              
+                    INFO     Automatically converted    scene_file_writer.py:377
+                             /work/output/voiceovers/to                         
+                             ng-xue-men-hao-wo-men-yi-q                         
+                             i-lai-kan-zhe-dao-ti-718d1                         
+                             179.mp3 to .wav                                    
+                    INFO     Animation 0 : Using cached     cairo_renderer.py:89
+                             data (hash :                                       
+                             3427088861_88180936_1707635112                     
+                             )                                                  
+                    WARNING  Generated silent MP3 cosyvoice_manim_service.py:778
+                             fallback:                                          
+                             /work/output/voiceov                               
+                             ers/shou-xian-ti-mu-                               
+                             gei-chu-san-jiao-xin                               
+                             g-abc-shi-deng-77cc4                               
+                             cc2.mp3                                            
+                    INFO     Automatically converted    scene_file_writer.py:377
+                             /work/output/voiceovers/sh                         
+                             ou-xian-ti-mu-gei-chu-san-                         
+                             jiao-xing-abc-shi-deng-77c                         
+                             c4cc2.mp3 to .wav                                  
+                    INFO     Animation 1 : Using cached     cairo_renderer.py:89
+                             data (hash :                                       
+                             2280645179_3304601702_30895660                     
+                             0)                                                 
+                    INFO     Animation 2 : Using cached     cairo_renderer.py:89
+                             data (hash :                                       
+                             2280645179_2241531523_30949402                     
+                             49)                                                
+                    INFO     Animation 3 : Using cached     cairo_renderer.py:89
+                             data (hash :                                       
+                             2280645179_3975916526_19868653                     
+                             55)                                                
+                    INFO     Animation 4 : Using cached     cairo_renderer.py:89
+                             data (hash :                                       
+                             2280645179_3279012430_13233617                     
+                             39)                                                
+                    WARNING  Generated silent MP3 cosyvoice_manim_service.py:778
+                             fallback:                                          
+                             /work/output/voiceov                               
+                             ers/dong-dian-d-zai-                               
+                             bian-ca-shang-dong-d                               
+                             ian-p-zai-bian-e6605                               
+                             801.mp3                                            
+                    INFO     Automatically converted    scene_file_writer.py:377
+                             /work/output/voiceovers/do                         
+                             ng-dian-d-zai-bian-ca-shan                         
+                             g-dong-dian-p-zai-bian-e66                         
+                             05801.mp3 to .wav                                  
+                    INFO     Animation 5 : Using cached     cairo_renderer.py:89
+                             data (hash :                                       
+                             2280645179_2299747103_14002820                     
+                             6)                                                 
+                    INFO     Animation 6 : Using cached     cairo_renderer.py:89
+                             data (hash :                                       
+                             2280645179_2266632760_18874174                     
+                             41)                                                
+                    INFO     Animation 7 : Using cached     cairo_renderer.py:89
+                             data (hash :                                       
+                             2280645179_4280622311_18874174                     
+                             41)                                                
+                    WARNING  Generated silent MP3 cosyvoice_manim_service.py:778
+                             fallback:                                          
+                             /work/output/voiceov                               
+                             ers/ta-men-fen-bie-c                               
+                             ong-c-dian-he-b-dian                               
+                             -tong-shi-chu-aaab27                               
+                             d6.mp3                                             
+                    INFO     Automatically converted    scene_file_writer.py:377
+                             /work/output/voiceovers/ta                         
+                             -men-fen-bie-cong-c-dian-h                         
+                             e-b-dian-tong-shi-chu-aaab                         
+                             27d6.mp3 to .wav                                   
+                    INFO     Animation 8 : Using cached     cairo_renderer.py:89
+                             data (hash :                                       
+                             2280645179_730522174_306806042                     
+                             7)                                                 
+                    WARNING  Generated silent MP3 cosyvoice_manim_service.py:778
+                             fallback:                                          
+                             /work/output/voiceov                               
+                             ers/bing-qie-yi-xian                               
+                             g-tong-de-su-du-jin-                               
+                             xing-yun-dong-cc1b7f                               
+                             4b.mp3                                             
+                    INFO     Automatically converted    scene_file_writer.py:377
+                             /work/output/voiceovers/bi                         
+                             ng-qie-yi-xiang-tong-de-su                         
+                             -du-jin-xing-yun-dong-cc1b                         
+                             7f4b.mp3 to .wav                                   
+                    INFO     Animation 9 : Using cached     cairo_renderer.py:89
+                             data (hash :                                       
+                             2280645179_2388537655_18359974                     
+                             09)                                                
+                    WARNING  Generated silent MP3 cosyvoice_manim_service.py:778
+                             fallback:                                          
+                             /work/output/voiceov                               
+                             ers/yin-wei-su-du-xi                               
+                             ang-tong-suo-yi-ta-m                               
+                             en-yun-dong-de-742ff                               
+                             7e2.mp3                                            
+                    INFO     Automatically converted    scene_file_writer.py:377
+                             /work/output/voiceovers/yi                         
+                             n-wei-su-du-xiang-tong-suo                         
+                             -yi-ta-men-yun-dong-de-742                         
+                             ff7e2.mp3 to .wav                                  
+                    INFO     Animation 10 : Using cached    cairo_renderer.py:89
+                             data (hash :                                       
+                             2280645179_1575911250_97176405                     
+                             4)                                                 
+                    INFO     Animation 11 : Using cached    cairo_renderer.py:89
+                             data (hash :                                       
+                             2280645179_178336284_699407051                     
+                             )                                                  
+[07/24/26 09:33:58] INFO     Animation 12 : Using cached    cairo_renderer.py:89
+                             data (hash :                                       
+                             2280645179_2659823545_50527110                     
+                             9)                                                 
+                    WARNING  Generated silent MP3 cosyvoice_manim_service.py:778
+                             fallback:                                          
+                             /work/output/voiceov                               
+                             ers/lian-jie-ap-he-b                               
+                             d-ta-men-xiang-jiao-                               
+                             yu-dian-q-6b897f4f.m                               
+                             p3                                                 
+                    INFO     Automatically converted    scene_file_writer.py:377
+                             /work/output/voiceovers/li                         
+                             an-jie-ap-he-bd-ta-men-xia                         
+                             ng-jiao-yu-dian-q-6b897f4f                         
+                             .mp3 to .wav                                       
+                    INFO     Animation 13 : Using cached    cairo_renderer.py:89
+                             data (hash :                                       
+                             2280645179_3578115422_29901483                     
+                             28)                                                
+                    INFO     Animation 14 : Using cached    cairo_renderer.py:89
+                             data (hash :                                       
+                             2280645179_1651915738_38122671                     
+                             80)                                                
+                    INFO     Animation 15 : Using cached    cairo_renderer.py:89
+                             data (hash :                                       
+                             2280645179_3628347107_55213079                     
+                             3)                                                 
+                    INFO     Animation 16 : Using cached    cairo_renderer.py:89
+                             data (hash :                                       
+                             2280645179_26755664_2864420216                     
+                             )                                                  
+                    WARNING  Generated silent MP3 cosyvoice_manim_service.py:778
+                             fallback:                                          
+                             /work/output/voiceov                               
+                             ers/di-yi-wen-yao-qi                               
+                             u-zheng-xian-duan-ap                               
+                             -deng-yu-bd-9cd69b97                               
+                             .mp3                                               
+                    INFO     Automatically converted    scene_file_writer.py:377
+                             /work/output/voiceovers/di                         
+                             -yi-wen-yao-qiu-zheng-xian                         
+                             -duan-ap-deng-yu-bd-9cd69b                         
+                             97.mp3 to .wav                                     
+                    INFO     Animation 17 : Using cached    cairo_renderer.py:89
+                             data (hash :                                       
+                             2280645179_3578115422_39993974                     
+                             32)                                                
+                    INFO     Animation 18 : Partial     scene_file_writer.py:588
+                             movie file written in                              
+                             '/work/output/videos/480p1                         
+                             5/partial_movie_files/Solu                         
+                             tion/2280645179_522110924_                         
+                             1153986912.mp4'                                    
+                    WARNING  Generated silent MP3 cosyvoice_manim_service.py:778
+                             fallback:                                          
+                             /work/output/voiceov                               
+                             ers/yao-zheng-ap-den                               
+                             g-yu-bd-wo-men-ke-yi                               
+                             -chang-shi-xun-7501a                               
+                             499.mp3                                            
+                    INFO     Automatically converted    scene_file_writer.py:377
+                             /work/output/voiceovers/ya                         
+                             o-zheng-ap-deng-yu-bd-wo-m                         
+                             en-ke-yi-chang-shi-xun-750                         
+                             1a499.mp3 to .wav                                  
+                    INFO     Animation 19 : Partial     scene_file_writer.py:588
+                             movie file written in                              
+                             '/work/output/videos/480p1                         
+                             5/partial_movie_files/Solu                         
+                             tion/2280645179_901563256_                         
+                             765610853.mp4'                                     
+                    INFO     Animation 20 : Partial     scene_file_writer.py:588
+                             movie file written in                              
+                             '/work/output/videos/480p1                         
+                             5/partial_movie_files/Solu                         
+                             tion/2280645179_953198010_                         
+                             665997153.mp4'                                     
+                    WARNING  Generated silent MP3 cosyvoice_manim_service.py:778
+                             fallback:                                          
+                             /work/output/voiceov                               
+                             ers/wo-men-zhu-yi-da                               
+                             o-ap-zai-san-jiao-xi                               
+                             ng-abp-zhong-5d9ac95                               
+                             f.mp3                                              
+                    INFO     Automatically converted    scene_file_writer.py:377
+                             /work/output/voiceovers/wo                         
+                             -men-zhu-yi-dao-ap-zai-san                         
+                             -jiao-xing-abp-zhong-5d9ac                         
+                             95f.mp3 to .wav                                    
+[07/24/26 09:33:59] INFO     Animation 21 : Partial     scene_file_writer.py:588
+                             movie file written in                              
+                             '/work/output/videos/480p1                         
+                             5/partial_movie_files/Solu                         
+                             tion/2280645179_3366626279                         
+                             _3940231052.mp4'                                   
+                    WARNING  Generated silent MP3 cosyvoice_manim_service.py:778
+                             fallback:                                          
+                             /work/output/voiceov                               
+                             ers/er-bd-zai-san-ji                               
+                             ao-xing-bcd-zhong-cf                               
+                             f8e721.mp3                                         
+                    INFO     Automatically converted    scene_file_writer.py:377
+                             /work/output/voiceovers/er                         
+                             -bd-zai-san-jiao-xing-bcd-                         
+                             zhong-cff8e721.mp3 to .wav                         
+                    INFO     Animation 22 : Partial     scene_file_writer.py:588
+                             movie file written in                              
+                             '/work/output/videos/480p1                         
+                             5/partial_movie_files/Solu                         
+                             tion/2280645179_7946462_25                         
+                             25295246.mp4'                                      
+                    WARNING  Generated silent MP3 cosyvoice_manim_service.py:778
+                             fallback:                                          
+                             /work/output/voiceov                               
+                             ers/wo-men-lai-kan-k                               
+                             an-zhe-liang-ge-san-                               
+                             jiao-xing-you-997bb4                               
+                             f2.mp3                                             
+                    INFO     Automatically converted    scene_file_writer.py:377
+                             /work/output/voiceovers/wo                         
+                             -men-lai-kan-kan-zhe-liang                         
+                             -ge-san-jiao-xing-you-997b                         
+                             b4f2.mp3 to .wav                                   
+                    INFO     Animation 23 : Partial     scene_file_writer.py:588
+                             movie file written in                              
+                             '/work/output/videos/480p1                         
+                             5/partial_movie_files/Solu                         
+                             tion/2280645179_4144434382                         
+                             _3509539841.mp4'                                   
+                    WARNING  Generated silent MP3 cosyvoice_manim_service.py:778
+                             fallback:                                          
+                             /work/output/voiceov                               
+                             ers/shou-xian-yin-we                               
+                             i-san-jiao-xing-abc-                               
+                             shi-deng-bian-ddecca                               
+                             8f.mp3                                             
+                    INFO     Automatically converted    scene_file_writer.py:377
+                             /work/output/voiceovers/sh                         
+                             ou-xian-yin-wei-san-jiao-x                         
+                             ing-abc-shi-deng-bian-ddec                         
+                             ca8f.mp3 to .wav                                   
+                    INFO     Animation 24 : Partial     scene_file_writer.py:588
+                             movie file written in                              
+                             '/work/output/videos/480p1                         
+                             5/partial_movie_files/Solu                         
+                             tion/2280645179_1749239480                         
+                             _3145524989.mp4'                                   
+                    WARNING  Generated silent MP3 cosyvoice_manim_service.py:778
+                             fallback:                                          
+                             /work/output/voiceov                               
+                             ers/tong-shi-deng-bi                               
+                             an-san-jiao-xing-de-                               
+                             mei-ge-nei-ac579bc6.                               
+                             mp3                                                
+                    INFO     Automatically converted    scene_file_writer.py:377
+                             /work/output/voiceovers/to                         
+                             ng-shi-deng-bian-san-jiao-                         
+                             xing-de-mei-ge-nei-ac579bc                         
+                             6.mp3 to .wav                                      
+                    INFO     Animation 25 : Partial     scene_file_writer.py:588
+                             movie file written in                              
+                             '/work/output/videos/480p1                         
+                             5/partial_movie_files/Solu                         
+                             tion/2280645179_4144434382                         
+                             _46003380.mp4'                                     
+                    WARNING  Generated silent MP3 cosyvoice_manim_service.py:778
+                             fallback:                                          
+                             /work/output/voiceov                               
+                             ers/suo-yi-jiao-abp-                               
+                             deng-yu-jiao-c-du-de                               
+                             ng-yu-liu-shi-339156                               
+                             fb.mp3                                             
+                    INFO     Automatically converted    scene_file_writer.py:377
+                             /work/output/voiceovers/su                         
+                             o-yi-jiao-abp-deng-yu-jiao                         
+                             -c-du-deng-yu-liu-shi-3391                         
+                             56fb.mp3 to .wav                                   
+                    INFO     Animation 26 : Partial     scene_file_writer.py:588
+                             movie file written in                              
+                             '/work/output/videos/480p1                         
+                             5/partial_movie_files/Solu                         
+                             tion/2280645179_3174287649                         
+                             _3042582820.mp4'                                   
+[07/24/26 09:34:00] INFO     Animation 27 : Partial     scene_file_writer.py:588
+                             movie file written in                              
+                             '/work/output/videos/480p1                         
+                             5/partial_movie_files/Solu                         
+                             tion/2280645179_1622641026                         
+                             _3552552322.mp4'                                   
+                    WARNING  Generated silent MP3 cosyvoice_manim_service.py:778
+                             fallback:                                          
+                             /work/output/voiceov                               
+                             ers/zai-jia-shang-yi                               
+                             -zhi-tiao-jian-zhong                               
+                             -bp-deng-yu-cd-dc155                               
+                             994.mp3                                            
+                    INFO     Automatically converted    scene_file_writer.py:377
+                             /work/output/voiceovers/za                         
+                             i-jia-shang-yi-zhi-tiao-ji                         
+                             an-zhong-bp-deng-yu-cd-dc1                         
+                             55994.mp3 to .wav                                  
+                    INFO     Animation 28 : Partial     scene_file_writer.py:588
+                             movie file written in                              
+                             '/work/output/videos/480p1                         
+                             5/partial_movie_files/Solu                         
+                             tion/2280645179_1243102726                         
+                             _902880773.mp4'                                    
+                    WARNING  Generated silent MP3 cosyvoice_manim_service.py:778
+                             fallback:                                          
+                             /work/output/voiceov                               
+                             ers/zhe-yang-wo-men-                               
+                             jiu-ke-yi-yong-bian-                               
+                             jiao-bian-ding-0386a                               
+                             74a.mp3                                            
+                    INFO     Automatically converted    scene_file_writer.py:377
+                             /work/output/voiceovers/zh                         
+                             e-yang-wo-men-jiu-ke-yi-yo                         
+                             ng-bian-jiao-bian-ding-038                         
+                             6a74a.mp3 to .wav                                  
+                    INFO     Animation 29 : Partial     scene_file_writer.py:588
+                             movie file written in                              
+                             '/work/output/videos/480p1                         
+                             5/partial_movie_files/Solu                         
+                             tion/2280645179_1930140806                         
+                             _1590186031.mp4'                                   
+                    INFO     Writing $\because \triangle tex_file_writing.py:111
+                             ABC \text{ 是等边三角形}$                          
+                             to                                                 
+                             /work/output/Tex/665c71c3cf                        
+                             eb44bd.tex                                         
+[07/24/26 09:34:01] INFO     Writing $\therefore AB =    tex_file_writing.py:111
+                             BC, \angle ABP = \angle C =                        
+                             60^\circ$ to                                       
+                             /work/output/Tex/4870f65be3                        
+                             e25883.tex                                         
+[07/24/26 09:34:02] INFO     Writing $\because BP = CD$  tex_file_writing.py:111
+                             to                                                 
+                             /work/output/Tex/2c5ae9add2                        
+                             b8813e.tex                                         
+                    INFO     Writing $\therefore         tex_file_writing.py:111
+                             \triangle ABP \cong                                
+                             \triangle BCD\ (SAS)$ to                           
+                             /work/output/Tex/52f3e95ec0                        
+                             b3bdc1.tex                                         
+[07/24/26 09:34:03] INFO     Writing $\therefore AP =    tex_file_writing.py:111
+                             BD$ to                                             
+                             /work/output/Tex/d52491fc5c                        
+                             bf5d4d.tex                                         
+[07/24/26 09:34:04] WARNING  Generated silent MP3 cosyvoice_manim_service.py:778
+                             fallback:                                          
+                             /work/output/voiceov                               
+                             ers/yin-wei-san-jiao                               
+                             -xing-abc-shi-deng-b                               
+                             ian-san-jiao-5538077                               
+                             2.mp3                                              
+                    INFO     Automatically converted    scene_file_writer.py:377
+                             /work/output/voiceovers/yi                         
+                             n-wei-san-jiao-xing-abc-sh                         
+                             i-deng-bian-san-jiao-55380                         
+                             772.mp3 to .wav                                    
+                    INFO     Animation 30 : Partial     scene_file_writer.py:588
+                             movie file written in                              
+                             '/work/output/videos/480p1                         
+                             5/partial_movie_files/Solu                         
+                             tion/2280645179_1870065382                         
+                             _1628343743.mp4'                                   
+[07/24/26 09:34:05] INFO     Animation 31 : Partial     scene_file_writer.py:588
+                             movie file written in                              
+                             '/work/output/videos/480p1                         
+                             5/partial_movie_files/Solu                         
+                             tion/2280645179_2845565575                         
+                             _1742528560.mp4'                                   
+                    WARNING  Generated silent MP3 cosyvoice_manim_service.py:778
+                             fallback:                                          
+                             /work/output/voiceov                               
+                             ers/you-yin-wei-yi-z                               
+                             hi-tiao-jian-zhong-b                               
+                             p-deng-yu-cd-fd24558                               
+                             7.mp3                                              
+                    INFO     Automatically converted    scene_file_writer.py:377
+                             /work/output/voiceovers/yo                         
+                             u-yin-wei-yi-zhi-tiao-jian                         
+                             -zhong-bp-deng-yu-cd-fd245                         
+                             587.mp3 to .wav                                    
+                    INFO     Animation 32 : Partial     scene_file_writer.py:588
+                             movie file written in                              
+                             '/work/output/videos/480p1                         
+                             5/partial_movie_files/Solu                         
+                             tion/2280645179_3458541278                         
+                             _3186276685.mp4'                                   
+                    WARNING  Generated silent MP3 cosyvoice_manim_service.py:778
+                             fallback:                                          
+                             /work/output/voiceov                               
+                             ers/suo-yi-san-jiao-                               
+                             xing-abp-quan-deng-y                               
+                             u-san-jiao-5bcaa778.                               
+                             mp3                                                
+                    INFO     Automatically converted    scene_file_writer.py:377
+                             /work/output/voiceovers/su                         
+                             o-yi-san-jiao-xing-abp-qua                         
+                             n-deng-yu-san-jiao-5bcaa77                         
+                             8.mp3 to .wav                                      
+                    INFO     Animation 33 : Partial     scene_file_writer.py:588
+                             movie file written in                              
+                             '/work/output/videos/480p1                         
+                             5/partial_movie_files/Solu                         
+                             tion/2280645179_2589844465                         
+                             _254368126.mp4'                                    
+                    WARNING  Generated silent MP3 cosyvoice_manim_service.py:778
+                             fallback:                                          
+                             /work/output/voiceov                               
+                             ers/quan-deng-san-ji                               
+                             ao-xing-de-dui-ying-                               
+                             bian-xiang-c81aa544.                               
+                             mp3                                                
+                    INFO     Automatically converted    scene_file_writer.py:377
+                             /work/output/voiceovers/qu                         
+                             an-deng-san-jiao-xing-de-d                         
+                             ui-ying-bian-xiang-c81aa54                         
+                             4.mp3 to .wav                                      
+[07/24/26 09:34:06] INFO     Animation 34 : Partial     scene_file_writer.py:588
+                             movie file written in                              
+                             '/work/output/videos/480p1                         
+                             5/partial_movie_files/Solu                         
+                             tion/2280645179_701231336_                         
+                             3847269191.mp4'                                    
+                    WARNING  Generated silent MP3 cosyvoice_manim_service.py:778
+                             fallback:                                          
+                             /work/output/voiceov                               
+                             ers/jie-xia-lai-wo-m                               
+                             en-kan-di-er-wen-6df                               
+                             86929.mp3                                          
+                    INFO     Automatically converted    scene_file_writer.py:377
+                             /work/output/voiceovers/ji                         
+                             e-xia-lai-wo-men-kan-di-er                         
+                             -wen-6df86929.mp3 to .wav                          
+                    INFO     Animation 35 : Partial     scene_file_writer.py:588
+                             movie file written in                              
+                             '/work/output/videos/480p1                         
+                             5/partial_movie_files/Solu                         
+                             tion/2280645179_1649234577                         
+                             _566924461.mp4'                                    
+                    WARNING  Generated silent MP3 cosyvoice_manim_service.py:778
+                             fallback:                                          
+                             /work/output/voiceov                               
+                             ers/ru-guo-ba-dong-d                               
+                             ian-d-he-p-de-fan-we                               
+                             i-gai-wei-zai-9cd0a5                               
+                             cb.mp3                                             
+                    INFO     Automatically converted    scene_file_writer.py:377
+                             /work/output/voiceovers/ru                         
+                             -guo-ba-dong-dian-d-he-p-d                         
+                             e-fan-wei-gai-wei-zai-9cd0                         
+                             a5cb.mp3 to .wav                                   
+                    INFO     Animation 36 : Partial     scene_file_writer.py:588
+                             movie file written in                              
+                             '/work/output/videos/480p1                         
+                             5/partial_movie_files/Solu                         
+                             tion/2280645179_730588155_                         
+                             3220366382.mp4'                                    
+                    WARNING  Generated silent MP3 cosyvoice_manim_service.py:778
+                             fallback:                                          
+                             /work/output/voiceov                               
+                             ers/ci-shi-wo-men-xu                               
+                             -yao-zheng-ming-jiao                               
+                             -bqp-de-da-6b39bc41.                               
+                             mp3                                                
+                    INFO     Automatically converted    scene_file_writer.py:377
+                             /work/output/voiceovers/ci                         
+                             -shi-wo-men-xu-yao-zheng-m                         
+                             ing-jiao-bqp-de-da-6b39bc4                         
+                             1.mp3 to .wav                                      
+                    INFO     Writing 求证：$\angle BQP = tex_file_writing.py:111
+                             60^\circ$ to                                       
+                             /work/output/Tex/5bba6eb37c                        
+                             35ee64.tex                                         
+[07/24/26 09:34:07] INFO     Animation 37 : Partial     scene_file_writer.py:588
+                             movie file written in                              
+                             '/work/output/videos/480p1                         
+                             5/partial_movie_files/Solu                         
+                             tion/2280645179_1659381550                         
+                             _1687146081.mp4'                                   
+                    INFO     Animation 38 : Partial     scene_file_writer.py:588
+                             movie file written in                              
+                             '/work/output/videos/480p1                         
+                             5/partial_movie_files/Solu                         
+                             tion/2280645179_3301412843                         
+                             _2689080121.mp4'                                   
+[07/24/26 09:34:08] WARNING  Generated silent MP3 cosyvoice_manim_service.py:778
+                             fallback:                                          
+                             /work/output/voiceov                               
+                             ers/wo-men-tong-yang                               
+                             -lai-xun-zhao-quan-d                               
+                             eng-san-jiao-5fff8bd                               
+                             6.mp3                                              
+                    INFO     Automatically converted    scene_file_writer.py:377
+                             /work/output/voiceovers/wo                         
+                             -men-tong-yang-lai-xun-zha                         
+                             o-quan-deng-san-jiao-5fff8                         
+                             bd6.mp3 to .wav                                    
+                    INFO     Animation 39 : Partial     scene_file_writer.py:588
+                             movie file written in                              
+                             '/work/output/videos/480p1                         
+                             5/partial_movie_files/Solu                         
+                             tion/2280645179_4293330724                         
+                             _2676920666.mp4'                                   
+                    WARNING  Generated silent MP3 cosyvoice_manim_service.py:778
+                             fallback:                                          
+                             /work/output/voiceov                               
+                             ers/zhu-yi-dao-ci-sh                               
+                             i-d-zai-ca-yan-chang                               
+                             -xian-shang-p-37f75e                               
+                             97.mp3                                             
+                    INFO     Automatically converted    scene_file_writer.py:377
+                             /work/output/voiceovers/zh                         
+                             u-yi-dao-ci-shi-d-zai-ca-y                         
+                             an-chang-xian-shang-p-37f7                         
+                             5e97.mp3 to .wav                                   
+                    INFO     Animation 40 : Partial     scene_file_writer.py:588
+                             movie file written in                              
+                             '/work/output/videos/480p1                         
+                             5/partial_movie_files/Solu                         
+                             tion/2280645179_1263542892                         
+                             _3018173037.mp4'                                   
+                    INFO     Animation 41 : Partial     scene_file_writer.py:588
+                             movie file written in                              
+                             '/work/output/videos/480p1                         
+                             5/partial_movie_files/Solu                         
+                             tion/2280645179_330886158_                         
+                             1202462699.mp4'                                    
+                    WARNING  Generated silent MP3 cosyvoice_manim_service.py:778
+                             fallback:                                          
+                             /work/output/voiceov                               
+                             ers/yin-wei-ta-men-y                               
+                             i-ran-yi-xiang-tong-                               
+                             de-su-du-yun-42737db                               
+                             a.mp3                                              
+                    INFO     Automatically converted    scene_file_writer.py:377
+                             /work/output/voiceovers/yi                         
+                             n-wei-ta-men-yi-ran-yi-xia                         
+                             ng-tong-de-su-du-yun-42737                         
+                             dba.mp3 to .wav                                    
+                    INFO     Animation 42 : Partial     scene_file_writer.py:588
+                             movie file written in                              
+                             '/work/output/videos/480p1                         
+                             5/partial_movie_files/Solu                         
+                             tion/2280645179_2140661768                         
+                             _3495395649.mp4'                                   
+                    INFO     Animation 43 : Partial     scene_file_writer.py:588
+                             movie file written in                              
+                             '/work/output/videos/480p1                         
+                             5/partial_movie_files/Solu                         
+                             tion/2280645179_3284878274                         
+                             _183757664.mp4'                                    
+                    WARNING  Generated silent MP3 cosyvoice_manim_service.py:778
+                             fallback:                                          
+                             /work/output/voiceov                               
+                             ers/wo-men-zai-ci-gu                               
+                             an-zhu-san-jiao-xing                               
+                             -abp-he-san-371a98f7                               
+                             .mp3                                               
+                    INFO     Automatically converted    scene_file_writer.py:377
+                             /work/output/voiceovers/wo                         
+                             -men-zai-ci-guan-zhu-san-j                         
+                             iao-xing-abp-he-san-371a98                         
+                             f7.mp3 to .wav                                     
+                    INFO     Animation 44 : Partial     scene_file_writer.py:588
+                             movie file written in                              
+                             '/work/output/videos/480p1                         
+                             5/partial_movie_files/Solu                         
+                             tion/2280645179_3668606890                         
+                             _2510228644.mp4'                                   
+[07/24/26 09:34:09] INFO     Animation 45 : Partial     scene_file_writer.py:588
+                             movie file written in                              
+                             '/work/output/videos/480p1                         
+                             5/partial_movie_files/Solu                         
+                             tion/2280645179_862367444_                         
+                             2851214454.mp4'                                    
+                    WARNING  Generated silent MP3 cosyvoice_manim_service.py:778
+                             fallback:                                          
+                             /work/output/voiceov                               
+                             ers/ci-shi-ab-yi-ran                               
+                             -deng-yu-bc-29339eeb                               
+                             .mp3                                               
+                    INFO     Automatically converted    scene_file_writer.py:377
+                             /work/output/voiceovers/ci                         
+                             -shi-ab-yi-ran-deng-yu-bc-                         
+                             29339eeb.mp3 to .wav                               
+                    INFO     Animation 46 : Partial     scene_file_writer.py:588
+                             movie file written in                              
+                             '/work/output/videos/480p1                         
+                             5/partial_movie_files/Solu                         
+                             tion/2280645179_1539265320                         
+                             _2449571471.mp4'                                   
+                    WARNING  Generated silent MP3 cosyvoice_manim_service.py:778
+                             fallback:                                          
+                             /work/output/voiceov                               
+                             ers/na-ta-men-de-jia                               
+                             -jiao-ni-f34e2732.mp                               
+                             3                                                  
+                    INFO     Automatically converted    scene_file_writer.py:377
+                             /work/output/voiceovers/na                         
+                             -ta-men-de-jia-jiao-ni-f34                         
+                             e2732.mp3 to .wav                                  
+                    INFO     Animation 47 : Partial     scene_file_writer.py:588
+                             movie file written in                              
+                             '/work/output/videos/480p1                         
+                             5/partial_movie_files/Solu                         
+                             tion/2280645179_4293330724                         
+                             _4015253649.mp4'                                   
+                    WARNING  Generated silent MP3 cosyvoice_manim_service.py:778
+                             fallback:                                          
+                             /work/output/voiceov                               
+                             ers/jiao-abp-shi-den                               
+                             g-bian-san-jiao-xing                               
+                             -wai-jiao-deng-d2f90                               
+                             37e.mp3                                            
+                    INFO     Automatically converted    scene_file_writer.py:377
+                             /work/output/voiceovers/ji                         
+                             ao-abp-shi-deng-bian-san-j                         
+                             iao-xing-wai-jiao-deng-d2f                         
+                             9037e.mp3 to .wav                                  
+                    INFO     Animation 48 : Partial     scene_file_writer.py:588
+                             movie file written in                              
+                             '/work/output/videos/480p1                         
+                             5/partial_movie_files/Solu                         
+                             tion/2280645179_1690929062                         
+                             _2117187540.mp4'                                   
+                    WARNING  Generated silent MP3 cosyvoice_manim_service.py:778
+                             fallback:                                          
+                             /work/output/voiceov                               
+                             ers/jiao-bcd-ye-shi-                               
+                             wai-jiao-tong-yang-d                               
+                             eng-yu-yi-bai-23166c                               
+                             38.mp3                                             
+                    INFO     Automatically converted    scene_file_writer.py:377
+                             /work/output/voiceovers/ji                         
+                             ao-bcd-ye-shi-wai-jiao-ton                         
+                             g-yang-deng-yu-yi-bai-2316                         
+                             6c38.mp3 to .wav                                   
+                    INFO     Animation 49 : Partial     scene_file_writer.py:588
+                             movie file written in                              
+                             '/work/output/videos/480p1                         
+                             5/partial_movie_files/Solu                         
+                             tion/2280645179_3017458438                         
+                             _1502290627.mp4'                                   
+                    WARNING  Generated silent MP3 cosyvoice_manim_service.py:778
+                             fallback:                                          
+                             /work/output/voiceov                               
+                             ers/yin-ci-jiao-abp-                               
+                             deng-yu-jiao-bcd-bbd                               
+                             d2f50.mp3                                          
+                    INFO     Automatically converted    scene_file_writer.py:377
+                             /work/output/voiceovers/yi                         
+                             n-ci-jiao-abp-deng-yu-jiao                         
+                             -bcd-bbdd2f50.mp3 to .wav                          
+                    INFO     Animation 50 : Partial     scene_file_writer.py:588
+                             movie file written in                              
+                             '/work/output/videos/480p1                         
+                             5/partial_movie_files/Solu                         
+                             tion/2280645179_4275914784                         
+                             _3787645953.mp4'                                   
+                    INFO     Writing $\therefore AB =    tex_file_writing.py:111
+                             BC, \angle ABP = \angle BCD                        
+                             = 120^\circ$ to                                    
+                             /work/output/Tex/cf681e47bc                        
+                             d4967e.tex                                         
+[07/24/26 09:34:10] WARNING  Generated silent MP3 cosyvoice_manim_service.py:778
+                             fallback:                                          
+                             /work/output/voiceov                               
+                             ers/yin-wei-san-jiao                               
+                             -xing-abc-shi-deng-b                               
+                             ian-san-jiao-1c6680e                               
+                             f.mp3                                              
+                    INFO     Automatically converted    scene_file_writer.py:377
+                             /work/output/voiceovers/yi                         
+                             n-wei-san-jiao-xing-abc-sh                         
+                             i-deng-bian-san-jiao-1c668                         
+                             0ef.mp3 to .wav                                    
+                    INFO     Animation 51 : Partial     scene_file_writer.py:588
+                             movie file written in                              
+                             '/work/output/videos/480p1                         
+                             5/partial_movie_files/Solu                         
+                             tion/2280645179_1441740317                         
+                             _2523117013.mp4'                                   
+[07/24/26 09:34:11] INFO     Animation 52 : Partial     scene_file_writer.py:588
+                             movie file written in                              
+                             '/work/output/videos/480p1                         
+                             5/partial_movie_files/Solu                         
+                             tion/2280645179_875434831_                         
+                             138583964.mp4'                                     
+                    WARNING  Generated silent MP3 cosyvoice_manim_service.py:778
+                             fallback:                                          
+                             /work/output/voiceov                               
+                             ers/jie-he-bp-deng-y                               
+                             u-cd-wo-men-yi-ran-k                               
+                             e-yi-zheng-c5d084f2.                               
+                             mp3                                                
+                    INFO     Automatically converted    scene_file_writer.py:377
+                             /work/output/voiceovers/ji                         
+                             e-he-bp-deng-yu-cd-wo-men-                         
+                             yi-ran-ke-yi-zheng-c5d084f                         
+                             2.mp3 to .wav                                      
+                    INFO     Animation 53 : Partial     scene_file_writer.py:588
+                             movie file written in                              
+                             '/work/output/videos/480p1                         
+                             5/partial_movie_files/Solu                         
+                             tion/2280645179_579400194_                         
+                             17905015.mp4'                                      
+                    INFO     Animation 54 : Partial     scene_file_writer.py:588
+                             movie file written in                              
+                             '/work/output/videos/480p1                         
+                             5/partial_movie_files/Solu                         
+                             tion/2280645179_3495586772                         
+                             _2912563572.mp4'                                   
+                    INFO     Writing $\therefore \angle  tex_file_writing.py:111
+                             BAP = \angle CBD$ to                               
+                             /work/output/Tex/d0b825f24c                        
+                             05ae26.tex                                         
+[07/24/26 09:34:12] INFO     Writing $\because \angle    tex_file_writing.py:111
+                             BQP = \angle BAP + \angle                          
+                             ABQ$ to                                            
+                             /work/output/Tex/4bd9ebf042                        
+                             4d592f.tex                                         
+[07/24/26 09:34:13] INFO     Writing $\therefore \angle  tex_file_writing.py:111
+                             BQP = \angle CBD + \angle                          
+                             ABQ = \angle ABC =                                 
+                             60^\circ$ to                                       
+                             /work/output/Tex/4b51666214                        
+                             ae5a75.tex                                         
+[07/24/26 09:34:14] WARNING  Generated silent MP3 cosyvoice_manim_service.py:778
+                             fallback:                                          
+                             /work/output/voiceov                               
+                             ers/you-quan-deng-sa                               
+                             n-jiao-xing-xing-zhi                               
+                             -wo-men-de-dao-fbc01                               
+                             1e9.mp3                                            
+                    INFO     Automatically converted    scene_file_writer.py:377
+                             /work/output/voiceovers/yo                         
+                             u-quan-deng-san-jiao-xing-                         
+                             xing-zhi-wo-men-de-dao-fbc                         
+                             011e9.mp3 to .wav                                  
+                    INFO     Animation 55 : Partial     scene_file_writer.py:588
+                             movie file written in                              
+                             '/work/output/videos/480p1                         
+                             5/partial_movie_files/Solu                         
+                             tion/2280645179_1986129831                         
+                             _2773358918.mp4'                                   
+[07/24/26 09:34:15] INFO     Animation 56 : Partial     scene_file_writer.py:588
+                             movie file written in                              
+                             '/work/output/videos/480p1                         
+                             5/partial_movie_files/Solu                         
+                             tion/2280645179_1404676135                         
+                             _1529109521.mp4'                                   
+                    WARNING  Generated silent MP3 cosyvoice_manim_service.py:778
+                             fallback:                                          
+                             /work/output/voiceov                               
+                             ers/jie-xia-lai-wo-m                               
+                             en-lai-kan-mu-biao-j                               
+                             iao-bqp-0820e60a.mp3                               
+                    INFO     Automatically converted    scene_file_writer.py:377
+                             /work/output/voiceovers/ji                         
+                             e-xia-lai-wo-men-lai-kan-m                         
+                             u-biao-jiao-bqp-0820e60a.m                         
+                             p3 to .wav                                         
+                    INFO     Animation 57 : Partial     scene_file_writer.py:588
+                             movie file written in                              
+                             '/work/output/videos/480p1                         
+                             5/partial_movie_files/Solu                         
+                             tion/2280645179_1599616301                         
+                             _1260040818.mp4'                                   
+                    WARNING  Generated silent MP3 cosyvoice_manim_service.py:778
+                             fallback:                                          
+                             /work/output/voiceov                               
+                             ers/li-yong-san-jiao                               
+                             -xing-wai-jiao-xing-                               
+                             zhi-jiao-bqp-8b16429                               
+                             5.mp3                                              
+                    INFO     Automatically converted    scene_file_writer.py:377
+                             /work/output/voiceovers/li                         
+                             -yong-san-jiao-xing-wai-ji                         
+                             ao-xing-zhi-jiao-bqp-8b164                         
+                             295.mp3 to .wav                                    
+                    INFO     Animation 58 : Partial     scene_file_writer.py:588
+                             movie file written in                              
+                             '/work/output/videos/480p1                         
+                             5/partial_movie_files/Solu                         
+                             tion/2280645179_2693817412                         
+                             _2632303592.mp4'                                   
+                    WARNING  Generated silent MP3 cosyvoice_manim_service.py:778
+                             fallback:                                          
+                             /work/output/voiceov                               
+                             ers/jiang-jiao-bap-t                               
+                             i-huan-wei-jiao-cbd-                               
+                             na-yao-jiao-57b27708                               
+                             .mp3                                               
+                    INFO     Automatically converted    scene_file_writer.py:377
+                             /work/output/voiceovers/ji                         
+                             ang-jiao-bap-ti-huan-wei-j                         
+                             iao-cbd-na-yao-jiao-57b277                         
+                             08.mp3 to .wav                                     
+                    INFO     Animation 59 : Partial     scene_file_writer.py:588
+                             movie file written in                              
+                             '/work/output/videos/480p1                         
+                             5/partial_movie_files/Solu                         
+                             tion/2280645179_2747025474                         
+                             _4232601036.mp4'                                   
+                    WARNING  Generated silent MP3 cosyvoice_manim_service.py:778
+                             fallback:                                          
+                             /work/output/voiceov                               
+                             ers/er-jiao-cbd-jia-                               
+                             shang-jiao-abq-zheng                               
+                             -hao-deng-yu-5f4c6bc                               
+                             e.mp3                                              
+                    INFO     Automatically converted    scene_file_writer.py:377
+                             /work/output/voiceovers/er                         
+                             -jiao-cbd-jia-shang-jiao-a                         
+                             bq-zheng-hao-deng-yu-5f4c6                         
+                             bce.mp3 to .wav                                    
+[07/24/26 09:34:16] INFO     Animation 60 : Partial     scene_file_writer.py:588
+                             movie file written in                              
+                             '/work/output/videos/480p1                         
+                             5/partial_movie_files/Solu                         
+                             tion/2280645179_3440293236                         
+                             _1841704645.mp4'                                   
+                    WARNING  Generated silent MP3 cosyvoice_manim_service.py:778
+                             fallback:                                          
+                             /work/output/voiceov                               
+                             ers/suo-yi-wu-lun-do                               
+                             ng-dian-ru-he-yun-do                               
+                             ng-jiao-bqp-de-b3ef4                               
+                             5a3.mp3                                            
+                    INFO     Automatically converted    scene_file_writer.py:377
+                             /work/output/voiceovers/su                         
+                             o-yi-wu-lun-dong-dian-ru-h                         
+                             e-yun-dong-jiao-bqp-de-b3e                         
+                             f45a3.mp3 to .wav                                  
+                    INFO     Animation 61 : Partial     scene_file_writer.py:588
+                             movie file written in                              
+                             '/work/output/videos/480p1                         
+                             5/partial_movie_files/Solu                         
+                             tion/2280645179_3707103810                         
+                             _2749895240.mp4'                                   
+                    WARNING  Generated silent MP3 cosyvoice_manim_service.py:778
+                             fallback:                                          
+                             /work/output/voiceov                               
+                             ers/zhe-dao-ti-de-gu                               
+                             an-jian-zai-yu-tong-                               
+                             guo-deng-bian-ed8919                               
+                             cc.mp3                                             
+                    INFO     Automatically converted    scene_file_writer.py:377
+                             /work/output/voiceovers/zh                         
+                             e-dao-ti-de-guan-jian-zai-                         
+                             yu-tong-guo-deng-bian-ed89                         
+                             19cc.mp3 to .wav                                   
+                    INFO     Animation 62 : Partial     scene_file_writer.py:588
+                             movie file written in                              
+                             '/work/output/videos/480p1                         
+                             5/partial_movie_files/Solu                         
+                             tion/2280645179_1590656822                         
+                             _3181749029.mp4'                                   
+                    WARNING  Generated silent MP3 cosyvoice_manim_service.py:778
+                             fallback:                                          
+                             /work/output/voiceov                               
+                             ers/jin-er-shi-xian-                               
+                             bian-yu-jiao-de-deng                               
+                             -liang-zhuan-dcc3974                               
+                             a.mp3                                              
+                    INFO     Automatically converted    scene_file_writer.py:377
+                             /work/output/voiceovers/ji                         
+                             n-er-shi-xian-bian-yu-jiao                         
+                             -de-deng-liang-zhuan-dcc39                         
+                             74a.mp3 to .wav                                    
+                    INFO     Animation 63 : Partial     scene_file_writer.py:588
+                             movie file written in                              
+                             '/work/output/videos/480p1                         
+                             5/partial_movie_files/Solu                         
+                             tion/2280645179_1820643695                         
+                             _3267703965.mp4'                                   
+                    WARNING  Generated silent MP3 cosyvoice_manim_service.py:778
+                             fallback:                                          
+                             /work/output/voiceov                               
+                             ers/zhang-wo-liao-zh                               
+                             e-chong-zhuan-hua-si                               
+                             -xiang-lei-si-5c7ec7                               
+                             81.mp3                                             
+                    INFO     Automatically converted    scene_file_writer.py:377
+                             /work/output/voiceovers/zh                         
+                             ang-wo-liao-zhe-chong-zhua                         
+                             n-hua-si-xiang-lei-si-5c7e                         
+                             c781.mp3 to .wav                                   
+                    INFO     Animation 64 : Partial     scene_file_writer.py:588
+                             movie file written in                              
+                             '/work/output/videos/480p1                         
+                             5/partial_movie_files/Solu                         
+                             tion/2280645179_1767062467                         
+                             _2447467265.mp4'                                   
+[07/24/26 09:34:17] WARNING  Generated silent MP3 cosyvoice_manim_service.py:778
+                             fallback:                                          
+                             /work/output/voiceov                               
+                             ers/tong-xue-men-wo-                               
+                             men-xia-qi-zai-jian-                               
+                             ce2f8c45.mp3                                       
+                    INFO     Automatically converted    scene_file_writer.py:377
+                             /work/output/voiceovers/to                         
+                             ng-xue-men-wo-men-xia-qi-z                         
+                             ai-jian-ce2f8c45.mp3 to                            
+                             .wav                                               
+                    INFO     Animation 65 : Partial     scene_file_writer.py:588
+                             movie file written in                              
+                             '/work/output/videos/480p1                         
+                             5/partial_movie_files/Solu                         
+                             tion/2280645179_2719495217                         
+                             _1639445375.mp4'                                   
+                    INFO     Combining to Movie file.   scene_file_writer.py:739
+                    WARNING  Some options were not      scene_file_writer.py:801
+                             used: {'shortest': '1',                            
+                             'metadata':                                        
+                             'comment=Rendered with                             
+                             Manim Community v0.19.0'}                          
+                    INFO                                scene_file_writer.py:886
+                             File ready at                                      
+                             '/work/output/videos/480p1                         
+                             5/video.mp4'                                       
+                                                                                
+                    INFO     Subcaption file has been   scene_file_writer.py:881
+                             written as                                         
+                             /work/output/videos/480p15                         
+                             /video.srt                                         
+                    INFO     Rendered Solution                      scene.py:255
+                             Played 66 animations                               
+
+/work/source/main.py:372: DeprecationWarning: This method is not guaranteed to stay around. Please prefer setting the attribute normally or with Mobject.set().
+  logo.set_height(float(globals().get("ENTERPRISE_LOGO_HEIGHT", 0.52) or 0.52))
+Animation 2: _MethodAnimation(Line):   0%|          | 0/1 [00:00<?, ?it/s]                                                                          Animation 3: _MethodAnimation(Line):   0%|          | 0/1 [00:00<?, ?it/s]                                                                          Animation 4: _MethodAnimation(Line):   0%|          | 0/1 [00:00<?, ?it/s]                                                                          Animation 6: Flash(VGroup of 12 submobjects):   0%|          | 0/1 [00:00<?, ?it/s]                                                                                   Animation 7: Flash(VGroup of 12 submobjects):   0%|          | 0/1 [00:00<?, ?it/s]                                                                                   Animation 11: FadeIn(VGroup of 1 submobjects):   0%|          | 0/1 [00:00<?, ?it/s]                                                                                    Animation 12: FadeIn(VGroup of 1 submobjects):   0%|          | 0/1 [00:00<?, ?it/s]                                                                                    Animation 14: _MethodAnimation(Line):   0%|          | 0/1 [00:00<?, ?it/s]                                                                           Animation 15: _MethodAnimation(Line):   0%|          | 0/1 [00:00<?, ?it/s]                                                                           Animation 16: Flash(VGroup of 12 submobjects):   0%|          | 0/1 [00:00<?, ?it/s]                                                                                    Animation 18: FadeIn(VGroup of 1 submobjects):   0%|          | 0/7 [00:00<?, ?it/s]                                                                                    Animation 19: AnimationGroup(Group):   0%|          | 0/11 [00:00<?, ?it/s]                                                                           Animation 20: AnimationGroup(Group):   0%|          | 0/11 [00:00<?, ?it/s]                                                                           Animation 21: FadeIn(Polygon):   0%|          | 0/11 [00:00<?, ?it/s]                                                                     Animation 22: FadeIn(Polygon):   0%|          | 0/11 [00:00<?, ?it/s]                                                                     Animation 24: AnimationGroup(Group):   0%|          | 0/11 [00:00<?, ?it/s]                                                                           Animation 26: FadeIn(VGroup of 2 submobjects):   0%|          | 0/11 [00:00<?, ?it/s]                                                                                     Animation 27: FadeIn(VGroup of 2 submobjects):   0%|          | 0/11 [00:00<?, ?it/s]                                                                                     Animation 28: AnimationGroup(Group):   0%|          | 0/11 [00:00<?, ?it/s]                                                                           Animation 30: Write(Tex('$\\because \\triangle ABC \\text{ 是等边三角形}$')):   0%|          | 0/11 [00:00<?, ?it/s]                                                                                                                    Animation 31: Write(Tex('$\\therefore AB = BC, \\angle ABP = \\angle C = 60^\\circ$')):   0%|          | 0/11 [00:00<?, ?it/s]                                                                                                                              Animation 32: Write(Tex('$\\because BP = CD$')):   0%|          | 0/11 [00:00<?, ?it/s]                                                                                       Animation 33: Write(Tex('$\\therefore \\triangle ABP \\cong \\triangle BCD\\ (SAS)$')):   0%|          | 0/11 [00:00<?, ?it/s]                                                                                                                              Animation 34: Write(Tex('$\\therefore AP = BD$')):   0%|          | 0/11 [00:00<?, ?it/s]                                                                                         Animation 35: FadeOut(VGroup of 22 submobjects), etc.:   0%|          | 0/15 [00:00<?, ?it/s]Animation 35: FadeOut(VGroup of 22 submobjects), etc.:  40%|████      | 6/15 [00:00<00:00, 57.31it/s]Animation 35: FadeOut(VGroup of 22 submobjects), etc.:  93%|█████████▎| 14/15 [00:00<00:00, 66.62it/s]                                                                                                      Animation 36: FadeIn(VGroup of 16 submobjects):   0%|          | 0/15 [00:00<?, ?it/s]                                                                                      Animation 38: FadeIn(VGroup of 1 submobjects):   0%|          | 0/7 [00:00<?, ?it/s]                                                                                    Animation 40: AnimationGroup(Group):   0%|          | 0/11 [00:00<?, ?it/s]                                                                           Animation 41: AnimationGroup(Group):   0%|          | 0/11 [00:00<?, ?it/s]                                                                           Animation 42: FadeIn(VGroup of 1 submobjects):   0%|          | 0/11 [00:00<?, ?it/s]                                                                                     Animation 43: FadeIn(VGroup of 1 submobjects):   0%|          | 0/11 [00:00<?, ?it/s]                                                                                     Animation 44: FadeIn(Polygon):   0%|          | 0/11 [00:00<?, ?it/s]                                                                     Animation 45: FadeIn(Polygon):   0%|          | 0/11 [00:00<?, ?it/s]                                                                     Animation 46: AnimationGroup(Group):   0%|          | 0/11 [00:00<?, ?it/s]                                                                           Animation 48: FadeIn(VGroup of 2 submobjects):   0%|          | 0/11 [00:00<?, ?it/s]                                                                                     Animation 49: FadeIn(VGroup of 2 submobjects):   0%|          | 0/11 [00:00<?, ?it/s]                                                                                     Animation 51: Write(Tex('$\\because \\triangle ABC \\text{ 是等边三角形}$')):   0%|          | 0/11 [00:00<?, ?it/s]                                                                                                                    Animation 52: Write(Tex('$\\therefore AB = BC, \\angle ABP = \\angle BCD = 120^\\circ$')):   0%|          | 0/11 [00:00<?, ?it/s]                                                                                                                                 Animation 53: Write(Tex('$\\because BP = CD$')):   0%|          | 0/11 [00:00<?, ?it/s]                                                                                       Animation 54: Write(Tex('$\\therefore \\triangle ABP \\cong \\triangle BCD\\ (SAS)$')):   0%|          | 0/11 [00:00<?, ?it/s]                                                                                                                              Animation 55: FadeOut(VGroup of 4 submobjects):   0%|          | 0/15 [00:00<?, ?it/s]Animation 55: FadeOut(VGroup of 4 submobjects):  67%|██████▋   | 10/15 [00:00<00:00, 98.78it/s]                                                                                               Animation 56: Write(Tex('$\\therefore \\angle BAP = \\angle CBD$')):   0%|          | 0/11 [00:00<?, ?it/s]                                                                                                           Animation 57: FadeIn(VGroup of 2 submobjects):   0%|          | 0/11 [00:00<?, ?it/s]                                                                                     Animation 58: Write(Tex('$\\because \\angle BQP = \\angle BAP + \\angle ABQ$')):   0%|          | 0/11 [00:00<?, ?it/s]                                                                                                                       Animation 60: Write(Tex('$\\therefore \\angle BQP = \\angle CBD + \\angle ABQ = \\angle ABC = 60^\\circ$')):   0%|          | 0/11 [00:00<?, ?it/s]                                                                                                                                                   Animation 61: Indicate(VGroup of 2 submobjects):   0%|          | 0/11 [00:00<?, ?it/s]                                                                                       Animation 65: FadeOut(VGroup of 3 submobjects), etc.:   0%|          | 0/15 [00:00<?, ?it/s]Animation 65: FadeOut(VGroup of 3 submobjects), etc.:  67%|██████▋   | 10/15 [00:00<00:00, 98.88it/s]                                                                                                     

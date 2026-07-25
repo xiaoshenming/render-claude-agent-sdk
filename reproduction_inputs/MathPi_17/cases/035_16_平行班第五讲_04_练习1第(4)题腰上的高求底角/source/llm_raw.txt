@@ -1,0 +1,311 @@
+class Solution(BaseConfigScene):
+    def construct(self):
+        # 图形1：锐角等腰三角形
+        A1 = np.array([0, 1.8, 0])
+        B1 = np.array([-1.5, -1.2, 0])
+        C1 = np.array([1.5, -1.2, 0])
+        D1 = np.array([0.9, 0.0, 0])
+        
+        tri1 = Polygon(A1, B1, C1, stroke_width=3, color=BASE_COLOR)
+        height1 = Line(B1, D1, stroke_width=3, color=DRAW_COLOR)
+        diagram1 = VGroup(tri1, height1)
+        self.fit_left(diagram1)
+        
+        pt_A1 = tri1.get_vertices()[0]
+        pt_B1 = tri1.get_vertices()[1]
+        pt_C1 = tri1.get_vertices()[2]
+        pt_D1 = height1.get_end()
+        
+        lbl_A1 = MathTex("A", color=TEXT_COLOR).next_to(pt_A1, UP, buff=0.15)
+        lbl_B1 = MathTex("B", color=TEXT_COLOR).next_to(pt_B1, DOWN + LEFT, buff=0.15)
+        lbl_C1 = MathTex("C", color=TEXT_COLOR).next_to(pt_C1, DOWN + RIGHT, buff=0.15)
+        lbl_D1 = MathTex("D", color=TEXT_COLOR).next_to(pt_D1, UP + RIGHT, buff=0.15)
+        
+        right_angle1 = self.make_right_angle_mark_at(pt_D1, pt_A1, pt_B1, size=0.2, color=DRAW_COLOR, fill_opacity=0.25)
+        arc1 = self.make_angle_mark(pt_B1, pt_D1, pt_A1, radius=0.4, color=FOCUS_COLOR, fill_opacity=0.25)
+        
+        dir_BD1 = (pt_D1 - pt_B1) / np.linalg.norm(pt_D1 - pt_B1)
+        dir_BA1 = (pt_A1 - pt_B1) / np.linalg.norm(pt_A1 - pt_B1)
+        dir_mid1 = (dir_BD1 + dir_BA1) / np.linalg.norm(dir_BD1 + dir_BA1)
+        lbl_40_1 = MathTex("40^\\circ", color=FOCUS_COLOR).move_to(pt_B1 + 0.7 * dir_mid1).scale(0.8)
+        
+        edge_AB1 = Line(pt_A1, pt_B1)
+        edge_AC1 = Line(pt_A1, pt_C1)
+        tick_AB1 = self.make_tick_mark(edge_AB1, n=2, color=KNOWN_COLOR)
+        tick_AC1 = self.make_tick_mark(edge_AC1, n=2, color=KNOWN_COLOR)
+        
+        geometry_all1 = VGroup(diagram1, lbl_A1, lbl_B1, lbl_C1, lbl_D1, right_angle1, arc1, lbl_40_1, tick_AB1, tick_AC1)
+        self.fit_geometry_group(geometry_all1)
+        
+        # 图形2：钝角等腰三角形
+        A2 = np.array([0, 0.5, 0])
+        B2 = np.array([-2.0, -1.0, 0])
+        C2 = np.array([2.0, -1.0, 0])
+        D2 = np.array([-0.56, 0.92, 0])
+        
+        tri2 = Polygon(A2, B2, C2, stroke_width=3, color=BASE_COLOR)
+        height2 = Line(B2, D2, stroke_width=3, color=DRAW_COLOR)
+        ext_line2 = DashedLine(A2, D2, stroke_width=2, color=BASE_COLOR)
+        diagram2 = VGroup(tri2, height2, ext_line2)
+        self.fit_left(diagram2)
+        
+        pt_A2 = tri2.get_vertices()[0]
+        pt_B2 = tri2.get_vertices()[1]
+        pt_C2 = tri2.get_vertices()[2]
+        pt_D2 = height2.get_end()
+        
+        lbl_A2 = MathTex("A", color=TEXT_COLOR).next_to(pt_A2, UP + RIGHT, buff=0.15)
+        lbl_B2 = MathTex("B", color=TEXT_COLOR).next_to(pt_B2, DOWN + LEFT, buff=0.15)
+        lbl_C2 = MathTex("C", color=TEXT_COLOR).next_to(pt_C2, DOWN + RIGHT, buff=0.15)
+        lbl_D2 = MathTex("D", color=TEXT_COLOR).next_to(pt_D2, UP + LEFT, buff=0.15)
+        
+        right_angle2 = self.make_right_angle_mark_at(pt_D2, pt_A2, pt_B2, size=0.2, color=DRAW_COLOR, fill_opacity=0.25)
+        arc2 = self.make_angle_mark(pt_B2, pt_D2, pt_A2, radius=0.4, color=FOCUS_COLOR, fill_opacity=0.25)
+        
+        dir_BD2 = (pt_D2 - pt_B2) / np.linalg.norm(pt_D2 - pt_B2)
+        dir_BA2 = (pt_A2 - pt_B2) / np.linalg.norm(pt_A2 - pt_B2)
+        dir_mid2 = (dir_BD2 + dir_BA2) / np.linalg.norm(dir_BD2 + dir_BA2)
+        lbl_40_2 = MathTex("40^\\circ", color=FOCUS_COLOR).move_to(pt_B2 + 0.7 * dir_mid2).scale(0.8)
+        
+        edge_AB2 = Line(pt_A2, pt_B2)
+        edge_AC2 = Line(pt_A2, pt_C2)
+        tick_AB2 = self.make_tick_mark(edge_AB2, n=2, color=KNOWN_COLOR)
+        tick_AC2 = self.make_tick_mark(edge_AC2, n=2, color=KNOWN_COLOR)
+        
+        geometry_all2 = VGroup(diagram2, lbl_A2, lbl_B2, lbl_C2, lbl_D2, right_angle2, arc2, lbl_40_2, tick_AB2, tick_AC2)
+        self.fit_geometry_group(geometry_all2)
+        
+        # 区域色块
+        region_ABC1 = self.make_region_fill(pt_A1, pt_B1, pt_C1, color=PAIR_A_COLOR, opacity=0.18)
+        region_ABC2 = self.make_region_fill(pt_A2, pt_B2, pt_C2, color=PAIR_A_COLOR, opacity=0.18)
+
+        # 1. "同学们好，今天我们一起来看一道关于等腰三角形的经典题目。"
+        with self.voiceover(text="同学们好，今天我们一起来看一道关于等腰三角形的经典题目。") as tracker:
+            self.play_after_speech([], tracker)
+        
+        # 2. "题目说，等腰三角形一腰上的高与另一腰的夹角为四十度，求这个等腰三角形的底角。"
+        with self.voiceover(text="题目说，等腰三角形一腰上的高与另一腰的夹角为四十度，求这个等腰三角形的底角。") as tracker:
+            self.play_after_speech([], tracker)
+        
+        # 3. "我们先来分析一下已知的线索，这里提到了等腰三角形，还有一腰上的高。"
+        with self.voiceover(text="我们先来分析一下已知的线索，这里提到了等腰三角形，还有一腰上的高。") as tracker:
+            self.play_after_speech([], tracker)
+        
+        # 4. "但是，题目并没有告诉我们这个等腰三角形是锐角三角形，还是钝角三角形。"
+        with self.voiceover(text="但是，题目并没有告诉我们这个等腰三角形是锐角三角形，还是钝角三角形。") as tracker:
+            self.play_after_speech([], tracker)
+        
+        # 5. "这就意味着，高线的位置可能会有所不同，我们需要分情况进行讨论。"
+        with self.voiceover(text="这就意味着，高线的位置可能会有所不同，我们需要分情况进行讨论。") as tracker:
+            self.play_after_speech([], tracker)
+        
+        # 6. "第一种情况，当这个等腰三角形是锐角三角形时，高线会落在三角形的内部。"
+        with self.voiceover(text="第一种情况，当这个等腰三角形是锐角三角形时，高线会落在三角形的内部。") as tracker:
+            self.play_after_speech([], tracker)
+        
+        # 7. "我们先画出这个锐角等腰三角形，记为三角形 A B C。"
+        with self.voiceover(text="我们先画出这个锐角等腰三角形，记为三角形 A B C。") as tracker:
+            self.play_after_speech([FadeIn(tri1), FadeIn(lbl_A1), FadeIn(lbl_B1), FadeIn(lbl_C1)], tracker)
+        
+        # 8. "其中，A B 等于 A C，我们在图上用双杠做出等腰的标记。"
+        with self.voiceover(text="其中，A B 等于 A C，我们在图上用双杠做出等腰的标记。") as tracker:
+            self.play_after_speech([FadeIn(tick_AB1), FadeIn(tick_AC1)], tracker)
+        
+        # 9. "接着，我们画出腰 A C 上的高，也就是线段 B D。"
+        with self.voiceover(text="接着，我们画出腰 A C 上的高，也就是线段 B D。") as tracker:
+            self.play_after_speech([Create(height1), FadeIn(lbl_D1)], tracker)
+        
+        # 10. "因为 B D 是高，所以角 A D B 是直角，我们在点 D 处标出直角符号。"
+        with self.voiceover(text="因为 B D 是高，所以角 A D B 是直角，我们在点 D 处标出直角符号。") as tracker:
+            self.play_after_speech([FadeIn(right_angle1)], tracker)
+        
+        # 11. "题目还告诉我们，高与另一腰的夹角为四十度，也就是角 A B D 等于四十度。"
+        with self.voiceover(text="题目还告诉我们，高与另一腰的夹角为四十度，也就是角 A B D 等于四十度。") as tracker:
+            self.play_after_speech([Create(arc1)], tracker)
+        
+        # 12. "我们在图上把这个夹角标出来，并写上四十度。"
+        with self.voiceover(text="我们在图上把这个夹角标出来，并写上四十度。") as tracker:
+            self.play_after_speech([FadeIn(lbl_40_1)], tracker)
+        
+        # 13. "现在，我们进入第一种情况的详细计算过程。"
+        panel1 = self.make_step_panel([
+            self.make_ctex_row(r"① 当高在三角形内部时："),
+            self.make_proof_because(r"\angle ADB = 90^\circ, \angle ABD = 40^\circ"),
+            self.make_proof_therefore(r"\angle A = 90^\circ - 40^\circ = 50^\circ"),
+            self.make_proof_therefore(r"\text{底角} = \frac{180^\circ - 50^\circ}{2} = 65^\circ")
+        ])
+        with self.voiceover(text="现在，我们进入第一种情况的详细计算过程。") as tracker:
+            self.play_steps_evenly([Write(panel1[0])], tracker)
+        
+        # 14. "在直角三角形 A B D 中，因为角 A D B 等于九十度，且角 A B D 等于四十度。"
+        with self.voiceover(text="在直角三角形 A B D 中，因为角 A D B 等于九十度，且角 A B D 等于四十度。") as tracker:
+            self.play_steps_evenly([
+                Write(panel1[1]),
+                self.reemphasize_element(right_angle1),
+                self.reemphasize_element(arc1)
+            ], tracker)
+        
+        # 15. "根据直角三角形两锐角互余，我们可以求出顶角 A 的度数。"
+        with self.voiceover(text="根据直角三角形两锐角互余，我们可以求出顶角 A 的度数。") as tracker:
+            self.play_steps_evenly([], tracker)
+        
+        # 16. "顶角 A 就等于九十度减去四十度，计算得出五十度。"
+        with self.voiceover(text="顶角 A 就等于九十度减去四十度，计算得出五十度。") as tracker:
+            self.play_steps_evenly([
+                Write(panel1[2]),
+                self.reemphasize_element(lbl_A1)
+            ], tracker)
+        
+        # 17. "求出顶角之后，我们再回到等腰三角形 A B C 中。"
+        with self.voiceover(text="求出顶角之后，我们再回到等腰三角形 A B C 中。") as tracker:
+            self.play_steps_evenly([
+                self.reemphasize_region(region_ABC1)
+            ], tracker)
+        
+        # 18. "因为 A B 等于 A C，所以两个底角，也就是角 B 和角 C 是相等的。"
+        with self.voiceover(text="因为 A B 等于 A C，所以两个底角，也就是角 B 和角 C 是相等的。") as tracker:
+            self.play_steps_evenly([
+                self.reemphasize_equal_segments(edge_AB1, edge_AC1)
+            ], tracker)
+        
+        # 19. "根据三角形内角和定理，底角就等于二分之一乘以一百八十度减去顶角 A。"
+        with self.voiceover(text="根据三角形内角和定理，底角就等于二分之一乘以一百八十度减去顶角 A。") as tracker:
+            self.play_steps_evenly([], tracker)
+        
+        # 20. "代入顶角五十度，计算得出底角为六十五度。"
+        with self.voiceover(text="代入顶角五十度，计算得出底角为六十五度。") as tracker:
+            self.play_steps_evenly([
+                Write(panel1[3])
+            ], tracker)
+        
+        # 21. "这就是第一种情况下，等腰三角形底角的度数。"
+        with self.voiceover(text="这就是第一种情况下，等腰三角形底角的度数。") as tracker:
+            self.play_steps_evenly([], tracker)
+        
+        # 22. "接下来，我们来看第二种情况，当等腰三角形是钝角三角形时。"
+        panel2 = self.make_step_panel([
+            self.make_ctex_row(r"② 当高在三角形外部时："),
+            self.make_proof_because(r"\angle ADB = 90^\circ, \angle ABD = 40^\circ"),
+            self.make_proof_therefore(r"\angle DAB = 90^\circ - 40^\circ = 50^\circ"),
+            self.make_proof_therefore(r"\angle BAC = 180^\circ - 50^\circ = 130^\circ")
+        ])
+        with self.voiceover(text="接下来，我们来看第二种情况，当等腰三角形是钝角三角形时。") as tracker:
+            self.play_steps_evenly([
+                FadeOut(geometry_all1),
+                FadeOut(panel1),
+                FadeIn(tri2),
+                FadeIn(lbl_A2),
+                FadeIn(lbl_B2),
+                FadeIn(lbl_C2),
+                Write(panel2[0])
+            ], tracker)
+        
+        # 23. "此时，腰 A C 上的高线会落在三角形的外部，也就是腰 C A 的延长线上。"
+        with self.voiceover(text="此时，腰 A C 上的高线会落在三角形的外部，也就是腰 C A 的延长线上。") as tracker:
+            self.play_steps_evenly([
+                Create(ext_line2)
+            ], tracker)
+        
+        # 24. "我们同样画出这个钝角等腰三角形 A B C，并标出 A B 等于 A C。"
+        with self.voiceover(text="我们同样画出这个钝角等腰三角形 A B C，并标出 A B 等于 A C。") as tracker:
+            self.play_steps_evenly([
+                FadeIn(tick_AB2),
+                FadeIn(tick_AC2)
+            ], tracker)
+        
+        # 25. "然后，我们延长 C A，并画出高线 B D 垂直于 C A 的延长线。"
+        with self.voiceover(text="然后，我们延长 C A，并画出高线 B D 垂直于 C A 的延长线。") as tracker:
+            self.play_steps_evenly([
+                Create(height2),
+                FadeIn(lbl_D2)
+            ], tracker)
+        
+        # 26. "在点 D 处，我们依然标出直角符号，表示 B D 垂直于 A D。"
+        with self.voiceover(text="在点 D 处，我们依然标出直角符号，表示 B D 垂直于 A D。") as tracker:
+            self.play_steps_evenly([
+                FadeIn(right_angle2)
+            ], tracker)
+        
+        # 27. "此时，高 B D 与另一腰 A B 的夹角为四十度，即角 A B D 等于四十度。"
+        with self.voiceover(text="此时，高 B D 与另一腰 A B 的夹角为四十度，即角 A B D 等于四十度。") as tracker:
+            self.play_steps_evenly([
+                Create(arc2)
+            ], tracker)
+        
+        # 28. "我们在图上把这个夹角标出来。"
+        with self.voiceover(text="我们在图上把这个夹角标出来。") as tracker:
+            self.play_steps_evenly([
+                FadeIn(lbl_40_2)
+            ], tracker)
+        
+        # 29. "现在，我们来计算第二种情况下的底角。"
+        with self.voiceover(text="现在，我们来计算第二种情况下的底角。") as tracker:
+            self.play_steps_evenly([], tracker)
+        
+        # 30. "在直角三角形 A B D 中，因为角 A D B 等于九十度，角 A B D 等于四十度。"
+        with self.voiceover(text="在直角三角形 A B D 中，因为角 A D B 等于九十度，角 A B D 等于四十度。") as tracker:
+            self.play_steps_evenly([
+                Write(panel2[1]),
+                self.reemphasize_element(right_angle2),
+                self.reemphasize_element(arc2)
+            ], tracker)
+        
+        # 31. "所以，顶角 A 的外角，也就是角 D A B，等于九十度减去四十度，等于五十度。"
+        with self.voiceover(text="所以，顶角 A 的外角，也就是角 D A B，等于九十度减去四十度，等于五十度。") as tracker:
+            self.play_steps_evenly([
+                Write(panel2[2]),
+                self.reemphasize_element(lbl_A2)
+            ], tracker)
+        
+        # 32. "因为角 D A B 与顶角 B A C 互为邻补角，所以顶角 B A C 等于一百八十度减去五十度。"
+        with self.voiceover(text="因为角 D A B 与顶角 B A C 互为邻补角，所以顶角 B A C 等于一百八十度减去五十度。") as tracker:
+            self.play_steps_evenly([], tracker)
+        
+        # 33. "计算得出，此时的顶角 B A C 等于一百三十度。"
+        with self.voiceover(text="计算得出，此时的顶角 B A C 等于一百三十度。") as tracker:
+            self.play_steps_evenly([
+                Write(panel2[3])
+            ], tracker)
+        
+        # 34. "求出顶角后，我们再次利用等腰三角形的性质来求底角。"
+        panel3 = self.make_step_panel([
+            self.make_proof_therefore(r"\text{底角} = \frac{180^\circ - 130^\circ}{2} = 25^\circ"),
+            self.make_ctex_row(r"综上所述："),
+            self.make_ctex_row(r"这个等腰三角形的底角为 $65^\circ$ 或 $25^\circ$")
+        ])
+        with self.voiceover(text="求出顶角后，我们再次利用等腰三角形的性质来求底角。") as tracker:
+            self.play_steps_evenly([
+                FadeOut(panel2)
+            ], tracker)
+        
+        # 35. "因为 A B 等于 A C，所以底角等于二分之一乘以一百八十度减去一百三十度。"
+        with self.voiceover(text="因为 A B 等于 A C，所以底角等于二分之一乘以一百八十度减去一百三十度。") as tracker:
+            self.play_steps_evenly([
+                Write(panel3[0]),
+                self.reemphasize_equal_segments(edge_AB2, edge_AC2)
+            ], tracker)
+        
+        # 36. "计算得出，此时的底角为二十五度。"
+        with self.voiceover(text="计算得出，此时的底角为二十五度。") as tracker:
+            self.play_steps_evenly([], tracker)
+        
+        # 37. "综上所述，这个等腰三角形的底角为六十五度或二十五度。"
+        with self.voiceover(text="综上所述，这个等腰三角形的底角为六十五度或二十五度。") as tracker:
+            self.play_steps_evenly([
+                Write(panel3[1]),
+                Write(panel3[2])
+            ], tracker)
+        
+        # 38. "最后，我们来总结一下这道题的解题技巧。"
+        with self.voiceover(text="最后，我们来总结一下这道题的解题技巧。") as tracker:
+            self.play_steps_evenly([], tracker)
+        
+        # 39. "当题目中出现等腰三角形一腰上的高时，一定要注意高在内部还是外部。"
+        with self.voiceover(text="当题目中出现等腰三角形一腰上的高时，一定要注意高在内部还是外部。") as tracker:
+            self.play_steps_evenly([
+                self.reemphasize_stroke(height2)
+            ], tracker)
+        
+        # 40. "我们需要分类画出锐角和钝角两种图形，再利用互余和内角和公式进行求解，避免漏解。"
+        with self.voiceover(text="我们需要分类画出锐角和钝角两种图形，再利用互余和内角和公式进行求解，避免漏解。") as tracker:
+            self.play_steps_evenly([], tracker)

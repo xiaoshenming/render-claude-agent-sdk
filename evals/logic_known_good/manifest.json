@@ -1,0 +1,185 @@
+{
+  "dataset_root_env": "MANIM_LOGIC_EVAL_PACKS_ROOT",
+  "frozen": true,
+  "pack_id": "geo30_no_error_holdout_v3",
+  "sample_count": 6,
+  "samples": [
+    {
+      "artifacts": {
+        "before.mp4": {
+          "path": "manim_test_tool_logic_review_20260708_geo30_shortnames/samples/MTT02_BASE_r7218_q494/before.mp4",
+          "sha256": "sha256:a0234582fbbec312cd51f1e575ec47d8c833a65fe3b0f7418cade8e26aff9d8d"
+        },
+        "candidate.py": {
+          "path": "manim_test_tool_logic_review_20260708_geo30_shortnames/samples/MTT02_BASE_r7218_q494/candidate.py",
+          "sha256": "sha256:a322422bc71270b35927e50b131bab73d9288dbcde228e81e3c5daaa802ea839"
+        },
+        "case_manifest.json": {
+          "path": "manim_test_tool_logic_review_20260708_geo30_shortnames/samples/MTT02_BASE_r7218_q494/case_manifest.json",
+          "sha256": "sha256:682e252dab1e356637ae594f3871797b9c7afc461448aab79eb80aff5d133e17"
+        },
+        "expected_solution.txt": {
+          "path": "manim_test_tool_logic_review_20260708_geo30_shortnames/samples/MTT02_BASE_r7218_q494/expected_solution.txt",
+          "sha256": "sha256:3859e1f4974aaf18796dc844ab088d80736806f9fb975e149970cfe12a2c5a23"
+        },
+        "problem_text.txt": {
+          "path": "manim_test_tool_logic_review_20260708_geo30_shortnames/samples/MTT02_BASE_r7218_q494/problem_text.txt",
+          "sha256": "sha256:4c495b5bbd86639ffb592b3ff25e98d66a7952cd398525caada271df77ef4200"
+        },
+        "sample_meta.json": {
+          "path": "manim_test_tool_logic_review_20260708_geo30_shortnames/samples/MTT02_BASE_r7218_q494/sample_meta.json",
+          "sha256": "sha256:6f8d6da9194df0f6454911c243f6ebe0e44a3f8248d05a72d96b09ee6f4195fc"
+        }
+      },
+      "sample_id": "GOOD001_MTT02_BASE_r7218_q494",
+      "truth": "known_good"
+    },
+    {
+      "artifacts": {
+        "before.mp4": {
+          "path": "manim_test_tool_logic_review_20260708_geo30_shortnames/samples/MTT03_BASE_r7217_q496/before.mp4",
+          "sha256": "sha256:cc4baf4819fef9c730cc0b3dc6d7102ca9565a0ba637435c73606f58346d9657"
+        },
+        "candidate.py": {
+          "path": "manim_test_tool_logic_review_20260708_geo30_shortnames/samples/MTT03_BASE_r7217_q496/candidate.py",
+          "sha256": "sha256:3b605973f1647f0da54c3998c7c9bdbaab2d38199074566295865197ef9a103d"
+        },
+        "case_manifest.json": {
+          "path": "manim_test_tool_logic_review_20260708_geo30_shortnames/samples/MTT03_BASE_r7217_q496/case_manifest.json",
+          "sha256": "sha256:8c53681e974da61c78fd52e0dbf6a2bf7222cb8524596606066f92c817466ffc"
+        },
+        "expected_solution.txt": {
+          "path": "manim_test_tool_logic_review_20260708_geo30_shortnames/samples/MTT03_BASE_r7217_q496/expected_solution.txt",
+          "sha256": "sha256:d10bbd702026ea3b65dbb68f3d27c7813b1663eb2e8e418bc0e2816821deecc6"
+        },
+        "problem_text.txt": {
+          "path": "manim_test_tool_logic_review_20260708_geo30_shortnames/samples/MTT03_BASE_r7217_q496/problem_text.txt",
+          "sha256": "sha256:87039ddbaf72bdf8568a322f374faddfc7c352267d3523d67b623982f0c1342f"
+        },
+        "sample_meta.json": {
+          "path": "manim_test_tool_logic_review_20260708_geo30_shortnames/samples/MTT03_BASE_r7217_q496/sample_meta.json",
+          "sha256": "sha256:922b8edacbfccec62ce714ee09a05ebfe4d6c150c206812db8fd1038f17fb719"
+        }
+      },
+      "sample_id": "GOOD002_MTT03_BASE_r7217_q496",
+      "truth": "known_good"
+    },
+    {
+      "artifacts": {
+        "before.mp4": {
+          "path": "manim_test_tool_logic_review_20260708_geo30_shortnames/samples/MTT05_BASE_r7212_q484/before.mp4",
+          "sha256": "sha256:64e481855b6f63951217e9e03f3df0e604cb5c3a4cac3057cb3fef0bb454f0bc"
+        },
+        "candidate.py": {
+          "path": "manim_test_tool_logic_review_20260708_geo30_shortnames/samples/MTT05_BASE_r7212_q484/candidate.py",
+          "sha256": "sha256:f5da08a7b354fc22385d70155e806093ab718ae88ca96852dd79a5e38ecd8768"
+        },
+        "case_manifest.json": {
+          "path": "manim_test_tool_logic_review_20260708_geo30_shortnames/samples/MTT05_BASE_r7212_q484/case_manifest.json",
+          "sha256": "sha256:555dd01c6de053818919ecba243fb8dfb516d408e43dc5b2ed86f6bbd6c5e47b"
+        },
+        "expected_solution.txt": {
+          "path": "manim_test_tool_logic_review_20260708_geo30_shortnames/samples/MTT05_BASE_r7212_q484/expected_solution.txt",
+          "sha256": "sha256:9ca68589081584478f907c65146a6e112ef488c5f94d122106188eb973192e8b"
+        },
+        "problem_text.txt": {
+          "path": "manim_test_tool_logic_review_20260708_geo30_shortnames/samples/MTT05_BASE_r7212_q484/problem_text.txt",
+          "sha256": "sha256:e793d90f5584acbdef2ec45ad7b4ca9d85c34a1ac4ea6077c0d5406bcca09144"
+        },
+        "sample_meta.json": {
+          "path": "manim_test_tool_logic_review_20260708_geo30_shortnames/samples/MTT05_BASE_r7212_q484/sample_meta.json",
+          "sha256": "sha256:2f631f143167e171f08cc3b711f003021674cfd2186b62e14f79be6c88ea6b52"
+        }
+      },
+      "sample_id": "GOOD003_MTT05_BASE_r7212_q484",
+      "truth": "known_good"
+    },
+    {
+      "artifacts": {
+        "before.mp4": {
+          "path": "manim_test_tool_logic_review_20260708_geo30_shortnames/samples/MTT21_GEO_r6707_q421/before.mp4",
+          "sha256": "sha256:e93b2863bc71cbe8044b05db584758b83b66511d2b62c2eb3805828d3e1fe72b"
+        },
+        "candidate.py": {
+          "path": "manim_test_tool_logic_review_20260708_geo30_shortnames/samples/MTT21_GEO_r6707_q421/candidate.py",
+          "sha256": "sha256:daaff76655bc375f36926467907b35021c5152089ffe02ae753fb19e26558770"
+        },
+        "case_manifest.json": {
+          "path": "manim_test_tool_logic_review_20260708_geo30_shortnames/samples/MTT21_GEO_r6707_q421/case_manifest.json",
+          "sha256": "sha256:75a34b183e51565e08fee3c7dc83603042d6e7704155aaac1f60fe01048206e0"
+        },
+        "expected_solution.txt": null,
+        "problem_text.txt": {
+          "path": "manim_test_tool_logic_review_20260708_geo30_shortnames/samples/MTT21_GEO_r6707_q421/problem_text.txt",
+          "sha256": "sha256:fc7743d2b16b33d64c3c516efc38a341b25b800b78c6870ba4c82e4abdb679e3"
+        },
+        "sample_meta.json": {
+          "path": "manim_test_tool_logic_review_20260708_geo30_shortnames/samples/MTT21_GEO_r6707_q421/sample_meta.json",
+          "sha256": "sha256:ffa605d771034fa7cc3bb434ee9243e4e189ab075f89a65f9ce9a8f17fcdcbf2"
+        }
+      },
+      "sample_id": "GOOD004_MTT21_GEO_r6707_q421",
+      "truth": "known_good"
+    },
+    {
+      "artifacts": {
+        "before.mp4": {
+          "path": "manim_test_tool_logic_review_20260708_geo30_shortnames/samples/MTT24_GEO_r6692_q423/before.mp4",
+          "sha256": "sha256:e014878c9a9ecbbfdf60178906f2c2508bd7eaa8e6eff6728f4e9fc93e47b4f2"
+        },
+        "candidate.py": {
+          "path": "manim_test_tool_logic_review_20260708_geo30_shortnames/samples/MTT24_GEO_r6692_q423/candidate.py",
+          "sha256": "sha256:580c7df2b060f320aa0b4d04df1d4a5acf2363e9c75612fd3fabe58b795bb02a"
+        },
+        "case_manifest.json": {
+          "path": "manim_test_tool_logic_review_20260708_geo30_shortnames/samples/MTT24_GEO_r6692_q423/case_manifest.json",
+          "sha256": "sha256:7f0a54c23c0b826412173000950b28790e71fd04486478c6d4d0e994248f4bb3"
+        },
+        "expected_solution.txt": null,
+        "problem_text.txt": {
+          "path": "manim_test_tool_logic_review_20260708_geo30_shortnames/samples/MTT24_GEO_r6692_q423/problem_text.txt",
+          "sha256": "sha256:8daca521816bc889a47d1333464aac5f89052d1afaacadf2f96cfb4897aa71b2"
+        },
+        "sample_meta.json": {
+          "path": "manim_test_tool_logic_review_20260708_geo30_shortnames/samples/MTT24_GEO_r6692_q423/sample_meta.json",
+          "sha256": "sha256:d2ccebaf7b31f385e9458b2ae42e442dedd6e022acb7ebf9b5d60dfcbcf40c65"
+        }
+      },
+      "sample_id": "GOOD005_MTT24_GEO_r6692_q423",
+      "truth": "known_good"
+    },
+    {
+      "artifacts": {
+        "before.mp4": {
+          "path": "manim_test_tool_logic_review_20260708_geo30_shortnames/samples/MTT30_GEO_r6742_q424/before.mp4",
+          "sha256": "sha256:501e411d53e929fa974ad1c28797e20dd72dccc5a00a3d7c1b8caf9d15a60458"
+        },
+        "candidate.py": {
+          "path": "manim_test_tool_logic_review_20260708_geo30_shortnames/samples/MTT30_GEO_r6742_q424/candidate.py",
+          "sha256": "sha256:f2ce59b96a18de01477909840ef75031c85d52e1c551ffd2d327e2c61a3d09d5"
+        },
+        "case_manifest.json": {
+          "path": "manim_test_tool_logic_review_20260708_geo30_shortnames/samples/MTT30_GEO_r6742_q424/case_manifest.json",
+          "sha256": "sha256:86f9842a6215478cfb531fe3826c1cd980d1e42277c12c119083426464d176d5"
+        },
+        "expected_solution.txt": null,
+        "problem_text.txt": {
+          "path": "manim_test_tool_logic_review_20260708_geo30_shortnames/samples/MTT30_GEO_r6742_q424/problem_text.txt",
+          "sha256": "sha256:cf7844557d0c20998b84b8835655900e15ad566b44fa2a261f1115d44262e3c0"
+        },
+        "sample_meta.json": {
+          "path": "manim_test_tool_logic_review_20260708_geo30_shortnames/samples/MTT30_GEO_r6742_q424/sample_meta.json",
+          "sha256": "sha256:751ce011977453e2dc95d567a50d9990ae79f9374490ab4d2ebf27081756c8a7"
+        }
+      },
+      "sample_id": "GOOD006_MTT30_GEO_r6742_q424",
+      "truth": "known_good"
+    }
+  ],
+  "schema_version": "manim-quality.logic-eval.v1",
+  "source_manifest": {
+    "path": "manim_test_tool_logic_review_20260708_geo30_shortnames/manifest.json",
+    "sha256": "sha256:ead646271193a14a32e97de94839873c68ee2f72a032d2db8718fff9db3b2445"
+  },
+  "truth": "known_good"
+}

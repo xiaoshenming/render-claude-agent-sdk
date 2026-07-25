@@ -1,0 +1,21 @@
+{
+  "source_batch_id": "7dd0b1498f8c",
+  "source_batch_name": "12_春季班全等三角形综合（一）15",
+  "source_item_id": "6223b9bf28f1",
+  "title": "12_春季班全等三角形综合（一）15_01_练习1",
+  "problem_text": "在 △PAB 中，PA=PB，M、N、K 分别在 PA、PB、AB 上，AM=BK，BN=AK，∠MKN=40°，求 ∠P 的度数，求∠P 的度数。",
+  "solution_steps": "【读题展示阶段】\n先自然读题，不进入计算。题目给出：在 △PAB 中，PA=PB，M、N、K 分别在 PA、PB、AB 上，AM=BK，BN=AK，∠MKN=40°，求 ∠P 的度数。读到 PA=PB 时高亮 PA、PB；读到 M、N、K 分别在 PA、PB、AB 上时高亮 M、N、K 及所在边；读到 AM=BK、BN=AK 时高亮两组相等线段；读到 ∠MKN=40° 时高亮 ∠MKN。最后读出要求：∠P 的度数，只高亮 ∠P。\n【思路切入阶段】\n本题最终要求 ∠P 的度数，直接从 ∠P 下手不方便。先利用 PA=PB 得到 ∠A=∠B，再把 AM=BK、AK=BN 和 ∠A=∠B 放进 △AMK 和 △BKN，证明这两个三角形全等，得到 ∠AMK=∠BKN。最后把 ∠MKN=40° 放进角度关系中，推出 ∠A=∠B=40°，再用 △PAB 的内角和求出 ∠P。\n【满分答案阶段：必须完整展示的官方解题步骤】\n\\because PA=PB ， \\therefore \\angle A=\\angle B 。\n\n在 \\triangle AMK 和 \\triangle BKN 中：\n\\begin{cases}AM=BK \\\\\\angle A=\\angle B \\\\AK=BN\\end{cases} \\therefore \\triangle AMK\\cong\\triangle BKN （SAS），\n\\therefore \\angle AMK=\\angle BKN 。\n\n\\because \\angle AMK+\\angle A+\\angle AKM=180^\\circ ， \\angle BKN+\\angle MKN+\\angle AKM=180^\\circ ，\n\\therefore \\angle MKN=\\angle A=40^\\circ ，\n\\therefore \\angle A=\\angle B=40^\\circ ，\n\\therefore \\angle P=180^\\circ-40^\\circ-40^\\circ=\\boldsymbol{100^\\circ} 。\n\n【结论收束阶段】\n最后收束结论：\\therefore \\angle MKN=\\angle A=40^\\circ ， \\therefore \\angle A=\\angle B=40^\\circ ， \\therefore \\angle P=180^\\circ-40^\\circ-40^\\circ=\\boldsymbol{100^\\circ} 。\n\n【技巧总结阶段】\n本题可迁移的方法是先把目标拆成可证明或可计算的中间关系，再逐步回到题目要求。",
+  "figure_code": "# PROBLEM_TEXT: 在△PAB中，PA=PB，M、N、K分别在PA、PB、AB上，且AM=BK，BN=AK。若∠MKN=40°，则∠P的度数为______。\n# FIGURE_FACTS: Triangle PAB is isosceles with PA=PB. Points M, N, K lie on PA, PB, AB respectively. AM=BK, BN=AK. Angle MKN is 40 degrees.\n\nfrom manim import *\n\nclass GeometryScene(Scene):\n    def construct(self):\n        # 定义顶点坐标\n        A = np.array([-3.0, -1.5, 0.0])\n        B = np.array([3.0, -1.5, 0.0])\n        P = np.array([0.0, 2.0, 0.0])\n        \n        # 计算 M, N, K 的位置\n        # K 在 AB 上，设 AK = 0.6 * AB\n        K = A + 0.6 * (B - A)\n        \n        # AM = BK\n        len_AB = np.linalg.norm(B - A)\n        len_PA = np.linalg.norm(P - A)\n        len_BK = np.linalg.norm(B - K)\n        M = A + (len_BK / len_PA) * (P - A)\n        \n        # BN = AK\n        len_AK = np.linalg.norm(K - A)\n        N = B + (len_AK / len_PA) * (P - B)\n        \n        # 创建线段\n        line_AB = Line(A, B, stroke_width=2.5, color=WHITE)\n        line_AP = Line(A, P, stroke_width=2.5, color=WHITE)\n        line_BP = Line(B, P, stroke_width=2.5, color=WHITE)\n        line_MK = Line(M, K, stroke_width=2.5, color=WHITE)\n        line_NK = Line(N, K, stroke_width=2.5, color=WHITE)\n        \n        # 创建点\n        dots = VGroup(*[\n            Dot(point, radius=0.06, color=WHITE)\n            for point in [A, B, P, M, N, K]\n        ])\n        \n        # 创建标签\n        label_P = MathTex(\"P\").next_to(P, UP, buff=0.15)\n        label_A = MathTex(\"A\").next_to(A, LEFT, buff=0.15)\n        label_B = MathTex(\"B\").next_to(B, RIGHT, buff=0.15)\n        label_M = MathTex(\"M\").next_to(M, LEFT, buff=0.15)\n        label_N = MathTex(\"N\").next_to(N, RIGHT, buff=0.15)\n        label_K = MathTex(\"K\").next_to(K, DOWN, buff=0.15)\n        \n        labels = VGroup(label_P, label_A, label_B, label_M, label_N, label_K)\n        \n        # 组合所有元素\n        geometry_group = VGroup(\n            line_AB, line_AP, line_BP, line_MK, line_NK,\n            dots, labels\n        )\n        \n        # 居中显示\n        geometry_group.move_to(ORIGIN)\n        \n        # 添加到场景\n        self.add(geometry_group)",
+  "index": 45,
+  "status": "render_succeeded",
+  "scene_class": "Solution",
+  "llm_seconds": 42.66,
+  "llm_findings": [
+    "provider_output_raw_python"
+  ],
+  "code_sha256": "306a45a0ffcb66c932b1f908ac56dd9bdcb1a0fe79bf48f27eec4329347ace8d",
+  "work_dir": "/opt/mathpi/batchops/benchmarks/geometry-drift-8797-20260724-1720/0045-6223b9bf28f1",
+  "render_seconds": 144.202,
+  "video_path": "/opt/mathpi/batchops/benchmarks/geometry-drift-8797-20260724-1720/0045-6223b9bf28f1/media/videos/480p15/video.mp4",
+  "video_bytes": 1566077
+}

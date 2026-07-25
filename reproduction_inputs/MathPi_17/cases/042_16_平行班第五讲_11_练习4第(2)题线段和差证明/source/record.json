@@ -1,0 +1,21 @@
+{
+  "source_batch_id": "98f4a0a05ba7",
+  "source_batch_name": "木木1",
+  "source_item_id": "f95fbed9b869",
+  "title": "16_平行班第五讲_11_练习4第(2)题线段和差证明",
+  "problem_text": "如图1，在△ABC中，∠BAC=75°，∠ACB=35°，∠ABC的平分线BD交边AC于点D。(1)求证：△BCD为等腰三角形；(2)若∠BAC的平分线AE交边BC于点E，如图2，求证：BD+AD=AB+BE；(3)若∠BAC外角的平分线AE交CB延长线于点E，请你探究(2)中的结论是否仍然成立？请证明你的结论。",
+  "solution_steps": "【读题展示阶段】\n展示图 2 并读题：在上一问的条件下，$\\angle BAC$ 的平分线 $AE$ 交边 $BC$ 于点 $E$。求证：$BD+AD=AB+BE$。重点标出待证等式中的四条线段。\n\n【思路切入阶段】\n由上一问 $BD=DC$，可先把左边 $BD+AD$ 转化为 $AC$。为了把右边 $AB+BE$ 拼成一条线段，延长 $AB$ 并截取 $BF=BE$，再证明 $AF=AC$。\n\n【满分答案阶段：必须完整展示的官方解题步骤】\n证明：由上一问得 $BD=DC$，所以\n$BD+AD=DC+AD=AC$。\n延长 $AB$ 至点 $F$，使 $BF=BE$，连接 $EF$。\n因为 $BF=BE$，所以 $\\angle F=\\angle BEF$。\n$\\angle ABC$ 是 $\\triangle FBE$ 的外角，所以\n$\\angle ABC=\\angle F+\\angle BEF=2\\angle F$。\n由上一问可知 $\\angle ABC=70^\\circ$，因此 $\\angle F=35^\\circ=\\angle ACB$。\n因为 $AE$ 平分 $\\angle BAC$，所以 $\\angle FAE=\\angle CAE$。\n在 $\\triangle AFE$ 和 $\\triangle ACE$ 中，\n$\\begin{cases}\\angle F=\\angle ACE,\\\\ \\angle FAE=\\angle CAE,\\\\ AE=AE.\\end{cases}$\n所以 $\\triangle AFE\\cong\\triangle ACE$（AAS），从而 $AF=AC$。\n又因为 $AF=AB+BF=AB+BE$，且 $AC=AD+DC=AD+BD$，\n所以 $BD+AD=AB+BE$。\n\n【结论收束阶段】\n把等式两边分别转化为 $AC$ 和 $AF$，再由全等证明 $AC=AF$，即可得到 $BD+AD=AB+BE$。\n\n【技巧总结阶段】\n证明线段和差关系时，可用截长补短把多条线段拼成整段，再通过全等证明两条整段相等。",
+  "figure_code": "# PROBLEM_TEXT: 如图1，在△ABC中，∠BAC=75°，∠ACB=35°，∠ABC的平分线BD交边AC于点D。(1)求证：△BCD为等腰三角形；(2)若∠BAC的平分线AE交边BC于点E，如图2，求证：BD+AD=AB+BE；(3)若∠BAC外角的平分线AE交CB延长线于点E，请你探究(2)中的结论是否仍然成立？请证明你的结论。\n# FIGURE_FACTS: 三角形ABC中，角BAC=75度，角ACB=35度。BD平分角ABC交AC于D。图2中AE平分角BAC交BC于E。\n\nfrom manim import *\n\nclass GeometryScene(Scene):\n    def construct(self):\n        # 图1 顶点坐标\n        A1 = np.array([-4.188, 1.732, 0])\n        B1 = np.array([-5.0, -0.5, 0])\n        C1 = np.array([-1.0, -0.5, 0])\n        D1 = np.array([-3.0, 0.9, 0])\n\n        # 图2 顶点坐标\n        A2 = np.array([1.812, 1.732, 0])\n        B2 = np.array([1.0, -0.5, 0])\n        C2 = np.array([5.0, -0.5, 0])\n        D2 = np.array([3.0, 0.9, 0])\n        E2 = np.array([2.516, -0.5, 0])\n\n        # 创建图1的几何元素\n        tri1 = Polygon(A1, B1, C1, stroke_width=3, color=WHITE)\n        line_BD1 = Line(B1, D1, stroke_width=3, color=WHITE)\n        \n        label_A1 = MathTex(\"A\").next_to(A1, UP, buff=0.15)\n        label_B1 = MathTex(\"B\").next_to(B1, DL, buff=0.1)\n        label_C1 = MathTex(\"C\").next_to(C1, DR, buff=0.1)\n        label_D1 = MathTex(\"D\").next_to(D1, UR, buff=0.1)\n        \n        title1 = Text(\"图 1\", font_size=20).next_to(np.array([-3.0, -0.5, 0]), DOWN, buff=0.6)\n\n        g1 = VGroup(tri1, line_BD1, label_A1, label_B1, label_C1, label_D1, title1)\n\n        # 创建图2的几何元素\n        tri2 = Polygon(A2, B2, C2, stroke_width=3, color=WHITE)\n        line_BD2 = Line(B2, D2, stroke_width=3, color=WHITE)\n        line_AE2 = Line(A2, E2, stroke_width=3, color=WHITE)\n\n        label_A2 = MathTex(\"A\").next_to(A2, UP, buff=0.15)\n        label_B2 = MathTex(\"B\").next_to(B2, DL, buff=0.1)\n        label_C2 = MathTex(\"C\").next_to(C2, DR, buff=0.1)\n        label_D2 = MathTex(\"D\").next_to(D2, UR, buff=0.1)\n        label_E2 = MathTex(\"E\").next_to(E2, DOWN, buff=0.15)\n\n        title2 = Text(\"图 2\", font_size=20).next_to(np.array([3.0, -0.5, 0]), DOWN, buff=0.6)\n\n        g2 = VGroup(tri2, line_BD2, line_AE2, label_A2, label_B2, label_C2, label_D2, label_E2, title2)\n\n        # 将所有元素添加到场景中\n        self.add(g1, g2)",
+  "index": 42,
+  "status": "render_succeeded",
+  "scene_class": "Solution",
+  "llm_seconds": 40.077,
+  "llm_findings": [
+    "provider_output_sanitized"
+  ],
+  "code_sha256": "50936fe249f51d7feb889c8a0d6084782016b76baab65d7316333ec8b9a4ab5f",
+  "work_dir": "/opt/mathpi/batchops/benchmarks/geometry-drift-8797-20260724-1720/0042-f95fbed9b869",
+  "render_seconds": 159.813,
+  "video_path": "/opt/mathpi/batchops/benchmarks/geometry-drift-8797-20260724-1720/0042-f95fbed9b869/media/videos/480p15/video.mp4",
+  "video_bytes": 2795008
+}
