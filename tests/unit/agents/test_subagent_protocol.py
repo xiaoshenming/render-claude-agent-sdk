@@ -213,9 +213,20 @@ def test_protocol_rejects_unbounded_or_malformed_issue_contract() -> None:
         )
 
     protocol = stopped()
+    detailed = json.loads(valid_result())
+    detailed["diagnosis"] = "x" * 6_000
+    protocol.record_result(
+        tool_use_id="tool-1",
+        content=json.dumps(detailed),
+        is_error=False,
+        parent_tool_use_id=None,
+    )
+    assert len(protocol.results[0]["payload"]["diagnosis"]) == 6_000
+
+    protocol = stopped()
     oversized = json.loads(valid_result())
-    oversized["diagnosis"] = "x" * 2_001
-    with pytest.raises(SubagentProtocolError, match="2000"):
+    oversized["diagnosis"] = "x" * 8_001
+    with pytest.raises(SubagentProtocolError, match="8000"):
         protocol.record_result(
             tool_use_id="tool-1",
             content=json.dumps(oversized),

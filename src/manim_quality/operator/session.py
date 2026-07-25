@@ -25,14 +25,14 @@ from .source_view import apply_solution_replacement, extract_solution
 
 
 class QualitySession:
-    """Own immutable inputs and at most two Agent-authored candidate attempts."""
+    """Own immutable inputs and at most three Agent-authored candidate attempts."""
 
     def __init__(
         self,
         *,
         problem_text: str,
         candidate_code: str,
-        max_patch_attempts: int = 2,
+        max_patch_attempts: int = 3,
     ) -> None:
         if not isinstance(problem_text, str) or not problem_text.strip():
             raise ValueError("problem_text must be non-empty")

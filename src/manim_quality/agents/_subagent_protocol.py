@@ -195,7 +195,7 @@ def _result_text(content: object) -> str:
         text = "\n".join(parts)
     else:
         raise SubagentProtocolError("Reviewer ToolResult must be text")
-    if not text.strip() or len(text) > 2_500:
+    if not text.strip() or len(text) > 8_500:
         raise SubagentProtocolError("Reviewer ToolResult exceeds transport bound")
     return text
 
@@ -227,8 +227,8 @@ def _result_parts(
         message = "Reviewer ToolResult must start with JSON"
         raise SubagentProtocolError(message) from error
     reviewer_text = stripped[:end]
-    if len(reviewer_text) > 2_000:
-        raise SubagentProtocolError("Reviewer ToolResult exceeds 2000 characters")
+    if len(reviewer_text) > 8_000:
+        raise SubagentProtocolError("Reviewer ToolResult exceeds 8000 characters")
     trailer = stripped[end:]
     if not trailer.strip():
         return reviewer_text, None
