@@ -99,6 +99,7 @@ def test_toolset_exposes_exact_seven_mcp_capabilities() -> None:
         "validate_revision",
         "submit_revision",
     )
+    assert tools["apply_patch"].max_calls == 3
 
 
 def test_read_solution_returns_only_exact_solution_class() -> None:
