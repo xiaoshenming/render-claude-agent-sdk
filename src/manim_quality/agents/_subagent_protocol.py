@@ -253,7 +253,7 @@ def _reviewer_payload(text: str) -> Mapping[str, object]:
     if not isinstance(value, Mapping):
         raise SubagentProtocolError("Reviewer ToolResult must be a JSON object")
     required = {"decision", "diagnosis", "issues", "coverage", "confidence"}
-    if set(value) != required:
+    if not required.issubset(value):
         raise SubagentProtocolError("Reviewer ToolResult has invalid fields")
     if value["decision"] not in {"pass", "needs_repair"}:
         raise SubagentProtocolError("Reviewer decision is invalid")
@@ -262,11 +262,11 @@ def _reviewer_payload(text: str) -> Mapping[str, object]:
     issues = value["issues"]
     if not isinstance(issues, list) or len(issues) > 12:
         raise SubagentProtocolError("Reviewer issues must contain at most 12 items")
-    for issue in issues:
-        _validate_issue(issue)
+    normalized_issues = [_normalize_issue(issue) for issue in issues]
     if not isinstance(value["coverage"], Mapping):
         raise SubagentProtocolError("Reviewer coverage must be an object")
-    normalized = dict(value)
+    normalized = {name: value[name] for name in required}
+    normalized["issues"] = normalized_issues
     normalized["confidence"] = normalize_confidence(
         value["confidence"],
         SubagentProtocolError,
@@ -274,7 +274,7 @@ def _reviewer_payload(text: str) -> Mapping[str, object]:
     return normalized
 
 
-def _validate_issue(value: object) -> None:
+def _normalize_issue(value: object) -> Mapping[str, object]:
     required = {
         "type",
         "target",
@@ -282,7 +282,7 @@ def _validate_issue(value: object) -> None:
         "required_invariant",
         "repair_scope",
     }
-    if not isinstance(value, Mapping) or set(value) != required:
+    if not isinstance(value, Mapping) or not required.issubset(value):
         raise SubagentProtocolError("Reviewer issue has invalid fields")
     evidence = value["evidence"]
     if (
@@ -294,6 +294,7 @@ def _validate_issue(value: object) -> None:
     for name in required - {"evidence"}:
         if not isinstance(value[name], str) or not value[name].strip():
             raise SubagentProtocolError(f"Reviewer issue {name} must be text")
+    return {name: value[name] for name in required}
 
 
 def _now_ms() -> int:

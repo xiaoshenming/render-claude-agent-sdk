@@ -46,6 +46,28 @@ def test_reviewer_confidence_accepts_common_equivalent_scales(
     assert normalized["confidence"] == expected
 
 
+def test_reviewer_payload_ignores_extra_metadata() -> None:
+    payload = json.loads(valid_result())
+    payload["notes"] = "extra model metadata"
+    payload["decision"] = "needs_repair"
+    payload["issues"] = [
+        {
+            "type": "blocking",
+            "target": "line AB",
+            "evidence": ["source line"],
+            "required_invariant": "AB remains aligned.",
+            "repair_scope": "Solution.construct",
+            "severity": "blocking",
+        }
+    ]
+
+    normalized = _reviewer_payload(json.dumps(payload))
+
+    assert "notes" not in normalized
+    assert "severity" not in normalized["issues"][0]
+    assert normalized["issues"][0]["target"] == "line AB"
+
+
 def sdk_result(
     result: str | None = None,
     *,
