@@ -51,6 +51,18 @@ def test_session_preserves_immutable_problem_and_r0() -> None:
     assert quality.baseline.code_hash.startswith("sha256:")
 
 
+def test_current_r0_can_bind_real_validation_evidence() -> None:
+    quality = session()
+    record = quality.record_validation(
+        revision_id="R0",
+        passed=True,
+        improved=True,
+        fingerprint="sha256:" + "0" * 64,
+    )
+
+    assert record.revision_id == "R0"
+
+
 def test_patch_requires_frozen_findings() -> None:
     quality = session()
 

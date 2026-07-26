@@ -220,7 +220,7 @@ class QualitySession:
         fingerprint: str,
     ) -> ValidationRecord:
         self._require_open()
-        if revision_id != self.current_revision.revision_id or revision_id == "R0":
+        if revision_id != self.current_revision.revision_id:
             raise InvalidSessionTransition(
                 "only the current candidate can be validated"
             )
