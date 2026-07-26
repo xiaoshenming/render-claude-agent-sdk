@@ -99,9 +99,9 @@ def test_toolset_exposes_exact_seven_mcp_capabilities() -> None:
         "validate_revision",
         "submit_revision",
     )
-    assert tools["record_findings"].max_calls == 3
+    assert tools["record_findings"].max_calls == 4
     assert tools["apply_patch"].max_calls == 5
-    assert tools["inspect_layout"].max_calls == 3
+    assert tools["inspect_layout"].max_calls == 5
     assert tools["validate_revision"].max_calls == 5
 
 

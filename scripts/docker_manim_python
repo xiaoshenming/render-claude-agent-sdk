@@ -2,8 +2,10 @@
 """Expose the existing Manim Docker image as a Python executable."""
 
 import os
+import fcntl
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 IMAGE = os.environ.get("MANIM_DOCKER_IMAGE", "docker-manim-worker-1:latest")
@@ -42,7 +44,32 @@ def main() -> int:
                 continue
             command.extend(("--volume", f"{target}:{target}:ro"))
     command.extend((IMAGE, *sys.argv[1:]))
-    return subprocess.run(command, check=False).returncode
+    lock = _acquire_render_slot()
+    try:
+        return subprocess.run(command, check=False).returncode
+    finally:
+        if lock is not None:
+            fcntl.flock(lock, fcntl.LOCK_UN)
+            lock.close()
+
+
+def _acquire_render_slot():
+    limit = int(os.environ.get("MANIM_RENDER_CONCURRENCY", "0") or 0)
+    if limit <= 0:
+        return None
+    root = Path(
+        os.environ.get("MANIM_RENDER_SEMAPHORE_DIR", "/tmp/manim-quality-render-slots")
+    )
+    root.mkdir(parents=True, exist_ok=True)
+    while True:
+        for index in range(limit):
+            handle = (root / f"slot-{index}.lock").open("a+")
+            try:
+                fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                return handle
+            except BlockingIOError:
+                handle.close()
+        time.sleep(0.1)
 
 
 def _argument_mounts(arguments: list[str]) -> tuple[Path, ...]:

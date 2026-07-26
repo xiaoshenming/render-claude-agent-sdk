@@ -122,10 +122,23 @@ class RuntimeControls:
                 agent_type=agent_type,
             )
         except Exception as error:
-            self._record_denied(name, input_data, error)
+            self._record_denied(
+                name,
+                input_data,
+                error,
+                agent_id=agent_id,
+                agent_type=agent_type,
+            )
             raise
         self._tool_calls.append(
-            ToolCallRecord(name=name, input=normalized, allowed=True)
+            ToolCallRecord(
+                name=name,
+                input=normalized,
+                allowed=True,
+                caller=agent_type or "parent",
+                agent_id=agent_id,
+                agent_type=agent_type,
+            )
         )
         return normalized
 
@@ -229,13 +242,24 @@ class RuntimeControls:
                 "backend result was not finalized through runtime controls"
             )
 
-    def _record_denied(self, name: str, input_data: object, error: Exception) -> None:
+    def _record_denied(
+        self,
+        name: str,
+        input_data: object,
+        error: Exception,
+        *,
+        agent_id: str | None = None,
+        agent_type: str | None = None,
+    ) -> None:
         self._tool_calls.append(
             ToolCallRecord(
                 name=name,
                 input=recordable_tool_input(input_data),
                 allowed=False,
                 error=str(error),
+                caller=agent_type or "parent",
+                agent_id=agent_id,
+                agent_type=agent_type,
             )
         )
 

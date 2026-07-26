@@ -108,8 +108,10 @@ def test_harness_runs_operator_then_independent_gate_and_writes_pack(
     )
 
     assert result.gate_result.decision.value == "PROPOSED"
+    assert result.baseline_layout_report["blocking_count"] == 0
     assert result.session.submitted_revision_id == "R0"
     assert (output / "output" / "proposed_candidate.py").is_file()
+    assert (output / "evidence" / "layout.R0.baseline.json").is_file()
 
 
 def test_harness_rejects_same_agent_and_acceptance_adapter_instances() -> None:

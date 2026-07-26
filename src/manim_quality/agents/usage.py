@@ -60,6 +60,9 @@ class ToolCallRecord:
     error: str | None = None
     result_status: str | None = None
     result_hash: str | None = None
+    caller: str = "parent"
+    agent_id: str | None = None
+    agent_type: str | None = None
 
     def __post_init__(self) -> None:
         _require_text(self.name, "name")
@@ -74,6 +77,11 @@ class ToolCallRecord:
             _require_text(self.result_hash, "result_hash")
         if (self.result_status is None) != (self.result_hash is None):
             raise ValueError("tool result status and hash must be recorded together")
+        _require_text(self.caller, "caller")
+        if self.agent_id is not None:
+            _require_text(self.agent_id, "agent_id")
+        if self.agent_type is not None:
+            _require_text(self.agent_type, "agent_type")
 
 
 @dataclass(frozen=True, slots=True)

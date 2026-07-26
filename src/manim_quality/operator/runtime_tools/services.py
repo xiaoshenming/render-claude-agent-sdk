@@ -8,6 +8,7 @@ from manim_quality.operator.models import CandidateAttempt, Finding, ValidationO
 
 from .detector import LayoutIssueDetector
 from .issues import compact_layout_report
+from .layout_diff import compare_layout_reports
 from .models import ProbeResult, RenderResult
 from .probe import BBoxProbe
 from .render import ManimRenderer
@@ -140,6 +141,7 @@ class RealRevisionValidator:
 class RealLayoutInspector:
     def __init__(self, toolchain: RuntimeToolchain) -> None:
         self._toolchain = toolchain
+        self._baseline: dict[str, object] | None = None
 
     async def inspect(
         self,
@@ -148,7 +150,7 @@ class RealLayoutInspector:
     ) -> dict[str, object]:
         result = self._toolchain.probe(revision)
         compact = self._toolchain.layout_report(revision)
-        return {
+        report = {
             "revision_id": revision.revision_id,
             "code_hash": revision.code_hash,
             "problem_hash": problem_hash,
@@ -156,3 +158,9 @@ class RealLayoutInspector:
             "error": result.error,
             **compact,
         }
+        if revision.revision_id == "R0" and self._baseline is None:
+            self._baseline = dict(report)
+        baseline = self._baseline
+        if baseline is not None:
+            report["comparison_to_R0"] = compare_layout_reports(baseline, report)
+        return report

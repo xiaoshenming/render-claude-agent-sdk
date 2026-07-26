@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from collections.abc import Mapping
 from pathlib import Path
 
 import anyio
 
 from .agent import QualityOperatorResult
 from .artifacts import write_run_artifacts
+from .failure_artifacts import write_failed_run_artifacts
+from manim_quality.agents._runtime_models import AgentRunFailed
 from .gate import GateResult, OuterAcceptanceGate
 from .session import QualitySession
 
@@ -18,6 +21,7 @@ class QualityHarnessResult:
     session: QualitySession
     operator_result: QualityOperatorResult
     gate_result: GateResult
+    baseline_layout_report: Mapping[str, object]
 
 
 class QualityHarness:
@@ -61,27 +65,44 @@ class QualityHarness:
             problem_text=problem_text,
             candidate_code=candidate_code,
         )
-        operator_result = self._operator.run(
-            run_id=run_id,
-            workspace=workspace,
-            session=session,
-            relation_checker=self._relation,
-            layout_inspector=self._agent_layout,
-            revision_validator=self._agent_validator,
-            estimated_input_tokens=estimated_input_tokens,
-            reserved_output_tokens=reserved_output_tokens,
-            reserved_cache_read_tokens=reserved_cache_read_tokens,
-            reserved_cache_write_tokens=reserved_cache_write_tokens,
+        baseline_layout = anyio.run(
+            self._agent_layout.inspect,
+            session.baseline,
+            session.problem_hash,
         )
+        try:
+            operator_result = self._operator.run(
+                run_id=run_id,
+                workspace=workspace,
+                session=session,
+                relation_checker=self._relation,
+                layout_inspector=self._agent_layout,
+                revision_validator=self._agent_validator,
+                estimated_input_tokens=estimated_input_tokens,
+                reserved_output_tokens=reserved_output_tokens,
+                reserved_cache_read_tokens=reserved_cache_read_tokens,
+                reserved_cache_write_tokens=reserved_cache_write_tokens,
+            )
+        except AgentRunFailed as error:
+            write_failed_run_artifacts(
+                root=artifact_root,
+                session=session,
+                record=error.record,
+                baseline_layout_report=baseline_layout,
+                error=error,
+            )
+            raise
         gate_result = anyio.run(self._gate.evaluate, session)
         write_run_artifacts(
             root=artifact_root,
             session=session,
             operator_result=operator_result,
             gate_result=gate_result,
+            baseline_layout_report=baseline_layout,
         )
         return QualityHarnessResult(
             session=session,
             operator_result=operator_result,
             gate_result=gate_result,
+            baseline_layout_report=baseline_layout,
         )

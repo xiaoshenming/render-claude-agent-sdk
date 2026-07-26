@@ -11,6 +11,8 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
+from batch_runtime import preflight, write_manifest
+
 
 def main() -> int:
     args = _arguments()
@@ -19,8 +21,13 @@ def main() -> int:
         raise SystemExit("no cases/*/source/main.py files found")
     args.output.mkdir(parents=True, exist_ok=True)
     (args.output / "_batch_logs").mkdir(exist_ok=True)
+    manifest = preflight(args, cases)
+    write_manifest(args.output / "runtime_manifest.json", manifest)
+    if manifest["status"] != "ok":
+        print(json.dumps(manifest, ensure_ascii=False, indent=2), file=sys.stderr)
+        return 3
     started = time.monotonic()
-    with ThreadPoolExecutor(max_workers=args.concurrency) as pool:
+    with ThreadPoolExecutor(max_workers=args.agent_concurrency) as pool:
         futures = {
             pool.submit(_run_case, args, candidate): candidate
             for candidate in cases
@@ -91,7 +98,7 @@ def _run_case(args, candidate: Path) -> dict[str, object]:
                 completed = subprocess.run(
                     argv,
                     cwd=args.repo,
-                    env=os.environ.copy(),
+                    env=_case_environment(args),
                     stdout=stdout,
                     stderr=stderr,
                     timeout=args.case_timeout,
@@ -159,6 +166,15 @@ def _read_json(path: Path) -> dict[str, object]:
     return value if isinstance(value, dict) else {}
 
 
+def _case_environment(args) -> dict[str, str]:
+    environment = os.environ.copy()
+    environment["MANIM_RENDER_CONCURRENCY"] = str(args.render_concurrency)
+    environment["MANIM_RENDER_SEMAPHORE_DIR"] = str(
+        (args.output / "_render_slots").resolve()
+    )
+    return environment
+
+
 def _arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--package", type=Path, required=True)
@@ -167,12 +183,19 @@ def _arguments() -> argparse.Namespace:
     parser.add_argument("--model", required=True)
     parser.add_argument("--manim-python", type=Path, required=True)
     parser.add_argument("--runtime-python-path", type=Path, required=True)
-    parser.add_argument("--concurrency", type=int, default=2)
-    parser.add_argument("--case-timeout", type=int, default=900)
-    parser.add_argument("--max-turns", type=int, default=16)
-    parser.add_argument("--max-tool-calls", type=int, default=18)
+    parser.add_argument("--agent-concurrency", type=int, default=20)
+    parser.add_argument("--render-concurrency", type=int, default=6)
+    parser.add_argument("--case-timeout", type=int, default=1_800)
+    parser.add_argument("--max-turns", type=int, default=24)
+    parser.add_argument("--max-tool-calls", type=int, default=32)
     args = parser.parse_args()
-    for name in ("concurrency", "case_timeout", "max_turns", "max_tool_calls"):
+    for name in (
+        "agent_concurrency",
+        "render_concurrency",
+        "case_timeout",
+        "max_turns",
+        "max_tool_calls",
+    ):
         if getattr(args, name) <= 0:
             parser.error(f"--{name.replace('_', '-')} must be positive")
     return args

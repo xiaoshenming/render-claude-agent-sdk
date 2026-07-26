@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from collections.abc import Mapping
 
 from manim_quality.contracts._json_values import thaw_json_object
 
@@ -20,6 +21,7 @@ def write_run_artifacts(
     session: QualitySession,
     operator_result: QualityOperatorResult,
     gate_result: GateResult,
+    baseline_layout_report: Mapping[str, object] | None = None,
 ) -> None:
     target = Path(root)
     _validate_existing_root(target)
@@ -28,7 +30,7 @@ def write_run_artifacts(
         (target / name).mkdir()
     _write_inputs(target, session)
     _write_revisions(target, session)
-    _write_evidence(target, session, gate_result)
+    _write_evidence(target, session, gate_result, baseline_layout_report or {})
     _write_logs(target, operator_result, gate_result)
     _write_output(target, gate_result)
 
@@ -64,7 +66,12 @@ def _write_evidence(
     target: Path,
     session: QualitySession,
     gate_result: GateResult,
+    baseline_layout_report: Mapping[str, object],
 ) -> None:
+    _write_json(
+        target / "evidence" / "layout.R0.baseline.json",
+        thaw_json_object(baseline_layout_report),
+    )
     _write_json(
         target / "evidence" / "findings.json",
         {
@@ -127,6 +134,9 @@ def _write_logs(
                 "error": item.error,
                 "result_status": item.result_status,
                 "result_hash": item.result_hash,
+                "caller": item.caller,
+                "agent_id": item.agent_id,
+                "agent_type": item.agent_type,
             }
             for item in record.tool_calls
         ],

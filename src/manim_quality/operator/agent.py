@@ -7,7 +7,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 
-from manim_quality.agents._runtime_models import CorrectableOutputError
+from manim_quality.agents._runtime_models import AgentRunFailed, CorrectableOutputError
 from manim_quality.agents.profile import AgentProfile, AgentRole
 from manim_quality.agents.runtime import AgentRunRequest, AgentRuntime
 from manim_quality.agents.usage import AgentCallRecord
@@ -89,7 +89,13 @@ class QualityOperatorAgent:
             subagents=reviewers,
             effort="low",
         )
-        result = self._runtime.run(request)
+        try:
+            result = self._runtime.run(request)
+        except AgentRunFailed as error:
+            recovered = _recover_submitted_output(session, error)
+            if recovered is None:
+                raise
+            return recovered
         summary = _bind_output(result.structured_output, session)
         return QualityOperatorResult(
             revision=session.current_revision,
@@ -98,6 +104,29 @@ class QualityOperatorAgent:
             sdk_messages=tuple(result.sdk_messages),
             subagent_results=tuple(result.subagent_results),
         )
+
+
+def _recover_submitted_output(
+    session: QualitySession,
+    error: AgentRunFailed,
+) -> QualityOperatorResult | None:
+    """Keep a submitted revision when only the terminal summary formatting failed."""
+
+    submitted = session.submitted_revision_id
+    text = (error.record.error or "").lower()
+    if submitted is None or not any(
+        marker in text for marker in ("structured", "output", "terminal")
+    ):
+        return None
+    revision = session.get_revision(submitted)
+    return QualityOperatorResult(
+        revision=revision,
+        summary=(
+            "宿主从 submit_revision 的权威会话状态恢复终态摘要；"
+            "候选仍需通过外层独立渲染与布局复检。"
+        ),
+        call_record=error.record,
+    )
 
 
 def _output_validator(session: QualitySession):
