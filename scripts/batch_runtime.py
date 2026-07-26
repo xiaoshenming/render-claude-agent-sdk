@@ -41,6 +41,17 @@ def preflight(args, candidates: list[Path]) -> dict[str, object]:
         check = _command([command, "-version"])
         if check["returncode"] != 0:
             issues.append(f"{command} unavailable")
+    import_check = _command(
+        [
+            os.environ.get("PYTHON", "python"),
+            "-c",
+            "import manim_quality.operator",
+        ],
+        cwd=args.repo,
+        env=_python_environment(args.repo),
+    )
+    if import_check["returncode"] != 0:
+        issues.append("manim_quality.operator import failed")
     manifest = {
         "status": "ok" if not issues else "failed",
         "issues": issues,
@@ -73,10 +84,20 @@ def write_manifest(path: Path, manifest: dict[str, object]) -> None:
     )
 
 
-def _command(argv: list[str], cwd: Path | None = None) -> dict[str, object]:
+def _command(
+    argv: list[str],
+    cwd: Path | None = None,
+    env: dict[str, str] | None = None,
+) -> dict[str, object]:
     try:
         result = subprocess.run(
-            argv, cwd=cwd, text=True, capture_output=True, timeout=30, check=False
+            argv,
+            cwd=cwd,
+            env=env,
+            text=True,
+            capture_output=True,
+            timeout=30,
+            check=False,
         )
         return {
             "returncode": result.returncode,
@@ -117,3 +138,13 @@ def _detector_hash(repo: Path) -> str:
     import hashlib
 
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _python_environment(repo: Path) -> dict[str, str]:
+    environment = os.environ.copy()
+    source_root = str((repo / "src").resolve())
+    inherited = environment.get("PYTHONPATH", "")
+    environment["PYTHONPATH"] = (
+        source_root if not inherited else os.pathsep.join((source_root, inherited))
+    )
+    return environment

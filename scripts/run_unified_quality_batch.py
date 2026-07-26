@@ -168,6 +168,11 @@ def _read_json(path: Path) -> dict[str, object]:
 
 def _case_environment(args) -> dict[str, str]:
     environment = os.environ.copy()
+    source_root = str((args.repo / "src").resolve())
+    inherited = environment.get("PYTHONPATH", "")
+    environment["PYTHONPATH"] = (
+        source_root if not inherited else os.pathsep.join((source_root, inherited))
+    )
     environment["MANIM_RENDER_CONCURRENCY"] = str(args.render_concurrency)
     environment.setdefault(
         "MANIM_RENDER_SEMAPHORE_DIR",
