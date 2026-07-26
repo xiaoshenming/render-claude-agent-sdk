@@ -127,7 +127,37 @@ def _import_issues(args) -> list[str]:
     )
     if render_import["returncode"] != 0:
         issues.append("render runtime stubs import failed")
+    issues.extend(_probe_wiring_issues(args))
     return issues
+
+
+def _probe_wiring_issues(args) -> list[str]:
+    """The sidecar env vars must survive into the render interpreter;
+    a wrapper that drops them silently disables the layout policy layer
+    and turns every probe run into a fake blocking failure."""
+
+    delegate = Path(args.repo) / "vendor" / "layout_probe" / "probe_runner.txt"
+    env = _render_environment(args.runtime_python_path)
+    env["MANIM_LAYOUT_PROBE_DELEGATE"] = str(delegate)
+    check = _command(
+        [
+            str(args.manim_python),
+            "-c",
+            (
+                "import os, sys; "
+                "sys.exit(0 if os.environ.get('MANIM_LAYOUT_PROBE_DELEGATE')"
+                " else 1)"
+            ),
+        ],
+        cwd=args.repo,
+        env=env,
+    )
+    if check["returncode"] != 0:
+        return [
+            "probe sidecar env not forwarded by manim python wrapper "
+            "(layout policy layer would be silently disabled)"
+        ]
+    return []
 
 
 def write_manifest(path: Path, manifest: dict[str, object]) -> None:

@@ -43,6 +43,18 @@ def main() -> int:
             if target.is_relative_to(REPO):
                 continue
             command.extend(("--volume", f"{target}:{target}:ro"))
+    # Sidecar probe wiring: the delegate (frozen runner) is read-only; the
+    # sidecar file is written next to the probe output inside cwd, which is
+    # already mounted read-write above.
+    delegate = os.environ.get("MANIM_LAYOUT_PROBE_DELEGATE")
+    if delegate:
+        command.extend(("--env", f"MANIM_LAYOUT_PROBE_DELEGATE={delegate}"))
+        target = Path(delegate).resolve()
+        if not target.is_relative_to(REPO) and not target.is_relative_to(cwd):
+            command.extend(("--volume", f"{target}:{target}:ro"))
+    sidecar = os.environ.get("MANIM_LAYOUT_PROBE_SIDECAR_PATH")
+    if sidecar:
+        command.extend(("--env", f"MANIM_LAYOUT_PROBE_SIDECAR_PATH={sidecar}"))
     command.extend((IMAGE, *sys.argv[1:]))
     lock = _acquire_render_slot()
     try:
