@@ -1,1 +1,3 @@
 vendor/logic_engine_mvp_baseline/** -text whitespace=-blank-at-eof
+vendor/logic_self_audit_baseline/** -text
+evals/** -text
