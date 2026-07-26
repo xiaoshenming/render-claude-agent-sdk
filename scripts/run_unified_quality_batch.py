@@ -169,8 +169,9 @@ def _read_json(path: Path) -> dict[str, object]:
 def _case_environment(args) -> dict[str, str]:
     environment = os.environ.copy()
     environment["MANIM_RENDER_CONCURRENCY"] = str(args.render_concurrency)
-    environment["MANIM_RENDER_SEMAPHORE_DIR"] = str(
-        (args.output / "_render_slots").resolve()
+    environment.setdefault(
+        "MANIM_RENDER_SEMAPHORE_DIR",
+        str((args.output / "_render_slots").resolve()),
     )
     return environment
 
