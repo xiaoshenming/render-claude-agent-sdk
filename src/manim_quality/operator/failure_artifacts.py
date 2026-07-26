@@ -49,10 +49,17 @@ def write_failed_run_artifacts(
     failure = _failure(record, session, error)
     _write_json(target / "logs" / "failure.json", failure)
     _write_json(target / "output" / "decision.json", {"decision": "FAILED", **failure})
+    current = session.current_revision
     _write_text(
-        target / "output" / f"latest_validated.{session.current_revision.revision_id}.py",
-        session.current_revision.code,
+        target / "output" / f"last_candidate.{current.revision_id}.py",
+        current.code,
     )
+    best = session.best_validated_revision_id()
+    if best is not None:
+        _write_text(
+            target / "output" / f"best_validated.{best}.py",
+            session.get_revision(best).code,
+        )
 
 
 def _tool_call(item) -> dict[str, object]:
@@ -77,7 +84,10 @@ def _failure(record, session: QualitySession, error: Exception) -> dict[str, obj
         "last_revision_id": session.current_revision.revision_id,
         "last_revision_code_hash": session.current_revision.code_hash,
         "submitted_revision_id": session.submitted_revision_id,
+        "best_validated_revision_id": session.best_validated_revision_id(),
         "tokens": _usage(record.usage),
+        "usage_complete": record.usage_complete,
+        "external_tool_ms": record.external_tool_ms,
         "turns": record.turns,
         "tool_calls": len(record.tool_calls),
     }
@@ -88,6 +98,9 @@ def _failure_status(error: str, session: QualitySession) -> str:
     if session.submitted_revision_id and ("structured" in text or "output" in text):
         return "FAILED_STRUCTURED_OUTPUT"
     for marker, status in (
+        ("timed out", "FAILED_TIMEOUT"),
+        ("timeout", "FAILED_TIMEOUT"),
+        ("elapsed time exceeds", "FAILED_TIMEOUT"),
         ("token", "FAILED_TOKEN_BUDGET"),
         ("inspect", "FAILED_LAYOUT_INSPECT_BUDGET"),
         ("layout", "FAILED_LAYOUT_INSPECT_BUDGET"),

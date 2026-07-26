@@ -193,6 +193,8 @@ def _agent_call(record) -> dict[str, object]:
         "turns": record.turns,
         "observed_model_rounds": record.observed_model_rounds,
         "elapsed_ms": record.elapsed_ms,
+        "external_tool_ms": record.external_tool_ms,
+        "usage_complete": record.usage_complete,
         "error": record.error,
     }
 

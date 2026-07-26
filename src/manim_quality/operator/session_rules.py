@@ -8,9 +8,15 @@ from collections.abc import Mapping
 from manim_quality.layout.policy import layout_invariant_fingerprint
 from manim_quality.revisions.fingerprint import sha256_text
 
+from collections.abc import Sequence
+
 from .models import CandidateAttempt, Finding, FindingCategory, PatchScope
 from .problem_source import extract_problem_text
-from .session_errors import ProblemLockViolation, ScopeViolation
+from .session_errors import (
+    InvalidSessionTransition,
+    ProblemLockViolation,
+    ScopeViolation,
+)
 
 
 def validate_finding_scope(
@@ -27,6 +33,26 @@ def validate_finding_scope(
             raise ValueError(f"unknown finding_id: {finding_id}")
         if item.category is not expected:
             raise ValueError(f"finding category does not match {scope} patch")
+
+
+def require_blocking_findings_repaired(
+    findings: Mapping[str, Finding],
+    attempts: Sequence[CandidateAttempt],
+) -> None:
+    blocking = {
+        item.finding_id
+        for item in findings.values()
+        if item.severity == "blocking"
+    }
+    repaired = {
+        finding_id
+        for attempt in attempts[1:]
+        for finding_id in attempt.finding_ids
+    }
+    if not blocking.issubset(repaired):
+        raise InvalidSessionTransition(
+            "blocking findings require a validated repair revision"
+        )
 
 
 def verify_candidate(

@@ -363,3 +363,71 @@ def test_leading_comment_problem_source_is_outside_patch_boundary() -> None:
             new_text="perpendicular to CD",
             finding_ids=("logic-1",),
         )
+
+
+def test_best_validated_revision_prefers_lowest_blocking_count() -> None:
+    quality = session()
+    quality.record_findings(
+        (
+            finding(),
+            finding("layout-1", FindingCategory.LAYOUT),
+        )
+    )
+    assert quality.best_validated_revision_id() is None
+
+    quality.apply_patch(
+        scope=PatchScope.LOGIC,
+        old_text="Line(LEFT, RIGHT)",
+        new_text="Line(LEFT, 2 * RIGHT)",
+        finding_ids=("logic-1",),
+    )
+    quality.record_validation(
+        revision_id="R1",
+        passed=True,
+        improved=True,
+        fingerprint="sha256:" + "1" * 64,
+    )
+    quality.record_layout_inspection(
+        revision_id="R1",
+        fingerprint="sha256:" + "2" * 64,
+        blocking_count=2,
+    )
+    quality.mark_solution_read("R1")
+    quality.apply_patch(
+        scope=PatchScope.LAYOUT,
+        old_text="self.add(line)",
+        new_text="self.add(line.shift(UP))",
+        finding_ids=("layout-1",),
+    )
+    quality.record_validation(
+        revision_id="R2",
+        passed=True,
+        improved=True,
+        fingerprint="sha256:" + "3" * 64,
+    )
+    quality.record_layout_inspection(
+        revision_id="R2",
+        fingerprint="sha256:" + "4" * 64,
+        blocking_count=5,
+    )
+
+    assert quality.best_validated_revision_id() == "R1"
+
+
+def test_best_validated_revision_ignores_failed_validation() -> None:
+    quality = session()
+    quality.record_findings((finding(),))
+    quality.apply_patch(
+        scope=PatchScope.LOGIC,
+        old_text="Line(LEFT, RIGHT)",
+        new_text="Line(LEFT, 2 * RIGHT)",
+        finding_ids=("logic-1",),
+    )
+    quality.record_validation(
+        revision_id="R1",
+        passed=False,
+        improved=False,
+        fingerprint="sha256:" + "1" * 64,
+    )
+
+    assert quality.best_validated_revision_id() is None

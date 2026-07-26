@@ -18,6 +18,7 @@ from .session_errors import (
 from .session_rules import (
     embedded_problem_hash,
     patch_hash,
+    require_blocking_findings_repaired,
     validate_finding_scope,
     verify_candidate,
 )
@@ -101,6 +102,23 @@ class QualitySession:
             if attempt.revision_id == revision_id:
                 return attempt
         raise ValueError(f"unknown revision_id: {revision_id}")
+
+    def best_validated_revision_id(self) -> str | None:
+        """Latest passing candidate with the lowest known blocking count."""
+
+        best_key: tuple[int, int] | None = None
+        best_id: str | None = None
+        for index, attempt in enumerate(self._attempts[1:], start=1):
+            record = self._validations.get(attempt.revision_id)
+            if record is None or not record.passed:
+                continue
+            inspection = self._layout_inspections.get(attempt.revision_id)
+            blocking = inspection[1] if inspection is not None else 10**9
+            key = (blocking, -index)
+            if best_key is None or key < best_key:
+                best_key = key
+                best_id = attempt.revision_id
+        return best_id
 
     def mark_solution_read(self, revision_id: str) -> None:
         self._require_open()
@@ -243,20 +261,7 @@ class QualitySession:
             )
         if self._finding_batches == 0:
             raise InvalidSessionTransition("findings must be recorded before submit")
-        blocking = {
-            item.finding_id
-            for item in self._findings.values()
-            if item.severity == "blocking"
-        }
-        repaired = {
-            finding_id
-            for attempt in self._attempts[1:]
-            for finding_id in attempt.finding_ids
-        }
-        if not blocking.issubset(repaired):
-            raise InvalidSessionTransition(
-                "blocking findings require a validated repair revision"
-            )
+        require_blocking_findings_repaired(self._findings, self._attempts)
         if revision_id not in self._layout_inspections:
             raise InvalidSessionTransition(
                 "current revision requires a fresh layout inspection"
