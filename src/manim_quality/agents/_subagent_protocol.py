@@ -8,7 +8,7 @@ import time
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
-from ._reviewer_values import normalize_confidence
+from ._reviewer_values import reviewer_payload
 
 
 class SubagentProtocolError(RuntimeError):
@@ -124,7 +124,7 @@ class NativeSubagentProtocol:
             text,
             expected_agent_id=run.agent_id,
         )
-        payload = _reviewer_payload(reviewer_text)
+        payload = reviewer_payload(reviewer_text, SubagentProtocolError)
         run.result = {
             "agent_type": run.agent_type,
             "agent_id": run.agent_id,
@@ -221,15 +221,17 @@ def _result_parts(
     expected_agent_id: str | None,
 ) -> tuple[str, Mapping[str, object] | None]:
     stripped = text.lstrip()
+    start = _json_object_start(stripped)
     try:
-        _, end = json.JSONDecoder().raw_decode(stripped)
+        _, end = json.JSONDecoder().raw_decode(stripped[start:])
     except json.JSONDecodeError as error:
-        message = "Reviewer ToolResult must start with JSON"
+        message = "Reviewer ToolResult must contain a JSON object"
         raise SubagentProtocolError(message) from error
-    reviewer_text = stripped[:end]
+    end += start
+    reviewer_text = stripped[start:end]
     if len(reviewer_text) > 8_000:
         raise SubagentProtocolError("Reviewer ToolResult exceeds 8000 characters")
-    trailer = stripped[end:]
+    trailer = _without_closing_fence(stripped[end:])
     if not trailer.strip():
         return reviewer_text, None
     match = _SDK_RESULT_TRAILER.fullmatch(trailer)
@@ -245,50 +247,26 @@ def _result_parts(
     }
 
 
-def _reviewer_payload(text: str) -> Mapping[str, object]:
-    try:
-        value = json.loads(text)
-    except json.JSONDecodeError as error:
-        raise SubagentProtocolError("Reviewer ToolResult must be valid JSON") from error
-    if not isinstance(value, Mapping):
-        raise SubagentProtocolError("Reviewer ToolResult must be a JSON object")
-    required = {"decision", "diagnosis", "issues", "coverage", "confidence"}
-    if not required.issubset(value):
-        raise SubagentProtocolError("Reviewer ToolResult has invalid fields")
-    if value["decision"] not in {"pass", "needs_repair"}:
-        raise SubagentProtocolError("Reviewer decision is invalid")
-    if not isinstance(value["diagnosis"], str):
-        raise SubagentProtocolError("Reviewer diagnosis must be text")
-    issues = value["issues"]
-    if not isinstance(issues, list) or len(issues) > 12:
-        raise SubagentProtocolError("Reviewer issues must contain at most 12 items")
-    normalized_issues = [_normalize_issue(issue) for issue in issues]
-    if not isinstance(value["coverage"], Mapping):
-        raise SubagentProtocolError("Reviewer coverage must be an object")
-    normalized = {name: value[name] for name in required}
-    normalized["issues"] = normalized_issues
-    normalized["confidence"] = normalize_confidence(
-        value["confidence"],
-        SubagentProtocolError,
-    )
-    return normalized
+def _json_object_start(stripped: str) -> int:
+    """Tolerate markdown fences and prose before the reviewer JSON object.
+
+    The payload itself is still validated strictly after extraction.
+    """
+
+    fence = re.search(r"```(?:json)?\s*\{", stripped)
+    if fence is not None:
+        return fence.end() - 1
+    brace = stripped.find("{")
+    if brace < 0:
+        raise SubagentProtocolError("Reviewer ToolResult contains no JSON object")
+    return brace
 
 
-def _normalize_issue(value: object) -> Mapping[str, object]:
-    required = {"type", "target", "evidence", "required_invariant", "repair_scope"}
-    if not isinstance(value, Mapping) or not required.issubset(value):
-        raise SubagentProtocolError("Reviewer issue has invalid fields")
-    evidence = value["evidence"]
-    if (
-        not isinstance(evidence, list)
-        or len(evidence) > 2
-        or any(not isinstance(item, str) for item in evidence)
-    ):
-        raise SubagentProtocolError("Reviewer issue evidence exceeds its bound")
-    for name in required - {"evidence"}:
-        if not isinstance(value[name], str) or not value[name].strip():
-            raise SubagentProtocolError(f"Reviewer issue {name} must be text")
-    return {name: value[name] for name in required}
+def _without_closing_fence(trailer: str) -> str:
+    stripped = trailer.lstrip()
+    if stripped.startswith("```"):
+        return stripped[3:]
+    return trailer
 
 
 def _now_ms() -> int:

@@ -2,10 +2,10 @@ import json
 
 import pytest
 
+from manim_quality.agents._reviewer_values import reviewer_payload
 from manim_quality.agents._subagent_protocol import (
     NativeSubagentProtocol,
     SubagentProtocolError,
-    _reviewer_payload,
 )
 
 REVIEWER = "math_geometry_reviewer"
@@ -41,7 +41,7 @@ def test_reviewer_confidence_accepts_common_equivalent_scales(
     payload = json.loads(valid_result())
     payload["confidence"] = raw
 
-    normalized = _reviewer_payload(json.dumps(payload))
+    normalized = reviewer_payload(json.dumps(payload), SubagentProtocolError)
 
     assert normalized["confidence"] == expected
 
@@ -61,7 +61,7 @@ def test_reviewer_payload_ignores_extra_metadata() -> None:
         }
     ]
 
-    normalized = _reviewer_payload(json.dumps(payload))
+    normalized = reviewer_payload(json.dumps(payload), SubagentProtocolError)
 
     assert "notes" not in normalized
     assert "severity" not in normalized["issues"][0]
@@ -148,7 +148,7 @@ def test_protocol_requires_stop_and_one_successful_json_result() -> None:
         )
 
     protocol = stopped()
-    with pytest.raises(SubagentProtocolError, match="start with JSON"):
+    with pytest.raises(SubagentProtocolError, match="no JSON object"):
         protocol.record_result(
             tool_use_id="tool-1",
             content="not-json",
@@ -255,3 +255,24 @@ def test_protocol_rejects_unbounded_or_malformed_issue_contract() -> None:
             is_error=False,
             parent_tool_use_id=None,
         )
+
+
+def test_reviewer_json_survives_markdown_fences_and_prose() -> None:
+    import json as _json
+
+    from manim_quality.agents._subagent_protocol import _result_parts
+
+    payload = _json.dumps(
+        {
+            "decision": "pass",
+            "diagnosis": "clean",
+            "issues": [],
+            "coverage": {"scenes": 1},
+            "confidence": 0.9,
+        }
+    )
+    wrapped = f"Here is my review:\n```json\n{payload}\n```\n"
+    reviewer_text, trailer = _result_parts(wrapped, expected_agent_id=None)
+
+    assert _json.loads(reviewer_text)["decision"] == "pass"
+    assert trailer is None
