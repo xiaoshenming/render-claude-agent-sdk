@@ -215,8 +215,12 @@ def _provider_environment(environ: Mapping[str, str]) -> dict[str, str]:
         values["ANTHROPIC_AUTH_TOKEN"] = ""
     elif auth_token:
         values["ANTHROPIC_AUTH_TOKEN"] = auth_token
-    else:
+    elif base_url:
+        # A custom gateway without an explicit credential is a
+        # misconfiguration; only a fully clean environment may fall
+        # through to the ambient official login below.
         raise SystemExit("provider authentication is required")
+    # Empty mapping: the SDK CLI resolves the official login session.
     return values
 
 

@@ -6,10 +6,11 @@ import ast
 import json
 import os
 import platform
+import shutil
 import subprocess
 from pathlib import Path
 
-import httpx
+from provider_smoke import _provider_tool_smoke
 
 
 def preflight(args, candidates: list[Path]) -> dict[str, object]:
@@ -54,7 +55,11 @@ def _credential_issues() -> list[str]:
     for name in ("ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_API_KEY"):
         if os.environ.get(name, "").strip():
             return []
-    return ["provider authentication missing"]
+    if os.environ.get("ANTHROPIC_BASE_URL", "").strip():
+        return ["custom gateway is set without a credential"]
+    if shutil.which("claude") is None:
+        return ["no credential and no claude CLI for ambient official login"]
+    return []
 
 
 def _path_issues(args) -> list[str]:
@@ -199,96 +204,3 @@ def _render_environment(runtime_path: Path) -> dict[str, str]:
     return environment
 
 
-def _provider_tool_smoke(model: str) -> dict[str, object]:
-    base = os.environ.get("ANTHROPIC_BASE_URL", "https://api.anthropic.com").rstrip("/")
-    api_key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
-    auth_token = os.environ.get("ANTHROPIC_AUTH_TOKEN", "").strip()
-    if not api_key and not auth_token:
-        return {"ok": False, "error": "authentication missing"}
-    # Match the SDK's single-credential semantics: an API key travels as
-    # x-api-key, a bearer token as Authorization; never send both.
-    if api_key:
-        headers = {"x-api-key": api_key, "anthropic-version": "2023-06-01"}
-    else:
-        headers = {
-            "authorization": f"Bearer {auth_token}",
-            "anthropic-version": "2023-06-01",
-        }
-    payload = {
-        "model": model,
-        "max_tokens": 32,
-        "messages": [{"role": "user", "content": "Call the health tool once."}],
-        "tools": [
-            {
-                "name": "health",
-                "description": "Return runtime health.",
-                "input_schema": {
-                    "type": "object",
-                    "properties": {},
-                    "additionalProperties": False,
-                },
-            }
-        ],
-        "tool_choice": {"type": "tool", "name": "health"},
-    }
-    try:
-        response = httpx.post(
-            f"{base}/v1/messages",
-            headers=headers,
-            json=payload,
-            timeout=30,
-        )
-        response.raise_for_status()
-        value = response.json()
-    except httpx.TransportError:
-        # Some relays TLS-fingerprint-filter Python clients while serving
-        # the Node-based SDK CLI just fine; retry the same real tool_use
-        # smoke through Node before declaring the provider unreachable.
-        return _provider_tool_smoke_node(base, headers, payload)
-    except Exception as error:
-        return {"ok": False, "error": f"{type(error).__name__}: {str(error)[:300]}"}
-    return _tool_smoke_verdict(value)
-
-
-def _tool_smoke_verdict(value: object) -> dict[str, object]:
-    content = value.get("content") if isinstance(value, dict) else None
-    used = any(
-        isinstance(item, dict) and item.get("type") == "tool_use"
-        for item in (content or [])
-    )
-    usage = value.get("usage") if isinstance(value, dict) else None
-    return {"ok": used, "error": None if used else "tool_use missing", "usage": usage}
-
-
-def _provider_tool_smoke_node(
-    base: str,
-    headers: dict[str, str],
-    payload: dict[str, object],
-) -> dict[str, object]:
-    script = (
-        "const [base, headers, payload] ="
-        " JSON.parse(require('fs').readFileSync(0, 'utf8'));"
-        "fetch(base + '/v1/messages',"
-        " {method: 'POST', headers: {...headers, 'content-type':"
-        " 'application/json'}, body: JSON.stringify(payload)})"
-        ".then(r => r.text().then(t => console.log(JSON.stringify("
-        "{status: r.status, body: t}))))"
-        ".catch(e => { console.log(JSON.stringify({status: 0, body:"
-        " String(e && e.cause ? e.cause : e)})); });"
-    )
-    result = subprocess.run(
-        ["node", "-e", script],
-        input=json.dumps([base, headers, payload]),
-        text=True,
-        capture_output=True,
-        timeout=60,
-        check=False,
-    )
-    try:
-        reply = json.loads(result.stdout.strip().splitlines()[-1])
-        if reply["status"] != 200:
-            detail = str(reply["body"])[:300]
-            return {"ok": False, "error": f"node smoke {reply['status']}: {detail}"}
-        return _tool_smoke_verdict(json.loads(reply["body"]))
-    except Exception as error:
-        return {"ok": False, "error": f"node smoke failed: {error}"}

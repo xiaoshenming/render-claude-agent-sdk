@@ -74,3 +74,7 @@ def test_problem_identity_falls_back_to_solution_hash() -> None:
     assert _problem_identity(candidate, None).startswith(
         "solution-source:sha256:"
     )
+
+
+def test_clean_environment_falls_through_to_ambient_official_login() -> None:
+    assert _provider_environment({"UNRELATED": "ignored"}) == {}
