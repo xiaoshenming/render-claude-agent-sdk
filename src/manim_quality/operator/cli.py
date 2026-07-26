@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import signal
 import uuid
 from collections.abc import Mapping, Sequence
 from pathlib import Path
@@ -30,9 +31,6 @@ from .services import (
 )
 from .source_view import extract_solution
 
-_PROVIDER_ENV = ("ANTHROPIC_BASE_URL", "ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_API_KEY")
-
-
 class MemoryUsageSink(UsageSink):
     def __init__(self) -> None:
         self.records: list[AgentCallRecord] = []
@@ -41,8 +39,23 @@ class MemoryUsageSink(UsageSink):
         self.records.append(record)
 
 
+def _install_sigterm_handler() -> None:
+    """Convert batch-level SIGTERM into an exception the harness can
+    catch, so failure evidence is persisted before the process exits."""
+
+    def _raise(signum, frame):
+        del signum, frame
+        raise TimeoutError("case timeout: SIGTERM received from batch runner")
+
+    try:
+        signal.signal(signal.SIGTERM, _raise)
+    except ValueError:
+        pass  # not the main thread; embedding caller owns signal handling
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     args = _arguments(argv)
+    _install_sigterm_handler()
     candidate = args.candidate.resolve(strict=True).read_text(encoding="utf-8")
     problem = _problem_identity(candidate, args.problem)
     workspace = args.workspace.resolve(strict=True)

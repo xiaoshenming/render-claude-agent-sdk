@@ -21,6 +21,7 @@ from claude_agent_sdk import (
 from manim_quality.contracts._json_values import thaw_json_object
 
 from ._claude_hooks import ClaudeHookState, ClaudeSdkProtocolError, token_usage
+from ._deadline import _DeadlineExtender
 from ._runtime_models import BackendRequest, BackendResult
 from .runtime import AgentBackend, RuntimeControls
 from .usage import TokenUsage
@@ -48,31 +49,6 @@ class ClaudeSdkRunError(RuntimeError):
     pass
 
 
-class _DeadlineExtender:
-    """Push the session deadline out by external tool wall time.
-
-    The reasoning budget bounds model and protocol time only; real render,
-    probe, and detector execution stay bounded by their own tool timeouts.
-    Overlapping tool executions extend by their shared wall-clock window
-    once, so concurrent calls cannot inflate the deadline.
-    """
-
-    def __init__(self) -> None:
-        self.scope: anyio.CancelScope | None = None
-        self._depth = 0
-        self._started = 0.0
-
-    def begin(self) -> None:
-        if self._depth == 0:
-            self._started = anyio.current_time()
-        self._depth += 1
-
-    def finish(self) -> None:
-        self._depth -= 1
-        if self._depth == 0 and self.scope is not None:
-            window = anyio.current_time() - self._started
-            if window > 0:
-                self.scope.deadline += window
 
 
 class ClaudeSdkBackend(AgentBackend):
@@ -96,6 +72,23 @@ class ClaudeSdkBackend(AgentBackend):
         state = ClaudeHookState(controls, request)
         extender = _DeadlineExtender()
         options = _options(request, state, self._provider_env, extender)
+        try:
+            return await self._consume(request, controls, state, options, extender)
+        except Exception as error:
+            # Keep the observed transcript on the failure so interrupted
+            # runs still archive their SDK message trail.
+            setattr(error, "sdk_messages", state.sdk_messages)
+            setattr(error, "subagent_results", state.subagent_results)
+            raise
+
+    async def _consume(
+        self,
+        request: BackendRequest,
+        controls: RuntimeControls,
+        state: ClaudeHookState,
+        options: ClaudeAgentOptions,
+        extender: _DeadlineExtender,
+    ) -> BackendResult:
         result: ResultMessage | None = None
         try:
             with anyio.CancelScope(

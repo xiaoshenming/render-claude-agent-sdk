@@ -94,22 +94,38 @@ def _run_case(args, candidate: Path) -> dict[str, object]:
         with (log_root / f"{case_id}.stderr.log").open(
             "w", encoding="utf-8"
         ) as stderr:
-            try:
-                completed = subprocess.run(
-                    argv,
-                    cwd=args.repo,
-                    env=_case_environment(args),
-                    stdout=stdout,
-                    stderr=stderr,
-                    timeout=args.case_timeout,
-                    check=False,
-                    shell=False,
-                )
-                exit_code = completed.returncode
-            except subprocess.TimeoutExpired:
-                exit_code = 124
+            exit_code = _run_bounded_case(
+                argv,
+                args=args,
+                stdout=stdout,
+                stderr=stderr,
+            )
     elapsed = round(time.monotonic() - started, 3)
     return _result(case_id, output, exit_code, elapsed, resumed=False)
+
+
+def _run_bounded_case(argv, *, args, stdout, stderr) -> int:
+    """Bound one case; on timeout SIGTERM first so the CLI can persist
+    failure evidence, and only SIGKILL after the grace period."""
+
+    process = subprocess.Popen(
+        argv,
+        cwd=args.repo,
+        env=_case_environment(args),
+        stdout=stdout,
+        stderr=stderr,
+        shell=False,
+    )
+    try:
+        return process.wait(timeout=args.case_timeout)
+    except subprocess.TimeoutExpired:
+        process.terminate()
+        try:
+            process.wait(timeout=args.case_grace)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            process.wait()
+        return 124
 
 
 def _result(
@@ -192,6 +208,7 @@ def _arguments() -> argparse.Namespace:
     parser.add_argument("--agent-concurrency", type=int, default=20)
     parser.add_argument("--render-concurrency", type=int, default=10)
     parser.add_argument("--case-timeout", type=int, default=3_600)
+    parser.add_argument("--case-grace", type=int, default=120)
     parser.add_argument("--max-turns", type=int, default=24)
     parser.add_argument("--max-tool-calls", type=int, default=32)
     args = parser.parse_args()
@@ -199,6 +216,7 @@ def _arguments() -> argparse.Namespace:
         "agent_concurrency",
         "render_concurrency",
         "case_timeout",
+        "case_grace",
         "max_turns",
         "max_tool_calls",
     ):

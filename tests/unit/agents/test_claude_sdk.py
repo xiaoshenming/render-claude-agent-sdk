@@ -1194,7 +1194,9 @@ def test_sdk_runs_foreground_native_reviewer_and_archives_tool_result(
     ]
 
 
-def test_deadline_extender_pushes_deadline_by_external_tool_time() -> None:
+def test_deadline_is_suspended_during_tools_and_restored_with_window() -> None:
+    import math
+
     from manim_quality.agents.claude_sdk import _DeadlineExtender
 
     async def scenario() -> None:
@@ -1208,8 +1210,10 @@ def test_deadline_extender_pushes_deadline_by_external_tool_time() -> None:
 
         extender.begin()
         extender.begin()  # overlapping executions share one window
+        assert scope.deadline == math.inf  # cannot fire mid-tool
         await anyio.sleep(0.05)
         extender.finish()
+        assert scope.deadline == math.inf  # one tool still running
         extender.finish()
 
         extended = scope.deadline - before

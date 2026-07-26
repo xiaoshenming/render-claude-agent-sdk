@@ -151,8 +151,16 @@ class AgentRunResult:
 
 
 class AgentRunFailed(RuntimeError):
-    def __init__(self, record: AgentCallRecord) -> None:
+    def __init__(
+        self,
+        record: AgentCallRecord,
+        *,
+        sdk_messages: tuple = (),
+        subagent_results: tuple = (),
+    ) -> None:
         self.record = record
+        self.sdk_messages = tuple(sdk_messages)
+        self.subagent_results = tuple(subagent_results)
         super().__init__(record.error or "Agent run failed")
 
 

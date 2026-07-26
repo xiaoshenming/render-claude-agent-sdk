@@ -97,7 +97,7 @@ class AgentRuntime:
         )
         self._usage_sink.save(record)
         if caught is not None:
-            raise AgentRunFailed(record) from caught
+            _raise_run_failed(record, caught)
         structured_output = record.structured_output or freeze_json_object(
             {}, "structured_output"
         )
@@ -107,6 +107,14 @@ class AgentRuntime:
             sdk_messages=backend_result.sdk_messages,
             subagent_results=backend_result.subagent_results,
         )
+
+
+def _raise_run_failed(record, caught: Exception) -> None:
+    raise AgentRunFailed(
+        record,
+        sdk_messages=getattr(caught, "sdk_messages", ()),
+        subagent_results=getattr(caught, "subagent_results", ()),
+    ) from caught
 
 
 def _round_counts(
