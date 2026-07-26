@@ -102,3 +102,57 @@ def test_detached_render_groups_are_tracked_and_reapable(tmp_path) -> None:
     assert reaped == 1
     worker.join(timeout=10)
     assert not process_module._ACTIVE_GROUPS
+
+
+def test_render_cache_flag_controls_manim_caching(tmp_path) -> None:
+    from manim_quality.operator.runtime_tools.render import (
+        ManimRenderer,
+        _newest_video,
+    )
+
+    workspace = tmp_path / "ws"
+    workspace.mkdir()
+    interpreter = tmp_path / "python"
+    interpreter.touch()
+
+    captured = {}
+
+    def fake_run(argv, **kwargs):
+        captured["argv"] = argv
+        raise OSError("stop before real subprocess")
+
+    import manim_quality.operator.runtime_tools.render as render_module
+
+    original = render_module.run_to_artifacts
+    render_module.run_to_artifacts = fake_run
+    try:
+        cold = ManimRenderer(
+            source_workspace=workspace,
+            python_executable=interpreter,
+        )
+        cold.render(tmp_path / "R1", tmp_path / "c.py")
+        assert "--disable_caching" in captured["argv"]
+        assert str(tmp_path / "R1" / "media") in captured["argv"]
+
+        cached = ManimRenderer(
+            source_workspace=workspace,
+            python_executable=interpreter,
+            cache_dir=tmp_path / "shared_cache",
+        )
+        cached.render(tmp_path / "R2", tmp_path / "c.py")
+        assert "--disable_caching" not in captured["argv"]
+        assert str(tmp_path / "shared_cache") in captured["argv"]
+    finally:
+        render_module.run_to_artifacts = original
+
+    # final video selection must skip Manim's partial movie segments
+    final_dir = tmp_path / "shared_cache" / "videos" / "c" / "480p15"
+    partial = final_dir / "partial_movie_files" / "Solution"
+    partial.mkdir(parents=True)
+    (final_dir / "Solution.mp4").write_bytes(b"final")
+    import time
+
+    time.sleep(0.01)
+    (partial / "seg01.mp4").write_bytes(b"segment-newer-mtime")
+    chosen = _newest_video(tmp_path / "shared_cache")
+    assert chosen is not None and chosen.name == "Solution.mp4"

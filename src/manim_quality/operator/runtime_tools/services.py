@@ -32,14 +32,21 @@ class RuntimeToolchain:
         environment: dict[str, str] | None = None,
         detector_path: Path | None = None,
         scene_name: str = "Solution",
+        render_cache: bool = False,
     ) -> None:
         self._workspaces = RevisionWorkspace(artifact_root)
         self.reports_dir = Path(artifact_root) / "reports"
+        # Cache scope is one toolchain = one problem; same-revision renders
+        # are serialized by self._lock, so the shared media dir never sees
+        # concurrent writers.
         self._renderer = ManimRenderer(
             source_workspace=source_workspace,
             python_executable=python_executable,
             environment=environment,
             scene_name=scene_name,
+            cache_dir=(
+                Path(artifact_root) / "render_cache" if render_cache else None
+            ),
         )
         self._probe = BBoxProbe(
             source_workspace=source_workspace,

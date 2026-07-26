@@ -132,6 +132,8 @@ def _run_case(args, candidate: Path) -> dict[str, object]:
     ]
     if args.allow_ambient_login:
         argv.append("--allow-ambient-login")
+    if args.render_cache:
+        argv.append("--render-cache")
     started = time.monotonic()
     with (log_root / f"{case_id}.stdout.log").open(
         "w", encoding="utf-8"
@@ -255,6 +257,7 @@ def _arguments() -> argparse.Namespace:
     parser.add_argument("--case-timeout", type=int, default=3_600)
     parser.add_argument("--case-grace", type=int, default=120)
     parser.add_argument("--allow-ambient-login", action="store_true")
+    parser.add_argument("--render-cache", action="store_true")
     parser.add_argument("--max-turns", type=int, default=24)
     parser.add_argument("--max-tool-calls", type=int, default=40)
     args = parser.parse_args()

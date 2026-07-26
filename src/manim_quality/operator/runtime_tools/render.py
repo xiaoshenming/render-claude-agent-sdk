@@ -20,6 +20,7 @@ class ManimRenderer:
         scene_name: str = "Solution",
         timeout_seconds: int = 1_200,
         quality: str = "l",
+        cache_dir: Path | None = None,
     ) -> None:
         self._workspace = source_workspace.resolve(strict=True)
         self._python = python_executable.resolve(strict=True)
@@ -27,9 +28,14 @@ class ManimRenderer:
         self._scene = scene_name
         self._timeout = timeout_seconds
         self._quality = quality
+        # A shared cache_dir enables Manim's content-hashed partial-movie
+        # cache across revisions of one problem: unchanged animations are
+        # reused, only edited segments re-render. Callers keep this OFF for
+        # the acceptance gate so delivered videos are always cold renders.
+        self._cache_dir = cache_dir
 
     def render(self, revision_dir: Path, candidate: Path) -> RenderResult:
-        media = revision_dir / "media"
+        media = self._cache_dir or (revision_dir / "media")
         argv = [
             str(self._python),
             "-m",
@@ -39,8 +45,9 @@ class ManimRenderer:
             f"-q{self._quality}",
             "--media_dir",
             str(media),
-            "--disable_caching",
         ]
+        if self._cache_dir is None:
+            argv.append("--disable_caching")
         try:
             result = run_to_artifacts(
                 argv,
@@ -69,7 +76,11 @@ class ManimRenderer:
 
 
 def _newest_video(media: Path) -> Path | None:
-    videos = [path for path in media.rglob("*.mp4") if path.is_file()]
+    videos = [
+        path
+        for path in media.rglob("*.mp4")
+        if path.is_file() and "partial_movie_files" not in path.parts
+    ]
     return max(videos, key=lambda path: path.stat().st_mtime_ns) if videos else None
 
 
