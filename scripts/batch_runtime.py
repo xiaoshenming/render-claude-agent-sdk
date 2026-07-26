@@ -201,9 +201,19 @@ def _render_environment(runtime_path: Path) -> dict[str, str]:
 
 def _provider_tool_smoke(model: str) -> dict[str, object]:
     base = os.environ.get("ANTHROPIC_BASE_URL", "https://api.anthropic.com").rstrip("/")
-    key = os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("ANTHROPIC_AUTH_TOKEN")
-    if not key:
+    api_key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
+    auth_token = os.environ.get("ANTHROPIC_AUTH_TOKEN", "").strip()
+    if not api_key and not auth_token:
         return {"ok": False, "error": "authentication missing"}
+    # Match the SDK's single-credential semantics: an API key travels as
+    # x-api-key, a bearer token as Authorization; never send both.
+    if api_key:
+        headers = {"x-api-key": api_key, "anthropic-version": "2023-06-01"}
+    else:
+        headers = {
+            "authorization": f"Bearer {auth_token}",
+            "anthropic-version": "2023-06-01",
+        }
     payload = {
         "model": model,
         "max_tokens": 32,
@@ -224,11 +234,7 @@ def _provider_tool_smoke(model: str) -> dict[str, object]:
     try:
         response = httpx.post(
             f"{base}/v1/messages",
-            headers={
-                "x-api-key": key,
-                "authorization": f"Bearer {key}",
-                "anthropic-version": "2023-06-01",
-            },
+            headers=headers,
             json=payload,
             timeout=30,
         )

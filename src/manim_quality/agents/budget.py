@@ -59,6 +59,8 @@ class BudgetTracker:
         self._turns = 0
         self._tool_calls = 0
         self._external_ms = 0
+        self._external_depth = 0
+        self._external_started = 0.0
         self._usage_reconciled = False
 
     def check_context(self, context_bytes: int) -> None:
@@ -126,13 +128,22 @@ class BudgetTracker:
 
     @contextmanager
     def external_call(self) -> Generator[None, None, None]:
-        """Exclude external tool wall time from the reasoning elapsed budget."""
+        """Exclude external tool wall time from the reasoning elapsed budget.
 
-        started = self._clock()
+        Overlapping calls count the shared wall-clock window once, so
+        concurrent validate/inspect execution cannot deflate elapsed time.
+        """
+
+        if self._external_depth == 0:
+            self._external_started = self._clock()
+        self._external_depth += 1
         try:
             yield
         finally:
-            self._external_ms += max(0, int((self._clock() - started) * 1_000))
+            self._external_depth -= 1
+            if self._external_depth == 0:
+                window = self._clock() - self._external_started
+                self._external_ms += max(0, int(window * 1_000))
 
     def snapshot(self) -> BudgetSnapshot:
         return BudgetSnapshot(

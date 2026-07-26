@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import threading
 from pathlib import Path
 
 import anyio
@@ -54,8 +55,16 @@ class RuntimeToolchain:
         self._detector = LayoutIssueDetector(detector_path)
         self._renders: dict[str, RenderResult] = {}
         self._probes: dict[str, ProbeResult] = {}
+        # Tools may run concurrently in worker threads within one round;
+        # the reentrant lock serializes render/probe so the same revision
+        # is never rendered twice and workspace writes never race.
+        self._lock = threading.RLock()
 
     def render(self, revision: CandidateAttempt) -> RenderResult:
+        with self._lock:
+            return self._render_locked(revision)
+
+    def _render_locked(self, revision: CandidateAttempt) -> RenderResult:
         cached = self._renders.get(revision.code_hash)
         if cached is not None:
             return cached
@@ -65,10 +74,14 @@ class RuntimeToolchain:
         return result
 
     def probe(self, revision: CandidateAttempt) -> ProbeResult:
+        with self._lock:
+            return self._probe_locked(revision)
+
+    def _probe_locked(self, revision: CandidateAttempt) -> ProbeResult:
         cached = self._probes.get(revision.code_hash)
         if cached is not None:
             return cached
-        rendered = self.render(revision)
+        rendered = self._render_locked(revision)
         if not rendered.ok:
             result = ProbeResult(
                 False,

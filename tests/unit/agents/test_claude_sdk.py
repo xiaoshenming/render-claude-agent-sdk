@@ -1199,14 +1199,20 @@ def test_deadline_extender_pushes_deadline_by_external_tool_time() -> None:
 
     async def scenario() -> None:
         extender = _DeadlineExtender()
-        extender.extend(5.0)  # no scope bound yet: must be a no-op
+        extender.begin()  # no scope bound yet: must be a no-op
+        extender.finish()
 
-        scope = anyio.CancelScope(deadline=100.0)
+        scope = anyio.CancelScope(deadline=anyio.current_time() + 100.0)
         extender.scope = scope
-        extender.extend(2.5)
-        extender.extend(0.0)
-        extender.extend(-1.0)
+        before = scope.deadline
 
-        assert scope.deadline == 102.5
+        extender.begin()
+        extender.begin()  # overlapping executions share one window
+        await anyio.sleep(0.05)
+        extender.finish()
+        extender.finish()
+
+        extended = scope.deadline - before
+        assert 0.04 <= extended <= 5.0
 
     anyio.run(scenario)

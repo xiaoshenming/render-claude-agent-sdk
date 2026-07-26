@@ -53,14 +53,26 @@ class _DeadlineExtender:
 
     The reasoning budget bounds model and protocol time only; real render,
     probe, and detector execution stay bounded by their own tool timeouts.
+    Overlapping tool executions extend by their shared wall-clock window
+    once, so concurrent calls cannot inflate the deadline.
     """
 
     def __init__(self) -> None:
         self.scope: anyio.CancelScope | None = None
+        self._depth = 0
+        self._started = 0.0
 
-    def extend(self, seconds: float) -> None:
-        if self.scope is not None and seconds > 0:
-            self.scope.deadline += seconds
+    def begin(self) -> None:
+        if self._depth == 0:
+            self._started = anyio.current_time()
+        self._depth += 1
+
+    def finish(self) -> None:
+        self._depth -= 1
+        if self._depth == 0 and self.scope is not None:
+            window = anyio.current_time() - self._started
+            if window > 0:
+                self.scope.deadline += window
 
 
 class ClaudeSdkBackend(AgentBackend):
@@ -238,14 +250,14 @@ def _sdk_tool(
         thaw_json_object(grant.input_schema),
     )
     async def invoke(arguments):
-        started = anyio.current_time()
+        extender.begin()
         try:
             if managed:
                 text = await state.execute_managed_tool(grant.sdk_name, arguments)
             else:
                 text = await state.execute_read_tool(grant.sdk_name, arguments)
         finally:
-            extender.extend(anyio.current_time() - started)
+            extender.finish()
         return {"content": [{"type": "text", "text": text}]}
 
     return invoke
