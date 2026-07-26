@@ -9,6 +9,29 @@ import subprocess
 import httpx
 
 
+def _proxy_env_names() -> list[str]:
+    names = ("http_proxy", "https_proxy", "HTTP_PROXY", "HTTPS_PROXY")
+    return [name for name in names if os.environ.get(name, "").strip()]
+
+
+def _transport_failure_verdict(base, headers, payload) -> dict[str, object]:
+    # httpx honours proxy env vars while node fetch ignores them; retry
+    # through Node, then decide what the transport failure really meant.
+    verdict = _provider_tool_smoke_node(base, headers, payload)
+    if verdict.get("ok") and _proxy_env_names():
+        # The SDK CLI honours the same proxy env that just broke httpx,
+        # so real agent calls would fail even though Node passed.
+        return {
+            "ok": False,
+            "error": (
+                "gateway unreachable through configured proxy but fine "
+                f"directly; unset {', '.join(_proxy_env_names())} "
+                "for the SDK CLI"
+            ),
+        }
+    return verdict
+
+
 def _provider_tool_smoke(model: str) -> dict[str, object]:
     base = os.environ.get("ANTHROPIC_BASE_URL", "https://api.anthropic.com").rstrip("/")
     api_key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
@@ -53,10 +76,7 @@ def _provider_tool_smoke(model: str) -> dict[str, object]:
         response.raise_for_status()
         value = response.json()
     except httpx.TransportError:
-        # Some relays TLS-fingerprint-filter Python clients while serving
-        # the Node-based SDK CLI just fine; retry the same real tool_use
-        # smoke through Node before declaring the provider unreachable.
-        return _provider_tool_smoke_node(base, headers, payload)
+        return _transport_failure_verdict(base, headers, payload)
     except Exception as error:
         return {"ok": False, "error": f"{type(error).__name__}: {str(error)[:300]}"}
     return _tool_smoke_verdict(value)

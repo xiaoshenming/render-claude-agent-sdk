@@ -41,6 +41,7 @@ def main() -> int:
                 f"{result['status']}",
                 flush=True,
             )
+    results = _retry_transient_failures(args, cases, results)
     results.sort(key=lambda item: str(item["case_id"]))
     summary = _summary(results, round(time.monotonic() - started, 3))
     (args.output / "batch_summary.json").write_text(
@@ -49,6 +50,47 @@ def main() -> int:
     )
     print(json.dumps(summary["totals"], ensure_ascii=False), flush=True)
     return 0 if summary["totals"]["failed"] == 0 else 1
+
+
+_TRANSIENT_MARKERS = (
+    "econnreset",
+    "server_error",
+    "unable to connect",
+    "connection error",
+    "overloaded",
+)
+
+
+def _transient_infra_failure(result: dict[str, object]) -> bool:
+    if result.get("status") != "FAILED":
+        return False
+    decision = result.get("decision")
+    error = str((decision or {}).get("error", "")).lower()
+    return any(marker in error for marker in _TRANSIENT_MARKERS)
+
+
+def _retry_transient_failures(args, cases, results):
+    """Retry gateway-level failures once; the first attempt is kept aside."""
+
+    by_id = {candidate.parents[1].name: candidate for candidate in cases}
+    updated = []
+    for result in results:
+        case_id = str(result["case_id"])
+        failed_dir = args.output / case_id
+        attempt_dir = args.output / f"{case_id}.infra_failed_1"
+        if (
+            not _transient_infra_failure(result)
+            or case_id not in by_id
+            or attempt_dir.exists()
+        ):
+            updated.append(result)
+            continue
+        failed_dir.rename(attempt_dir)
+        print(f"[retry] {case_id}: transient infra failure, one retry", flush=True)
+        retried = _run_case(args, by_id[case_id])
+        retried["infra_retried"] = True
+        updated.append(retried)
+    return updated
 
 
 def _run_case(args, candidate: Path) -> dict[str, object]:
