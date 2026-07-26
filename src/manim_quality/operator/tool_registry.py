@@ -47,7 +47,17 @@ def _read_tools(handlers) -> tuple[ManagedToolGrant, ...]:
         ),
         _grant(
             "check_relation",
-            "Evaluate one declared mathematical or geometric relation.",
+            (
+                "Evaluate one declared relation. Supported: "
+                "numeric_equal [a, b]; parallel / perpendicular "
+                "[[dx,dy], [dx,dy]] direction vectors; collinear [p, p, p]; "
+                "midpoint [m, a, b]; equal_length [a1, a2, b1, b2]; "
+                "equal_distance [center, p1, p2]; point_on_segment "
+                "[p, seg_start, seg_end]; angle_degrees "
+                "[vertex, point_a, point_b, degrees]. Points are [x, y] "
+                "or [x, y, z] numbers. Other relations return "
+                "unsupported_or_malformed_relation."
+            ),
             CHECK_RELATION_SCHEMA,
             handlers.check_relation,
             ToolEffect.READ_ONLY,

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from collections.abc import Mapping
 from fractions import Fraction
 
@@ -102,6 +103,8 @@ def _evaluate_relation(
         assert left is not None and right is not None
         residual = abs(float(left - right))
         return residual <= TOLERANCE, residual
+    if relation == "angle_degrees" and len(operands) == 4:
+        return _angle_degrees(operands)
     points = [vector(item) for item in operands]
     if any(item is None for item in points):
         return None
@@ -122,7 +125,65 @@ def _evaluate_relation(
         expected = scale(total, Fraction(1, 2))
         residual = distance(values[0], expected)
         return None if residual is None else (residual <= TOLERANCE, residual)
+    if relation == "equal_length" and len(values) == 4:
+        return _equal_scalars(
+            distance(values[0], values[1]), distance(values[2], values[3])
+        )
+    if relation == "equal_distance" and len(values) == 3:
+        return _equal_scalars(
+            distance(values[0], values[1]), distance(values[0], values[2])
+        )
+    if relation == "point_on_segment" and len(values) == 3:
+        return _point_on_segment(values[0], values[1], values[2])
     return None
+
+
+_ANGLE_TOLERANCE_DEGREES = 0.1
+
+
+def _angle_degrees(operands: list[object]) -> tuple[bool, float] | None:
+    """[vertex, point_a, point_b, degrees]: angle at vertex between rays."""
+
+    expected = _scalar(operands[3])
+    corners = [vector(item) for item in operands[:3]]
+    if expected is None or any(item is None for item in corners):
+        return None
+    vertex, first, second = corners
+    left = subtract(first, vertex)
+    right = subtract(second, vertex)
+    if left is None or right is None:
+        return None
+    product = dot(left, right)
+    lengths = [
+        math.sqrt(sum(float(part) ** 2 for part in item)) for item in (left, right)
+    ]
+    if product is None or 0 in lengths:
+        return None
+    cosine = max(-1.0, min(1.0, float(product) / (lengths[0] * lengths[1])))
+    actual = math.degrees(math.acos(cosine))
+    residual = abs(actual - float(expected))
+    return residual <= _ANGLE_TOLERANCE_DEGREES, residual
+
+
+def _equal_scalars(left, right) -> tuple[bool, float] | None:
+    if left is None or right is None:
+        return None
+    residual = abs(float(left) - float(right))
+    return residual <= TOLERANCE, residual
+
+
+def _point_on_segment(point, start, end) -> tuple[bool, float] | None:
+    direct = distance(start, end)
+    via = (
+        None
+        if (a := distance(start, point)) is None
+        or (b := distance(point, end)) is None
+        else a + b
+    )
+    if direct is None or via is None:
+        return None
+    residual = abs(float(via) - float(direct))
+    return residual <= TOLERANCE, residual
 
 
 def _vector_relation(relation: str, left, right) -> tuple[bool, float] | None:

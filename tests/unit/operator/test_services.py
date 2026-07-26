@@ -236,3 +236,48 @@ def test_in_session_verification_facts_survive_on_disk(tmp_path) -> None:
     payload = json.loads((toolchain.reports_dir / layout_reports[0]).read_text())
     assert payload["revision_id"] == "R0"
     assert "blocking_count" in payload
+
+
+def test_check_relation_covers_reviewer_needed_relations() -> None:
+    from manim_quality.operator.services import BasicRelationChecker
+
+    checker = BasicRelationChecker()
+
+    async def check(relation, operands, expected=True):
+        return await checker.check(
+            {"relation": relation, "operands": operands, "expected": expected}
+        )
+
+    async def scenario() -> None:
+        # 035 real geometry: apex 50°, base angles 65° at B=(0,0), A=(2.57,5.5)-ish
+        angle = await check(
+            "angle_degrees",
+            [[0.0, 0.0], [4.0, 0.0], [4.0, 4.0], 45.0],
+        )
+        assert angle["verified"] and angle["holds"] is True
+
+        wrong = await check(
+            "angle_degrees",
+            [[0.0, 0.0], [4.0, 0.0], [4.0, 4.0], 50.0],
+        )
+        assert wrong["verified"] and wrong["holds"] is False
+
+        equal = await check(
+            "equal_length",
+            [[0, 0], [3, 0], [10, 10], [10, 13]],
+        )
+        assert equal["verified"] and equal["holds"] is True
+
+        iso = await check("equal_distance", [[0, 0], [3, 4], [5, 0]])
+        assert iso["verified"] and iso["holds"] is True
+
+        on_seg = await check("point_on_segment", [[1, 1], [0, 0], [2, 2]])
+        assert on_seg["verified"] and on_seg["holds"] is True
+
+        off_seg = await check("point_on_segment", [[3, 3], [0, 0], [2, 2]])
+        assert off_seg["verified"] and off_seg["holds"] is False
+
+        unsupported = await check("angle_bisector", [[0, 0], [1, 0]])
+        assert unsupported["verified"] is False
+
+    anyio.run(scenario)
