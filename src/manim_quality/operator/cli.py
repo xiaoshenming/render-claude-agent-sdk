@@ -199,6 +199,7 @@ def _provider_environment(environ: Mapping[str, str]) -> dict[str, str]:
     auth_token = environ.get("ANTHROPIC_AUTH_TOKEN", "").strip()
     if api_key:
         values["ANTHROPIC_API_KEY"] = api_key
+        values["ANTHROPIC_AUTH_TOKEN"] = ""
     elif auth_token:
         values["ANTHROPIC_AUTH_TOKEN"] = auth_token
     else:

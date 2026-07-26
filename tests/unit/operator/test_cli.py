@@ -60,6 +60,7 @@ def test_provider_environment_does_not_mix_api_key_and_stale_token() -> None:
     ) == {
         "ANTHROPIC_BASE_URL": "https://gateway.example",
         "ANTHROPIC_API_KEY": "current-key",
+        "ANTHROPIC_AUTH_TOKEN": "",
     }
 
 
