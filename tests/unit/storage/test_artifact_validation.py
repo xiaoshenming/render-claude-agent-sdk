@@ -2,6 +2,14 @@ from pathlib import Path
 
 import pytest
 
+from urllib.parse import urlparse
+from urllib.request import url2pathname
+
+
+def _uri_path(uri: str) -> Path:
+    """Cross-platform file URI to path (removeprefix broke on Linux)."""
+    return Path(url2pathname(urlparse(uri).path))
+
 from manim_quality.storage.artifacts import (
     ArtifactCorruption,
     ArtifactRef,
@@ -50,6 +58,6 @@ def test_get_rejects_wrong_type_and_missing_file(tmp_path: Path) -> None:
         store.get(object())  # type: ignore[arg-type]
 
     artifact = store.put(b"temporary", media_type="text/plain")
-    Path(artifact.uri.removeprefix("file:///")).unlink()
+    _uri_path(artifact.uri).unlink()
     with pytest.raises(ArtifactCorruption, match="cannot be read"):
         store.get(artifact)

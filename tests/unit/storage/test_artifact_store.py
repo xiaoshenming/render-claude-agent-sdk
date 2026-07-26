@@ -3,6 +3,14 @@ from pathlib import Path
 
 import pytest
 
+from urllib.parse import urlparse
+from urllib.request import url2pathname
+
+
+def _uri_path(uri: str) -> Path:
+    """Cross-platform file URI to path (removeprefix broke on Linux)."""
+    return Path(url2pathname(urlparse(uri).path))
+
 from manim_quality.storage.artifacts import (
     ArtifactCorruption,
     ArtifactHashMismatch,
@@ -24,7 +32,7 @@ def test_put_is_content_addressed_and_idempotent(tmp_path: Path) -> None:
     assert first.hash.startswith("sha256:")
     assert first.size == len(b"rendered bytes")
     assert first.media_type == "video/mp4"
-    assert Path(first.uri.removeprefix("file:///")).name == first.hash[7:]
+    assert _uri_path(first.uri).name == first.hash[7:]
     assert store.get(first) == b"rendered bytes"
 
 
@@ -49,7 +57,7 @@ def test_expected_hash_is_strictly_verified(tmp_path: Path) -> None:
 def test_existing_corrupt_artifact_is_never_overwritten(tmp_path: Path) -> None:
     store = LocalArtifactStore(tmp_path)
     artifact = store.put(b"trusted", media_type="application/octet-stream")
-    path = Path(artifact.uri.removeprefix("file:///"))
+    path = _uri_path(artifact.uri)
     path.write_bytes(b"corrupt")
 
     with pytest.raises(ArtifactCorruption, match="content does not match"):
@@ -61,7 +69,7 @@ def test_existing_corrupt_artifact_is_never_overwritten(tmp_path: Path) -> None:
 def test_get_rehashes_content_and_rejects_tampering(tmp_path: Path) -> None:
     store = LocalArtifactStore(tmp_path)
     artifact = store.put(b"trusted", media_type="application/octet-stream")
-    Path(artifact.uri.removeprefix("file:///")).write_bytes(b"tampered")
+    _uri_path(artifact.uri).write_bytes(b"tampered")
 
     with pytest.raises(ArtifactCorruption, match="content does not match"):
         store.get(artifact)
