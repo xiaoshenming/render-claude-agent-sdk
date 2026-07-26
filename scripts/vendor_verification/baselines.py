@@ -51,12 +51,12 @@ BASELINES: dict[str, dict[str, object]] = {
         "source_archive_sha256": None,
         "source_revision": None,
         "content_identity": (
-            "sha256:e0f123e603231a2e4a8a533a81b4befeec4c4417b9755b9b244a14d453513412"
+            "sha256:2c759775aae1f57720fe877323e88f378f5a0ca998209d7c6bee0832e049813a"
         ),
         "claude_agent_sdk_version": "0.2.110",
         "manifest_path": "SOURCE_MANIFEST.sha256",
         "manifest_sha256": (
-            "e0f123e603231a2e4a8a533a81b4befeec4c4417b9755b9b244a14d453513412"
+            "2c759775aae1f57720fe877323e88f378f5a0ca998209d7c6bee0832e049813a"
         ),
         "metadata_files": ("SOURCE_MANIFEST.sha256",),
         "required_files": (
