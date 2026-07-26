@@ -191,14 +191,17 @@ def _worker_environment(args) -> dict[str, str]:
 
 
 def _provider_environment(environ: Mapping[str, str]) -> dict[str, str]:
-    values = {
-        name: value
-        for name in _PROVIDER_ENV
-        if (value := environ.get(name, "")).strip()
-    }
-    if not any(
-        name in values for name in ("ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_API_KEY")
-    ):
+    values: dict[str, str] = {}
+    base_url = environ.get("ANTHROPIC_BASE_URL", "").strip()
+    if base_url:
+        values["ANTHROPIC_BASE_URL"] = base_url
+    api_key = environ.get("ANTHROPIC_API_KEY", "").strip()
+    auth_token = environ.get("ANTHROPIC_AUTH_TOKEN", "").strip()
+    if api_key:
+        values["ANTHROPIC_API_KEY"] = api_key
+    elif auth_token:
+        values["ANTHROPIC_AUTH_TOKEN"] = auth_token
+    else:
         raise SystemExit("provider authentication is required")
     return values
 

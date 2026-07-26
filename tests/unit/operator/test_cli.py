@@ -50,6 +50,19 @@ def test_provider_environment_returns_only_supported_values() -> None:
     }
 
 
+def test_provider_environment_does_not_mix_api_key_and_stale_token() -> None:
+    assert _provider_environment(
+        {
+            "ANTHROPIC_BASE_URL": "https://gateway.example",
+            "ANTHROPIC_API_KEY": "current-key",
+            "ANTHROPIC_AUTH_TOKEN": "stale-token",
+        }
+    ) == {
+        "ANTHROPIC_BASE_URL": "https://gateway.example",
+        "ANTHROPIC_API_KEY": "current-key",
+    }
+
+
 def test_problem_identity_falls_back_to_solution_hash() -> None:
     candidate = (
         "class Solution(BaseConfigScene):\n"
