@@ -1,6 +1,13 @@
+import json
 from pathlib import Path
 
-from claude_agent_sdk import AssistantMessage, ResultMessage, ToolUseBlock
+from claude_agent_sdk import (
+    AssistantMessage,
+    ResultMessage,
+    ToolResultBlock,
+    ToolUseBlock,
+    UserMessage,
+)
 from mcp.types import CallToolRequest
 
 from manim_quality.agents.budget import BudgetLimits
@@ -18,6 +25,17 @@ CODE = (
     "class Solution(BaseConfigScene):\n"
     "    def construct(self):\n"
     "        self.wait()\n"
+)
+REVIEWERS = ("math_geometry_reviewer", "animation_lifecycle_reviewer")
+REVIEWER_RESULT = json.dumps(
+    {
+        "decision": "pass",
+        "diagnosis": "No supported defect.",
+        "issues": [],
+        "coverage": {"diagrams": ["main"]},
+        "confidence": 0.9,
+    },
+    separators=(",", ":"),
 )
 
 
@@ -73,95 +91,182 @@ def limits() -> BudgetLimits:
     )
 
 
+class _SdkDriver:
+    """Drive the mounted hooks and MCP server exactly as the SDK would."""
+
+    def __init__(self, options, cwd: str) -> None:
+        self.pre = options.hooks["PreToolUse"][0].hooks[0]
+        self.post = options.hooks["PostToolUse"][0].hooks[0]
+        self.start = options.hooks["SubagentStart"][0].hooks[0]
+        self.stop = options.hooks["SubagentStop"][0].hooks[0]
+        self.server = options.mcp_servers["quality"]["instance"]
+        self.cwd = cwd
+
+    def hook_data(self, name, arguments, tool_id, **extra):
+        return {
+            "hook_event_name": "PreToolUse",
+            "session_id": "sdk-session",
+            "transcript_path": "ignored",
+            "cwd": self.cwd,
+            "tool_name": name,
+            "tool_input": arguments,
+            "tool_use_id": tool_id,
+            **extra,
+        }
+
+    async def allow(self, name, arguments, tool_id, **extra):
+        data = self.hook_data(name, arguments, tool_id, **extra)
+        permission = await self.pre(data, tool_id, {"signal": None})
+        assert permission["hookSpecificOutput"]["permissionDecision"] == "allow"
+        return data
+
+    async def invoke(self, name, arguments) -> None:
+        await self.server.request_handlers[CallToolRequest](
+            CallToolRequest(params={"name": name, "arguments": arguments})
+        )
+
+    async def finish(self, data) -> None:
+        await self.post(
+            data | {"hook_event_name": "PostToolUse", "tool_response": {}},
+            data["tool_use_id"],
+            {"signal": None},
+        )
+
+    def lifecycle_data(self, event, reviewer, agent_id, **extra):
+        return {
+            "hook_event_name": event,
+            "session_id": "sdk-session",
+            "transcript_path": "ignored",
+            "cwd": self.cwd,
+            "agent_id": agent_id,
+            "agent_type": reviewer,
+            **extra,
+        }
+
+
+def _message(tool_id, name, arguments, message_id, **extra):
+    return AssistantMessage(
+        content=[ToolUseBlock(id=tool_id, name=name, input=arguments)],
+        model="fake-model",
+        message_id=message_id,
+        usage={"input_tokens": 2, "output_tokens": 1},
+        **extra,
+    )
+
+
+async def _parent_tool(driver, index, name, arguments):
+    sdk_name = f"mcp__quality__{name}"
+    tool_id = f"tool-{index}"
+    data = await driver.allow(sdk_name, arguments, tool_id)
+    await driver.invoke(name, arguments)
+    yield _message(tool_id, sdk_name, arguments, f"message-{index}")
+    await driver.finish(data)
+
+
+async def _reviewer_round(driver, index, reviewer):
+    agent_id = f"reviewer-id-{index}"
+    tool_id = f"agent-tool-{index}"
+    agent_input = {
+        "subagent_type": reviewer,
+        "description": "Audit the current Solution",
+        "prompt": "Audit the current Solution and return findings.",
+        "run_in_background": False,
+    }
+    agent_data = await driver.allow("Agent", agent_input, tool_id)
+    yield _message(tool_id, "Agent", agent_input, f"agent-message-{index}")
+    await driver.start(
+        driver.lifecycle_data("SubagentStart", reviewer, agent_id),
+        None,
+        {"signal": None},
+    )
+    read_args = {"revision_id": "R0"}
+    child_data = await driver.allow(
+        "mcp__quality__read_solution",
+        read_args,
+        f"agent-read-{index}",
+        agent_id=agent_id,
+        agent_type=reviewer,
+    )
+    await driver.invoke("read_solution", read_args)
+    yield _message(
+        f"agent-read-{index}",
+        "mcp__quality__read_solution",
+        read_args,
+        f"agent-child-{index}",
+        parent_tool_use_id=tool_id,
+    )
+    await driver.finish(child_data)
+    await driver.stop(
+        driver.lifecycle_data(
+            "SubagentStop",
+            reviewer,
+            agent_id,
+            stop_hook_active=False,
+            agent_transcript_path="ignored",
+        ),
+        None,
+        {"signal": None},
+    )
+    yield UserMessage(
+        content=[
+            ToolResultBlock(
+                tool_use_id=tool_id,
+                content=REVIEWER_RESULT,
+                is_error=False,
+            )
+        ],
+        parent_tool_use_id=None,
+    )
+    await driver.finish(agent_data)
+
+
+async def _structured_output(driver, session):
+    output = {
+        "status": "submitted",
+        "submitted_revision_id": "R0",
+        "code_hash": session.baseline.code_hash,
+        "problem_hash": session.problem_hash,
+        "summary": "No blocking issue found.",
+    }
+    data = await driver.allow("StructuredOutput", output, "structured-1")
+    yield _message("structured-1", "StructuredOutput", output, "message-7")
+    await driver.finish(data)
+    yield ResultMessage(
+        subtype="success",
+        duration_ms=100,
+        duration_api_ms=80,
+        is_error=False,
+        num_turns=7,
+        session_id="sdk-session",
+        usage={"input_tokens": 40, "output_tokens": 20},
+        structured_output=output,
+    )
+
+
 def test_real_sdk_backend_runs_clean_operator_tool_sequence(
     tmp_path: Path,
 ) -> None:
     session = QualitySession(problem_text=PROBLEM, candidate_code=CODE)
-    script = (
-        ("read_problem", {}),
-        (
-            "read_candidate",
-            {"revision_id": "R0", "start_line": 1, "end_line": 100},
-        ),
-        ("record_findings", {"findings": []}),
-        ("inspect_layout", {"revision_id": "R0"}),
-        ("submit_revision", {"revision_id": "R0"}),
-    )
 
     async def fake_query(*, prompt, options):
-        pre = options.hooks["PreToolUse"][0].hooks[0]
-        post = options.hooks["PostToolUse"][0].hooks[0]
-        server = options.mcp_servers["quality"]["instance"]
-        handler = server.request_handlers[CallToolRequest]
-        for index, (name, arguments) in enumerate(script, start=1):
-            sdk_name = f"mcp__quality__{name}"
-            tool_id = f"tool-{index}"
-            hook_input = {
-                "hook_event_name": "PreToolUse",
-                "session_id": "sdk-session",
-                "transcript_path": "ignored",
-                "cwd": str(tmp_path),
-                "tool_name": sdk_name,
-                "tool_input": arguments,
-                "tool_use_id": tool_id,
-            }
-            permission = await pre(hook_input, tool_id, {"signal": None})
-            assert permission["hookSpecificOutput"]["permissionDecision"] == "allow"
-            await handler(
-                CallToolRequest(params={"name": name, "arguments": arguments})
-            )
-            yield AssistantMessage(
-                content=[ToolUseBlock(id=tool_id, name=sdk_name, input=arguments)],
-                model="fake-model",
-                message_id=f"message-{index}",
-                usage={"input_tokens": 1, "output_tokens": 1},
-            )
-            await post(
-                hook_input | {"hook_event_name": "PostToolUse", "tool_response": {}},
-                tool_id,
-                {"signal": None},
-            )
-        output = {
-            "status": "submitted",
-            "submitted_revision_id": "R0",
-            "code_hash": session.baseline.code_hash,
-            "problem_hash": session.problem_hash,
-            "summary": "No blocking issue found.",
-        }
-        tool_id = "structured-1"
-        hook_input = {
-            "hook_event_name": "PreToolUse",
-            "session_id": "sdk-session",
-            "transcript_path": "ignored",
-            "cwd": str(tmp_path),
-            "tool_name": "StructuredOutput",
-            "tool_input": output,
-            "tool_use_id": tool_id,
-        }
-        await pre(hook_input, tool_id, {"signal": None})
-        yield AssistantMessage(
-            content=[
-                ToolUseBlock(id=tool_id, name="StructuredOutput", input=output)
-            ],
-            model="fake-model",
-            message_id="message-6",
-            usage={"input_tokens": 1, "output_tokens": 1},
+        driver = _SdkDriver(options, str(tmp_path))
+        parent_script = (
+            (1, "read_solution", {"revision_id": "R0"}),
+            (4, "record_findings", {"findings": []}),
+            (5, "inspect_layout", {"revision_id": "R0"}),
+            (6, "submit_revision", {"revision_id": "R0"}),
         )
-        await post(
-            hook_input | {"hook_event_name": "PostToolUse", "tool_response": {}},
-            tool_id,
-            {"signal": None},
-        )
-        yield ResultMessage(
-            subtype="success",
-            duration_ms=100,
-            duration_api_ms=80,
-            is_error=False,
-            num_turns=6,
-            session_id="sdk-session",
-            usage={"input_tokens": 6, "output_tokens": 6},
-            structured_output=output,
-        )
+        for index, name, arguments in parent_script[:1]:
+            async for message in _parent_tool(driver, index, name, arguments):
+                yield message
+        for index, reviewer in enumerate(REVIEWERS, start=1):
+            async for message in _reviewer_round(driver, index, reviewer):
+                yield message
+        for index, name, arguments in parent_script[1:]:
+            async for message in _parent_tool(driver, index, name, arguments):
+                yield message
+        async for message in _structured_output(driver, session):
+            yield message
 
     sink = Sink()
     runtime = AgentRuntime(
@@ -189,6 +294,8 @@ def test_real_sdk_backend_runs_clean_operator_tool_sequence(
     )
 
     assert result.revision.revision_id == "R0"
-    assert result.call_record.turns == 6
-    assert len(result.call_record.tool_calls) == 6
+    assert result.call_record.turns == 7
+    assert len(result.call_record.tool_calls) == 9
+    assert len(result.subagent_results) == 2
+    assert {item["agent_type"] for item in result.subagent_results} == set(REVIEWERS)
     assert session.submitted_revision_id == "R0"

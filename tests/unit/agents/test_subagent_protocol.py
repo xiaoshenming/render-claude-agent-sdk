@@ -204,7 +204,7 @@ def test_protocol_strips_and_validates_sdk_agent_result_trailer() -> None:
     ("content", "match"),
     [
         (sdk_result(agent_id="forged-agent"), "does not match"),
-        (valid_result() + "\nunexpected", "unknown SDK trailer"),
+        (valid_result() + "\nunexpected", "followed by unexpected text"),
     ],
 )
 def test_protocol_rejects_forged_or_unknown_sdk_trailers(
@@ -276,3 +276,48 @@ def test_reviewer_json_survives_markdown_fences_and_prose() -> None:
 
     assert _json.loads(reviewer_text)["decision"] == "pass"
     assert trailer is None
+
+
+def test_reviewer_json_is_found_after_a_schema_example_block() -> None:
+    import json as _json
+
+    from manim_quality.agents._subagent_protocol import _result_parts
+
+    example = '{"decision": "..."}'
+    real = _json.dumps(
+        {
+            "decision": "needs_repair",
+            "diagnosis": "angle mismatch",
+            "issues": [],
+            "coverage": {"scenes": 2},
+            "confidence": 0.8,
+        }
+    )
+    wrapped = (
+        "Schema example:\n```json\n" + example + "\n```\n"
+        "My actual review:\n```json\n" + real + "\n```\n"
+    )
+    reviewer_text, trailer = _result_parts(wrapped, expected_agent_id=None)
+
+    assert _json.loads(reviewer_text)["diagnosis"] == "angle mismatch"
+    assert trailer is None
+
+
+def test_prose_braces_before_reviewer_json_do_not_break_extraction() -> None:
+    import json as _json
+
+    from manim_quality.agents._subagent_protocol import _result_parts
+
+    real = _json.dumps(
+        {
+            "decision": "pass",
+            "diagnosis": "ok",
+            "issues": [],
+            "coverage": {},
+            "confidence": 0.7,
+        }
+    )
+    wrapped = "The set {x} and \\frac{a}{b} appear fine.\n" + real
+    reviewer_text, _ = _result_parts(wrapped, expected_agent_id=None)
+
+    assert _json.loads(reviewer_text)["decision"] == "pass"

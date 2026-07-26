@@ -62,7 +62,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     if not workspace.is_dir():
         raise SystemExit("--workspace must be a directory")
     sink = MemoryUsageSink()
-    backend = ClaudeSdkBackend(provider_env=_provider_environment(os.environ))
+    backend = ClaudeSdkBackend(
+        provider_env=_provider_environment(
+            os.environ,
+            allow_ambient=args.allow_ambient_login,
+        )
+    )
     runtime = AgentRuntime(backend, sink, _limits(args))
     operator = QualityOperatorAgent(
         runtime=runtime,
@@ -128,6 +133,7 @@ def _arguments(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--assets-dir", type=Path)
     parser.add_argument("--run-id")
     parser.add_argument("--compile-only", action="store_true")
+    parser.add_argument("--allow-ambient-login", action="store_true")
     parser.add_argument("--max-turns", type=int, default=24)
     parser.add_argument("--max-tool-calls", type=int, default=40)
     parser.add_argument("--estimated-input-tokens", type=int, default=4_000)
@@ -203,7 +209,11 @@ def _worker_environment(args) -> dict[str, str]:
     return environment
 
 
-def _provider_environment(environ: Mapping[str, str]) -> dict[str, str]:
+def _provider_environment(
+    environ: Mapping[str, str],
+    *,
+    allow_ambient: bool = False,
+) -> dict[str, str]:
     values: dict[str, str] = {}
     base_url = environ.get("ANTHROPIC_BASE_URL", "").strip()
     if base_url:
@@ -215,11 +225,14 @@ def _provider_environment(environ: Mapping[str, str]) -> dict[str, str]:
         values["ANTHROPIC_AUTH_TOKEN"] = ""
     elif auth_token:
         values["ANTHROPIC_AUTH_TOKEN"] = auth_token
-    elif base_url:
-        # A custom gateway without an explicit credential is a
-        # misconfiguration; only a fully clean environment may fall
-        # through to the ambient official login below.
-        raise SystemExit("provider authentication is required")
+    elif not allow_ambient or base_url:
+        # A custom gateway without a credential is a misconfiguration, and
+        # falling back to the machine's official login session must be an
+        # explicit operator decision, never a silent default.
+        raise SystemExit(
+            "provider authentication is required "
+            "(pass --allow-ambient-login to use the official login session)"
+        )
     # Empty mapping: the SDK CLI resolves the official login session.
     return values
 

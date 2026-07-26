@@ -32,13 +32,23 @@ def _transport_failure_verdict(base, headers, payload) -> dict[str, object]:
     return verdict
 
 
-def _provider_tool_smoke(model: str) -> dict[str, object]:
+def _provider_tool_smoke(
+    model: str, *, allow_ambient: bool = False
+) -> dict[str, object]:
     base = os.environ.get("ANTHROPIC_BASE_URL", "https://api.anthropic.com").rstrip("/")
     api_key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
     auth_token = os.environ.get("ANTHROPIC_AUTH_TOKEN", "").strip()
     if not api_key and not auth_token:
         if os.environ.get("ANTHROPIC_BASE_URL", "").strip():
             return {"ok": False, "error": "authentication missing"}
+        if not allow_ambient:
+            return {
+                "ok": False,
+                "error": (
+                    "no credential; ambient official login requires "
+                    "--allow-ambient-login"
+                ),
+            }
         return _provider_smoke_ambient(model)
     # Match the SDK's single-credential semantics: an API key travels as
     # x-api-key, a bearer token as Authorization; never send both.
@@ -108,14 +118,17 @@ def _provider_tool_smoke_node(
         ".catch(e => { console.log(JSON.stringify({status: 0, body:"
         " String(e && e.cause ? e.cause : e)})); });"
     )
-    result = subprocess.run(
-        ["node", "-e", script],
-        input=json.dumps([base, headers, payload]),
-        text=True,
-        capture_output=True,
-        timeout=60,
-        check=False,
-    )
+    try:
+        result = subprocess.run(
+            ["node", "-e", script],
+            input=json.dumps([base, headers, payload]),
+            text=True,
+            capture_output=True,
+            timeout=60,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired) as error:
+        return {"ok": False, "error": f"node smoke failed: {error}"}
     try:
         reply = json.loads(result.stdout.strip().splitlines()[-1])
         if reply["status"] != 200:
@@ -155,6 +168,8 @@ def _provider_smoke_ambient(model: str) -> dict[str, object]:
         return {"ok": False, "error": f"ambient smoke exit {result.returncode}: {detail}"}
     try:
         value = json.loads(result.stdout.strip().splitlines()[-1])
+        if not isinstance(value, dict):
+            return {"ok": False, "error": "ambient smoke output is not an object"}
         return {
             "ok": not value.get("is_error", False),
             "error": None,

@@ -73,6 +73,7 @@ def message_record(
             "parent_tool_use_id": message.parent_tool_use_id,
             "model": message.model,
             "stop_reason": message.stop_reason,
+            "error": _json_safe(message.error),
             "content": _json_safe(message.content),
         }
     return {

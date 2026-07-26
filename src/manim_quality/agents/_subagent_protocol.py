@@ -220,14 +220,35 @@ def _result_parts(
     *,
     expected_agent_id: str | None,
 ) -> tuple[str, Mapping[str, object] | None]:
+    """Locate the reviewer JSON among fences and prose, fail-closed.
+
+    A candidate is accepted only when nothing but an optional closing
+    fence and the strict SDK usage trailer follows it; identity and
+    payload validation stay unchanged after extraction.
+    """
+
     stripped = text.lstrip()
-    start = _json_object_start(stripped)
-    try:
-        _, end = json.JSONDecoder().raw_decode(stripped[start:])
-    except json.JSONDecodeError as error:
-        message = "Reviewer ToolResult must contain a JSON object"
-        raise SubagentProtocolError(message) from error
-    end += start
+    reason = "Reviewer ToolResult contains no JSON object"
+    for start in _json_candidate_starts(stripped):
+        try:
+            _, end = json.JSONDecoder().raw_decode(stripped[start:])
+        except json.JSONDecodeError:
+            continue
+        end += start
+        parts = _accepted_parts(stripped, start, end, expected_agent_id)
+        if parts is not None:
+            return parts
+        residue = stripped[end : end + 80].strip()[:80]
+        reason = f"Reviewer JSON is followed by unexpected text: {residue!r}"
+    raise SubagentProtocolError(reason)
+
+
+def _accepted_parts(
+    stripped: str,
+    start: int,
+    end: int,
+    expected_agent_id: str | None,
+) -> tuple[str, Mapping[str, object] | None] | None:
     reviewer_text = stripped[start:end]
     if len(reviewer_text) > 8_000:
         raise SubagentProtocolError("Reviewer ToolResult exceeds 8000 characters")
@@ -236,7 +257,7 @@ def _result_parts(
         return reviewer_text, None
     match = _SDK_RESULT_TRAILER.fullmatch(trailer)
     if match is None:
-        raise SubagentProtocolError("Reviewer ToolResult has an unknown SDK trailer")
+        return None
     if expected_agent_id is None or match["agent_id"] != expected_agent_id:
         raise SubagentProtocolError("Reviewer ToolResult agent_id does not match hook")
     return reviewer_text, {
@@ -247,19 +268,21 @@ def _result_parts(
     }
 
 
-def _json_object_start(stripped: str) -> int:
-    """Tolerate markdown fences and prose before the reviewer JSON object.
-
-    The payload itself is still validated strictly after extraction.
-    """
-
-    fence = re.search(r"```(?:json)?\s*\{", stripped)
-    if fence is not None:
-        return fence.end() - 1
-    brace = stripped.find("{")
-    if brace < 0:
-        raise SubagentProtocolError("Reviewer ToolResult contains no JSON object")
-    return brace
+def _json_candidate_starts(stripped: str) -> list[int]:
+    seen: set[int] = set()
+    starts: list[int] = []
+    for match in re.finditer(r"```(?:json)?\s*\{", stripped):
+        position = match.end() - 1
+        if position not in seen:
+            seen.add(position)
+            starts.append(position)
+    for match in re.finditer(r"\{", stripped):
+        if len(starts) >= 32:
+            break
+        if match.start() not in seen:
+            seen.add(match.start())
+            starts.append(match.start())
+    return starts
 
 
 def _without_closing_fence(trailer: str) -> str:

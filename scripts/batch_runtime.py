@@ -16,9 +16,12 @@ from provider_smoke import _provider_tool_smoke
 def preflight(args, candidates: list[Path]) -> dict[str, object]:
     image = os.environ.get("MANIM_DOCKER_IMAGE", "docker-manim-worker-1:latest")
     image_id = _command(["docker", "image", "inspect", image, "--format", "{{.Id}}"])
-    provider_smoke = _provider_tool_smoke(args.model)
+    provider_smoke = _provider_tool_smoke(
+        args.model,
+        allow_ambient=getattr(args, "allow_ambient_login", False),
+    )
     issues = [
-        *_credential_issues(),
+        *_credential_issues(getattr(args, "allow_ambient_login", False)),
         *_path_issues(args),
         *_candidate_issues(candidates),
         *_binary_issues(image, image_id),
@@ -51,12 +54,14 @@ def preflight(args, candidates: list[Path]) -> dict[str, object]:
     }
 
 
-def _credential_issues() -> list[str]:
+def _credential_issues(allow_ambient: bool) -> list[str]:
     for name in ("ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_API_KEY"):
         if os.environ.get(name, "").strip():
             return []
     if os.environ.get("ANTHROPIC_BASE_URL", "").strip():
         return ["custom gateway is set without a credential"]
+    if not allow_ambient:
+        return ["no credential; pass --allow-ambient-login for official login"]
     if shutil.which("claude") is None:
         return ["no credential and no claude CLI for ambient official login"]
     return []

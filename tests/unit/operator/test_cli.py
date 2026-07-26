@@ -76,5 +76,7 @@ def test_problem_identity_falls_back_to_solution_hash() -> None:
     )
 
 
-def test_clean_environment_falls_through_to_ambient_official_login() -> None:
-    assert _provider_environment({"UNRELATED": "ignored"}) == {}
+def test_clean_environment_requires_explicit_ambient_opt_in() -> None:
+    with pytest.raises(SystemExit, match="ambient"):
+        _provider_environment({"UNRELATED": "ignored"})
+    assert _provider_environment({"UNRELATED": "ignored"}, allow_ambient=True) == {}
