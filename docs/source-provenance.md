@@ -60,11 +60,11 @@ PYTHONPATH=.vendor/quality_repair python3.11 -m pytest -p no:cacheprovider .vend
 - Original directory: `C:\Users\Admin\Desktop\shuxuepai\apps\render`
 - Original archive SHA-256: not applicable; this source was not an archive.
 - Source revision: none.
-- Content identity: `sha256:2c759775aae1f57720fe877323e88f378f5a0ca998209d7c6bee0832e049813a`
+- Content identity: `sha256:e0f123e603231a2e4a8a533a81b4befeec4c4417b9755b9b244a14d453513412`
 - Claude Agent SDK version: `0.2.110`
 - Frozen root: `vendor/logic_self_audit_baseline`
 - File manifest: `vendor/logic_self_audit_baseline/SOURCE_MANIFEST.sha256`
-- File manifest SHA-256: `2c759775aae1f57720fe877323e88f378f5a0ca998209d7c6bee0832e049813a`
+- File manifest SHA-256: `e0f123e603231a2e4a8a533a81b4befeec4c4417b9755b9b244a14d453513412`
 
 The ten prototype files, two required legacy validation dependency files, and
 two requested tests were untracked in the source working tree. The prototype
