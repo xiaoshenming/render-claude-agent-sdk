@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import signal
 import subprocess
 from pathlib import Path
 
@@ -19,29 +20,46 @@ def run_to_artifacts(
 ) -> subprocess.CompletedProcess[str]:
     environment = os.environ.copy()
     environment.update(env_overrides or {})
+    # start_new_session puts the wrapper and every grandchild (for example
+    # the docker run client) into one process group; on timeout the whole
+    # group is killed so inherited pipes close and communicate() returns
+    # instead of hanging on a surviving grandchild.
+    process = subprocess.Popen(
+        argv,
+        cwd=cwd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        shell=False,
+        env=environment,
+        start_new_session=True,
+    )
     try:
-        result = subprocess.run(
-            argv,
-            cwd=cwd,
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-            timeout=timeout_seconds,
-            check=False,
-            shell=False,
-            env=environment,
-        )
+        stdout, stderr = process.communicate(timeout=timeout_seconds)
     except subprocess.TimeoutExpired as error:
-        stdout_path.write_text(_timeout_text(error.stdout), encoding="utf-8")
+        _kill_process_group(process)
+        stdout, stderr = process.communicate()
+        stdout_path.write_text(
+            _timeout_text(error.stdout) or stdout or "",
+            encoding="utf-8",
+        )
         stderr_path.write_text(
-            _timeout_text(error.stderr) or "process timed out",
+            _timeout_text(error.stderr) or stderr or "process timed out",
             encoding="utf-8",
         )
         raise
-    stdout_path.write_text(result.stdout, encoding="utf-8")
-    stderr_path.write_text(result.stderr, encoding="utf-8")
-    return result
+    stdout_path.write_text(stdout, encoding="utf-8")
+    stderr_path.write_text(stderr, encoding="utf-8")
+    return subprocess.CompletedProcess(argv, process.returncode, stdout, stderr)
+
+
+def _kill_process_group(process: subprocess.Popen) -> None:
+    try:
+        os.killpg(process.pid, signal.SIGKILL)
+    except (ProcessLookupError, PermissionError):
+        process.kill()
 
 
 def _timeout_text(value: str | bytes | None) -> str:
