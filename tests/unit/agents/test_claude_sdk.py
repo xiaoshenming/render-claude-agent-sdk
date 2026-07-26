@@ -1220,3 +1220,39 @@ def test_deadline_is_suspended_during_tools_and_restored_with_window() -> None:
         assert 0.04 <= extended <= 5.0
 
     anyio.run(scenario)
+
+
+def test_errored_assistant_message_is_archived_before_failing() -> None:
+    from claude_agent_sdk import AssistantMessage
+
+    from manim_quality.agents._claude_hooks import (
+        ClaudeHookState,
+        ClaudeSdkProtocolError,
+    )
+
+    async def scenario() -> None:
+        state = ClaudeHookState.__new__(ClaudeHookState)
+        state.__init__(
+            _StubControls(),
+            _StubRequest(),
+        )
+        message = AssistantMessage(
+            content=[],
+            model="test-model",
+            error="server_error",
+        )
+        try:
+            await state.record_assistant(message)
+        except ClaudeSdkProtocolError:
+            pass
+        else:
+            raise AssertionError("errored assistant message must fail the run")
+        assert len(state.sdk_messages) == 1
+
+    class _StubControls:
+        pass
+
+    class _StubRequest:
+        subagents = ()
+
+    anyio.run(scenario)

@@ -88,6 +88,8 @@ class ClaudeHookState(ClaudeHookAccessors):
         self, message: AssistantMessage
     ) -> None:
         if message.error is not None:
+            async with self._lock:
+                self._sdk_messages.append(message_record(message))
             raise ClaudeSdkProtocolError(f"assistant error: {message.error}")
         usage = parse_token_usage(message.usage)
         tool_ids = {
