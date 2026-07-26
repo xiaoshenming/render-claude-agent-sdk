@@ -167,7 +167,8 @@ class RuntimeControls:
     async def _execute_grant(self, name: str, input_data: object, grant) -> str:
         normalized = grant.normalize_input(input_data)
         try:
-            result = await grant.execute(normalized)
+            with self._budget.external_call():
+                result = await grant.execute(normalized)
         except Exception as error:
             if (
                 isinstance(grant, ManagedToolGrant)

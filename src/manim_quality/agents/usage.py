@@ -100,6 +100,8 @@ class AgentCallRecord:
     observed_model_rounds: int
     elapsed_ms: int
     error: str | None
+    external_tool_ms: int = 0
+    usage_complete: bool = True
 
     def __post_init__(self) -> None:
         for name in (
@@ -124,6 +126,9 @@ class AgentCallRecord:
         _require_non_negative_int(self.turns, "turns")
         _require_non_negative_int(self.observed_model_rounds, "observed_model_rounds")
         _require_non_negative_int(self.elapsed_ms, "elapsed_ms")
+        _require_non_negative_int(self.external_tool_ms, "external_tool_ms")
+        if not isinstance(self.usage_complete, bool):
+            raise TypeError("usage_complete must be bool")
         if self.error is not None:
             _require_text(self.error, "error")
 
@@ -152,6 +157,8 @@ def build_agent_call_record(
     observed_model_rounds: int,
     elapsed_ms: int,
     error: str | None,
+    external_tool_ms: int = 0,
+    usage_complete: bool = True,
 ) -> AgentCallRecord:
     profile = request.profile
     return AgentCallRecord(
@@ -169,6 +176,8 @@ def build_agent_call_record(
         observed_model_rounds=observed_model_rounds,
         elapsed_ms=elapsed_ms,
         error=error,
+        external_tool_ms=external_tool_ms,
+        usage_complete=usage_complete,
     )
 
 

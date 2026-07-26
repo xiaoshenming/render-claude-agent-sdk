@@ -162,3 +162,37 @@ def test_budget_rejects_aggregate_below_observed_usage() -> None:
 
     with pytest.raises(ValueError, match="aggregate usage cannot be lower"):
         tracker.reconcile_usage(TokenUsage(input_tokens=9, output_tokens=5))
+
+
+def test_external_call_time_is_excluded_from_reasoning_elapsed() -> None:
+    clock = Clock()
+    tracker = BudgetTracker(limits(), clock=clock)
+
+    with tracker.external_call():
+        clock.now = 100.0
+    tracker.check_elapsed()
+    snapshot = tracker.snapshot()
+
+    assert snapshot.elapsed_ms == 0
+    assert snapshot.external_ms == 100_000
+
+    clock.now = 100.9
+    tracker.check_elapsed()
+    clock.now = 101.1
+    with pytest.raises(BudgetExceeded, match="elapsed"):
+        tracker.check_elapsed()
+
+
+def test_snapshot_reports_whether_usage_was_reconciled() -> None:
+    tracker = BudgetTracker(limits())
+    tracker.before_round(
+        estimated_input_tokens=10,
+        reserved_output_tokens=5,
+        reserved_cache_read_tokens=0,
+        reserved_cache_write_tokens=0,
+    )
+    tracker.record_usage(TokenUsage(input_tokens=10, output_tokens=5))
+
+    assert tracker.snapshot().usage_reconciled is False
+    tracker.reconcile_usage(TokenUsage(input_tokens=10, output_tokens=5))
+    assert tracker.snapshot().usage_reconciled is True

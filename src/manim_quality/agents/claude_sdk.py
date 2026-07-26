@@ -48,6 +48,21 @@ class ClaudeSdkRunError(RuntimeError):
     pass
 
 
+class _DeadlineExtender:
+    """Push the session deadline out by external tool wall time.
+
+    The reasoning budget bounds model and protocol time only; real render,
+    probe, and detector execution stay bounded by their own tool timeouts.
+    """
+
+    def __init__(self) -> None:
+        self.scope: anyio.CancelScope | None = None
+
+    def extend(self, seconds: float) -> None:
+        if self.scope is not None and seconds > 0:
+            self.scope.deadline += seconds
+
+
 class ClaudeSdkBackend(AgentBackend):
     def __init__(
         self,
@@ -67,10 +82,14 @@ class ClaudeSdkBackend(AgentBackend):
         self, request: BackendRequest, controls: RuntimeControls
     ) -> BackendResult:
         state = ClaudeHookState(controls, request)
-        options = _options(request, state, self._provider_env)
+        extender = _DeadlineExtender()
+        options = _options(request, state, self._provider_env, extender)
         result: ResultMessage | None = None
         try:
-            with anyio.fail_after(request.timeout_ms / 1_000):
+            with anyio.CancelScope(
+                deadline=anyio.current_time() + request.timeout_ms / 1_000
+            ) as scope:
+                extender.scope = scope
                 async for message in self._query(
                     prompt=request.prompt, options=options
                 ):
@@ -81,6 +100,10 @@ class ClaudeSdkBackend(AgentBackend):
                     elif isinstance(message, ResultMessage):
                         result = message
                     state.raise_failure()
+            if scope.cancelled_caught:
+                raise TimeoutError(
+                    "Claude Agent SDK session exceeded the reasoning budget"
+                )
         finally:
             controls.record_observed_model_rounds(state.turns)
         state.raise_failure()
@@ -103,6 +126,7 @@ def _options(
     request: BackendRequest,
     state: ClaudeHookState,
     provider_env: Mapping[str, str],
+    extender: _DeadlineExtender,
 ) -> ClaudeAgentOptions:
     tools = list(request.allowed_tools)
     read_tool_names = [item.sdk_name for item in request.read_tools]
@@ -132,7 +156,7 @@ def _options(
         hooks=hooks,
         setting_sources=[],
         skills=[],
-        mcp_servers=_mcp_servers(request, state),
+        mcp_servers=_mcp_servers(request, state, extender),
         strict_mcp_config=True,
         plugins=[],
         agents=_subagent_definitions(request),
@@ -143,16 +167,18 @@ def _options(
 
 
 def _mcp_servers(
-    request: BackendRequest, state: ClaudeHookState
+    request: BackendRequest,
+    state: ClaudeHookState,
+    extender: _DeadlineExtender,
 ) -> Mapping[str, object]:
     grouped: dict[str, list[object]] = {}
     for grant in request.read_tools:
         grouped.setdefault(grant.server_name, []).append(
-            _sdk_tool(grant, state, managed=False)
+            _sdk_tool(grant, state, extender, managed=False)
         )
     for grant in request.managed_tools:
         grouped.setdefault(grant.server_name, []).append(
-            _sdk_tool(grant, state, managed=True)
+            _sdk_tool(grant, state, extender, managed=True)
         )
     return {
         name: create_sdk_mcp_server(name=name, tools=tools)
@@ -199,17 +225,27 @@ def _denied_tools(enabled: list[str]) -> list[str]:
     ]
 
 
-def _sdk_tool(grant, state: ClaudeHookState, *, managed: bool):
+def _sdk_tool(
+    grant,
+    state: ClaudeHookState,
+    extender: _DeadlineExtender,
+    *,
+    managed: bool,
+):
     @tool(
         grant.name,
         grant.description,
         thaw_json_object(grant.input_schema),
     )
     async def invoke(arguments):
-        if managed:
-            text = await state.execute_managed_tool(grant.sdk_name, arguments)
-        else:
-            text = await state.execute_read_tool(grant.sdk_name, arguments)
+        started = anyio.current_time()
+        try:
+            if managed:
+                text = await state.execute_managed_tool(grant.sdk_name, arguments)
+            else:
+                text = await state.execute_read_tool(grant.sdk_name, arguments)
+        finally:
+            extender.extend(anyio.current_time() - started)
         return {"content": [{"type": "text", "text": text}]}
 
     return invoke

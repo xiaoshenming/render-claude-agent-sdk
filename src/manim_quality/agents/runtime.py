@@ -92,6 +92,8 @@ class AgentRuntime:
             observed_model_rounds=observed_rounds,
             elapsed_ms=snapshot.elapsed_ms,
             error=error_text,
+            external_tool_ms=snapshot.external_ms,
+            usage_complete=snapshot.usage_reconciled,
         )
         self._usage_sink.save(record)
         if caught is not None:

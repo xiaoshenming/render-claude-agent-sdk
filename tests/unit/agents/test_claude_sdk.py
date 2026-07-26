@@ -1192,3 +1192,21 @@ def test_sdk_runs_foreground_native_reviewer_and_archives_tool_result(
         "user",
         "assistant",
     ]
+
+
+def test_deadline_extender_pushes_deadline_by_external_tool_time() -> None:
+    from manim_quality.agents.claude_sdk import _DeadlineExtender
+
+    async def scenario() -> None:
+        extender = _DeadlineExtender()
+        extender.extend(5.0)  # no scope bound yet: must be a no-op
+
+        scope = anyio.CancelScope(deadline=100.0)
+        extender.scope = scope
+        extender.extend(2.5)
+        extender.extend(0.0)
+        extender.extend(-1.0)
+
+        assert scope.deadline == 102.5
+
+    anyio.run(scenario)

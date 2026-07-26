@@ -14,6 +14,10 @@ from .tool_schemas import (
 
 SERVER = "quality"
 
+# Validation tools run a real render (1200 s cap) plus BBox probe (1200 s cap)
+# and the detector in a worker thread; their timeout must cover that chain.
+_EXTERNAL_VALIDATION_TIMEOUT_MS = 2_700_000
+
 
 def register_quality_tools(handlers) -> tuple[ManagedToolGrant, ...]:
     return (
@@ -81,6 +85,7 @@ def _validation_tools(handlers) -> tuple[ManagedToolGrant, ...]:
             ToolEffect.VALIDATION,
             5,
             30_000,
+            timeout_ms=_EXTERNAL_VALIDATION_TIMEOUT_MS,
         ),
         _grant(
             "validate_revision",
@@ -90,6 +95,7 @@ def _validation_tools(handlers) -> tuple[ManagedToolGrant, ...]:
             ToolEffect.VALIDATION,
             5,
             30_000,
+            timeout_ms=_EXTERNAL_VALIDATION_TIMEOUT_MS,
         ),
     )
 
@@ -116,6 +122,7 @@ def _grant(
     max_result_chars: int,
     *,
     max_input_bytes: int = 16_000,
+    timeout_ms: int = 30_000,
 ) -> ManagedToolGrant:
     return ManagedToolGrant(
         server_name=SERVER,
@@ -125,7 +132,7 @@ def _grant(
         handler=handler,
         effect=effect,
         max_calls=max_calls,
-        timeout_ms=30_000,
+        timeout_ms=timeout_ms,
         max_result_chars=max_result_chars,
         max_input_bytes=max_input_bytes,
     )

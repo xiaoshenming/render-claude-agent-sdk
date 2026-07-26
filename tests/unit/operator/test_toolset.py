@@ -276,3 +276,40 @@ def test_findings_contract_rejects_malformed_nested_item() -> None:
             tools["record_findings"],
             {"findings": [{"finding_id": "missing-fields"}]},
         )
+
+
+def test_validation_tools_cover_the_real_render_and_probe_chain() -> None:
+    from manim_quality.operator.tool_registry import (
+        _EXTERNAL_VALIDATION_TIMEOUT_MS,
+        register_quality_tools,
+    )
+
+    class Handlers:
+        async def read_solution(self, arguments):
+            return "{}"
+
+        async def check_relation(self, arguments):
+            return "{}"
+
+        async def record_findings(self, arguments):
+            return "{}"
+
+        async def apply_patch(self, arguments):
+            return "{}"
+
+        async def inspect_layout(self, arguments):
+            return "{}"
+
+        async def validate_revision(self, arguments):
+            return "{}"
+
+        async def submit_revision(self, arguments):
+            return "{}"
+
+    grants = {item.name: item for item in register_quality_tools(Handlers())}
+
+    assert _EXTERNAL_VALIDATION_TIMEOUT_MS >= 2 * 1_200_000
+    for name in ("inspect_layout", "validate_revision"):
+        assert grants[name].timeout_ms == _EXTERNAL_VALIDATION_TIMEOUT_MS
+    for name in ("read_solution", "record_findings", "apply_patch", "submit_revision"):
+        assert grants[name].timeout_ms == 30_000

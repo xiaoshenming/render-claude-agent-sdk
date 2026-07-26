@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Generator
+from contextlib import contextmanager
 from dataclasses import dataclass
 
 from .usage import TokenUsage
@@ -38,6 +39,8 @@ class BudgetSnapshot:
     turns: int
     tool_calls: int
     elapsed_ms: int
+    external_ms: int = 0
+    usage_reconciled: bool = False
 
 
 class BudgetTracker:
@@ -55,6 +58,8 @@ class BudgetTracker:
         self._usage = TokenUsage()
         self._turns = 0
         self._tool_calls = 0
+        self._external_ms = 0
+        self._usage_reconciled = False
 
     def check_context(self, context_bytes: int) -> None:
         _require_count(context_bytes, "context_bytes")
@@ -112,11 +117,22 @@ class BudgetTracker:
         ):
             raise ValueError("aggregate usage cannot be lower than observed usage")
         self._usage = aggregate
+        self._usage_reconciled = True
         self._check_usage(aggregate)
 
     def check_elapsed(self) -> None:
         if self._elapsed_ms() > self._limits.max_elapsed_ms:
             raise BudgetExceeded("elapsed time exceeds hard limit")
+
+    @contextmanager
+    def external_call(self) -> Generator[None, None, None]:
+        """Exclude external tool wall time from the reasoning elapsed budget."""
+
+        started = self._clock()
+        try:
+            yield
+        finally:
+            self._external_ms += max(0, int((self._clock() - started) * 1_000))
 
     def snapshot(self) -> BudgetSnapshot:
         return BudgetSnapshot(
@@ -124,6 +140,8 @@ class BudgetTracker:
             turns=self._turns,
             tool_calls=self._tool_calls,
             elapsed_ms=self._elapsed_ms(),
+            external_ms=self._external_ms,
+            usage_reconciled=self._usage_reconciled,
         )
 
     def remaining_elapsed_ms(self) -> int:
@@ -188,7 +206,8 @@ class BudgetTracker:
                 raise BudgetExceeded(f"{label} exceed hard limit")
 
     def _elapsed_ms(self) -> int:
-        return max(0, int((self._clock() - self._started) * 1_000))
+        wall_ms = int((self._clock() - self._started) * 1_000)
+        return max(0, wall_ms - self._external_ms)
 
 
 def _require_count(value: object, name: str) -> int:

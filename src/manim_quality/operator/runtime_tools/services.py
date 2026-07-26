@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import anyio
+
 from manim_quality.operator.models import CandidateAttempt, Finding, ValidationOutcome
 
 from .detector import LayoutIssueDetector
@@ -116,7 +118,7 @@ class RealRevisionValidator:
         problem_hash: str,
     ) -> ValidationOutcome:
         del findings
-        result = self._toolchain.render(revision)
+        result = await anyio.to_thread.run_sync(self._toolchain.render, revision)
         return ValidationOutcome(
             passed=result.ok,
             improved=result.ok,
@@ -141,15 +143,18 @@ class RealRevisionValidator:
 class RealLayoutInspector:
     def __init__(self, toolchain: RuntimeToolchain) -> None:
         self._toolchain = toolchain
-        self._baseline: dict[str, object] | None = None
+        self._baselines: dict[str, dict[str, object]] = {}
 
     async def inspect(
         self,
         revision: CandidateAttempt,
         problem_hash: str,
     ) -> dict[str, object]:
-        result = self._toolchain.probe(revision)
-        compact = self._toolchain.layout_report(revision)
+        def _probe_and_report():
+            probe = self._toolchain.probe(revision)
+            return probe, self._toolchain.layout_report(revision)
+
+        result, compact = await anyio.to_thread.run_sync(_probe_and_report)
         report = {
             "revision_id": revision.revision_id,
             "code_hash": revision.code_hash,
@@ -158,9 +163,9 @@ class RealLayoutInspector:
             "error": result.error,
             **compact,
         }
-        if revision.revision_id == "R0" and self._baseline is None:
-            self._baseline = dict(report)
-        baseline = self._baseline
+        if revision.revision_id == "R0" and problem_hash not in self._baselines:
+            self._baselines[problem_hash] = dict(report)
+        baseline = self._baselines.get(problem_hash)
         if baseline is not None:
             report["comparison_to_R0"] = compare_layout_reports(baseline, report)
         return report
