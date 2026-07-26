@@ -240,12 +240,55 @@ def _provider_tool_smoke(model: str) -> dict[str, object]:
         )
         response.raise_for_status()
         value = response.json()
-        content = value.get("content") if isinstance(value, dict) else None
-        used = any(
-            isinstance(item, dict) and item.get("type") == "tool_use"
-            for item in (content or [])
-        )
-        usage = value.get("usage") if isinstance(value, dict) else None
-        return {"ok": used, "error": None if used else "tool_use missing", "usage": usage}
+    except httpx.TransportError:
+        # Some relays TLS-fingerprint-filter Python clients while serving
+        # the Node-based SDK CLI just fine; retry the same real tool_use
+        # smoke through Node before declaring the provider unreachable.
+        return _provider_tool_smoke_node(base, headers, payload)
     except Exception as error:
         return {"ok": False, "error": f"{type(error).__name__}: {str(error)[:300]}"}
+    return _tool_smoke_verdict(value)
+
+
+def _tool_smoke_verdict(value: object) -> dict[str, object]:
+    content = value.get("content") if isinstance(value, dict) else None
+    used = any(
+        isinstance(item, dict) and item.get("type") == "tool_use"
+        for item in (content or [])
+    )
+    usage = value.get("usage") if isinstance(value, dict) else None
+    return {"ok": used, "error": None if used else "tool_use missing", "usage": usage}
+
+
+def _provider_tool_smoke_node(
+    base: str,
+    headers: dict[str, str],
+    payload: dict[str, object],
+) -> dict[str, object]:
+    script = (
+        "const [base, headers, payload] ="
+        " JSON.parse(require('fs').readFileSync(0, 'utf8'));"
+        "fetch(base + '/v1/messages',"
+        " {method: 'POST', headers: {...headers, 'content-type':"
+        " 'application/json'}, body: JSON.stringify(payload)})"
+        ".then(r => r.text().then(t => console.log(JSON.stringify("
+        "{status: r.status, body: t}))))"
+        ".catch(e => { console.log(JSON.stringify({status: 0, body:"
+        " String(e && e.cause ? e.cause : e)})); });"
+    )
+    result = subprocess.run(
+        ["node", "-e", script],
+        input=json.dumps([base, headers, payload]),
+        text=True,
+        capture_output=True,
+        timeout=60,
+        check=False,
+    )
+    try:
+        reply = json.loads(result.stdout.strip().splitlines()[-1])
+        if reply["status"] != 200:
+            detail = str(reply["body"])[:300]
+            return {"ok": False, "error": f"node smoke {reply['status']}: {detail}"}
+        return _tool_smoke_verdict(json.loads(reply["body"]))
+    except Exception as error:
+        return {"ok": False, "error": f"node smoke failed: {error}"}
