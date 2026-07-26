@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import json
 import threading
+from itertools import count
 from pathlib import Path
 
 import anyio
@@ -31,6 +33,7 @@ class RuntimeToolchain:
         scene_name: str = "Solution",
     ) -> None:
         self._workspaces = RevisionWorkspace(artifact_root)
+        self.reports_dir = Path(artifact_root) / "reports"
         self._renderer = ManimRenderer(
             source_workspace=source_workspace,
             python_executable=python_executable,
@@ -120,9 +123,32 @@ class RuntimeToolchain:
         return compact_layout_report(detector_payload)
 
 
+def _persist_report(
+    toolchain: RuntimeToolchain,
+    kind: str,
+    revision_id: str,
+    sequence: count,
+    payload: dict[str, object],
+) -> None:
+    """Persist each in-session verification fact the moment it exists.
+
+    Session death (timeout, protocol failure, SIGKILL) must never erase
+    already-computed render or layout evidence.
+    """
+
+    directory = toolchain.reports_dir
+    directory.mkdir(parents=True, exist_ok=True)
+    path = directory / f"{kind}.{revision_id}.{next(sequence):02d}.json"
+    path.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+
 class RealRevisionValidator:
     def __init__(self, toolchain: RuntimeToolchain) -> None:
         self._toolchain = toolchain
+        self._sequence = count(1)
 
     async def validate(
         self,
@@ -136,6 +162,25 @@ class RealRevisionValidator:
             revision,
             abandon_on_cancel=True,
         )
+        details = {
+            "compiled": result.ok,
+            "rendered": result.ok,
+            "video_path": str(result.video_path) if result.video_path else None,
+            "duration_seconds": result.duration_seconds,
+            "error": result.error,
+        }
+        _persist_report(
+            self._toolchain,
+            "validation",
+            revision.revision_id,
+            self._sequence,
+            {
+                "revision_id": revision.revision_id,
+                "code_hash": revision.code_hash,
+                "problem_hash": problem_hash,
+                **details,
+            },
+        )
         return ValidationOutcome(
             passed=result.ok,
             improved=result.ok,
@@ -144,13 +189,7 @@ class RealRevisionValidator:
                 if result.ok
                 else "real Manim render failed"
             ),
-            details={
-                "compiled": result.ok,
-                "rendered": result.ok,
-                "video_path": str(result.video_path) if result.video_path else None,
-                "duration_seconds": result.duration_seconds,
-                "error": result.error,
-            },
+            details=details,
             revision_id=revision.revision_id,
             code_hash=revision.code_hash,
             problem_hash=problem_hash,
@@ -161,6 +200,7 @@ class RealLayoutInspector:
     def __init__(self, toolchain: RuntimeToolchain) -> None:
         self._toolchain = toolchain
         self._baselines: dict[str, dict[str, object]] = {}
+        self._sequence = count(1)
 
     async def inspect(
         self,
@@ -188,4 +228,11 @@ class RealLayoutInspector:
         baseline = self._baselines.get(problem_hash)
         if baseline is not None:
             report["comparison_to_R0"] = compare_layout_reports(baseline, report)
+        _persist_report(
+            self._toolchain,
+            "layout",
+            revision.revision_id,
+            self._sequence,
+            report,
+        )
         return report

@@ -200,3 +200,39 @@ def test_concurrent_validate_and_inspect_render_revision_once(
     # Two distinct worker threads prove the tools really overlapped, so the
     # single render is the lock plus cache, not accidental serialization.
     assert len(entry_threads) == 2
+
+
+def test_in_session_verification_facts_survive_on_disk(tmp_path) -> None:
+    """Session death must not erase already-computed evidence."""
+    import json
+
+    toolchain = _toolchain(tmp_path)
+    toolchain._renderer = _CountingRenderer(tmp_path / "video.mp4")
+    toolchain._probe = _StubProbe()
+    toolchain._detector = _StubDetector()
+    session = QualitySession(
+        problem_text="Construct a line.",
+        candidate_code=(
+            "class Solution(BaseConfigScene):\n"
+            "    def construct(self):\n"
+            "        pass\n"
+        ),
+    )
+    revision = session.baseline
+    validator = RealRevisionValidator(toolchain)
+    inspector = RealLayoutInspector(toolchain)
+
+    async def scenario() -> None:
+        await validator.validate(revision, (), "sha256:" + "0" * 64)
+        await inspector.inspect(revision, "sha256:" + "0" * 64)
+        await inspector.inspect(revision, "sha256:" + "0" * 64)
+
+    anyio.run(scenario)
+
+    reports = sorted(p.name for p in toolchain.reports_dir.glob("*.json"))
+    assert any(name.startswith("validation.R0.") for name in reports)
+    layout_reports = [n for n in reports if n.startswith("layout.R0.")]
+    assert len(layout_reports) == 2
+    payload = json.loads((toolchain.reports_dir / layout_reports[0]).read_text())
+    assert payload["revision_id"] == "R0"
+    assert "blocking_count" in payload

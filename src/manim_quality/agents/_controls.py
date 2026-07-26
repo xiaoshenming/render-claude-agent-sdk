@@ -181,6 +181,7 @@ class RuntimeControls:
                 normalized,
                 status="error",
                 result_hash=sha256_text(error_fingerprint),
+                error=error_fingerprint[:500],
             )
             raise
         self._record_tool_result(
@@ -271,6 +272,7 @@ class RuntimeControls:
         *,
         status: str,
         result_hash: str,
+        error: str | None = None,
     ) -> None:
         for index in range(len(self._tool_calls) - 1, -1, -1):
             record = self._tool_calls[index]
@@ -284,6 +286,7 @@ class RuntimeControls:
                     record,
                     result_status=status,
                     result_hash=result_hash,
+                    error=error,
                 )
                 return
         raise RuntimeProtocolError("read tool result has no authorized call record")
