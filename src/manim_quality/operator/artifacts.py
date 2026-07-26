@@ -213,9 +213,16 @@ def _decision(
     record = operator_result.call_record
     final = gate_result.final_revision
     rollback = gate_result.rollback_revision
+    held = operator_result.agent_held
+    reviewer_tokens = _reviewer_tokens(operator_result.subagent_results)
     return {
         "decision": gate_result.decision.value,
-        "submitted_revision_id": operator_result.revision.revision_id,
+        "agent_held": held,
+        "hold_reason": operator_result.hold_reason,
+        "submitted_revision_id": (
+            None if held else operator_result.revision.revision_id
+        ),
+        "last_revision_id": operator_result.revision.revision_id,
         "final_revision_id": None if final is None else final.revision_id,
         "rollback_revision_id": None if rollback is None else rollback.revision_id,
         "reasons": list(gate_result.reasons),
@@ -223,10 +230,26 @@ def _decision(
         "turns": record.turns,
         "tool_calls": len(record.tool_calls),
         "elapsed_ms": record.elapsed_ms,
+        "external_tool_ms": record.external_tool_ms,
         "tokens": _usage(record.usage),
+        "reviewer_tokens": reviewer_tokens,
+        "total_tokens_with_reviewers": (
+            record.usage.total_tokens + reviewer_tokens
+        ),
         "layout_report": gate_result.layout_report,
         "validation": _validation(gate_result.validation),
     }
+
+
+def _reviewer_tokens(subagent_results) -> int:
+    total = 0
+    for item in subagent_results:
+        metadata = item.get("sdk_metadata")
+        if isinstance(metadata, Mapping):
+            value = metadata.get("subagent_tokens")
+            if isinstance(value, int) and not isinstance(value, bool):
+                total += value
+    return total
 
 
 def _validation(value) -> dict[str, object] | None:

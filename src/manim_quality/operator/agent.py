@@ -29,6 +29,8 @@ class QualityOperatorResult:
     call_record: AgentCallRecord
     sdk_messages: tuple[Mapping[str, object], ...] = ()
     subagent_results: tuple[Mapping[str, object], ...] = ()
+    agent_held: bool = False
+    hold_reason: str | None = None
 
 
 class QualityOperatorAgent:
@@ -96,14 +98,22 @@ class QualityOperatorAgent:
             if recovered is None:
                 raise
             return recovered
-        summary = _bind_output(result.structured_output, session)
-        return QualityOperatorResult(
-            revision=session.current_revision,
-            summary=summary,
-            call_record=result.record,
-            sdk_messages=tuple(result.sdk_messages),
-            subagent_results=tuple(result.subagent_results),
-        )
+        return _terminal_result(session, result)
+
+
+def _terminal_result(session: QualitySession, result) -> QualityOperatorResult:
+    summary = _bind_output(result.structured_output, session)
+    held = result.structured_output.get("status") == "held"
+    reason = result.structured_output.get("hold_reason")
+    return QualityOperatorResult(
+        revision=session.current_revision,
+        summary=summary,
+        call_record=result.record,
+        sdk_messages=tuple(result.sdk_messages),
+        subagent_results=tuple(result.subagent_results),
+        agent_held=held,
+        hold_reason=str(reason) if held and reason is not None else None,
+    )
 
 
 def _recover_submitted_output(

@@ -101,6 +101,7 @@ def _run_case(args, candidate: Path) -> dict[str, object]:
     decision_path = output / "output" / "decision.json"
     if decision_path.is_file():
         return _result(case_id, output, 0, 0.0, resumed=True)
+    print(f"[start] {case_id}", flush=True)
     output.mkdir(parents=True, exist_ok=True)
     argv = [
         sys.executable,

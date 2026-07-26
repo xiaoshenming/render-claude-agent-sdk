@@ -244,3 +244,52 @@ def test_terminal_output_supports_honest_held_state() -> None:
             },
             session,
         )
+
+
+def test_held_terminal_result_propagates_hold_reason() -> None:
+    from types import SimpleNamespace
+
+    from manim_quality.agents.usage import AgentCallRecord, TokenUsage
+    from manim_quality.operator.agent import _terminal_result
+    from manim_quality.operator.session import QualitySession
+
+    problem = "Problem: prove AB is parallel to CD."
+    code = (
+        f'"""{problem}"""\n'
+        "from manim import *\n\n"
+        "class Solution(BaseConfigScene):\n"
+        "    def construct(self):\n"
+        "        self.add(Line(LEFT, RIGHT))\n"
+    )
+    session = QualitySession(problem_text=problem, candidate_code=code)
+    record = AgentCallRecord(
+        run_id="r",
+        role="quality_operator",
+        model="m",
+        prompt="p",
+        prompt_version="v",
+        schema_version="v",
+        tool_version="v",
+        structured_output=None,
+        tool_calls=(),
+        usage=TokenUsage(),
+        turns=1,
+        observed_model_rounds=1,
+        elapsed_ms=1,
+        error=None,
+    )
+    result = SimpleNamespace(
+        structured_output={
+            "status": "held",
+            "summary": "预算耗尽仍剩 blocking。",
+            "hold_reason": "blocking overlap not cleared within budget",
+        },
+        record=record,
+        sdk_messages=(),
+        subagent_results=(),
+    )
+
+    outcome = _terminal_result(session, result)
+
+    assert outcome.agent_held is True
+    assert outcome.hold_reason == "blocking overlap not cleared within budget"
