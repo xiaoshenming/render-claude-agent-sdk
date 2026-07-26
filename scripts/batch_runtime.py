@@ -9,6 +9,8 @@ import platform
 import subprocess
 from pathlib import Path
 
+import httpx
+
 
 def preflight(args, candidates: list[Path]) -> dict[str, object]:
     issues: list[str] = []
@@ -52,6 +54,23 @@ def preflight(args, candidates: list[Path]) -> dict[str, object]:
     )
     if import_check["returncode"] != 0:
         issues.append("manim_quality.operator import failed")
+    render_import = _command(
+        [
+            str(args.manim_python),
+            "-c",
+            (
+                "from custom_services.system_tts_service "
+                "import create_system_tts_service"
+            ),
+        ],
+        cwd=args.repo,
+        env=_render_environment(args.runtime_python_path),
+    )
+    if render_import["returncode"] != 0:
+        issues.append("render runtime stubs import failed")
+    provider_smoke = _provider_tool_smoke(args.model)
+    if not provider_smoke["ok"]:
+        issues.append(f"provider tool smoke failed: {provider_smoke['error']}")
     manifest = {
         "status": "ok" if not issues else "failed",
         "issues": issues,
@@ -73,6 +92,7 @@ def preflight(args, candidates: list[Path]) -> dict[str, object]:
         "agent_concurrency": args.agent_concurrency,
         "render_concurrency": args.render_concurrency,
         "case_count": len(candidates),
+        "provider_tool_smoke": provider_smoke,
     }
     return manifest
 
@@ -148,3 +168,55 @@ def _python_environment(repo: Path) -> dict[str, str]:
         source_root if not inherited else os.pathsep.join((source_root, inherited))
     )
     return environment
+
+
+def _render_environment(runtime_path: Path) -> dict[str, str]:
+    environment = os.environ.copy()
+    environment["PYTHONPATH"] = str(Path(runtime_path).resolve())
+    return environment
+
+
+def _provider_tool_smoke(model: str) -> dict[str, object]:
+    base = os.environ.get("ANTHROPIC_BASE_URL", "https://api.anthropic.com").rstrip("/")
+    key = os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("ANTHROPIC_AUTH_TOKEN")
+    if not key:
+        return {"ok": False, "error": "authentication missing"}
+    payload = {
+        "model": model,
+        "max_tokens": 32,
+        "messages": [{"role": "user", "content": "Call the health tool once."}],
+        "tools": [
+            {
+                "name": "health",
+                "description": "Return runtime health.",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": False,
+                },
+            }
+        ],
+        "tool_choice": {"type": "tool", "name": "health"},
+    }
+    try:
+        response = httpx.post(
+            f"{base}/v1/messages",
+            headers={
+                "x-api-key": key,
+                "authorization": f"Bearer {key}",
+                "anthropic-version": "2023-06-01",
+            },
+            json=payload,
+            timeout=30,
+        )
+        response.raise_for_status()
+        value = response.json()
+        content = value.get("content") if isinstance(value, dict) else None
+        used = any(
+            isinstance(item, dict) and item.get("type") == "tool_use"
+            for item in (content or [])
+        )
+        usage = value.get("usage") if isinstance(value, dict) else None
+        return {"ok": used, "error": None if used else "tool_use missing", "usage": usage}
+    except Exception as error:
+        return {"ok": False, "error": f"{type(error).__name__}: {str(error)[:300]}"}

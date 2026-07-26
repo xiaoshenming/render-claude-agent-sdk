@@ -31,7 +31,6 @@ _DENIED_TOOLS = (
     "Edit",
     "Glob",
     "Grep",
-    "LS",
     "NotebookEdit",
     "Read",
     "Skill",
