@@ -19,7 +19,7 @@ from .reviewers import build_reviewer_specs
 from .session import QualitySession
 from .toolset import build_quality_tools
 
-PROMPT_PATH = Path(__file__).with_name("prompts") / "quality_operator_v1.md"
+PROMPT_PATH = Path(__file__).with_name("prompts") / "quality_operator_v2.md"
 
 
 @dataclass(frozen=True, slots=True)

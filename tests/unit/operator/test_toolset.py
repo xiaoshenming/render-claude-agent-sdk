@@ -101,7 +101,8 @@ def test_toolset_exposes_exact_seven_mcp_capabilities() -> None:
     )
     assert tools["record_findings"].max_calls == 4
     assert tools["apply_patch"].max_calls == 5
-    assert tools["inspect_layout"].max_calls == 5
+    # inspect covers one verification per patch plus the initial R0 pass.
+    assert tools["inspect_layout"].max_calls == 6
     assert tools["validate_revision"].max_calls == 5
 
 
@@ -313,3 +314,16 @@ def test_validation_tools_cover_the_real_render_and_probe_chain() -> None:
         assert grants[name].timeout_ms == _EXTERNAL_VALIDATION_TIMEOUT_MS
     for name in ("read_solution", "record_findings", "apply_patch", "submit_revision"):
         assert grants[name].timeout_ms == 30_000
+
+
+def test_verification_receipts_carry_remaining_budget_signal() -> None:
+    session, _relation, _layout, _validator, tools = tool_fixture()
+    prime_tools(tools)
+
+    report = execute(tools["inspect_layout"], {"revision_id": "R0"})
+    assert report["patches_remaining"] == 5
+    assert report["findings_batches_remaining"] == 4
+
+    session.raise_patch_budget(7)
+    report = execute(tools["inspect_layout"], {"revision_id": "R0"})
+    assert report["patches_remaining"] == 7

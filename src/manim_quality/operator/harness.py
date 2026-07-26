@@ -14,6 +14,7 @@ from .failure_artifacts import write_failed_run_artifacts
 from manim_quality.agents._runtime_models import AgentRunFailed
 from .gate import GateResult, OuterAcceptanceGate
 from .session import QualitySession
+from .session_rules import patch_budget_for_blocking
 
 
 @dataclass(frozen=True, slots=True)
@@ -22,6 +23,34 @@ class QualityHarnessResult:
     operator_result: QualityOperatorResult
     gate_result: GateResult
     baseline_layout_report: Mapping[str, object]
+
+
+def _prepared_session_impl(
+    inspector,
+    problem_text: str,
+    candidate_code: str,
+    max_patch_attempts: int | None,
+) -> tuple[QualitySession, Mapping[str, object]]:
+    session = QualitySession(
+        problem_text=problem_text,
+        candidate_code=candidate_code,
+        max_patch_attempts=max_patch_attempts or 5,
+    )
+    baseline_layout = anyio.run(
+        inspector.inspect,
+        session.baseline,
+        session.problem_hash,
+    )
+    if max_patch_attempts is None:
+        session.raise_patch_budget(_patch_budget(baseline_layout))
+    return session, baseline_layout
+
+
+def _patch_budget(baseline_layout: Mapping[str, object]) -> int:
+    blocking = baseline_layout.get("blocking_count")
+    if isinstance(blocking, bool) or not isinstance(blocking, int) or blocking < 0:
+        blocking = 0
+    return patch_budget_for_blocking(blocking)
 
 
 class QualityHarness:
@@ -60,15 +89,13 @@ class QualityHarness:
         reserved_output_tokens: int,
         reserved_cache_read_tokens: int = 0,
         reserved_cache_write_tokens: int = 0,
+        max_patch_attempts: int | None = None,
     ) -> QualityHarnessResult:
-        session = QualitySession(
-            problem_text=problem_text,
-            candidate_code=candidate_code,
-        )
-        baseline_layout = anyio.run(
-            self._agent_layout.inspect,
-            session.baseline,
-            session.problem_hash,
+        session, baseline_layout = _prepared_session_impl(
+            self._agent_layout,
+            problem_text,
+            candidate_code,
+            max_patch_attempts,
         )
         try:
             operator_result = self._operator.run(

@@ -13,13 +13,16 @@ from .models import (
 from .session_errors import (
     DuplicatePatch,
     InvalidSessionTransition,
-    ScopeViolation,
 )
 from .session_rules import (
+    best_validated_revision,
     embedded_problem_hash,
     patch_hash,
     require_blocking_findings_repaired,
     validate_finding_scope,
+    validate_layout_inspection,
+    validate_patch_budget_raise,
+    validate_patch_text,
     verify_candidate,
 )
 from .source_view import apply_solution_replacement, extract_solution
@@ -97,6 +100,27 @@ class QualitySession:
     def submitted_revision_id(self) -> str | None:
         return self._submitted_revision_id
 
+    @property
+    def max_patch_attempts(self) -> int:
+        return self._max_patch_attempts
+
+    @property
+    def patches_remaining(self) -> int:
+        return self._max_patch_attempts - (len(self._attempts) - 1)
+
+    @property
+    def finding_batches_remaining(self) -> int:
+        return 4 - self._finding_batches
+
+    def raise_patch_budget(self, max_patch_attempts: int) -> None:
+        self._require_open()
+        validate_patch_budget_raise(self._max_patch_attempts, max_patch_attempts)
+        if self._finding_batches > 0 or len(self._attempts) > 1:
+            raise InvalidSessionTransition(
+                "patch budget is frozen after findings or patches"
+            )
+        self._max_patch_attempts = max_patch_attempts
+
     def get_revision(self, revision_id: str) -> CandidateAttempt:
         for attempt in self._attempts:
             if attempt.revision_id == revision_id:
@@ -104,21 +128,11 @@ class QualitySession:
         raise ValueError(f"unknown revision_id: {revision_id}")
 
     def best_validated_revision_id(self) -> str | None:
-        """Latest passing candidate with the lowest known blocking count."""
-
-        best_key: tuple[int, int] | None = None
-        best_id: str | None = None
-        for index, attempt in enumerate(self._attempts[1:], start=1):
-            record = self._validations.get(attempt.revision_id)
-            if record is None or not record.passed:
-                continue
-            inspection = self._layout_inspections.get(attempt.revision_id)
-            blocking = inspection[1] if inspection is not None else 10**9
-            key = (blocking, -index)
-            if best_key is None or key < best_key:
-                best_key = key
-                best_id = attempt.revision_id
-        return best_id
+        return best_validated_revision(
+            self._attempts,
+            self._validations,
+            self._layout_inspections,
+        )
 
     def mark_solution_read(self, revision_id: str) -> None:
         self._require_open()
@@ -166,10 +180,7 @@ class QualitySession:
             raise InvalidSessionTransition(
                 "read_solution must cover the current revision before patch"
             )
-        if old_text == new_text:
-            raise ValueError("patch must change content")
-        if len(old_text) > 200 and len(new_text) * 2 < len(old_text):
-            raise ScopeViolation("patch removes too much content in one block")
+        validate_patch_text(old_text, new_text)
         after_code = apply_solution_replacement(
             before.code,
             old_text=old_text,
@@ -231,18 +242,7 @@ class QualitySession:
             raise InvalidSessionTransition(
                 "only the current revision can bind layout inspection"
             )
-        if (
-            not isinstance(fingerprint, str)
-            or not fingerprint.startswith("sha256:")
-            or len(fingerprint) != 71
-        ):
-            raise ValueError("fingerprint must be a sha256 digest")
-        if (
-            isinstance(blocking_count, bool)
-            or not isinstance(blocking_count, int)
-            or blocking_count < 0
-        ):
-            raise ValueError("blocking_count must be a non-negative integer")
+        validate_layout_inspection(fingerprint, blocking_count)
         self._layout_inspections[revision_id] = (fingerprint, blocking_count)
 
     def submit(self, revision_id: str) -> CandidateAttempt:

@@ -28,6 +28,12 @@ def register_quality_tools(handlers) -> tuple[ManagedToolGrant, ...]:
     )
 
 
+def _patch_budget(handlers) -> int:
+    session = getattr(handlers, "session", None)
+    budget = getattr(session, "max_patch_attempts", 5)
+    return budget if isinstance(budget, int) and budget > 0 else 5
+
+
 def _read_tools(handlers) -> tuple[ManagedToolGrant, ...]:
     return (
         _grant(
@@ -68,7 +74,7 @@ def _edit_tools(handlers) -> tuple[ManagedToolGrant, ...]:
             APPLY_PATCH_SCHEMA,
             handlers.apply_patch,
             ToolEffect.REVISION_MUTATION,
-            5,
+            _patch_budget(handlers),
             8_000,
             max_input_bytes=48_000,
         ),
@@ -83,7 +89,7 @@ def _validation_tools(handlers) -> tuple[ManagedToolGrant, ...]:
             REVISION_INPUT_SCHEMA,
             handlers.inspect_layout,
             ToolEffect.VALIDATION,
-            5,
+            _patch_budget(handlers) + 1,
             30_000,
             timeout_ms=_EXTERNAL_VALIDATION_TIMEOUT_MS,
         ),
@@ -93,7 +99,7 @@ def _validation_tools(handlers) -> tuple[ManagedToolGrant, ...]:
             REVISION_INPUT_SCHEMA,
             handlers.validate_revision,
             ToolEffect.VALIDATION,
-            5,
+            _patch_budget(handlers),
             30_000,
             timeout_ms=_EXTERNAL_VALIDATION_TIMEOUT_MS,
         ),

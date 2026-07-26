@@ -35,6 +35,69 @@ def validate_finding_scope(
             raise ValueError(f"finding category does not match {scope} patch")
 
 
+def validate_patch_budget_raise(current: int, requested: int) -> None:
+    if type(requested) is not int:
+        raise TypeError("max_patch_attempts must be an integer")
+    if requested < current:
+        raise InvalidSessionTransition("patch budget can only be raised")
+
+
+def validate_patch_text(old_text: str, new_text: str) -> None:
+    if old_text == new_text:
+        raise ValueError("patch must change content")
+    if len(old_text) > 200 and len(new_text) * 2 < len(old_text):
+        raise ScopeViolation("patch removes too much content in one block")
+
+
+def validate_layout_inspection(fingerprint: str, blocking_count: int) -> None:
+    if (
+        not isinstance(fingerprint, str)
+        or not fingerprint.startswith("sha256:")
+        or len(fingerprint) != 71
+    ):
+        raise ValueError("fingerprint must be a sha256 digest")
+    if (
+        isinstance(blocking_count, bool)
+        or not isinstance(blocking_count, int)
+        or blocking_count < 0
+    ):
+        raise ValueError("blocking_count must be a non-negative integer")
+
+
+def best_validated_revision(
+    attempts: Sequence[CandidateAttempt],
+    validations: Mapping[str, object],
+    inspections: Mapping[str, tuple[str, int]],
+) -> str | None:
+    """Latest passing candidate with the lowest known blocking count."""
+
+    best_key: tuple[int, int] | None = None
+    best_id: str | None = None
+    for index, attempt in enumerate(attempts[1:], start=1):
+        record = validations.get(attempt.revision_id)
+        if record is None or not getattr(record, "passed", False):
+            continue
+        inspection = inspections.get(attempt.revision_id)
+        blocking = inspection[1] if inspection is not None else 10**9
+        key = (blocking, -index)
+        if best_key is None or key < best_key:
+            best_key = key
+            best_id = attempt.revision_id
+    return best_id
+
+
+def patch_budget_for_blocking(blocking_count: int) -> int:
+    """Scale the patch budget to the baseline blocking pressure."""
+
+    if isinstance(blocking_count, bool) or not isinstance(blocking_count, int):
+        raise TypeError("blocking_count must be an integer")
+    if blocking_count <= 2:
+        return 5
+    if blocking_count <= 8:
+        return 6
+    return 7
+
+
 def require_blocking_findings_repaired(
     findings: Mapping[str, Finding],
     attempts: Sequence[CandidateAttempt],

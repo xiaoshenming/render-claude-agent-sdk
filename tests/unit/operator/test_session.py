@@ -431,3 +431,28 @@ def test_best_validated_revision_ignores_failed_validation() -> None:
     )
 
     assert quality.best_validated_revision_id() is None
+
+
+def test_patch_budget_can_only_be_raised_before_findings() -> None:
+    quality = session()
+    quality.raise_patch_budget(7)
+    assert quality.max_patch_attempts == 7
+    assert quality.patches_remaining == 7
+
+    with pytest.raises(InvalidSessionTransition, match="raised"):
+        quality.raise_patch_budget(6)
+
+    quality.record_findings((finding(),))
+    with pytest.raises(InvalidSessionTransition, match="frozen"):
+        quality.raise_patch_budget(8)
+
+
+def test_patch_budget_for_blocking_maps_pressure_to_budget() -> None:
+    from manim_quality.operator.session_rules import patch_budget_for_blocking
+
+    assert patch_budget_for_blocking(0) == 5
+    assert patch_budget_for_blocking(2) == 5
+    assert patch_budget_for_blocking(3) == 6
+    assert patch_budget_for_blocking(8) == 6
+    assert patch_budget_for_blocking(9) == 7
+    assert patch_budget_for_blocking(36) == 7

@@ -55,7 +55,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         runtime=runtime,
         profile=operator_profile(
             model=args.model,
-            prompt_version="quality-operator-v1",
+            prompt_version="quality-operator-v2",
             schema_version="quality-operator-output-v1",
             tool_version="quality-tools-v1",
         ),
@@ -116,7 +116,7 @@ def _arguments(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--run-id")
     parser.add_argument("--compile-only", action="store_true")
     parser.add_argument("--max-turns", type=int, default=24)
-    parser.add_argument("--max-tool-calls", type=int, default=32)
+    parser.add_argument("--max-tool-calls", type=int, default=40)
     parser.add_argument("--estimated-input-tokens", type=int, default=4_000)
     parser.add_argument("--reserved-output-tokens", type=int, default=2_000)
     args = parser.parse_args(argv)

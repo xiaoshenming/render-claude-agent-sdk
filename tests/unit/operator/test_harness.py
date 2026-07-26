@@ -131,3 +131,13 @@ def test_harness_rejects_same_agent_and_acceptance_adapter_instances() -> None:
         assert "independent" in str(error)
     else:
         raise AssertionError("shared validation adapters must be rejected")
+
+
+def test_harness_scales_patch_budget_with_baseline_blocking() -> None:
+    from manim_quality.operator.harness import _patch_budget
+
+    assert _patch_budget({"blocking_count": 0}) == 5
+    assert _patch_budget({"blocking_count": 5}) == 6
+    assert _patch_budget({"blocking_count": 23}) == 7
+    assert _patch_budget({}) == 5
+    assert _patch_budget({"blocking_count": "bad"}) == 5

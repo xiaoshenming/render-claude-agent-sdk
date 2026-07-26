@@ -110,6 +110,7 @@ class _Handlers:
         )
         if identity != expected:
             raise ValueError("layout inspector returned stale evidence")
+        report = {**report, **_budget_signal(self.session)}
         text = _json_text(report)
         blocking = report.get("blocking_count")
         if type(blocking) is not int or blocking < 0:
@@ -147,7 +148,8 @@ class _Handlers:
             improved=outcome.improved,
             fingerprint=outcome.fingerprint,
         )
-        return _json_text(_validation_receipt(revision.revision_id, outcome))
+        receipt = _validation_receipt(revision.revision_id, outcome)
+        return _json_text({**receipt, **_budget_signal(self.session)})
 
     async def submit_revision(self, arguments):
         revision = self.session.submit(bind_revision_id(arguments))
@@ -187,6 +189,13 @@ def _validation_receipt(
         "fingerprint": outcome.fingerprint,
         "code_hash": outcome.code_hash,
         "problem_hash": outcome.problem_hash,
+    }
+
+
+def _budget_signal(session: QualitySession) -> dict[str, int]:
+    return {
+        "patches_remaining": session.patches_remaining,
+        "findings_batches_remaining": session.finding_batches_remaining,
     }
 
 
