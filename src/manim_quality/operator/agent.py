@@ -19,7 +19,7 @@ from .reviewers import build_reviewer_specs
 from .session import QualitySession
 from .toolset import build_quality_tools
 
-PROMPT_PATH = Path(__file__).with_name("prompts") / "quality_operator_v2.md"
+PROMPT_PATH = Path(__file__).with_name("prompts") / "quality_operator_v3.md"
 
 
 @dataclass(frozen=True, slots=True)
@@ -146,6 +146,18 @@ def _bind_output(
     value: Mapping[str, object],
     session: QualitySession,
 ) -> str:
+    status = value.get("status")
+    if status == "submitted":
+        return _bind_submitted_output(value, session)
+    if status == "held":
+        return _bind_held_output(value, session)
+    raise ValueError("invalid Quality Operator terminal output")
+
+
+def _bind_submitted_output(
+    value: Mapping[str, object],
+    session: QualitySession,
+) -> str:
     required = {
         "status",
         "submitted_revision_id",
@@ -153,7 +165,7 @@ def _bind_output(
         "problem_hash",
         "summary",
     }
-    if set(value) != required or value.get("status") != "submitted":
+    if set(value) != required:
         raise ValueError("invalid Quality Operator terminal output")
     submitted = session.submitted_revision_id
     if submitted is None:
@@ -167,6 +179,24 @@ def _bind_output(
     )
     if actual != expected:
         raise ValueError("terminal output does not bind submitted revision")
+    return _bounded_summary(value)
+
+
+def _bind_held_output(
+    value: Mapping[str, object],
+    session: QualitySession,
+) -> str:
+    if not set(value) <= {"status", "summary", "hold_reason"}:
+        raise ValueError("held output allows only status, summary, hold_reason")
+    if session.submitted_revision_id is not None:
+        raise ValueError("held output is forbidden after a real submission")
+    reason = value.get("hold_reason")
+    if not isinstance(reason, str) or not reason.strip() or len(reason) > 500:
+        raise ValueError("hold_reason must be a bounded non-empty string")
+    return _bounded_summary(value)
+
+
+def _bounded_summary(value: Mapping[str, object]) -> str:
     summary = value.get("summary")
     if not isinstance(summary, str) or not summary.strip() or len(summary) > 2_000:
         raise ValueError("summary must be a bounded non-empty string")

@@ -205,3 +205,42 @@ def test_operator_rejects_structured_output_without_tool_submission(
         )
 
     assert session.submitted_revision_id is None
+
+
+def test_terminal_output_supports_honest_held_state() -> None:
+    from manim_quality.operator.agent import _bind_output
+    from manim_quality.operator.session import QualitySession
+
+    problem = "Problem: prove AB is parallel to CD."
+    code = (
+        f'"""{problem}"""\n'
+        "from manim import *\n\n"
+        "class Solution(BaseConfigScene):\n"
+        "    def construct(self):\n"
+        "        self.add(Line(LEFT, RIGHT))\n"
+    )
+    session = QualitySession(problem_text=problem, candidate_code=code)
+
+    summary = _bind_output(
+        {
+            "status": "held",
+            "summary": "预算耗尽，仍剩 1 个 blocking。",
+            "hold_reason": "patch budget exhausted with blocking overlap",
+        },
+        session,
+    )
+    assert "blocking" in summary or summary
+
+    with pytest.raises(ValueError, match="hold_reason"):
+        _bind_output({"status": "held", "summary": "x"}, session)
+
+    with pytest.raises(ValueError, match="allows only"):
+        _bind_output(
+            {
+                "status": "held",
+                "summary": "x",
+                "hold_reason": "y",
+                "submitted_revision_id": "R1",
+            },
+            session,
+        )

@@ -32,7 +32,7 @@ def write_run_artifacts(
     _write_revisions(target, session)
     _write_evidence(target, session, gate_result, baseline_layout_report or {})
     _write_logs(target, operator_result, gate_result)
-    _write_output(target, gate_result)
+    _write_output(target, session, gate_result)
 
 
 def _validate_existing_root(target: Path) -> None:
@@ -158,19 +158,26 @@ def _write_logs(
     _write_json(target / "output" / "decision.json", decision)
 
 
-def _write_output(target: Path, gate_result: GateResult) -> None:
+def _write_output(target: Path, session, gate_result: GateResult) -> None:
     if gate_result.decision is GateDecision.PROPOSED:
         assert gate_result.final_revision is not None
         _write_text(
             target / "output" / "proposed_candidate.py",
             gate_result.final_revision.code,
         )
-    else:
-        assert gate_result.rollback_revision is not None
-        rollback = gate_result.rollback_revision
+        return
+    assert gate_result.rollback_revision is not None
+    rollback = gate_result.rollback_revision
+    _write_text(
+        target / "output" / f"rollback.{rollback.revision_id}.py",
+        rollback.code,
+    )
+    evidence = session.best_validated_evidence()
+    if evidence is not None:
+        revision_id = str(evidence["revision_id"])
         _write_text(
-            target / "output" / f"rollback.{rollback.revision_id}.py",
-            rollback.code,
+            target / "output" / f"best_render_passed.{revision_id}.py",
+            session.get_revision(revision_id).code,
         )
 
 

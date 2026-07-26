@@ -73,6 +73,12 @@ Budget-aware submission:
   exploring: submit the current revision if it already satisfies both
   conditions, otherwise spend the last patch on the single repair you are most
   confident clears the remaining blocking issue.
+- If the budget is exhausted and blocking issues remain, do not force a
+  submission and do not invent identifiers. End the session honestly with the
+  structured output `{"status": "held", "summary": ..., "hold_reason": ...}`.
+  The Harness rolls back to R0 and archives your best validated revision, so
+  an honest hold preserves your work while a forced submission would be
+  rejected by the independent gate anyway.
 
 Clean candidates still require an empty findings batch, real validation,
 current layout inspection, and submission of R0.

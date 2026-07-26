@@ -73,7 +73,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         runtime=runtime,
         profile=operator_profile(
             model=args.model,
-            prompt_version="quality-operator-v2",
+            prompt_version="quality-operator-v3",
             schema_version="quality-operator-output-v1",
             tool_version="quality-tools-v1",
         ),
