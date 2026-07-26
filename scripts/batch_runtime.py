@@ -13,65 +13,19 @@ import httpx
 
 
 def preflight(args, candidates: list[Path]) -> dict[str, object]:
-    issues: list[str] = []
-    for name in ("ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_API_KEY"):
-        if os.environ.get(name, "").strip():
-            break
-    else:
-        issues.append("provider authentication missing")
-    for path, label in (
-        (args.manim_python, "manim python"),
-        (args.runtime_python_path, "runtime python path"),
-    ):
-        if not Path(path).exists():
-            issues.append(f"{label} missing: {path}")
-    for candidate in candidates:
-        try:
-            source = candidate.read_text(encoding="utf-8")
-            ast.parse(source)
-            compile(source, str(candidate), "exec")
-        except Exception as error:
-            issues.append(f"candidate invalid: {candidate}: {error}")
-    docker = _command(["docker", "info", "--format", "{{.ServerVersion}}"])
-    if docker["returncode"] != 0:
-        issues.append("docker daemon unavailable")
     image = os.environ.get("MANIM_DOCKER_IMAGE", "docker-manim-worker-1:latest")
     image_id = _command(["docker", "image", "inspect", image, "--format", "{{.Id}}"])
-    if image_id["returncode"] != 0:
-        issues.append(f"docker image unavailable: {image}")
-    for command in ("ffmpeg", "ffprobe"):
-        check = _command([command, "-version"])
-        if check["returncode"] != 0:
-            issues.append(f"{command} unavailable")
-    import_check = _command(
-        [
-            os.environ.get("PYTHON", "python"),
-            "-c",
-            "import manim_quality.operator",
-        ],
-        cwd=args.repo,
-        env=_python_environment(args.repo),
-    )
-    if import_check["returncode"] != 0:
-        issues.append("manim_quality.operator import failed")
-    render_import = _command(
-        [
-            str(args.manim_python),
-            "-c",
-            (
-                "from custom_services.system_tts_service "
-                "import create_system_tts_service"
-            ),
-        ],
-        cwd=args.repo,
-        env=_render_environment(args.runtime_python_path),
-    )
-    if render_import["returncode"] != 0:
-        issues.append("render runtime stubs import failed")
     provider_smoke = _provider_tool_smoke(args.model)
+    issues = [
+        *_credential_issues(),
+        *_path_issues(args),
+        *_candidate_issues(candidates),
+        *_binary_issues(image, image_id),
+        *_import_issues(args),
+    ]
     if not provider_smoke["ok"]:
         issues.append(f"provider tool smoke failed: {provider_smoke['error']}")
-    manifest = {
+    return {
         "status": "ok" if not issues else "failed",
         "issues": issues,
         "agent_commit": _text(["git", "rev-parse", "HEAD"], cwd=args.repo),
@@ -94,7 +48,76 @@ def preflight(args, candidates: list[Path]) -> dict[str, object]:
         "case_count": len(candidates),
         "provider_tool_smoke": provider_smoke,
     }
-    return manifest
+
+
+def _credential_issues() -> list[str]:
+    for name in ("ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_API_KEY"):
+        if os.environ.get(name, "").strip():
+            return []
+    return ["provider authentication missing"]
+
+
+def _path_issues(args) -> list[str]:
+    return [
+        f"{label} missing: {path}"
+        for path, label in (
+            (args.manim_python, "manim python"),
+            (args.runtime_python_path, "runtime python path"),
+        )
+        if not Path(path).exists()
+    ]
+
+
+def _candidate_issues(candidates: list[Path]) -> list[str]:
+    issues: list[str] = []
+    for candidate in candidates:
+        try:
+            source = candidate.read_text(encoding="utf-8")
+            ast.parse(source)
+            compile(source, str(candidate), "exec")
+        except Exception as error:
+            issues.append(f"candidate invalid: {candidate}: {error}")
+    return issues
+
+
+def _binary_issues(image: str, image_id: dict[str, object]) -> list[str]:
+    issues: list[str] = []
+    docker = _command(["docker", "info", "--format", "{{.ServerVersion}}"])
+    if docker["returncode"] != 0:
+        issues.append("docker daemon unavailable")
+    if image_id["returncode"] != 0:
+        issues.append(f"docker image unavailable: {image}")
+    for command in ("ffmpeg", "ffprobe"):
+        check = _command([command, "-version"])
+        if check["returncode"] != 0:
+            issues.append(f"{command} unavailable")
+    return issues
+
+
+def _import_issues(args) -> list[str]:
+    issues: list[str] = []
+    import_check = _command(
+        [os.environ.get("PYTHON", "python"), "-c", "import manim_quality.operator"],
+        cwd=args.repo,
+        env=_python_environment(args.repo),
+    )
+    if import_check["returncode"] != 0:
+        issues.append("manim_quality.operator import failed")
+    render_import = _command(
+        [
+            str(args.manim_python),
+            "-c",
+            (
+                "from custom_services.system_tts_service "
+                "import create_system_tts_service"
+            ),
+        ],
+        cwd=args.repo,
+        env=_render_environment(args.runtime_python_path),
+    )
+    if render_import["returncode"] != 0:
+        issues.append("render runtime stubs import failed")
+    return issues
 
 
 def write_manifest(path: Path, manifest: dict[str, object]) -> None:

@@ -275,13 +275,7 @@ def _reviewer_payload(text: str) -> Mapping[str, object]:
 
 
 def _normalize_issue(value: object) -> Mapping[str, object]:
-    required = {
-        "type",
-        "target",
-        "evidence",
-        "required_invariant",
-        "repair_scope",
-    }
+    required = {"type", "target", "evidence", "required_invariant", "repair_scope"}
     if not isinstance(value, Mapping) or not required.issubset(value):
         raise SubagentProtocolError("Reviewer issue has invalid fields")
     evidence = value["evidence"]
