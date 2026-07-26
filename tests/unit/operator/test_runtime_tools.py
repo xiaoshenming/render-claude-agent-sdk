@@ -63,3 +63,42 @@ def test_compact_layout_report_returns_only_bounded_issue_facts() -> None:
     assert result["truncated"] is True
     assert "points" not in json.dumps(result)
     assert result["issues"][0]["objects"][0]["path"] == "mobjects.0"
+
+
+def test_detached_render_groups_are_tracked_and_reapable(tmp_path) -> None:
+    """A supervisor group-kill cannot reach detached render sessions, so
+    live groups must be registered for explicit reaping."""
+    import subprocess
+    import sys
+    import time
+
+    from manim_quality.operator.runtime_tools import process as process_module
+
+    argv = [sys.executable, "-c", "import time; time.sleep(30)"]
+    holder = {}
+
+    def run_in_thread():
+        try:
+            process_module.run_to_artifacts(
+                argv,
+                cwd=tmp_path,
+                timeout_seconds=25,
+                stdout_path=tmp_path / "out.log",
+                stderr_path=tmp_path / "err.log",
+            )
+        except Exception as error:
+            holder["error"] = error
+
+    import threading
+
+    worker = threading.Thread(target=run_in_thread, daemon=True)
+    worker.start()
+    deadline = time.monotonic() + 5
+    while time.monotonic() < deadline and not process_module._ACTIVE_GROUPS:
+        time.sleep(0.05)
+    assert process_module._ACTIVE_GROUPS, "live render group must be registered"
+
+    reaped = process_module.kill_active_process_groups()
+    assert reaped == 1
+    worker.join(timeout=10)
+    assert not process_module._ACTIVE_GROUPS

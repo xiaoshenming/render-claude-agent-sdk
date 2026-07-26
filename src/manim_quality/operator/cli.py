@@ -41,10 +41,15 @@ class MemoryUsageSink(UsageSink):
 
 def _install_sigterm_handler() -> None:
     """Convert batch-level SIGTERM into an exception the harness can
-    catch, so failure evidence is persisted before the process exits."""
+    catch, so failure evidence is persisted before the process exits.
+    Detached render sessions are reaped first: a supervisor's group kill
+    cannot reach them, and orphaned containers would hold render slots."""
 
     def _raise(signum, frame):
         del signum, frame
+        from .runtime_tools.process import kill_active_process_groups
+
+        kill_active_process_groups()
         raise TimeoutError("case timeout: SIGTERM received from batch runner")
 
     try:

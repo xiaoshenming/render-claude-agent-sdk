@@ -2,11 +2,37 @@
 
 from __future__ import annotations
 
+import atexit
 import json
 import os
 import signal
 import subprocess
+import threading
 from pathlib import Path
+
+# Render children run in their own sessions (start_new_session) so our
+# group-kill on timeout cannot orphan-proof them from the outside: a
+# supervisor's killpg on *our* group never reaches them. Track live groups
+# and reap them on interpreter exit or supervisor termination.
+_ACTIVE_GROUPS: set[int] = set()
+_ACTIVE_LOCK = threading.Lock()
+
+
+def kill_active_process_groups() -> int:
+    """Kill every live render process group; returns how many were signalled."""
+
+    with _ACTIVE_LOCK:
+        groups = tuple(_ACTIVE_GROUPS)
+        _ACTIVE_GROUPS.clear()
+    for pgid in groups:
+        try:
+            os.killpg(pgid, signal.SIGKILL)
+        except (ProcessLookupError, PermissionError):
+            pass
+    return len(groups)
+
+
+atexit.register(kill_active_process_groups)
 
 
 def run_to_artifacts(
@@ -36,6 +62,8 @@ def run_to_artifacts(
         env=environment,
         start_new_session=True,
     )
+    with _ACTIVE_LOCK:
+        _ACTIVE_GROUPS.add(process.pid)
     try:
         stdout, stderr = process.communicate(timeout=timeout_seconds)
     except subprocess.TimeoutExpired as error:
@@ -50,6 +78,9 @@ def run_to_artifacts(
             encoding="utf-8",
         )
         raise
+    finally:
+        with _ACTIVE_LOCK:
+            _ACTIVE_GROUPS.discard(process.pid)
     stdout_path.write_text(stdout, encoding="utf-8")
     stderr_path.write_text(stderr, encoding="utf-8")
     return subprocess.CompletedProcess(argv, process.returncode, stdout, stderr)
