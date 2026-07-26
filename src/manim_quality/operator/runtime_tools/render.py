@@ -18,7 +18,7 @@ class ManimRenderer:
         python_executable: Path,
         environment: dict[str, str] | None = None,
         scene_name: str = "Solution",
-        timeout_seconds: int = 300,
+        timeout_seconds: int = 1_200,
         quality: str = "l",
     ) -> None:
         self._workspace = source_workspace.resolve(strict=True)

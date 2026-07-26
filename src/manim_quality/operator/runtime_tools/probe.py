@@ -19,7 +19,7 @@ class BBoxProbe:
         python_executable: Path,
         environment: dict[str, str] | None = None,
         scene_name: str = "Solution",
-        timeout_seconds: int = 180,
+        timeout_seconds: int = 1_200,
         width: int = 1280,
         height: int = 720,
     ) -> None:

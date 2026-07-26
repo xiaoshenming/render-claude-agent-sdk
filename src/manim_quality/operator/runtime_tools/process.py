@@ -33,12 +33,23 @@ def run_to_artifacts(
             env=environment,
         )
     except subprocess.TimeoutExpired as error:
-        stdout_path.write_text(error.stdout or "", encoding="utf-8")
-        stderr_path.write_text(error.stderr or "process timed out", encoding="utf-8")
+        stdout_path.write_text(_timeout_text(error.stdout), encoding="utf-8")
+        stderr_path.write_text(
+            _timeout_text(error.stderr) or "process timed out",
+            encoding="utf-8",
+        )
         raise
     stdout_path.write_text(result.stdout, encoding="utf-8")
     stderr_path.write_text(result.stderr, encoding="utf-8")
     return result
+
+
+def _timeout_text(value: str | bytes | None) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, bytes):
+        return value.decode("utf-8", errors="replace")
+    return value
 
 
 def read_last_json_line(text: str) -> dict[str, object]:
