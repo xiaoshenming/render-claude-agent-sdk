@@ -37,6 +37,9 @@ class BBoxProbe:
         environment = {
             **self._environment,
             "MANIM_LAYOUT_PROBE_MEDIA_DIR": str(revision_dir / "media"),
+            "MANIM_LAYOUT_PROBE_SIDECAR_PATH": str(
+                revision_dir / "geometry_sidecar.json"
+            ),
         }
         argv = [
             str(self._python),

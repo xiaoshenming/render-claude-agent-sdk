@@ -6,19 +6,29 @@ import hashlib
 import json
 from collections.abc import Mapping
 
+from .layout_policy import LAYOUT_POLICY_VERSION, evaluate_downgrade
+
 
 def compact_layout_report(
     payload: Mapping[str, object],
     *,
     max_issues: int = 20,
+    geometry_sidecar: Mapping[str, object] | None = None,
 ) -> dict[str, object]:
     raw = _raw_issues(payload)
-    issues = [_compact_issue(item) for item in raw[:max_issues]]
+    decisions = [evaluate_downgrade(item, geometry_sidecar) for item in raw]
+    blocking_count = sum(1 for policy in decisions if policy is None)
+    issues = [
+        _compact_issue(item, policy)
+        for item, policy in zip(raw[:max_issues], decisions)
+    ]
     probe_summary = payload.get("raw")
     if not isinstance(probe_summary, Mapping):
         probe_summary = payload
     return {
-        "blocking_count": len(raw),
+        "blocking_count": blocking_count,
+        "downgraded_count": len(raw) - blocking_count,
+        "layout_policy_version": LAYOUT_POLICY_VERSION,
         "returned_issue_count": len(issues),
         "truncated": len(raw) > len(issues),
         "issues": issues,
@@ -35,7 +45,10 @@ def _raw_issues(payload: Mapping[str, object]) -> list[Mapping[str, object]]:
     return [item for item in values if isinstance(item, Mapping)]
 
 
-def _compact_issue(issue: Mapping[str, object]) -> dict[str, object]:
+def _compact_issue(
+    issue: Mapping[str, object],
+    policy: Mapping[str, object] | None = None,
+) -> dict[str, object]:
     category = str(issue.get("category") or "unknown")
     objects = [
         _object_ref(issue.get(f"{key}_raw") or issue.get(key))
@@ -50,6 +63,8 @@ def _compact_issue(issue: Mapping[str, object]) -> dict[str, object]:
     return {
         "issue_id": "layout-" + hashlib.sha256(identity.encode()).hexdigest()[:12],
         "category": category,
+        "severity": "warning" if policy else "blocking",
+        **({"policy": dict(policy)} if policy else {}),
         "objects": objects,
         "phase": {
             "step": issue.get("step"),

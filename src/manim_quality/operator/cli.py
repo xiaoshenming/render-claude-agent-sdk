@@ -24,6 +24,7 @@ from .runtime_tools import (
     RealRevisionValidator,
     RuntimeToolchain,
 )
+from .runtime_tools import geometry_sidecar_runner
 from .services import (
     BasicRelationChecker,
     CompileOnlyValidator,
@@ -171,12 +172,16 @@ def _harness(operator, args, workspace: Path) -> QualityHarness:
     if not manim_python.is_file():
         raise SystemExit("--manim-python must be a file")
     environment = _worker_environment(args)
-    runner = (
+    # The frozen probe runner is executed via the sidecar tee wrapper so the
+    # versioned layout policy receives real stroke geometry. The wrapper never
+    # alters the frozen runner's classification or stdout contract.
+    environment["MANIM_LAYOUT_PROBE_DELEGATE"] = str(
         Path(__file__).resolve().parents[3]
         / "vendor"
         / "layout_probe"
         / "probe_runner.txt"
     )
+    runner = Path(geometry_sidecar_runner.__file__).resolve()
     agent_chain = RuntimeToolchain(
         source_workspace=workspace,
         artifact_root=args.output / "agent_runtime",

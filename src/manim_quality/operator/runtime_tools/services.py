@@ -14,6 +14,7 @@ from manim_quality.operator.models import CandidateAttempt, Finding, ValidationO
 from .detector import LayoutIssueDetector
 from .issues import compact_layout_report
 from .layout_diff import compare_layout_reports
+from .layout_policy import load_geometry_sidecar
 from .models import ProbeResult, RenderResult
 from .probe import BBoxProbe
 from .render import ManimRenderer
@@ -120,7 +121,12 @@ class RuntimeToolchain:
             result.payload,
             artifact_path=result.raw_path.with_name("layout_detector.json"),
         )
-        return compact_layout_report(detector_payload)
+        return compact_layout_report(
+            detector_payload,
+            geometry_sidecar=load_geometry_sidecar(
+                result.raw_path.with_name("geometry_sidecar.json")
+            ),
+        )
 
 
 def _persist_report(
