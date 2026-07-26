@@ -194,6 +194,7 @@ def _write_result(
         "harness_decision": decision.get("decision"),
         "turns": decision.get("turns"),
         "tokens": decision.get("tokens"),
+        "token_usage": _token_usage(decision),
         "external_tool_ms": decision.get("external_tool_ms"),
         "harness_artifacts": "harness/",
     }
@@ -201,6 +202,29 @@ def _write_result(
         json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
+
+
+def _token_usage(decision: dict[str, object]) -> dict[str, object]:
+    parent = decision.get("tokens")
+    parent = parent if isinstance(parent, dict) else {}
+    parent_total = int(parent.get("total_tokens") or 0)
+    reviewer_total = int(decision.get("reviewer_tokens") or 0)
+    entries = []
+    if parent_total:
+        entries.append({"operation": "parent", **parent})
+    if reviewer_total:
+        entries.append({
+            "operation": "reviewers",
+            "total_tokens": reviewer_total,
+        })
+    return {
+        "schema_version": "batchops.token-usage.v2",
+        "total_tokens": int(
+            decision.get("total_tokens_with_reviewers")
+            or parent_total + reviewer_total
+        ),
+        "entries": entries,
+    }
 
 
 def _final_video(

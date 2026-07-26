@@ -53,6 +53,8 @@ def test_proposed_translates_to_deliver_contract(tmp_path: Path) -> None:
             "final_revision_id": "R2",
             "turns": 13,
             "tokens": {"total_tokens": 69101},
+            "reviewer_tokens": 900,
+            "total_tokens_with_reviewers": 70001,
         },
     )
     (harness / "output" / "proposed_candidate.py").write_text(
@@ -69,6 +71,11 @@ def test_proposed_translates_to_deliver_contract(tmp_path: Path) -> None:
     result = json.loads((output / "result.json").read_text())
     assert result["status"] == "deliver"
     assert result["logic"]["status"] == "candidate_ready"
+    assert result["token_usage"]["total_tokens"] == 70001
+    assert result["token_usage"]["entries"] == [
+        {"operation": "parent", "total_tokens": 69101},
+        {"operation": "reviewers", "total_tokens": 900},
+    ]
     assert (output / "candidate_final.py").read_text() == "class Solution: fixed\n"
     assert (output / "video_final.mp4").read_bytes() == b"after-video"
 
