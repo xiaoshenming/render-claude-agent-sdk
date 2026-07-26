@@ -3,12 +3,10 @@
 from __future__ import annotations
 
 import difflib
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 
 from manim_quality.layout.policy import layout_invariant_fingerprint
 from manim_quality.revisions.fingerprint import sha256_text
-
-from collections.abc import Sequence
 
 from .models import CandidateAttempt, Finding, FindingCategory, PatchScope
 from .problem_source import extract_problem_text
@@ -68,8 +66,12 @@ def best_validated_revision(
     attempts: Sequence[CandidateAttempt],
     validations: Mapping[str, object],
     inspections: Mapping[str, tuple[str, int]],
-) -> str | None:
-    """Latest passing candidate with the lowest known blocking count."""
+) -> dict[str, object] | None:
+    """Latest render-passing candidate with the lowest known blocking count.
+
+    The result is evidence, not a deliverable: it may still carry blocking
+    layout issues or lack a layout inspection entirely.
+    """
 
     best_key: tuple[int, int] | None = None
     best_id: str | None = None
@@ -83,7 +85,14 @@ def best_validated_revision(
         if best_key is None or key < best_key:
             best_key = key
             best_id = attempt.revision_id
-    return best_id
+    if best_id is None:
+        return None
+    inspection = inspections.get(best_id)
+    return {
+        "revision_id": best_id,
+        "blocking_count": None if inspection is None else inspection[1],
+        "layout_inspected": inspection is not None,
+    }
 
 
 def patch_budget_for_blocking(blocking_count: int) -> int:

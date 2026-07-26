@@ -373,7 +373,7 @@ def test_best_validated_revision_prefers_lowest_blocking_count() -> None:
             finding("layout-1", FindingCategory.LAYOUT),
         )
     )
-    assert quality.best_validated_revision_id() is None
+    assert quality.best_validated_evidence() is None
 
     quality.apply_patch(
         scope=PatchScope.LOGIC,
@@ -411,7 +411,12 @@ def test_best_validated_revision_prefers_lowest_blocking_count() -> None:
         blocking_count=5,
     )
 
-    assert quality.best_validated_revision_id() == "R1"
+    evidence = quality.best_validated_evidence()
+    assert evidence == {
+        "revision_id": "R1",
+        "blocking_count": 2,
+        "layout_inspected": True,
+    }
 
 
 def test_best_validated_revision_ignores_failed_validation() -> None:
@@ -430,7 +435,7 @@ def test_best_validated_revision_ignores_failed_validation() -> None:
         fingerprint="sha256:" + "1" * 64,
     )
 
-    assert quality.best_validated_revision_id() is None
+    assert quality.best_validated_evidence() is None
 
 
 def test_patch_budget_can_only_be_raised_before_findings() -> None:

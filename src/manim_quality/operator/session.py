@@ -127,7 +127,7 @@ class QualitySession:
                 return attempt
         raise ValueError(f"unknown revision_id: {revision_id}")
 
-    def best_validated_revision_id(self) -> str | None:
+    def best_validated_evidence(self) -> dict[str, object] | None:
         return best_validated_revision(
             self._attempts,
             self._validations,

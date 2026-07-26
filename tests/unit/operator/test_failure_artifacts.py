@@ -112,8 +112,12 @@ def test_failed_run_artifacts_classify_timeout_and_keep_best_candidate(
 
     failure = json.loads((tmp_path / "run" / "logs" / "failure.json").read_text())
     assert failure["status"] == "FAILED_TIMEOUT"
-    assert failure["best_validated_revision_id"] == "R1"
+    assert failure["best_render_passed"] == {
+        "revision_id": "R1",
+        "blocking_count": 0,
+        "layout_inspected": True,
+    }
     assert failure["usage_complete"] is False
     assert failure["external_tool_ms"] == 250
     assert (tmp_path / "run" / "output" / "last_candidate.R1.py").is_file()
-    assert (tmp_path / "run" / "output" / "best_validated.R1.py").is_file()
+    assert (tmp_path / "run" / "output" / "best_render_passed.R1.py").is_file()

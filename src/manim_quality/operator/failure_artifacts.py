@@ -44,8 +44,19 @@ def write_failed_run_artifacts(
         target / "logs" / "tool_calls.jsonl",
         [_tool_call(item) for item in record.tool_calls],
     )
-    _write_jsonl(target / "logs" / "parent-sdk-messages.jsonl", [])
-    _write_json(target / "logs" / "subagent-results.json", {"results": []})
+    _write_jsonl(
+        target / "logs" / "parent-sdk-messages.jsonl",
+        [thaw_json_object(item) for item in getattr(error, "sdk_messages", ())],
+    )
+    _write_json(
+        target / "logs" / "subagent-results.json",
+        {
+            "results": [
+                thaw_json_object(item)
+                for item in getattr(error, "subagent_results", ())
+            ]
+        },
+    )
     failure = _failure(record, session, error)
     _write_json(target / "logs" / "failure.json", failure)
     _write_json(target / "output" / "decision.json", {"decision": "FAILED", **failure})
@@ -54,11 +65,12 @@ def write_failed_run_artifacts(
         target / "output" / f"last_candidate.{current.revision_id}.py",
         current.code,
     )
-    best = session.best_validated_revision_id()
-    if best is not None:
+    evidence = session.best_validated_evidence()
+    if evidence is not None:
+        revision_id = str(evidence["revision_id"])
         _write_text(
-            target / "output" / f"best_validated.{best}.py",
-            session.get_revision(best).code,
+            target / "output" / f"best_render_passed.{revision_id}.py",
+            session.get_revision(revision_id).code,
         )
 
 
@@ -83,8 +95,7 @@ def _failure(record, session: QualitySession, error: Exception) -> dict[str, obj
         "error": str(error),
         "last_revision_id": session.current_revision.revision_id,
         "last_revision_code_hash": session.current_revision.code_hash,
-        "submitted_revision_id": session.submitted_revision_id,
-        "best_validated_revision_id": session.best_validated_revision_id(),
+        "best_render_passed": session.best_validated_evidence(),
         "tokens": _usage(record.usage),
         "usage_complete": record.usage_complete,
         "external_tool_ms": record.external_tool_ms,
@@ -94,9 +105,9 @@ def _failure(record, session: QualitySession, error: Exception) -> dict[str, obj
 
 
 def _failure_status(error: str, session: QualitySession) -> str:
+    # Submitted sessions are always recovered upstream, so no branch for
+    # them exists here by design.
     text = error.lower()
-    if session.submitted_revision_id and ("structured" in text or "output" in text):
-        return "FAILED_STRUCTURED_OUTPUT"
     for marker, status in (
         ("timed out", "FAILED_TIMEOUT"),
         ("timeout", "FAILED_TIMEOUT"),
