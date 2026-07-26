@@ -15,7 +15,7 @@ candidate.py
      -> validate_revision 真实渲染并用 ffprobe 验证视频
      -> inspect_layout 复用渲染缓存执行多快照 BBox 探针
      -> detector 只把紧凑 blocking issues 返回 Agent
-  -> 最多两个候选修改 R1/R2
+  -> R1 起的动态候选修改（预算按 R0 blocking 压力定为 5..7 个 Patch）
   -> submit_revision
   -> 独立 OuterAcceptanceGate
   -> PROPOSED 或 HOLD/回滚 R0
@@ -39,17 +39,47 @@ candidate.py
 | --- | --- | ---: |
 | `read_solution` | 读取当前 revision 的完整 Solution 与 Hash | 父/每个 Reviewer 各 1 |
 | `check_relation` | 确定性数值或几何关系检查 | 6 |
-| `record_findings` | 分逻辑、布局两批冻结问题 | 2 |
-| `apply_patch` | 精确块级替换并创建 child revision | 2 |
-| `inspect_layout` | 检测当前 revision 的重叠事实 | 2 |
-| `validate_revision` | 外部检查并把结果反馈给 Agent | 2 |
+| `record_findings` | 分批冻结逻辑、布局问题 | 4 |
+| `apply_patch` | 精确块级替换并创建 child revision | 动态 5..7 |
+| `inspect_layout` | 检测当前 revision 的重叠事实 | Patch 预算 + 1（6..8） |
+| `validate_revision` | 外部检查并把结果反馈给 Agent | 同 Patch 预算（5..7） |
 | `submit_revision` | 提交候选给外层 Harness | 1 |
 
-全局默认限制为 12 turns、14 次工具调用，真实 smoke 可显式放到 16。工具自己的
-上限不能突破全局上限。
+`apply_patch` 预算不是常量，由 Harness 在会话开始前按 R0 基线布局的
+`blocking_count` 一次性确定：`<=2` 给 5，`3..8` 给 6，`>8` 给 7。该预算只能被抬
+高，不能在会话中被下调。`validate_revision` 与之等值，`inspect_layout` 多一次，
+用于提交前对最终 revision 再复检一遍。`patches_remaining` 和
+`findings_batches_remaining` 会随工具返回值一起回给 Agent，让它据此决定是继续
+修还是尽早提交。
+
+CLI 全局默认限制为 24 turns、40 次工具调用。工具自己的上限不能突破全局上限。
+
+会话另有 `max_elapsed_ms = 1_800_000`（30 分钟）的硬时限，但它**只计模型推理与
+协议时间**：外部渲染和 BBox 探针的墙钟已从中剔除，工具执行期间会话 deadline 被
+挂起，执行完再按同一段共享窗口平移恢复。因此一次长渲染不会吃掉 Agent 的思考预
+算。验证类工具（`validate_revision`、`inspect_layout`）单次执行超时为 2700 秒，
+覆盖「渲染 1200 秒 + 探针 1200 秒」这条链。
 
 父 Agent 除两个命名 Reviewer 和上述 MCP 工具外，没有 Bash、Read、Edit、
 Write、Glob、Grep、Web、Skill 或任意路径权限。所有文件写入都由 Harness 完成。
+
+父 Agent 当前使用 `prompts/quality_operator_v2.md`，`prompt_version` 标记为
+`quality-operator-v2`。相对 v1 增加三条收敛策略：
+
+1. **共享根因协调修复**：`inspect_layout` 返回 `comparison_to_R0`。当
+   `shared_roots` 非空时，`affected_issue_count` 最大的那一项代表一整簇碰撞背后
+   的同一个缺陷，应设计一次协调修复（移动、重排或缩放共享父 VGroup，或改共享
+   布局常量）让整簇一次清掉，而不是逐个碰撞消耗 Patch 预算。协调移动可能打回
+   已修好的区域，因此每次复检都要比较 `resolved_count`、`persistent_count`、
+   `introduced_count`；`introduced_count` 上升就把 Patch 收窄到具体子元素。
+2. **同轮批量验证**：`validate_revision` 和 `inspect_layout` 都只需要当前
+   revision id，必须在同一条 assistant 消息里一起发出、一起读回执，不要为了等
+   验证结果单独花一个 turn。只有 `apply_patch` 必须单独发，因为新 revision id
+   和 code Hash 在回执返回前未知。
+3. **预算感知及时提交**：一旦当前 revision 同时拿到 `validate_revision` 的
+   `passed` 和 `inspect_layout` 的 `blocking_count=0`，就立即提交，不再追加优化
+   或润色轮次。因为只有当前 revision 可提交，多修一轮等于拿已证明的候选去赌。
+   `patches_remaining` 降到 1 或 0 时停止探索。
 
 ## 3. 硬保护
 
@@ -57,7 +87,7 @@ Write、Glob、Grep、Web、Skill 或任意路径权限。所有文件写入都�
 - 题目文本和 `problem_hash` 不可变。
 - 没有冻结 finding 不能修改。
 - `apply_patch` 必须绑定当前 revision ID 和 code Hash。
-- 重复 code Hash、无改善重试、超过两个 Patch 自动停止。
+- 重复 code Hash、无改善重试、Patch 次数超出当前预算自动停止。
 - logic 和 layout 不能混为一个 revision。
 - logic Patch 之后才允许 layout Patch，layout 之后不能回头改 logic。
 - layout Patch 改变语义指纹时立即拒绝。
@@ -141,7 +171,7 @@ $env:ANTHROPIC_AUTH_TOKEN = "<runtime-secret>"
 
 ## 6. 审计包
 
-每次运行输出：
+跑完一次（`PROPOSED` 或 `HOLD`）输出：
 
 ```text
 run/
@@ -150,13 +180,14 @@ run/
     candidate.R0.py
   revisions/
     R0.baseline.py
-    R1.logic.py
+    R1.logic.py          # 文件名为 R<n>.<scope>.py，n 随动态预算可到 R7
     R2.layout.py
   evidence/
     findings.json
     revisions.json
-    validation.R1.json  # 外层独立验证事实
-    layout.R1.json      # 外层独立布局复检事实
+    layout.R0.baseline.json # 会话开始前的 R0 基线布局，同时决定 Patch 预算
+    validation.R1.json      # 外层独立验证事实
+    layout.R1.json          # 外层独立布局复检事实
   logs/
     agent_call.json
     parent-sdk-messages.jsonl
@@ -170,7 +201,37 @@ run/
 ```
 
 `run_summary.json` 包含 turns、工具调用数、输入/输出/cache Tokens、总 Tokens、
-Agent 耗时、提交 revision、最终 revision、回滚 revision 和门禁原因。
+Agent 耗时、`external_tool_ms`、`usage_complete`、提交 revision、最终 revision、
+回滚 revision 和门禁原因。`external_tool_ms` 是被排除在推理时限之外的外部工具墙
+钟，`usage_complete` 表示 SDK 用量是否已完整对账。
+
+跑挂（Agent、工具、运行时或预算异常）时改为写失败归档，同样保留可追溯证据：
+
+```text
+run/
+  evidence/
+    layout.R0.baseline.json
+  logs/
+    agent_call.partial.json
+    parent-sdk-messages.jsonl # 中断时仍有真实内容
+    subagent-results.json     # 中断时仍有真实内容
+    tool_calls.jsonl
+    failure.json
+  output/
+    decision.json                # {"decision": "FAILED", ...}
+    last_candidate.<Rn>.py       # 中断时的当前 revision
+    best_render_passed.<Rn>.py   # 可选：过程中渲染通过的最好候选
+```
+
+`failure.json` 含 `status`（`FAILED_TIMEOUT` / `FAILED_PATCH_BUDGET` /
+`FAILED_RENDER` / `FAILED_REVIEWER_SCHEMA` 等）、`error_type`、`error`、
+`last_revision_id`、`last_revision_code_hash`、`best_render_passed`
+（`{revision_id, blocking_count, layout_inspected}`）、`tokens`、`usage_complete`、
+`external_tool_ms`、`turns`、`tool_calls`。
+
+`best_render_passed.<Rn>.py` 是**证据不是交付物**：它只表示该 revision 当时渲染
+通过，可能仍带 blocking 布局问题，也可能根本没做过布局复检（此时
+`layout_inspected` 为 `false`）。不要把它当成可直接使用的成品。
 
 `subagent-results.json` 保存两个 Reviewer 的结构化正文、真实 `agent_id`、
 生命周期时间、父消息消费绑定以及 SDK 报告的独立 Tokens/工具次数。

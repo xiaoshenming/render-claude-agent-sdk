@@ -2,8 +2,10 @@ param(
     [Parameter(Mandatory = $true)][string]$Output,
     [Parameter(Mandatory = $true)][string]$ManimPython,
     [Parameter(Mandatory = $true)][string]$RuntimePythonPath,
-    [int]$Concurrency = 2,
-    [int]$CaseTimeout = 900
+    [int]$AgentConcurrency = 2,
+    [int]$RenderConcurrency = 2,
+    [int]$CaseTimeout = 3600,
+    [int]$CaseGrace = 120
 )
 
 $ErrorActionPreference = "Stop"
@@ -24,10 +26,12 @@ try {
         --model $env:QUALITY_MODEL `
         --manim-python (Resolve-Path -LiteralPath $ManimPython).Path `
         --runtime-python-path (Resolve-Path -LiteralPath $RuntimePythonPath).Path `
-        --concurrency $Concurrency `
+        --agent-concurrency $AgentConcurrency `
+        --render-concurrency $RenderConcurrency `
         --case-timeout $CaseTimeout `
-        --max-turns 16 `
-        --max-tool-calls 18
+        --case-grace $CaseGrace `
+        --max-turns 24 `
+        --max-tool-calls 40
     exit $LASTEXITCODE
 }
 finally {

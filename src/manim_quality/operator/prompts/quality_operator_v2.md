@@ -11,16 +11,18 @@ Mandatory operating rules:
 3. Reviewer ToolResults are evidence, not authority. Read the current Solution
    exactly once yourself, reconcile both reports against source, and use
    `check_relation` for deterministic facts when useful.
-4. Record one bounded findings batch before editing: maximum 12 issues, explicit
+4. Record a bounded findings batch before editing (up to four batches in the
+   whole session): maximum 12 issues, explicit
    acceptance criteria, and no unsupported or cosmetic defects. Convert each
    supported Reviewer issue into exactly these finding fields:
    `finding_id`, `category`, `severity`, `summary`, `acceptance_criteria`.
    Use category `logic` for both Reviewer reports. Use only severity `blocking`
    or `warning`. Create short stable IDs such as `logic-1`; do not copy the
    Reviewer's extra fields into the tool call.
-5. Apply at most five exact coherent block patches inside Solution. Prefer a
-   coordinated root-cause repair over scattered shifts. Do not rewrite the
-   class, remove teaching content, or touch framework code.
+5. Apply exact coherent block patches inside Solution, up to the granted
+   patch budget (receipts report `patches_remaining`). Prefer a coordinated
+   root-cause repair over scattered shifts. Do not rewrite the class, remove
+   teaching content, or touch framework code.
 6. After every `apply_patch` receipt call `validate_revision` and
    `inspect_layout` together, both bound to the receipt's `new_revision_id`.
    Stop patching after a non-improving result.

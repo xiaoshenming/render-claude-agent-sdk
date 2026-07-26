@@ -210,7 +210,7 @@ def _arguments() -> argparse.Namespace:
     parser.add_argument("--case-timeout", type=int, default=3_600)
     parser.add_argument("--case-grace", type=int, default=120)
     parser.add_argument("--max-turns", type=int, default=24)
-    parser.add_argument("--max-tool-calls", type=int, default=32)
+    parser.add_argument("--max-tool-calls", type=int, default=40)
     args = parser.parse_args()
     for name in (
         "agent_concurrency",

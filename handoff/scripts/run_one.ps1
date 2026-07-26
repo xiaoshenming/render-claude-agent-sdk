@@ -6,8 +6,8 @@ param(
     [string[]]$RuntimePythonPath = @(),
     [string]$AssetsDir,
     [string]$Problem,
-    [int]$MaxTurns = 16,
-    [int]$MaxToolCalls = 18
+    [int]$MaxTurns = 24,
+    [int]$MaxToolCalls = 40
 )
 
 $ErrorActionPreference = "Stop"
