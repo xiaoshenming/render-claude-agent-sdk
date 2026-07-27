@@ -28,6 +28,9 @@ class Finding:
     severity: str
     summary: str
     acceptance_criteria: str
+    depends_on_finding_ids: tuple[str, ...] = ()
+    affected_symbols: tuple[str, ...] = ()
+    source_reviewer_ids: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         _require_text(self.finding_id, "finding_id")
@@ -37,6 +40,11 @@ class Finding:
             raise ValueError("severity must be blocking or warning")
         _require_text(self.summary, "summary")
         _require_text(self.acceptance_criteria, "acceptance_criteria")
+        _require_text_tuple(
+            self.depends_on_finding_ids, "depends_on_finding_ids"
+        )
+        _require_text_tuple(self.affected_symbols, "affected_symbols")
+        _require_text_tuple(self.source_reviewer_ids, "source_reviewer_ids")
 
 
 @dataclass(frozen=True, slots=True)
@@ -128,4 +136,14 @@ def _require_sha256(value: object, name: str) -> str:
         or len(value) != 71
     ):
         raise ValueError(f"{name} must be a sha256 digest")
+    return value
+
+
+def _require_text_tuple(value: object, name: str) -> tuple[str, ...]:
+    if not isinstance(value, tuple):
+        raise TypeError(f"{name} must be a tuple")
+    if len(set(value)) != len(value):
+        raise ValueError(f"{name} must not contain duplicates")
+    for item in value:
+        _require_text(item, name)
     return value

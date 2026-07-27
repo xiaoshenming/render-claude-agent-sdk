@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
-
 import anyio
 from claude_agent_sdk import (
     AssistantMessage,
@@ -284,22 +282,6 @@ class ClaudeHookState(ClaudeHookAccessors):
             reserved_cache_read_tokens=self._request.reserved_cache_read_tokens,
             reserved_cache_write_tokens=self._request.reserved_cache_write_tokens,
         )
-
-    def raise_failure(self) -> None:
-        if self._failure is not None:
-            raise self._failure
-
-    async def execute_read_tool(self, name: str, input_data: object) -> str:
-        return await self._controls.execute_read_tool(name, input_data)
-
-    async def execute_managed_tool(self, name: str, input_data: object) -> str:
-        return await self._controls.execute_managed_tool(name, input_data)
-
-    async def execute_managed_tool_content(
-        self, name: str, input_data: object
-    ) -> tuple[Mapping[str, object], ...]:
-        return await self._controls.execute_managed_tool_content(name, input_data)
-
 
 def token_usage(value: object) -> TokenUsage:
     return parse_token_usage(value)

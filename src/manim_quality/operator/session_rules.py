@@ -21,16 +21,25 @@ def validate_finding_scope(
     findings: Mapping[str, Finding],
     scope: PatchScope,
     finding_ids: tuple[str, ...],
+    repaired_finding_ids: set[str] | None = None,
 ) -> None:
     if not finding_ids:
         raise ValueError("patch requires at least one finding_id")
     expected = FindingCategory(scope.value)
+    selected = set(finding_ids)
+    repaired = repaired_finding_ids or set()
     for finding_id in finding_ids:
         item = findings.get(finding_id)
         if item is None:
             raise ValueError(f"unknown finding_id: {finding_id}")
         if item.category is not expected:
             raise ValueError(f"finding category does not match {scope} patch")
+        missing = set(item.depends_on_finding_ids) - selected - repaired
+        if missing:
+            raise ValueError(
+                "patch finding_ids must include dependency closure: "
+                + ", ".join(sorted(missing))
+            )
 
 
 def validate_patch_budget_raise(current: int, requested: int) -> None:
@@ -38,6 +47,72 @@ def validate_patch_budget_raise(current: int, requested: int) -> None:
         raise TypeError("max_patch_attempts must be an integer")
     if requested < current:
         raise InvalidSessionTransition("patch budget can only be raised")
+
+
+def validate_patch_transition(
+    *,
+    findings: Mapping[str, Finding],
+    attempts: Sequence[CandidateAttempt],
+    validations: Mapping[str, object],
+    current: CandidateAttempt,
+    max_patch_attempts: int,
+    finding_batches: int,
+    scope: PatchScope,
+    finding_ids: tuple[str, ...],
+) -> None:
+    if not isinstance(scope, PatchScope):
+        raise TypeError("scope must be a PatchScope")
+    if finding_batches == 0:
+        raise InvalidSessionTransition("findings must be recorded before patch")
+    if len(attempts) - 1 >= max_patch_attempts:
+        raise InvalidSessionTransition("patch attempt budget exhausted")
+    lineage = _revision_lineage(attempts, current.revision_id)
+    if any(item.scope is PatchScope.LAYOUT for item in lineage):
+        if scope is PatchScope.LOGIC:
+            raise InvalidSessionTransition("logic patch is forbidden after layout")
+    current_validation = validations.get(current.revision_id)
+    if current.revision_id != "R0":
+        if current_validation is None:
+            raise InvalidSessionTransition("current revision must be validated")
+        if not getattr(current_validation, "improved", False):
+            raise InvalidSessionTransition("previous revision did not improve")
+    repaired = validated_repaired_finding_ids(
+        attempts, validations, current.revision_id
+    )
+    validate_finding_scope(findings, scope, finding_ids, repaired)
+
+
+def validate_session_patch(
+    session, scope: PatchScope, finding_ids: tuple[str, ...]
+) -> None:
+    validate_patch_transition(
+        findings=session._findings,
+        attempts=session._attempts,
+        validations=session._validations,
+        current=session.current_revision,
+        max_patch_attempts=session._max_patch_attempts,
+        finding_batches=session._finding_batches,
+        scope=scope,
+        finding_ids=finding_ids,
+    )
+
+
+def validate_recovery_revision(
+    target: CandidateAttempt,
+    current: CandidateAttempt,
+    validations: Mapping[str, object],
+) -> None:
+    if target.revision_id == current.revision_id:
+        raise ValueError("recovery target is already current")
+    record = validations.get(target.revision_id)
+    if (
+        record is None
+        or not getattr(record, "passed", False)
+        or not getattr(record, "improved", False)
+    ):
+        raise ValueError(
+            "recovery target must be a validated passing improved revision"
+        )
 
 
 def validate_patch_text(old_text: str, new_text: str) -> None:
@@ -110,21 +185,47 @@ def patch_budget_for_blocking(blocking_count: int) -> int:
 def require_blocking_findings_repaired(
     findings: Mapping[str, Finding],
     attempts: Sequence[CandidateAttempt],
+    validations: Mapping[str, object],
+    current_revision_id: str,
 ) -> None:
     blocking = {
         item.finding_id
         for item in findings.values()
         if item.severity == "blocking"
     }
-    repaired = {
-        finding_id
-        for attempt in attempts[1:]
-        for finding_id in attempt.finding_ids
-    }
+    repaired = validated_repaired_finding_ids(
+        attempts, validations, current_revision_id
+    )
     if not blocking.issubset(repaired):
         raise InvalidSessionTransition(
             "blocking findings require a validated repair revision"
         )
+
+
+def validated_repaired_finding_ids(
+    attempts: Sequence[CandidateAttempt],
+    validations: Mapping[str, object],
+    current_revision_id: str,
+) -> set[str]:
+    return {
+        finding_id
+        for attempt in _revision_lineage(attempts, current_revision_id)
+        if getattr(validations.get(attempt.revision_id), "passed", False)
+        for finding_id in attempt.finding_ids
+    }
+
+
+def _revision_lineage(
+    attempts: Sequence[CandidateAttempt],
+    current_revision_id: str,
+) -> tuple[CandidateAttempt, ...]:
+    by_id = {item.revision_id: item for item in attempts}
+    lineage = []
+    revision = by_id[current_revision_id]
+    while revision.parent_revision_id is not None:
+        lineage.append(revision)
+        revision = by_id[revision.parent_revision_id]
+    return tuple(reversed(lineage))
 
 
 def verify_candidate(

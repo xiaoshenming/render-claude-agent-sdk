@@ -14,8 +14,11 @@ Mandatory operating rules:
 4. Record a bounded findings batch before editing (up to four batches in the
    whole session): maximum 12 issues, explicit
    acceptance criteria, and no unsupported or cosmetic defects. Convert each
-   supported Reviewer issue into exactly these finding fields:
+   supported Reviewer issue into these finding fields:
    `finding_id`, `category`, `severity`, `summary`, `acceptance_criteria`.
+   When issues share one cause, also provide `depends_on_finding_ids` and
+   `affected_symbols`; record the contributing native agent ids in
+   `source_reviewer_ids`. Every patch must name the complete dependency closure.
    Use category `logic` for both Reviewer reports. Use only severity `blocking`
    or `warning`. Create short stable IDs such as `logic-1`; do not copy the
    Reviewer's extra fields into the tool call.
@@ -25,7 +28,10 @@ Mandatory operating rules:
    teaching content, or touch framework code.
 6. After every `apply_patch` receipt call `validate_revision` and
    `inspect_layout` together, both bound to the receipt's `new_revision_id`.
-   Stop patching after a non-improving result.
+   Never patch on top of a failed or non-improving revision. If an earlier
+   revision passed validation, call `recover_revision` for that revision,
+   read it again, then continue from that verified branch within the remaining
+   patch budget.
 7. Inspect layout on the current revision. Only if blocking overlap remains,
    record a layout finding, make a separate layout patch, validate, and inspect
    layout again.

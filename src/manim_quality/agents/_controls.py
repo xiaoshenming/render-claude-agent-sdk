@@ -3,24 +3,22 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
-from dataclasses import replace
 
 from manim_quality.contracts._json_values import freeze_json_object
 from manim_quality.revisions.fingerprint import sha256_text
 
+from ._control_records import ControlRecordMixin
 from ._runtime_models import (
     BackendResult,
-    CorrectableOutputError,
-    OutputRejected,
     RuntimeProtocolError,
 )
 from .budget import BudgetTracker
 from .guards import ToolGuard
 from .managed_tools import ManagedToolGrant, ToolEffect
-from .usage import TokenUsage, ToolCallRecord, recordable_tool_input
+from .usage import TokenUsage, ToolCallRecord
 
 
-class RuntimeControls:
+class RuntimeControls(ControlRecordMixin):
     def __init__(
         self,
         budget: BudgetTracker,
@@ -259,58 +257,3 @@ class RuntimeControls:
             raise RuntimeProtocolError(
                 "backend result was not finalized through runtime controls"
             )
-
-    def _record_denied(
-        self,
-        name: str,
-        input_data: object,
-        error: Exception,
-        *,
-        agent_id: str | None = None,
-        agent_type: str | None = None,
-    ) -> None:
-        self._tool_calls.append(
-            ToolCallRecord(
-                name=name,
-                input=recordable_tool_input(input_data),
-                allowed=False,
-                error=str(error),
-                caller=agent_type or "parent",
-                agent_id=agent_id,
-                agent_type=agent_type,
-            )
-        )
-
-    def _record_tool_result(
-        self,
-        name: str,
-        input_data: Mapping[str, object],
-        *,
-        status: str,
-        result_hash: str,
-        error: str | None = None,
-    ) -> None:
-        for index in range(len(self._tool_calls) - 1, -1, -1):
-            record = self._tool_calls[index]
-            if (
-                record.name == name
-                and record.allowed
-                and record.result_status is None
-                and record.input == input_data
-            ):
-                self._tool_calls[index] = replace(
-                    record,
-                    result_status=status,
-                    result_hash=result_hash,
-                    error=error,
-                )
-                return
-        raise RuntimeProtocolError("read tool result has no authorized call record")
-
-    def _validate_output(self, output: Mapping[str, object]) -> None:
-        if self._output_validator is None:
-            return
-        try:
-            self._output_validator(output)
-        except CorrectableOutputError as error:
-            raise OutputRejected(str(error)) from error

@@ -1,4 +1,4 @@
-"""Seven structured MCP tools exposed to the parent and Reviewers."""
+"""Eight structured MCP tools exposed to the parent and Reviewers."""
 
 from __future__ import annotations
 
@@ -88,6 +88,17 @@ class _Handlers:
             finding_ids=values["finding_ids"],
         )
         return _json_text(_patch_receipt(current, revision))
+
+    async def recover_revision(self, arguments):
+        revision = self.session.recover_revision(bind_revision_id(arguments))
+        return _json_text(
+            {
+                "status": "recovered",
+                "revision_id": revision.revision_id,
+                "code_hash": revision.code_hash,
+                **_budget_signal(self.session),
+            }
+        )
 
     async def inspect_layout(self, arguments):
         revision = _current_revision(

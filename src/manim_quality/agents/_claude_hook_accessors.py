@@ -8,6 +8,7 @@ from .usage import TokenUsage
 
 
 class ClaudeHookAccessors:
+    _controls: object
     _usage: TokenUsage
     _turns: int
     _sdk_messages: list[dict[str, object]]
@@ -39,3 +40,21 @@ class ClaudeHookAccessors:
 
     def validate_subagent_protocol(self) -> None:
         self._subagents.validate_complete()  # type: ignore[attr-defined]
+
+    def raise_failure(self) -> None:
+        failure = getattr(self, "_failure", None)
+        if failure is not None:
+            raise failure
+
+    async def execute_read_tool(self, name: str, input_data: object) -> str:
+        return await self._controls.execute_read_tool(name, input_data)  # type: ignore[attr-defined]
+
+    async def execute_managed_tool(self, name: str, input_data: object) -> str:
+        return await self._controls.execute_managed_tool(name, input_data)  # type: ignore[attr-defined]
+
+    async def execute_managed_tool_content(
+        self, name: str, input_data: object
+    ) -> tuple[Mapping[str, object], ...]:
+        return await self._controls.execute_managed_tool_content(  # type: ignore[attr-defined]
+            name, input_data
+        )

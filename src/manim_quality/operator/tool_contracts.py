@@ -47,7 +47,12 @@ def bind_findings(value: Mapping[str, object]) -> tuple[Finding, ...]:
             "summary",
             "acceptance_criteria",
         }
-        if set(item) != required:
+        optional = {
+            "depends_on_finding_ids",
+            "affected_symbols",
+            "source_reviewer_ids",
+        }
+        if not required.issubset(item) or not set(item).issubset(required | optional):
             raise ValueError(f"finding {index} has invalid fields")
         try:
             category = FindingCategory(item["category"])
@@ -63,6 +68,21 @@ def bind_findings(value: Mapping[str, object]) -> tuple[Finding, ...]:
                     item["acceptance_criteria"],
                     "acceptance_criteria",
                     2_000,
+                ),
+                depends_on_finding_ids=_text_items(
+                    item.get("depends_on_finding_ids", ()),
+                    "depends_on_finding_ids",
+                    maximum=12,
+                ),
+                affected_symbols=_text_items(
+                    item.get("affected_symbols", ()),
+                    "affected_symbols",
+                    maximum=24,
+                ),
+                source_reviewer_ids=_text_items(
+                    item.get("source_reviewer_ids", ()),
+                    "source_reviewer_ids",
+                    maximum=2,
                 ),
             )
         )
@@ -128,3 +148,12 @@ def _sha256(value: object, name: str) -> str:
     if not text.startswith("sha256:") or len(text) != 71:
         raise ValueError(f"{name} must be a sha256 digest")
     return text
+
+
+def _text_items(value: object, name: str, *, maximum: int) -> tuple[str, ...]:
+    if not isinstance(value, (list, tuple)) or len(value) > maximum:
+        raise ValueError(f"{name} must be an array of at most {maximum} items")
+    result = tuple(_text(item, name) for item in value)
+    if len(set(result)) != len(result):
+        raise ValueError(f"{name} must not contain duplicates")
+    return result

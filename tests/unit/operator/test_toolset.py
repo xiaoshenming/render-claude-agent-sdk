@@ -63,6 +63,32 @@ class ValidatorStub:
         )
 
 
+class RegistryHandlers:
+    async def read_solution(self, arguments):
+        return "{}"
+
+    async def check_relation(self, arguments):
+        return "{}"
+
+    async def record_findings(self, arguments):
+        return "{}"
+
+    async def apply_patch(self, arguments):
+        return "{}"
+
+    async def recover_revision(self, arguments):
+        return "{}"
+
+    async def inspect_layout(self, arguments):
+        return "{}"
+
+    async def validate_revision(self, arguments):
+        return "{}"
+
+    async def submit_revision(self, arguments):
+        return "{}"
+
+
 def tool_fixture():
     session = QualitySession(problem_text=PROBLEM, candidate_code=CODE)
     relation = RelationStub()
@@ -87,7 +113,7 @@ def prime_tools(tools, revision_id: str = "R0") -> None:
     execute(tools["read_solution"], {"revision_id": revision_id})
 
 
-def test_toolset_exposes_exact_seven_mcp_capabilities() -> None:
+def test_toolset_exposes_exact_eight_mcp_capabilities() -> None:
     *_items, tools = tool_fixture()
 
     assert tuple(tools) == (
@@ -95,6 +121,7 @@ def test_toolset_exposes_exact_seven_mcp_capabilities() -> None:
         "check_relation",
         "record_findings",
         "apply_patch",
+        "recover_revision",
         "inspect_layout",
         "validate_revision",
         "submit_revision",
@@ -285,29 +312,9 @@ def test_validation_tools_cover_the_real_render_and_probe_chain() -> None:
         register_quality_tools,
     )
 
-    class Handlers:
-        async def read_solution(self, arguments):
-            return "{}"
-
-        async def check_relation(self, arguments):
-            return "{}"
-
-        async def record_findings(self, arguments):
-            return "{}"
-
-        async def apply_patch(self, arguments):
-            return "{}"
-
-        async def inspect_layout(self, arguments):
-            return "{}"
-
-        async def validate_revision(self, arguments):
-            return "{}"
-
-        async def submit_revision(self, arguments):
-            return "{}"
-
-    grants = {item.name: item for item in register_quality_tools(Handlers())}
+    grants = {
+        item.name: item for item in register_quality_tools(RegistryHandlers())
+    }
 
     assert _EXTERNAL_VALIDATION_TIMEOUT_MS >= 2 * 1_200_000
     for name in ("inspect_layout", "validate_revision"):

@@ -1,4 +1,4 @@
-"""Declarative registration of the seven Quality Operator MCP tools."""
+"""Declarative registration of the eight Quality Operator MCP tools."""
 
 from collections.abc import Mapping
 
@@ -87,6 +87,15 @@ def _edit_tools(handlers) -> tuple[ManagedToolGrant, ...]:
             _patch_budget(handlers),
             8_000,
             max_input_bytes=48_000,
+        ),
+        _grant(
+            "recover_revision",
+            "Restore a previously validated passing revision as the repair base.",
+            REVISION_INPUT_SCHEMA,
+            handlers.recover_revision,
+            ToolEffect.SESSION_MUTATION,
+            max(1, _patch_budget(handlers) - 1),
+            4_000,
         ),
     )
 

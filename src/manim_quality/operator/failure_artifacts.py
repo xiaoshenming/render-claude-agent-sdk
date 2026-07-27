@@ -7,9 +7,10 @@ from pathlib import Path
 
 from manim_quality.contracts._json_values import thaw_json_object
 
+from .artifact_session import findings_payload, revisions_payload
+from .artifact_usage import usage_record
 from .artifacts import (
     _agent_call,
-    _usage,
     _validate_existing_root,
     _write_inputs,
     _write_json,
@@ -39,6 +40,8 @@ def write_failed_run_artifacts(
         target / "evidence" / "layout.R0.baseline.json",
         thaw_json_object(baseline_layout_report),
     )
+    _write_json(target / "evidence" / "findings.json", findings_payload(session))
+    _write_json(target / "evidence" / "revisions.json", revisions_payload(session))
     _write_json(target / "logs" / "agent_call.partial.json", _agent_call(record))
     _write_jsonl(
         target / "logs" / "tool_calls.jsonl",
@@ -96,7 +99,7 @@ def _failure(record, session: QualitySession, error: Exception) -> dict[str, obj
         "last_revision_id": session.current_revision.revision_id,
         "last_revision_code_hash": session.current_revision.code_hash,
         "best_render_passed": session.best_validated_evidence(),
-        "tokens": _usage(record.usage),
+        "tokens": usage_record(record.usage),
         "usage_complete": record.usage_complete,
         "external_tool_ms": record.external_tool_ms,
         "turns": record.turns,
@@ -123,4 +126,8 @@ def _failure_status(error: str, session: QualitySession) -> str:
     ):
         if marker in text:
             return status
-    return "FAILED_NO_PATCH" if len(session.attempts) == 1 else "FAILED_EXTERNAL_ACCEPTANCE"
+    return (
+        "FAILED_NO_PATCH"
+        if len(session.attempts) == 1
+        else "FAILED_EXTERNAL_ACCEPTANCE"
+    )

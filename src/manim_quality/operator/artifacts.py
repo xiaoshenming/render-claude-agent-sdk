@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 from collections.abc import Mapping
+from pathlib import Path
 
 from manim_quality.contracts._json_values import thaw_json_object
 
 from .agent import QualityOperatorResult
+from .artifact_session import findings_payload, revisions_payload
+from .artifact_usage import reviewer_tokens, usage_record
 from .gate import GateDecision, GateResult
 from .session import QualitySession
 
@@ -31,7 +33,7 @@ def write_run_artifacts(
     _write_inputs(target, session)
     _write_revisions(target, session)
     _write_evidence(target, session, gate_result, baseline_layout_report or {})
-    _write_logs(target, operator_result, gate_result)
+    _write_logs(target, session, operator_result, gate_result)
     _write_output(target, session, gate_result)
 
 
@@ -72,38 +74,8 @@ def _write_evidence(
         target / "evidence" / "layout.R0.baseline.json",
         thaw_json_object(baseline_layout_report),
     )
-    _write_json(
-        target / "evidence" / "findings.json",
-        {
-            "problem_hash": session.problem_hash,
-            "findings": [
-                {
-                    "finding_id": item.finding_id,
-                    "category": item.category.value,
-                    "severity": item.severity,
-                    "summary": item.summary,
-                    "acceptance_criteria": item.acceptance_criteria,
-                }
-                for item in session.findings
-            ],
-        },
-    )
-    _write_json(
-        target / "evidence" / "revisions.json",
-        {
-            "revisions": [
-                {
-                    "revision_id": item.revision_id,
-                    "parent_revision_id": item.parent_revision_id,
-                    "scope": None if item.scope is None else item.scope.value,
-                    "code_hash": item.code_hash,
-                    "patch_hash": item.patch_hash,
-                    "finding_ids": list(item.finding_ids),
-                }
-                for item in session.attempts
-            ]
-        },
-    )
+    _write_json(target / "evidence" / "findings.json", findings_payload(session))
+    _write_json(target / "evidence" / "revisions.json", revisions_payload(session))
     revision_id = session.submitted_revision_id or session.current_revision.revision_id
     if gate_result.validation is not None:
         _write_json(
@@ -119,6 +91,7 @@ def _write_evidence(
 
 def _write_logs(
     target: Path,
+    session: QualitySession,
     operator_result: QualityOperatorResult,
     gate_result: GateResult,
 ) -> None:
@@ -153,7 +126,7 @@ def _write_logs(
             ]
         },
     )
-    decision = _decision(operator_result, gate_result)
+    decision = _decision(session, operator_result, gate_result)
     _write_json(target / "logs" / "run_summary.json", decision)
     _write_json(target / "output" / "decision.json", decision)
 
@@ -196,7 +169,7 @@ def _agent_call(record) -> dict[str, object]:
             if record.structured_output is None
             else thaw_json_object(record.structured_output)
         ),
-        "usage": _usage(usage),
+        "usage": usage_record(usage),
         "turns": record.turns,
         "observed_model_rounds": record.observed_model_rounds,
         "elapsed_ms": record.elapsed_ms,
@@ -207,14 +180,14 @@ def _agent_call(record) -> dict[str, object]:
 
 
 def _decision(
+    session: QualitySession,
     operator_result: QualityOperatorResult,
     gate_result: GateResult,
 ) -> dict[str, object]:
     record = operator_result.call_record
-    final = gate_result.final_revision
-    rollback = gate_result.rollback_revision
+    final, rollback = gate_result.final_revision, gate_result.rollback_revision
     held = operator_result.agent_held
-    reviewer_tokens = _reviewer_tokens(operator_result.subagent_results)
+    reviewer_total = reviewer_tokens(operator_result.subagent_results)
     return {
         "decision": gate_result.decision.value,
         "agent_held": held,
@@ -225,31 +198,21 @@ def _decision(
         "last_revision_id": operator_result.revision.revision_id,
         "final_revision_id": None if final is None else final.revision_id,
         "rollback_revision_id": None if rollback is None else rollback.revision_id,
+        "best_render_passed": session.best_validated_evidence(),
         "reasons": list(gate_result.reasons),
         "agent_summary": operator_result.summary,
         "turns": record.turns,
         "tool_calls": len(record.tool_calls),
         "elapsed_ms": record.elapsed_ms,
         "external_tool_ms": record.external_tool_ms,
-        "tokens": _usage(record.usage),
-        "reviewer_tokens": reviewer_tokens,
+        "tokens": usage_record(record.usage),
+        "reviewer_tokens": reviewer_total,
         "total_tokens_with_reviewers": (
-            record.usage.total_tokens + reviewer_tokens
+            record.usage.total_tokens + reviewer_total
         ),
         "layout_report": gate_result.layout_report,
         "validation": _validation(gate_result.validation),
     }
-
-
-def _reviewer_tokens(subagent_results) -> int:
-    total = 0
-    for item in subagent_results:
-        metadata = item.get("sdk_metadata")
-        if isinstance(metadata, Mapping):
-            value = metadata.get("subagent_tokens")
-            if isinstance(value, int) and not isinstance(value, bool):
-                total += value
-    return total
 
 
 def _validation(value) -> dict[str, object] | None:
@@ -264,16 +227,6 @@ def _validation(value) -> dict[str, object] | None:
         "revision_id": value.revision_id,
         "code_hash": value.code_hash,
         "problem_hash": value.problem_hash,
-    }
-
-
-def _usage(value) -> dict[str, int]:
-    return {
-        "input_tokens": value.input_tokens,
-        "output_tokens": value.output_tokens,
-        "cache_read_tokens": value.cache_read_tokens,
-        "cache_write_tokens": value.cache_write_tokens,
-        "total_tokens": value.total_tokens,
     }
 
 

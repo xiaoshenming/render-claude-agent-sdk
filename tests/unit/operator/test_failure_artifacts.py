@@ -51,6 +51,7 @@ def repaired_session(*, submit: bool) -> QualitySession:
                 severity="blocking",
                 summary="The constructed relation contradicts the stated proof.",
                 acceptance_criteria="The rendered relation matches the problem.",
+                source_reviewer_ids=("math_geometry_reviewer",),
             ),
         )
     )
@@ -121,3 +122,14 @@ def test_failed_run_artifacts_classify_timeout_and_keep_best_candidate(
     assert failure["external_tool_ms"] == 250
     assert (tmp_path / "run" / "output" / "last_candidate.R1.py").is_file()
     assert (tmp_path / "run" / "output" / "best_render_passed.R1.py").is_file()
+    findings = json.loads(
+        (tmp_path / "run" / "evidence" / "findings.json").read_text()
+    )
+    revisions = json.loads(
+        (tmp_path / "run" / "evidence" / "revisions.json").read_text()
+    )
+    assert findings["findings"][0]["finding_id"] == "logic-1"
+    assert findings["findings"][0]["source_reviewer_ids"] == [
+        "math_geometry_reviewer"
+    ]
+    assert revisions["active_revision_id"] == "R1"

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from manim_quality.revisions.fingerprint import code_hash, sha256_text
 
+from .finding_dependencies import validate_finding_dependencies
 from .models import (
     CandidateAttempt,
     Finding,
@@ -19,10 +20,11 @@ from .session_rules import (
     embedded_problem_hash,
     patch_hash,
     require_blocking_findings_repaired,
-    validate_finding_scope,
     validate_layout_inspection,
     validate_patch_budget_raise,
     validate_patch_text,
+    validate_recovery_revision,
+    validate_session_patch,
     verify_candidate,
 )
 from .source_view import apply_solution_replacement, extract_solution
@@ -64,6 +66,7 @@ class QualitySession:
                 finding_ids=(),
             )
         ]
+        self._active_revision_id = "R0"
         self._findings: dict[str, Finding] = {}
         self._finding_batches = 0
         self._validations: dict[str, ValidationRecord] = {}
@@ -86,7 +89,7 @@ class QualitySession:
 
     @property
     def current_revision(self) -> CandidateAttempt:
-        return self._attempts[-1]
+        return self.get_revision(self._active_revision_id)
 
     @property
     def attempts(self) -> tuple[CandidateAttempt, ...]:
@@ -163,6 +166,7 @@ class QualitySession:
             if item.finding_id in values or item.finding_id in self._findings:
                 raise ValueError(f"duplicate finding_id: {item.finding_id}")
             values[item.finding_id] = item
+        validate_finding_dependencies(self._findings, values)
         self._findings.update(values)
         self._finding_batches += 1
 
@@ -174,7 +178,8 @@ class QualitySession:
         new_text: str,
         finding_ids: tuple[str, ...],
     ) -> CandidateAttempt:
-        self._require_patch_allowed(scope, finding_ids)
+        self._require_open()
+        validate_session_patch(self, scope, finding_ids)
         before = self.current_revision
         if before.revision_id not in self._solution_reads:
             raise InvalidSessionTransition(
@@ -207,9 +212,20 @@ class QualitySession:
             finding_ids=finding_ids,
         )
         self._attempts.append(attempt)
+        self._active_revision_id = attempt.revision_id
         self._solution_reads.add(attempt.revision_id)
         self._seen_code_hashes.add(after_hash)
         return attempt
+
+    def recover_revision(self, revision_id: str) -> CandidateAttempt:
+        self._require_open()
+        target = self.get_revision(revision_id)
+        validate_recovery_revision(
+            target, self.current_revision, self._validations
+        )
+        self._active_revision_id = target.revision_id
+        self._solution_reads.discard(target.revision_id)
+        return target
 
     def record_validation(
         self,
@@ -261,7 +277,12 @@ class QualitySession:
             )
         if self._finding_batches == 0:
             raise InvalidSessionTransition("findings must be recorded before submit")
-        require_blocking_findings_repaired(self._findings, self._attempts)
+        require_blocking_findings_repaired(
+            self._findings,
+            self._attempts,
+            self._validations,
+            current.revision_id,
+        )
         if revision_id not in self._layout_inspections:
             raise InvalidSessionTransition(
                 "current revision requires a fresh layout inspection"
@@ -272,27 +293,6 @@ class QualitySession:
             )
         self._submitted_revision_id = revision_id
         return current
-
-    def _require_patch_allowed(
-        self, scope: PatchScope, finding_ids: tuple[str, ...]
-    ) -> None:
-        self._require_open()
-        if not isinstance(scope, PatchScope):
-            raise TypeError("scope must be a PatchScope")
-        if self._finding_batches == 0:
-            raise InvalidSessionTransition("findings must be recorded before patch")
-        if len(self._attempts) - 1 >= self._max_patch_attempts:
-            raise InvalidSessionTransition("patch attempt budget exhausted")
-        if any(item.scope is PatchScope.LAYOUT for item in self._attempts):
-            if scope is PatchScope.LOGIC:
-                raise InvalidSessionTransition("logic patch is forbidden after layout")
-        current_validation = self._validations.get(self.current_revision.revision_id)
-        if self.current_revision.revision_id != "R0":
-            if current_validation is None:
-                raise InvalidSessionTransition("current revision must be validated")
-            if not current_validation.improved:
-                raise InvalidSessionTransition("previous revision did not improve")
-        validate_finding_scope(self._findings, scope, finding_ids)
 
     def _require_open(self) -> None:
         if self._submitted_revision_id is not None:

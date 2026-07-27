@@ -177,7 +177,7 @@ def test_operator_runs_clean_candidate_through_tools_without_prompt_source(
     assert session.submitted_revision_id == "R0"
     assert backend.request is not None
     assert backend.request.allowed_tools == ("Agent",)
-    assert len(backend.request.managed_tools) == 7
+    assert len(backend.request.managed_tools) == 8
     assert {item.name for item in backend.request.subagents} == {
         "math_geometry_reviewer",
         "animation_lifecycle_reviewer",
