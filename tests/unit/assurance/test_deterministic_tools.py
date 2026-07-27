@@ -2,10 +2,17 @@ import json
 
 from manim_quality.assurance.models import AssuranceCase
 from manim_quality.assurance.tools import (
+    _effectively_silent,
     inspect_code_review,
     inspect_execution,
     inspect_layout,
 )
+
+
+def test_effective_silence_uses_audible_threshold() -> None:
+    assert _effectively_silent("-inf")
+    assert _effectively_silent("-91.0")
+    assert not _effectively_silent("-12.5")
 
 
 def case(tmp_path) -> AssuranceCase:

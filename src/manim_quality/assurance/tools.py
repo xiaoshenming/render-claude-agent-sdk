@@ -3,6 +3,7 @@ from __future__ import annotations
 import ast
 import hashlib
 import json
+import re
 import subprocess
 from pathlib import Path
 
@@ -76,15 +77,31 @@ def inspect_layout(case: AssuranceCase) -> ToolReport:
 
 
 def inspect_tts(case: AssuranceCase) -> ToolReport:
-    if case.subtitle_path is None:
-        return _report("inspect_tts", "incomplete", ("subtitle_not_supplied",))
-    if not case.subtitle_path.is_file():
-        return _report("inspect_tts", "incomplete", ("missing_subtitle",))
+    audio = _audio_levels(case.video_path)
+    risks = []
+    if not audio.get("has_audio"):
+        risks.append("missing_audio_stream")
+    elif _effectively_silent(audio.get("max_volume")):
+        risks.append("silent_audio_stream")
+    evidence = {
+        "id": f"{case.key}:tts-audio",
+        **audio,
+        "subtitle": str(case.subtitle_path) if case.subtitle_path else None,
+    }
+    if risks:
+        return _report("inspect_tts", "risk", tuple(risks), evidence)
+    if case.subtitle_path is None or not case.subtitle_path.is_file():
+        return _report(
+            "inspect_tts",
+            "incomplete",
+            ("subtitle_not_supplied",),
+            evidence,
+        )
     return _report(
         "inspect_tts",
         "complete",
         (),
-        {"id": f"{case.key}:tts", "subtitle": str(case.subtitle_path)},
+        evidence,
     )
 
 
@@ -185,3 +202,41 @@ def _ffprobe(path: Path) -> dict[str, object]:
         "video": any(row.get("codec_type") == "video" for row in streams),
         "audio": any(row.get("codec_type") == "audio" for row in streams),
     }
+
+
+def _audio_levels(path: Path) -> dict[str, object]:
+    completed = subprocess.run(
+        [
+            "ffmpeg",
+            "-hide_banner",
+            "-nostats",
+            "-i",
+            str(path),
+            "-af",
+            "volumedetect",
+            "-f",
+            "null",
+            "-",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    text = completed.stderr
+    maximum = re.search(r"max_volume:\s*(?P<value>-?inf|-?[0-9.]+) dB", text)
+    mean = re.search(r"mean_volume:\s*(?P<value>-?inf|-?[0-9.]+) dB", text)
+    return {
+        "has_audio": "Audio:" in text,
+        "max_volume": maximum.group("value") if maximum else None,
+        "mean_volume": mean.group("value") if mean else None,
+        "ffmpeg_returncode": completed.returncode,
+    }
+
+
+def _effectively_silent(value: object) -> bool:
+    if value == "-inf":
+        return True
+    try:
+        return float(str(value)) <= -60.0
+    except (TypeError, ValueError):
+        return False
