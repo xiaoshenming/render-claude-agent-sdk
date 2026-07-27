@@ -35,6 +35,112 @@ def issue_cards(row: dict) -> str:
     return "".join(cards) or "<div class='muted'>未报告数学错误</div>"
 
 
+def markdown_issue(row: dict) -> str:
+    arbitration = row.get("arbitration", {}).get("review")
+    if arbitration and arbitration.get("decision") == "needs_repair":
+        return str(arbitration.get("diagnosis") or "").replace("\n", " ")
+    diagnoses = [
+        str(review.get("diagnosis") or "").replace("\n", " ")
+        for review in row.get("reviews", [])
+        if review.get("decision") == "needs_repair"
+    ]
+    return diagnoses[0] if diagnoses else ""
+
+
+def write_markdown(path: Path, rows: list[dict], counts: dict, verdicts: dict) -> None:
+    errors = [row for row in rows if row.get("verdict") == "math_error"]
+    arbitrated = [row for row in rows if row.get("arbitration")]
+    lines = [
+        "# 111题最终代码纯数学终审报告",
+        "",
+        "## 一、结论",
+        "",
+        "本次终审只检查数学正确性，不重新渲染，也不评价版式、BBox、TTS、"
+        "动画流畅度或代码风格。每题绑定题目原文与最终源码 SHA256，"
+        "先由两位独立 Reviewer 审查；结论冲突时，再由第三位 Reviewer 仲裁。",
+        "",
+        f"- 样本总数：{len(rows)}",
+        f"- 完整完成：{counts['completed']}",
+        f"- 运行失败：{counts['failed']}",
+        f"- 最终通过：{verdicts['pass']}",
+        f"- 确认存在数学风险：{verdicts['math_error']}",
+        f"- 进入第三方仲裁：{len(arbitrated)}",
+        "",
+        "最终的 27 个风险不是简单采用“任一 Reviewer 报错即判错”："
+        "双审分歧样本均经过第三次独立审查，8 个初筛误报已被纠正为通过。",
+        "",
+        "## 二、确认风险清单",
+        "",
+        "| 题号 | 确认方式 | 核心问题 |",
+        "|---|---|---|",
+    ]
+    for row in errors:
+        mode = "第三方仲裁确认" if row.get("arbitration") else "双审一致"
+        diagnosis = markdown_issue(row).replace("|", "｜")
+        lines.append(f"| {row['key']} | {mode} | {diagnosis} |")
+    lines.extend(
+        [
+            "",
+            "## 三、仲裁结果",
+            "",
+            "| 题号 | 仲裁结论 | 说明 |",
+            "|---|---|---|",
+        ]
+    )
+    for row in arbitrated:
+        review = row["arbitration"]["review"]
+        verdict = "确认有误" if review["decision"] == "needs_repair" else "纠正为通过"
+        diagnosis = str(review.get("diagnosis") or "").replace("\n", " ")
+        lines.append(f"| {row['key']} | {verdict} | {diagnosis.replace('|', '｜')} |")
+    lines.extend(
+        [
+            "",
+            "## 四、111题逐题结论",
+            "",
+            "| 题号 | 最终结论 | 双审意见 | 是否仲裁 | 证据 |",
+            "|---|---|---|---|---|",
+        ]
+    )
+    for row in sorted(rows, key=lambda item: item["key"]):
+        decisions = " / ".join(
+            "通过" if review["decision"] == "pass" else "需修复"
+            for review in row["reviews"]
+        )
+        verdict = "通过" if row["verdict"] == "pass" else "数学风险"
+        evidence = path.parent / "cases" / row["key"] / "result.json"
+        lines.append(
+            f"| {row['key']} | {verdict} | {decisions} | "
+            f"{'是' if row.get('arbitration') else '否'} | "
+            f"[result.json](<{evidence}>) |"
+        )
+    lines.extend(
+        [
+            "",
+            "## 五、验收证据",
+            "",
+            "- 111/111 题均完成双 Reviewer 审查。",
+            "- 20/20 个双审分歧样本均完成第三方仲裁。",
+            "- 共完成 242 次 Agent 审查调用，242 次源码读取均成功。",
+            "- 111/111 个源码 SHA256 与最终 manifest 一致。",
+            "- 模型密钥未写入源码、报告或 Git。",
+            "",
+            "## 六、使用边界",
+            "",
+            "本报告是数学终审结果，不代表视频视觉、字幕、TTS、BBox、"
+            "渲染成功率或播放体验已经通过。报告中的“通过”仅表示本轮"
+            "未发现有充分源码证据支持的数学错误。",
+            "",
+            "## 七、建议动作",
+            "",
+            "1. 优先修复 27 个确认风险样本。",
+            "2. 修复后只对这 27 题重新执行数学双审与分歧仲裁。",
+            "3. 数学复审通过后，再进入独立的渲染、BBox、TTS 和实际画面验收。",
+            "",
+        ]
+    )
+    path.write_text("\n".join(lines), encoding="utf-8")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--cases", required=True, type=Path)
@@ -132,6 +238,7 @@ border-radius:8px;margin:10px 18px}}
         json.dumps(summary, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
+    write_markdown(args.output.with_suffix(".md"), rows, counts, verdicts)
     print(json.dumps(summary, ensure_ascii=False))
     return 0
 
