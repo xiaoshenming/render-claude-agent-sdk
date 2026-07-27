@@ -12,20 +12,26 @@ from pathlib import Path
 def main() -> int:
     args = arguments()
     results = load(args.results)["cases"]
-    manifest = load(args.gallery / "manifest.json")["items"]
     annotations = load(args.annotations)
     tags = invert_tags(annotations)
-    media = {
-        row["external_key"]: selected_video(row)
-        for row in manifest
-        if row.get("item_status") == "succeeded"
-    }
+    media = {}
+    if args.video_root is None:
+        manifest = load(args.gallery / "manifest.json")["items"]
+        media = {
+            row["external_key"]: selected_video(row)
+            for row in manifest
+            if row.get("item_status") == "succeeded"
+        }
     video_dir = args.output.parent / "videos"
     video_dir.mkdir(parents=True, exist_ok=True)
     cards = []
     for row in sorted(results, key=lambda value: value["key"]):
         key = row["key"]
-        source = args.gallery / media[key]
+        source = (
+            args.video_root / f"{key}.mp4"
+            if args.video_root is not None
+            else args.gallery / media[key]
+        )
         target = video_dir / f"{key}.mp4"
         link_video(source, target)
         cards.append(card(row, tags.get(key, ()), f"videos/{key}.mp4"))
@@ -169,6 +175,7 @@ def arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--results", type=Path, required=True)
     parser.add_argument("--gallery", type=Path, required=True)
+    parser.add_argument("--video-root", type=Path)
     parser.add_argument("--annotations", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     return parser.parse_args()

@@ -13,6 +13,7 @@ from manim_quality.agents.usage import UsageSink
 from manim_quality.assurance.agent import FinalAssuranceAgent
 from manim_quality.assurance.dataset import (
     load_annotated_cases,
+    load_curated_cases,
     load_successful_cases,
 )
 from manim_quality.assurance.risk_frames import inspect_risk_frames
@@ -36,11 +37,12 @@ class Sink(UsageSink):
 
 def main() -> int:
     args = arguments()
-    cases = (
-        load_successful_cases(args.gallery, args.logs)
-        if args.all_successful
-        else load_annotated_cases(args.forensic, args.gallery, args.logs)
-    )
+    if args.case_manifest:
+        cases = load_curated_cases(args.case_manifest, args.logs)
+    elif args.all_successful:
+        cases = load_successful_cases(args.gallery, args.logs)
+    else:
+        cases = load_annotated_cases(args.forensic, args.gallery, args.logs)
     if args.keys:
         wanted = set(args.keys.split(","))
         cases = tuple(case for case in cases if case.key in wanted)
@@ -167,6 +169,7 @@ def arguments() -> argparse.Namespace:
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--with-agent", action="store_true")
     parser.add_argument("--all-successful", action="store_true")
+    parser.add_argument("--case-manifest", type=Path)
     parser.add_argument("--model", default="gpt-5.6-sol")
     parser.add_argument("--limit", type=int, default=0)
     parser.add_argument("--keys", default="")

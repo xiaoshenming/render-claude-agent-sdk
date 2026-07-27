@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import hashlib
 import json
 import subprocess
@@ -49,12 +50,16 @@ def inspect_execution(case: AssuranceCase) -> ToolReport:
 
 
 def inspect_code_review(case: AssuranceCase) -> ToolReport:
+    source_evidence, source_risks = _inspect_source(case)
     findings = _findings(case, {"logic", "lifecycle", "code"})
-    risks = ("blocking_logic_finding",) if _blocking(findings) else ()
+    risks = list(source_risks)
+    if _blocking(findings):
+        risks.append("blocking_logic_finding")
     return _report(
         "inspect_code_review",
-        "risk" if risks else ("complete" if findings else "incomplete"),
-        risks,
+        "risk" if risks else ("complete" if source_evidence else "incomplete"),
+        tuple(risks),
+        *source_evidence,
         *findings,
     )
 
@@ -119,6 +124,26 @@ def _findings(case: AssuranceCase, categories: set[str]) -> tuple[dict, ...]:
 
 def _blocking(rows: tuple[dict, ...]) -> bool:
     return any(row.get("severity") in {"blocking", "critical", "high"} for row in rows)
+
+
+def _inspect_source(case: AssuranceCase) -> tuple[tuple[dict, ...], tuple[str, ...]]:
+    if case.source_path is None or not case.source_path.is_file():
+        return (), ()
+    text = case.source_path.read_text(encoding="utf-8")
+    risks = []
+    try:
+        ast.parse(text)
+    except SyntaxError:
+        risks.append("final_source_syntax_error")
+    evidence = {
+        "id": f"{case.key}:final-source",
+        "path": str(case.source_path),
+        "sha256": _sha256(case.source_path),
+        "lines": text.count("\n") + 1,
+        "voiceover_blocks": text.count("voiceover("),
+        "ast_parse_ok": not risks,
+    }
+    return (evidence,), tuple(risks)
 
 
 def _report(tool: str, status: str, risks: tuple[str, ...], *evidence) -> ToolReport:

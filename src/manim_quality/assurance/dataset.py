@@ -79,6 +79,28 @@ def load_successful_cases(
     return tuple(cases)
 
 
+def load_curated_cases(
+    manifest_path: Path,
+    logs_dir: Path,
+) -> tuple[AssuranceCase, ...]:
+    rows = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if not isinstance(rows, list):
+        return ()
+    root = manifest_path.parent
+    return tuple(
+        AssuranceCase(
+            key=str(row["key"]),
+            question=str(row.get("question") or ""),
+            human_tags=(str(row.get("group") or ""),),
+            expected_verdict="",
+            video_path=root / "videos" / f"{row['key']}.mp4",
+            source_path=root / "sources" / str(row["key"]) / "main.py",
+            log_dir=logs_dir / str(row["key"]),
+        )
+        for row in rows
+    )
+
+
 def _selected_stage(value: object) -> dict[str, object]:
     if not isinstance(value, dict):
         return {}
