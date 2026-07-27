@@ -109,7 +109,9 @@ def test_failed_exits_nonzero_for_fail_open(tmp_path: Path, monkeypatch) -> None
     monkeypatch.setattr(shim, "_run_operator", lambda a, h: 2)
 
     assert shim.main([]) == 3
-    assert not (args.output / "result.json").exists()
+    result = json.loads((args.output / "result.json").read_text())
+    assert result["status"] == "failed"
+    assert result["agent_outcome"]["status"] == "failed"
 
 
 def test_proxy_stripping_clears_all_variants(monkeypatch) -> None:
@@ -120,3 +122,21 @@ def test_proxy_stripping_clears_all_variants(monkeypatch) -> None:
 
     assert all(name not in os.environ for name in shim._PROXY_VARIABLES)
     assert os.environ["NO_PROXY"] == "*"
+
+
+def test_runtime_python_paths_are_forwarded(tmp_path: Path, monkeypatch) -> None:
+    args = _args(tmp_path)
+    runtime = tmp_path / "render-runtime"
+    runtime.mkdir()
+    args.runtime_python_path = [runtime]
+    captured = {}
+
+    def fake_main(argv):
+        captured["argv"] = argv
+        return 0
+
+    monkeypatch.setattr("manim_quality.operator.cli.main", fake_main)
+
+    assert shim._run_operator(args, tmp_path / "harness") == 0
+    index = captured["argv"].index("--runtime-python-path")
+    assert captured["argv"][index + 1] == str(runtime.resolve())

@@ -25,6 +25,8 @@ import shutil
 import sys
 from pathlib import Path
 
+from batchops_result_contract import write_result
+
 _PROXY_VARIABLES = (
     "http_proxy",
     "https_proxy",
@@ -48,6 +50,7 @@ def main(argv: list[str] | None = None) -> int:
         return _emit_proposed(args, output, harness_root, decision)
     if verdict == "HOLD":
         return _emit_hold(args, output, decision)
+    _emit_failed(output, decision, exit_code)
     print(
         f"quality harness terminal state: {verdict} (exit {exit_code}); "
         "failing open",
@@ -62,6 +65,12 @@ def _arguments(argv: list[str] | None) -> argparse.Namespace:
     parser.add_argument("--problem", type=Path, required=True)
     parser.add_argument("--baseline-video", type=Path, required=True)
     parser.add_argument("--manim-python", type=Path, required=True)
+    parser.add_argument(
+        "--runtime-python-path",
+        type=Path,
+        action="append",
+        default=[],
+    )
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--job-id", required=True)
     parser.add_argument("--model", required=True)
@@ -109,6 +118,8 @@ def _run_operator(args: argparse.Namespace, harness_root: Path) -> int:
     assets = workspace / "assets"
     if assets.is_dir():
         argv.extend(("--assets-dir", str(assets)))
+    for path in args.runtime_python_path:
+        argv.extend(("--runtime-python-path", str(path.resolve(strict=True))))
     try:
         return operator_main(argv)
     except SystemExit as error:
@@ -140,7 +151,7 @@ def _emit_proposed(
     final_code = output / "candidate_final.py"
     shutil.copyfile(candidate, final_code)
     shutil.copyfile(video, output / "video_final.mp4")
-    _write_result(
+    write_result(
         output,
         status="deliver",
         decision=decision,
@@ -163,7 +174,7 @@ def _emit_hold(
     shutil.copyfile(
         args.baseline_video.resolve(strict=True), output / "video_final.mp4"
     )
-    _write_result(
+    write_result(
         output,
         status="deliver_with_warning",
         decision=decision,
@@ -178,54 +189,24 @@ def _emit_hold(
     return 0
 
 
-def _write_result(
+def _emit_failed(
     output: Path,
-    *,
-    status: str,
     decision: dict[str, object],
-    logic: dict[str, object],
-    layout: dict[str, object],
+    exit_code: int,
 ) -> None:
-    payload = {
-        "schema_version": "batchops.quality-agent.result.v1",
-        "status": status,
-        "logic": logic,
-        "layout": layout,
-        "harness_decision": decision.get("decision"),
-        "turns": decision.get("turns"),
-        "tokens": decision.get("tokens"),
-        "token_usage": _token_usage(decision),
-        "external_tool_ms": decision.get("external_tool_ms"),
-        "harness_artifacts": "harness/",
-    }
-    (output / "result.json").write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
+    write_result(
+        output,
+        status="failed",
+        decision=decision,
+        logic={"status": "failed"},
+        layout={
+            "status": "failed",
+            "risk_codes": ["quality_agent_failed_before_retained"],
+            "reasons": decision.get("reasons") or [decision.get("status")],
+            "exit_code": exit_code,
+            "best_render_passed": decision.get("best_render_passed"),
+        },
     )
-
-
-def _token_usage(decision: dict[str, object]) -> dict[str, object]:
-    parent = decision.get("tokens")
-    parent = parent if isinstance(parent, dict) else {}
-    parent_total = int(parent.get("total_tokens") or 0)
-    reviewer_total = int(decision.get("reviewer_tokens") or 0)
-    entries = []
-    if parent_total:
-        entries.append({"operation": "parent", **parent})
-    if reviewer_total:
-        entries.append({
-            "operation": "reviewers",
-            "total_tokens": reviewer_total,
-        })
-    return {
-        "schema_version": "batchops.token-usage.v2",
-        "total_tokens": int(
-            decision.get("total_tokens_with_reviewers")
-            or parent_total + reviewer_total
-        ),
-        "entries": entries,
-    }
-
 
 def _final_video(
     harness_root: Path, decision: dict[str, object]
