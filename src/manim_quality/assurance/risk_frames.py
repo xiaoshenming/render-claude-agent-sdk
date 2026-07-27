@@ -21,7 +21,7 @@ def inspect_risk_frames(case: AssuranceCase, output_dir: Path) -> ToolReport:
         )
     case_dir = output_dir / case.key
     case_dir.mkdir(parents=True, exist_ok=True)
-    sheet = case_dir / "risk-contact-sheet.png"
+    sheet = case_dir / "risk-contact-sheet.jpg"
     duration = _duration(case.video_path)
     errors = _make_sheet(case.video_path, sheet, duration)
     windows = _detect_windows(case.video_path)
@@ -57,7 +57,7 @@ def multimodal_content(report: ToolReport) -> ManagedToolContent:
                 {
                     "type": "image",
                     "data": base64.b64encode(image.read_bytes()).decode("ascii"),
-                    "mimeType": "image/png",
+                    "mimeType": "image/jpeg",
                 }
             )
     return ManagedToolContent(audit_text=audit, blocks=tuple(blocks))
@@ -96,7 +96,9 @@ def _make_sheet(video: Path, output: Path, duration: float) -> str | None:
             "-i",
             str(video),
             "-vf",
-            f"fps={fps:.8f},scale=320:-2,tile=4x3:padding=4:margin=4",
+            f"fps={fps:.8f},scale=280:-2,tile=4x3:padding=4:margin=4",
+            "-q:v",
+            "3",
             "-frames:v",
             "1",
             str(output),

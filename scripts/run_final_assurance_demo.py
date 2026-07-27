@@ -11,7 +11,10 @@ from manim_quality.agents.claude_sdk import ClaudeSdkBackend
 from manim_quality.agents.runtime import AgentRuntime
 from manim_quality.agents.usage import UsageSink
 from manim_quality.assurance.agent import FinalAssuranceAgent
-from manim_quality.assurance.dataset import load_annotated_cases
+from manim_quality.assurance.dataset import (
+    load_annotated_cases,
+    load_successful_cases,
+)
 from manim_quality.assurance.risk_frames import inspect_risk_frames
 from manim_quality.assurance.tools import (
     inspect_artifact,
@@ -33,7 +36,11 @@ class Sink(UsageSink):
 
 def main() -> int:
     args = arguments()
-    cases = load_annotated_cases(args.forensic, args.gallery, args.logs)
+    cases = (
+        load_successful_cases(args.gallery, args.logs)
+        if args.all_successful
+        else load_annotated_cases(args.forensic, args.gallery, args.logs)
+    )
     if args.keys:
         wanted = set(args.keys.split(","))
         cases = tuple(case for case in cases if case.key in wanted)
@@ -88,6 +95,9 @@ def deterministic_reports(case, frame_root: Path):
 def summarize(rows: list[dict]) -> dict[str, object]:
     total = len(rows)
     detected = sum(bool(row["detected_by_tools"]) for row in rows)
+    labeled_bad = sum(
+        bool(row.get("human_tags") or row.get("expected_verdict")) for row in rows
+    )
     agent_completed = [row for row in rows if isinstance(row.get("agent"), dict)]
     agent_reviewed = sum(
         row["agent"].get("status") in {"review", "incomplete"}
@@ -100,7 +110,11 @@ def summarize(rows: list[dict]) -> dict[str, object]:
     return {
         "total": total,
         "deterministic_detected": detected,
-        "deterministic_recall": detected / total if total else 0,
+        "deterministic_flag_rate": detected / total if total else 0,
+        "labeled_bad": labeled_bad,
+        "deterministic_recall": (
+            detected / labeled_bad if labeled_bad == total and total else None
+        ),
         "agent_completed": len(agent_completed),
         "agent_reviewed": agent_reviewed,
         "agent_recall": (
@@ -152,6 +166,7 @@ def arguments() -> argparse.Namespace:
     parser.add_argument("--logs", type=Path, default=default / "all-agent-logs")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--with-agent", action="store_true")
+    parser.add_argument("--all-successful", action="store_true")
     parser.add_argument("--model", default="gpt-5.6-sol")
     parser.add_argument("--limit", type=int, default=0)
     parser.add_argument("--keys", default="")

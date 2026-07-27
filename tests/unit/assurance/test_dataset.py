@@ -1,6 +1,10 @@
 import json
+from pathlib import Path
 
-from manim_quality.assurance.dataset import load_annotated_cases
+from manim_quality.assurance.dataset import (
+    load_annotated_cases,
+    load_successful_cases,
+)
 
 
 def test_dataset_binds_annotations_gallery_and_logs(tmp_path) -> None:
@@ -37,3 +41,36 @@ def test_dataset_binds_annotations_gallery_and_logs(tmp_path) -> None:
     assert len(cases) == 1
     assert cases[0].human_tags == ("overlap",)
     assert cases[0].video_path == gallery / "media/a.mp4"
+
+
+def test_load_successful_cases_uses_only_complete_final_videos(tmp_path: Path) -> None:
+    gallery = tmp_path / "gallery"
+    logs = tmp_path / "logs"
+    gallery.mkdir()
+    (gallery / "manifest.json").write_text(
+        json.dumps(
+            {
+                "items": [
+                    _gallery_item("OK-1", "succeeded", "media/final.mp4"),
+                    _gallery_item("BAD-1", "failed", "media/bad.mp4"),
+                    _gallery_item("MISS-1", "succeeded", None),
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    cases = load_successful_cases(gallery, logs)
+
+    assert [case.key for case in cases] == ["OK-1"]
+    assert cases[0].video_path == gallery / "media/final.mp4"
+
+
+def _gallery_item(key: str, status: str, path: str | None) -> dict:
+    stages = {"overlap": {"path": path}} if path else {}
+    return {
+        "external_key": key,
+        "item_status": status,
+        "question": "question",
+        "stages": stages,
+    }

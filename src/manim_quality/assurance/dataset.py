@@ -50,6 +50,35 @@ def load_annotated_cases(
     return tuple(cases)
 
 
+def load_successful_cases(
+    gallery_dir: Path,
+    logs_dir: Path,
+) -> tuple[AssuranceCase, ...]:
+    gallery = _object(gallery_dir / "manifest.json").get("items", [])
+    if not isinstance(gallery, list):
+        return ()
+    cases = []
+    for item in gallery:
+        if not isinstance(item, dict) or item.get("item_status") != "succeeded":
+            continue
+        key = item.get("external_key")
+        stage = _selected_stage(item.get("stages"))
+        relative = stage.get("path") if isinstance(stage, dict) else None
+        if not isinstance(key, str) or not relative:
+            continue
+        cases.append(
+            AssuranceCase(
+                key=key,
+                question=str(item.get("question") or ""),
+                human_tags=(),
+                expected_verdict="",
+                video_path=gallery_dir / str(relative),
+                log_dir=logs_dir / key,
+            )
+        )
+    return tuple(cases)
+
+
 def _selected_stage(value: object) -> dict[str, object]:
     if not isinstance(value, dict):
         return {}
