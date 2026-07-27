@@ -19,7 +19,7 @@ from manim_quality.revisions.fingerprint import sha256_text
 
 ManagedToolHandler = Callable[
     [Mapping[str, object]],
-    str | Awaitable[str],
+    object | Awaitable[object],
 ]
 ManagedToolValidator = Callable[[Mapping[str, object]], None]
 
@@ -65,6 +65,21 @@ class ManagedToolResult:
     text: str
     status: str
     result_hash: str
+    content: tuple[Mapping[str, object], ...]
+
+
+@dataclass(frozen=True, slots=True)
+class ManagedToolContent:
+    """Auditable MCP content; image bytes are never copied into the call log."""
+
+    audit_text: str
+    blocks: tuple[Mapping[str, object], ...]
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.audit_text, str):
+            raise TypeError("audit_text must be a string")
+        if not self.blocks:
+            raise ValueError("blocks must not be empty")
 
 
 @dataclass(frozen=True, slots=True)
@@ -155,16 +170,16 @@ class ManagedToolGrant:
             raise ManagedToolTimeout(
                 f"managed tool timed out: {self.sdk_name}"
             ) from error
-        if not isinstance(text, str):
-            raise TypeError("managed tool handler must return text")
-        if len(text) > self.max_result_chars:
+        content = _normalize_content(text)
+        if len(content.audit_text) > self.max_result_chars:
             raise ManagedToolResultTooLarge(
                 f"managed tool result exceeds {self.max_result_chars} characters"
             )
         return ManagedToolResult(
-            text=text,
+            text=content.audit_text,
             status="ok",
-            result_hash=sha256_text(text),
+            result_hash=sha256_text(content.audit_text),
+            content=content.blocks,
         )
 
 
@@ -210,3 +225,17 @@ def _json_bytes(value: Mapping[str, object]) -> int:
         separators=(",", ":"),
     )
     return len(text.encode("utf-8"))
+
+
+def _normalize_content(value: object) -> ManagedToolContent:
+    if isinstance(value, str):
+        return ManagedToolContent(
+            audit_text=value,
+            blocks=({"type": "text", "text": value},),
+        )
+    if not isinstance(value, ManagedToolContent):
+        raise TypeError("managed tool handler must return text or ManagedToolContent")
+    for block in value.blocks:
+        if not isinstance(block, Mapping) or block.get("type") not in {"text", "image"}:
+            raise ValueError("managed tool content contains an unsupported block")
+    return value

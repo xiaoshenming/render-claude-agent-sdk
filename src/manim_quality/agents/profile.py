@@ -14,6 +14,7 @@ class AgentRole(StrEnum):
     CODER = "coder"
     VERIFIER = "verifier"
     OPERATOR = "operator"
+    ASSURANCE = "assurance"
 
 
 @dataclass(frozen=True, slots=True)
@@ -37,6 +38,7 @@ class AgentProfile:
             AgentRole.CODER: frozenset({"Read", "Edit"}),
             AgentRole.VERIFIER: frozenset({"Read"}),
             AgentRole.OPERATOR: frozenset({"Agent"}),
+            AgentRole.ASSURANCE: frozenset(),
         }[self.role]
         if self.allowed_tools != expected:
             raise ValueError(f"allowed_tools do not match {self.role} profile")
@@ -107,6 +109,23 @@ def operator_profile(
         schema_version=schema_version,
         tool_version=tool_version,
         allowed_tools=frozenset({"Agent"}),
+    )
+
+
+def assurance_profile(
+    *,
+    model: str,
+    prompt_version: str,
+    schema_version: str = DEFAULT_SCHEMA_VERSION,
+    tool_version: str = DEFAULT_TOOL_VERSION,
+) -> AgentProfile:
+    return AgentProfile(
+        role=AgentRole.ASSURANCE,
+        model=model,
+        prompt_version=prompt_version,
+        schema_version=schema_version,
+        tool_version=tool_version,
+        allowed_tools=frozenset(),
     )
 
 

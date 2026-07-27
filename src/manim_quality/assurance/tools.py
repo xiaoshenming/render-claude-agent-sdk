@@ -1,0 +1,162 @@
+from __future__ import annotations
+
+import hashlib
+import json
+import subprocess
+from pathlib import Path
+
+from .models import AssuranceCase, ToolReport
+
+
+def inspect_artifact(case: AssuranceCase) -> ToolReport:
+    if not case.video_path.is_file() or case.video_path.stat().st_size == 0:
+        return _report("inspect_artifact", "incomplete", ("missing_video",))
+    probe = _ffprobe(case.video_path)
+    risks = []
+    if probe.get("returncode") != 0:
+        risks.append("ffprobe_failed")
+    elif not probe.get("video"):
+        risks.append("missing_video_stream")
+    evidence = {
+        "id": f"{case.key}:artifact",
+        "path": str(case.video_path),
+        "sha256": _sha256(case.video_path),
+        **probe,
+    }
+    return _report(
+        "inspect_artifact",
+        "risk" if risks else "complete",
+        tuple(risks),
+        evidence,
+    )
+
+
+def inspect_execution(case: AssuranceCase) -> ToolReport:
+    summary = _json(case.log_dir / "run_summary.json")
+    risks = []
+    if not summary:
+        risks.append("missing_run_summary")
+    if summary.get("decision") != "PROPOSED":
+        risks.append("quality_not_proposed")
+    if not summary.get("final_revision_id"):
+        risks.append("missing_final_revision")
+    return _report(
+        "inspect_execution",
+        "risk" if risks else "complete",
+        tuple(risks),
+        {"id": f"{case.key}:execution", **summary},
+    )
+
+
+def inspect_code_review(case: AssuranceCase) -> ToolReport:
+    findings = _findings(case, {"logic", "lifecycle", "code"})
+    risks = ("blocking_logic_finding",) if _blocking(findings) else ()
+    return _report(
+        "inspect_code_review",
+        "risk" if risks else ("complete" if findings else "incomplete"),
+        risks,
+        *findings,
+    )
+
+
+def inspect_layout(case: AssuranceCase) -> ToolReport:
+    findings = _findings(case, {"layout", "overlap", "bbox"})
+    risks = ("blocking_layout_finding",) if _blocking(findings) else ()
+    return _report(
+        "inspect_layout",
+        "risk" if risks else ("complete" if findings else "incomplete"),
+        risks,
+        *findings,
+    )
+
+
+def inspect_tts(case: AssuranceCase) -> ToolReport:
+    if case.subtitle_path is None:
+        return _report("inspect_tts", "incomplete", ("subtitle_not_supplied",))
+    if not case.subtitle_path.is_file():
+        return _report("inspect_tts", "incomplete", ("missing_subtitle",))
+    return _report(
+        "inspect_tts",
+        "complete",
+        (),
+        {"id": f"{case.key}:tts", "subtitle": str(case.subtitle_path)},
+    )
+
+
+def inspect_consistency(case: AssuranceCase) -> ToolReport:
+    summary = _json(case.log_dir / "run_summary.json")
+    result = _json(case.log_dir / "result.json")
+    final = summary.get("final_revision_id")
+    logic = result.get("logic") if isinstance(result.get("logic"), dict) else {}
+    reported = logic.get("final_revision_id")
+    risks = []
+    if final and reported and final != reported:
+        risks.append("revision_identity_mismatch")
+    if result.get("status") == "deliver_with_warning":
+        risks.append("delivered_with_warning")
+    return _report(
+        "inspect_consistency",
+        "risk" if risks else "complete",
+        tuple(risks),
+        {
+            "id": f"{case.key}:consistency",
+            "run_final_revision": final,
+            "result_final_revision": reported,
+        },
+    )
+
+
+def _findings(case: AssuranceCase, categories: set[str]) -> tuple[dict, ...]:
+    rows = _json(case.log_dir / "findings.json").get("findings", [])
+    if not isinstance(rows, list):
+        return ()
+    return tuple(
+        {"id": f"{case.key}:{row.get('finding_id', 'finding')}", **row}
+        for row in rows
+        if isinstance(row, dict) and str(row.get("category", "")).lower() in categories
+    )
+
+
+def _blocking(rows: tuple[dict, ...]) -> bool:
+    return any(row.get("severity") in {"blocking", "critical", "high"} for row in rows)
+
+
+def _report(tool: str, status: str, risks: tuple[str, ...], *evidence) -> ToolReport:
+    return ToolReport(tool, status, risks, tuple(evidence))
+
+
+def _json(path: Path) -> dict:
+    if not path.is_file():
+        return {}
+    value = json.loads(path.read_text(encoding="utf-8"))
+    return value if isinstance(value, dict) else {}
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _ffprobe(path: Path) -> dict[str, object]:
+    command = [
+        "ffprobe",
+        "-v",
+        "error",
+        "-show_entries",
+        "format=duration:stream=codec_type,codec_name",
+        "-of",
+        "json",
+        str(path),
+    ]
+    completed = subprocess.run(command, capture_output=True, text=True, timeout=30)
+    value = json.loads(completed.stdout or "{}") if completed.returncode == 0 else {}
+    streams = value.get("streams", []) if isinstance(value, dict) else []
+    return {
+        "returncode": completed.returncode,
+        "duration": (value.get("format") or {}).get("duration"),
+        "video": any(row.get("codec_type") == "video" for row in streams),
+        "audio": any(row.get("codec_type") == "audio" for row in streams),
+    }

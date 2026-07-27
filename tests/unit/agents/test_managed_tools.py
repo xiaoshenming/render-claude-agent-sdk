@@ -4,6 +4,7 @@ import anyio
 import pytest
 
 from manim_quality.agents.managed_tools import (
+    ManagedToolContent,
     ManagedToolGrant,
     ManagedToolResultTooLarge,
     ManagedToolTimeout,
@@ -68,6 +69,23 @@ def test_managed_tool_executes_and_hashes_bounded_result() -> None:
     assert result.text == "value=ok"
     assert result.status == "ok"
     assert result.result_hash.startswith("sha256:")
+    assert result.content == ({"type": "text", "text": "value=ok"},)
+
+
+def test_managed_tool_supports_auditable_image_content() -> None:
+    async def image_result(_arguments):
+        return ManagedToolContent(
+            audit_text='{"frames":1}',
+            blocks=(
+                {"type": "text", "text": '{"frames":1}'},
+                {"type": "image", "data": "YWJj", "mimeType": "image/png"},
+            ),
+        )
+
+    result = anyio.run(grant(handler=image_result).execute, {"value": "ok"})
+
+    assert result.text == '{"frames":1}'
+    assert result.content[1]["type"] == "image"
 
 
 def test_managed_tool_rejects_oversized_result() -> None:

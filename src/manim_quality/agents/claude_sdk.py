@@ -77,8 +77,8 @@ class ClaudeSdkBackend(AgentBackend):
         except Exception as error:
             # Keep the observed transcript on the failure so interrupted
             # runs still archive their SDK message trail.
-            setattr(error, "sdk_messages", state.sdk_messages)
-            setattr(error, "subagent_results", state.subagent_results)
+            error.sdk_messages = state.sdk_messages
+            error.subagent_results = state.subagent_results
             raise
 
     async def _consume(
@@ -246,12 +246,15 @@ def _sdk_tool(
         extender.begin()
         try:
             if managed:
-                text = await state.execute_managed_tool(grant.sdk_name, arguments)
+                content = await state.execute_managed_tool_content(
+                    grant.sdk_name, arguments
+                )
             else:
                 text = await state.execute_read_tool(grant.sdk_name, arguments)
+                content = ({"type": "text", "text": text},)
         finally:
             extender.finish()
-        return {"content": [{"type": "text", "text": text}]}
+        return {"content": list(content)}
 
     return invoke
 

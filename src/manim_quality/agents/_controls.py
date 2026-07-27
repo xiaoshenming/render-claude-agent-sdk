@@ -164,7 +164,23 @@ class RuntimeControls:
         grant = self._guard.claim_managed_tool(name, input_data)
         return await self._execute_grant(name, input_data, grant)
 
+    async def execute_managed_tool_content(
+        self, name: str, input_data: object
+    ) -> tuple[Mapping[str, object], ...]:
+        grant = self._guard.claim_managed_tool(name, input_data)
+        return await self._execute_grant_content(name, input_data, grant)
+
     async def _execute_grant(self, name: str, input_data: object, grant) -> str:
+        result = await self._execute_grant_result(name, input_data, grant)
+        return result.text
+
+    async def _execute_grant_content(
+        self, name: str, input_data: object, grant
+    ) -> tuple[Mapping[str, object], ...]:
+        result = await self._execute_grant_result(name, input_data, grant)
+        return result.content
+
+    async def _execute_grant_result(self, name: str, input_data: object, grant):
         normalized = grant.normalize_input(input_data)
         try:
             with self._budget.external_call():
@@ -190,7 +206,7 @@ class RuntimeControls:
             status=result.status,
             result_hash=result.result_hash,
         )
-        return result.text
+        return result
 
     def record_output_correction(self, error_text: str) -> None:
         self._tool_calls.append(

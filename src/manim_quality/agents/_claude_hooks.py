@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+
 import anyio
 from claude_agent_sdk import (
     AssistantMessage,
@@ -292,6 +294,11 @@ class ClaudeHookState(ClaudeHookAccessors):
 
     async def execute_managed_tool(self, name: str, input_data: object) -> str:
         return await self._controls.execute_managed_tool(name, input_data)
+
+    async def execute_managed_tool_content(
+        self, name: str, input_data: object
+    ) -> tuple[Mapping[str, object], ...]:
+        return await self._controls.execute_managed_tool_content(name, input_data)
 
 
 def token_usage(value: object) -> TokenUsage:
