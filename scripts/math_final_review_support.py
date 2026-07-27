@@ -1,6 +1,44 @@
 from __future__ import annotations
 
+import ast
+import json
+import os
+from pathlib import Path
+
 from manim_quality.contracts._json_values import thaw_json_object
+
+
+def authoritative_problem(source: str) -> str:
+    tree = ast.parse(source)
+    for node in tree.body:
+        if not isinstance(node, (ast.Assign, ast.AnnAssign)):
+            continue
+        targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+        if any(
+            isinstance(target, ast.Name)
+            and target.id == "AUTHORITATIVE_PROBLEM_TEXT"
+            for target in targets
+        ):
+            value = ast.literal_eval(node.value)
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+    raise ValueError("AUTHORITATIVE_PROBLEM_TEXT missing")
+
+
+def provider_env() -> dict[str, str]:
+    names = ("ANTHROPIC_BASE_URL", "ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN")
+    result = {name: os.environ[name] for name in names if os.environ.get(name)}
+    settings = Path("/home/ming/.claude/settings.json")
+    if settings.is_file():
+        configured = json.loads(settings.read_text(encoding="utf-8")).get("env", {})
+        for name in names:
+            if not result.get(name) and configured.get(name):
+                result[name] = configured[name]
+    if not result.get("ANTHROPIC_API_KEY") and not result.get(
+        "ANTHROPIC_AUTH_TOKEN"
+    ):
+        raise RuntimeError("missing provider credentials")
+    return result
 
 
 def record_payload(record) -> dict[str, object] | None:

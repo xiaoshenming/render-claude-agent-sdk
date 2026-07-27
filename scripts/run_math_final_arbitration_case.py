@@ -19,36 +19,30 @@ from run_math_final_review_case import (  # noqa: E402
 )
 
 
-def main() -> int:
+def arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--file", required=True, type=Path)
     parser.add_argument("--result", required=True, type=Path)
     parser.add_argument("--model", default="gpt-5.6-sol")
-    args = parser.parse_args()
+    return parser.parse_args()
+
+
+def main() -> int:
+    args = arguments()
     row = json.loads(args.result.read_text(encoding="utf-8"))
     decisions = {item["decision"] for item in row["reviews"]}
     if len(decisions) == 1 or row.get("arbitration"):
         print(f"SKIP {row['key']}", flush=True)
         return 0
 
+    _arbitrate(args, row)
+    print(f"ARBITRATED {row['key']} {row['verdict']}", flush=True)
+    return 0
+
+
+def _arbitrate(args, row):
     source = args.file.read_text(encoding="utf-8")
-    session = QualitySession(
-        problem_text=row["authoritative_problem"],
-        candidate_code=source,
-    )
-    tools = build_quality_tools(
-        session=session,
-        relation_checker=BasicRelationChecker(),
-        layout_inspector=UnverifiedLayoutInspector(),
-        revision_validator=CompileOnlyValidator(),
-    )
-    reviewer_tools = tuple(
-        replace(tool, max_calls=2)
-        if tool.name == "check_relation"
-        else replace(tool, max_calls=1)
-        for tool in tools
-        if tool.name in {"read_solution", "check_relation"}
-    )
+    reviewer_tools = _reviewer_tools(row, source)
     claims = json.dumps(
         [
             {
@@ -69,11 +63,8 @@ def main() -> int:
         f"\n待仲裁意见：{claims}\n"
     )
     review, record = run_reviewer(
-        name="arbiter",
-        extra_prompt=prompt,
-        model=args.model,
-        output_dir=args.result.parent,
-        tools=reviewer_tools,
+        name="arbiter", extra_prompt=prompt, model=args.model,
+        output_dir=args.result.parent, tools=reviewer_tools,
         problem=row["authoritative_problem"],
         source_sha256=hashlib.sha256(source.encode()).hexdigest(),
     )
@@ -88,8 +79,26 @@ def main() -> int:
         encoding="utf-8",
     )
     temporary.replace(args.result)
-    print(f"ARBITRATED {row['key']} {row['verdict']}", flush=True)
-    return 0
+
+
+def _reviewer_tools(row, source):
+    session = QualitySession(
+        problem_text=row["authoritative_problem"],
+        candidate_code=source,
+    )
+    tools = build_quality_tools(
+        session=session,
+        relation_checker=BasicRelationChecker(),
+        layout_inspector=UnverifiedLayoutInspector(),
+        revision_validator=CompileOnlyValidator(),
+    )
+    return tuple(
+        replace(tool, max_calls=2)
+        if tool.name == "check_relation"
+        else replace(tool, max_calls=1)
+        for tool in tools
+        if tool.name in {"read_solution", "check_relation"}
+    )
 
 
 if __name__ == "__main__":

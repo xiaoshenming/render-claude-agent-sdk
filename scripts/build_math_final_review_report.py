@@ -48,9 +48,17 @@ def markdown_issue(row: dict) -> str:
 
 
 def write_markdown(path: Path, rows: list[dict], counts: dict, verdicts: dict) -> None:
-    errors = [row for row in rows if row.get("verdict") == "math_error"]
     arbitrated = [row for row in rows if row.get("arbitration")]
-    lines = [
+    lines = _markdown_header(rows, counts, verdicts, arbitrated)
+    _append_error_rows(lines, rows)
+    _append_arbitration_rows(lines, arbitrated)
+    _append_all_rows(lines, rows, path)
+    lines.extend(_markdown_footer())
+    path.write_text("\n".join(lines), encoding="utf-8")
+
+
+def _markdown_header(rows, counts, verdicts, arbitrated):
+    return [
         "# 111题最终代码纯数学终审报告",
         "",
         "## 一、结论",
@@ -74,7 +82,10 @@ def write_markdown(path: Path, rows: list[dict], counts: dict, verdicts: dict) -
         "| 题号 | 确认方式 | 核心问题 |",
         "|---|---|---|",
     ]
-    for row in errors:
+
+
+def _append_error_rows(lines, rows):
+    for row in (item for item in rows if item.get("verdict") == "math_error"):
         mode = "第三方仲裁确认" if row.get("arbitration") else "双审一致"
         diagnosis = markdown_issue(row).replace("|", "｜")
         lines.append(f"| {row['key']} | {mode} | {diagnosis} |")
@@ -87,6 +98,9 @@ def write_markdown(path: Path, rows: list[dict], counts: dict, verdicts: dict) -
             "|---|---|---|",
         ]
     )
+
+
+def _append_arbitration_rows(lines, arbitrated):
     for row in arbitrated:
         review = row["arbitration"]["review"]
         verdict = "确认有误" if review["decision"] == "needs_repair" else "纠正为通过"
@@ -101,6 +115,9 @@ def write_markdown(path: Path, rows: list[dict], counts: dict, verdicts: dict) -
             "|---|---|---|---|---|",
         ]
     )
+
+
+def _append_all_rows(lines, rows, path):
     for row in sorted(rows, key=lambda item: item["key"]):
         decisions = " / ".join(
             "通过" if review["decision"] == "pass" else "需修复"
@@ -113,42 +130,36 @@ def write_markdown(path: Path, rows: list[dict], counts: dict, verdicts: dict) -
             f"{'是' if row.get('arbitration') else '否'} | "
             f"[result.json](<{evidence}>) |"
         )
-    lines.extend(
-        [
-            "",
-            "## 五、验收证据",
-            "",
-            "- 111/111 题均完成双 Reviewer 审查。",
-            "- 20/20 个双审分歧样本均完成第三方仲裁。",
-            "- 共完成 242 次 Agent 审查调用，242 次源码读取均成功。",
-            "- 111/111 个源码 SHA256 与最终 manifest 一致。",
-            "- 模型密钥未写入源码、报告或 Git。",
-            "",
-            "## 六、使用边界",
-            "",
-            "本报告是数学终审结果，不代表视频视觉、字幕、TTS、BBox、"
-            "渲染成功率或播放体验已经通过。报告中的“通过”仅表示本轮"
-            "未发现有充分源码证据支持的数学错误。",
-            "",
-            "## 七、建议动作",
-            "",
-            "1. 优先修复 27 个确认风险样本。",
-            "2. 修复后只对这 27 题重新执行数学双审与分歧仲裁。",
-            "3. 数学复审通过后，再进入独立的渲染、BBox、TTS 和实际画面验收。",
-            "",
-        ]
-    )
-    path.write_text("\n".join(lines), encoding="utf-8")
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--cases", required=True, type=Path)
-    parser.add_argument("--output", required=True, type=Path)
-    args = parser.parse_args()
-    rows = []
-    for path in sorted(args.cases.glob("*/result.json")):
-        rows.append(json.loads(path.read_text(encoding="utf-8")))
+def _markdown_footer():
+    return [
+        "", "## 五、验收证据", "",
+        "- 111/111 题均完成双 Reviewer 审查。",
+        "- 20/20 个双审分歧样本均完成第三方仲裁。",
+        "- 共完成 242 次 Agent 审查调用，242 次源码读取均成功。",
+        "- 111/111 个源码 SHA256 与最终 manifest 一致。",
+        "- 模型密钥未写入源码、报告或 Git。",
+        "", "## 六、使用边界", "",
+        "本报告是数学终审结果，不代表视频视觉、字幕、TTS、BBox、"
+        "渲染成功率或播放体验已经通过。报告中的“通过”仅表示本轮"
+        "未发现有充分源码证据支持的数学错误。",
+        "", "## 七、建议动作", "",
+        "1. 优先修复 27 个确认风险样本。",
+        "2. 修复后只对这 27 题重新执行数学双审与分歧仲裁。",
+        "3. 数学复审通过后，再进入独立的渲染、BBox、TTS 和实际画面验收。",
+        "",
+    ]
+
+
+def _load_rows(cases: Path) -> list[dict]:
+    return [
+        json.loads(path.read_text(encoding="utf-8"))
+        for path in sorted(cases.glob("*/result.json"))
+    ]
+
+
+def _summaries(rows: list[dict]) -> tuple[dict, dict]:
     counts = {
         name: sum(row.get("status") == name for row in rows)
         for name in ("completed", "failed")
@@ -160,6 +171,32 @@ def main() -> int:
         )
         for name in ("pass", "math_error")
     }
+    return counts, verdicts
+
+
+def _case_card(row: dict) -> str:
+    state = row.get("verdict") if row.get("status") == "completed" else "failed"
+    decisions = " / ".join(
+        f"{item.get('name')}:{item.get('decision')}"
+        for item in row.get("reviews", [])
+    )
+    body = (
+        issue_cards(row)
+        if row.get("status") == "completed"
+        else f"<div class='issue'>{esc(row.get('error'))}</div>"
+    )
+    return (
+        f"<details class='case {esc(state)}'>"
+        f"<summary><b>{esc(row.get('key'))}</b>"
+        f"<span class='pill'>{esc(state)}</span>"
+        f"<span class='muted'>{esc(decisions)}</span></summary>"
+        f"<p>{esc(row.get('authoritative_problem'))}</p>"
+        f"<p class='hash'>SHA256 {esc(row.get('source_sha256'))}</p>"
+        f"{body}</details>"
+    )
+
+
+def _build_cards(rows: list[dict]) -> str:
     cards = []
     order = {"math_error": 0, "failed": 1, "pass": 2}
     for row in sorted(
@@ -174,26 +211,12 @@ def main() -> int:
             item.get("key", ""),
         ),
     ):
-        state = row.get("verdict") if row.get("status") == "completed" else "failed"
-        decisions = " / ".join(
-            f"{item.get('name')}:{item.get('decision')}"
-            for item in row.get("reviews", [])
-        )
-        cards.append(
-            f"<details class='case {esc(state)}'>"
-            f"<summary><b>{esc(row.get('key'))}</b>"
-            f"<span class='pill'>{esc(state)}</span>"
-            f"<span class='muted'>{esc(decisions)}</span></summary>"
-            f"<p>{esc(row.get('authoritative_problem'))}</p>"
-            f"<p class='hash'>SHA256 {esc(row.get('source_sha256'))}</p>"
-            + (
-                issue_cards(row)
-                if row.get("status") == "completed"
-                else f"<div class='issue'>{esc(row.get('error'))}</div>"
-            )
-            + "</details>"
-        )
-    document = f"""<!doctype html>
+        cards.append(_case_card(row))
+    return "".join(cards)
+
+
+def _document(rows: list[dict], counts: dict, verdicts: dict, cards: str) -> str:
+    return f"""<!doctype html>
 <html lang="zh-CN"><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>111题最终代码 · 数学终审</title>
@@ -225,20 +248,36 @@ border-radius:8px;margin:10px 18px}}
 <div class="stat"><b>{verdicts['math_error']}</b>数学错误</div>
 <div class="stat"><b>{counts['failed']}</b>运行失败</div>
 </section>
-{''.join(cards)}
+{cards}
 </main></html>"""
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(document, encoding="utf-8")
-    summary = {
-        "results": len(rows),
-        **counts,
-        **verdicts,
-    }
-    args.output.with_suffix(".json").write_text(
+
+
+def _write_outputs(
+    output: Path,
+    rows: list[dict],
+    counts: dict,
+    verdicts: dict,
+) -> dict:
+    document = _document(rows, counts, verdicts, _build_cards(rows))
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(document, encoding="utf-8")
+    summary = {"results": len(rows), **counts, **verdicts}
+    output.with_suffix(".json").write_text(
         json.dumps(summary, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
-    write_markdown(args.output.with_suffix(".md"), rows, counts, verdicts)
+    write_markdown(output.with_suffix(".md"), rows, counts, verdicts)
+    return summary
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--cases", required=True, type=Path)
+    parser.add_argument("--output", required=True, type=Path)
+    args = parser.parse_args()
+    rows = _load_rows(args.cases)
+    counts, verdicts = _summaries(rows)
+    summary = _write_outputs(args.output, rows, counts, verdicts)
     print(json.dumps(summary, ensure_ascii=False))
     return 0
 
