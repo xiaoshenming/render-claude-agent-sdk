@@ -1192,6 +1192,7 @@ def test_sdk_runs_foreground_native_reviewer_and_archives_tool_result(
         "user",
         "assistant",
     ]
+    assert outcome.sdk_messages[0]["usage"]["input_tokens"] >= 0
 
 
 def test_deadline_is_suspended_during_tools_and_restored_with_window() -> None:

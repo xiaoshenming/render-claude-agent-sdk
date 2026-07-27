@@ -10,6 +10,7 @@ from manim_quality.contracts._json_values import thaw_json_object
 
 from .agent import QualityOperatorResult
 from .artifact_session import findings_payload, revisions_payload
+from .artifact_transcripts import reviewer_messages, tool_results
 from .artifact_usage import reviewer_tokens, usage_record
 from .gate import GateDecision, GateResult
 from .session import QualitySession
@@ -118,6 +119,17 @@ def _write_logs(
         target / "logs" / "parent-sdk-messages.jsonl",
         [thaw_json_object(item) for item in operator_result.sdk_messages],
     )
+    _write_jsonl(
+        target / "logs" / "reviewer-sdk-messages.jsonl",
+        [
+            thaw_json_object(item)
+            for item in reviewer_messages(operator_result.sdk_messages)
+        ],
+    )
+    _write_jsonl(
+        target / "logs" / "tool-results.jsonl",
+        tool_results(operator_result.sdk_messages),
+    )
     _write_json(
         target / "logs" / "subagent-results.json",
         {
@@ -206,6 +218,7 @@ def _decision(
         "elapsed_ms": record.elapsed_ms,
         "external_tool_ms": record.external_tool_ms,
         "tokens": usage_record(record.usage),
+        "usage_complete": record.usage_complete,
         "reviewer_tokens": reviewer_total,
         "total_tokens_with_reviewers": (
             record.usage.total_tokens + reviewer_total

@@ -74,6 +74,7 @@ def message_record(
             "model": message.model,
             "stop_reason": message.stop_reason,
             "error": _json_safe(message.error),
+            "usage": _json_safe(message.usage),
             "content": _json_safe(message.content),
         }
     return {

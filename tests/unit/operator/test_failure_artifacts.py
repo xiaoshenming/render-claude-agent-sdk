@@ -102,13 +102,31 @@ def test_failed_run_artifacts_classify_timeout_and_keep_best_candidate(
     failure_record = record(
         "TimeoutError: Claude Agent SDK session exceeded the reasoning budget"
     )
+    error = TimeoutError("session exceeded")
+    error.sdk_messages = ({
+        "kind": "assistant",
+        "parent_tool_use_id": "reviewer-call-1",
+        "usage": {"input_tokens": 10, "output_tokens": 2},
+        "content": [],
+    }, {
+        "kind": "user",
+        "parent_tool_use_id": None,
+        "content": [{
+            "tool_use_id": "read-1",
+            "is_error": False,
+            "content": "full tool result",
+        }],
+    })
+    error.subagent_results = ({
+        "sdk_metadata": {"subagent_tokens": 321},
+    },)
 
     write_failed_run_artifacts(
         root=tmp_path / "run",
         session=session,
         record=failure_record,
         baseline_layout_report={"blocking_count": 3},
-        error=TimeoutError("session exceeded"),
+        error=error,
     )
 
     failure = json.loads((tmp_path / "run" / "logs" / "failure.json").read_text())
@@ -119,7 +137,17 @@ def test_failed_run_artifacts_classify_timeout_and_keep_best_candidate(
         "layout_inspected": True,
     }
     assert failure["usage_complete"] is False
+    assert failure["reviewer_tokens"] == 321
+    assert failure["total_tokens_with_reviewers"] == 321
     assert failure["external_tool_ms"] == 250
+    reviewer_messages = (
+        tmp_path / "run" / "logs" / "reviewer-sdk-messages.jsonl"
+    ).read_text(encoding="utf-8")
+    tool_results = (
+        tmp_path / "run" / "logs" / "tool-results.jsonl"
+    ).read_text(encoding="utf-8")
+    assert "reviewer-call-1" in reviewer_messages
+    assert "full tool result" in tool_results
     assert (tmp_path / "run" / "output" / "last_candidate.R1.py").is_file()
     assert (tmp_path / "run" / "output" / "best_render_passed.R1.py").is_file()
     findings = json.loads(

@@ -59,6 +59,20 @@ def accepted_fixture():
         revision=revision,
         summary="clean",
         call_record=agent_record(),
+        sdk_messages=({
+            "kind": "assistant",
+            "parent_tool_use_id": "reviewer-call-1",
+            "usage": {"input_tokens": 10, "output_tokens": 2},
+            "content": [],
+        }, {
+            "kind": "user",
+            "parent_tool_use_id": None,
+            "content": [{
+                "tool_use_id": "submit-1",
+                "is_error": False,
+                "content": "accepted",
+            }],
+        }),
     )
     gate = GateResult(
         decision=GateDecision.PROPOSED,
@@ -104,6 +118,12 @@ def test_artifact_writer_persists_replayable_run_pack(tmp_path: Path) -> None:
     assert (tmp_path / "revisions" / "R0.baseline.py").is_file()
     assert (tmp_path / "logs" / "agent_call.json").is_file()
     assert (tmp_path / "logs" / "tool_calls.jsonl").is_file()
+    assert "reviewer-call-1" in (
+        tmp_path / "logs" / "reviewer-sdk-messages.jsonl"
+    ).read_text(encoding="utf-8")
+    assert "accepted" in (
+        tmp_path / "logs" / "tool-results.jsonl"
+    ).read_text(encoding="utf-8")
     assert (tmp_path / "evidence" / "revisions.json").is_file()
     assert (tmp_path / "evidence" / "validation.R0.json").is_file()
     assert (tmp_path / "evidence" / "layout.R0.json").is_file()

@@ -139,6 +139,8 @@ def _recover_submitted_output(
             f"（提交后错误：{reason}）；候选仍需通过外层独立渲染与布局复检。"
         ),
         call_record=error.record,
+        sdk_messages=tuple(error.sdk_messages),
+        subagent_results=tuple(error.subagent_results),
     )
 
 

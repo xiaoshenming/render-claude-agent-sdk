@@ -8,7 +8,8 @@ from pathlib import Path
 from manim_quality.contracts._json_values import thaw_json_object
 
 from .artifact_session import findings_payload, revisions_payload
-from .artifact_usage import usage_record
+from .artifact_transcripts import reviewer_messages, tool_results
+from .artifact_usage import reviewer_tokens, usage_record
 from .artifacts import (
     _agent_call,
     _validate_existing_root,
@@ -47,10 +48,7 @@ def write_failed_run_artifacts(
         target / "logs" / "tool_calls.jsonl",
         [_tool_call(item) for item in record.tool_calls],
     )
-    _write_jsonl(
-        target / "logs" / "parent-sdk-messages.jsonl",
-        [thaw_json_object(item) for item in getattr(error, "sdk_messages", ())],
-    )
+    _write_transcript_logs(target, error)
     _write_json(
         target / "logs" / "subagent-results.json",
         {
@@ -77,6 +75,19 @@ def write_failed_run_artifacts(
         )
 
 
+def _write_transcript_logs(target: Path, error: Exception) -> None:
+    sdk_messages = [
+        thaw_json_object(item) for item in getattr(error, "sdk_messages", ())
+    ]
+    logs = target / "logs"
+    _write_jsonl(logs / "parent-sdk-messages.jsonl", sdk_messages)
+    _write_jsonl(
+        logs / "reviewer-sdk-messages.jsonl",
+        reviewer_messages(sdk_messages),
+    )
+    _write_jsonl(logs / "tool-results.jsonl", tool_results(sdk_messages))
+
+
 def _tool_call(item) -> dict[str, object]:
     return {
         "name": item.name,
@@ -92,6 +103,7 @@ def _tool_call(item) -> dict[str, object]:
 
 
 def _failure(record, session: QualitySession, error: Exception) -> dict[str, object]:
+    reviewers = reviewer_tokens(getattr(error, "subagent_results", ()))
     return {
         "status": _failure_status(record.error or str(error), session),
         "error_type": type(error).__name__,
@@ -100,6 +112,8 @@ def _failure(record, session: QualitySession, error: Exception) -> dict[str, obj
         "last_revision_code_hash": session.current_revision.code_hash,
         "best_render_passed": session.best_validated_evidence(),
         "tokens": usage_record(record.usage),
+        "reviewer_tokens": reviewers,
+        "total_tokens_with_reviewers": record.usage.total_tokens + reviewers,
         "usage_complete": record.usage_complete,
         "external_tool_ms": record.external_tool_ms,
         "turns": record.turns,

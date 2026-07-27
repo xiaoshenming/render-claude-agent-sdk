@@ -28,8 +28,8 @@ def test_cli_arguments_require_candidate_output_and_model(tmp_path: Path) -> Non
 
     assert args.candidate == candidate
     assert args.model == "model-a"
-    assert args.max_turns == 24
-    assert args.max_tool_calls == 40
+    assert args.max_turns == 5
+    assert args.max_tool_calls == 16
 
 
 def test_provider_environment_requires_authentication() -> None:

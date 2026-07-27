@@ -258,8 +258,8 @@ def _arguments() -> argparse.Namespace:
     parser.add_argument("--case-grace", type=int, default=120)
     parser.add_argument("--allow-ambient-login", action="store_true")
     parser.add_argument("--render-cache", action="store_true")
-    parser.add_argument("--max-turns", type=int, default=24)
-    parser.add_argument("--max-tool-calls", type=int, default=40)
+    parser.add_argument("--max-turns", type=int, default=5)
+    parser.add_argument("--max-tool-calls", type=int, default=16)
     args = parser.parse_args()
     for name in (
         "agent_concurrency",

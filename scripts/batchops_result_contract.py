@@ -49,6 +49,7 @@ def token_usage(decision: dict[str, object]) -> dict[str, object]:
         entries.append({"operation": "parent", **parent})
     if reviewer_total:
         entries.append({"operation": "reviewers", "total_tokens": reviewer_total})
+    complete = bool(decision.get("usage_complete", True))
     return {
         "schema_version": "batchops.token-usage.v2",
         "total_tokens": int(
@@ -56,6 +57,8 @@ def token_usage(decision: dict[str, object]) -> dict[str, object]:
             or parent_total + reviewer_total
         ),
         "entries": entries,
+        "complete": complete,
+        "missing_operations": [] if complete else ["parent"],
     }
 
 

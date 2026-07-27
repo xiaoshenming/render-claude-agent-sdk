@@ -55,6 +55,7 @@ def test_proposed_translates_to_deliver_contract(tmp_path: Path) -> None:
             "tokens": {"total_tokens": 69101},
             "reviewer_tokens": 900,
             "total_tokens_with_reviewers": 70001,
+            "usage_complete": False,
         },
     )
     (harness / "output" / "proposed_candidate.py").write_text(
@@ -76,6 +77,8 @@ def test_proposed_translates_to_deliver_contract(tmp_path: Path) -> None:
         {"operation": "parent", "total_tokens": 69101},
         {"operation": "reviewers", "total_tokens": 900},
     ]
+    assert result["token_usage"]["complete"] is False
+    assert result["token_usage"]["missing_operations"] == ["parent"]
     assert (output / "candidate_final.py").read_text() == "class Solution: fixed\n"
     assert (output / "video_final.mp4").read_bytes() == b"after-video"
 
