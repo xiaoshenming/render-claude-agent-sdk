@@ -8,6 +8,7 @@ from collections.abc import Mapping, Sequence
 from manim_quality.layout.policy import layout_invariant_fingerprint
 from manim_quality.revisions.fingerprint import sha256_text
 
+from .finding_dependencies import shared_symbol_closure
 from .models import CandidateAttempt, Finding, FindingCategory, PatchScope
 from .problem_source import extract_problem_text
 from .session_errors import (
@@ -40,8 +41,13 @@ def validate_finding_scope(
                 "patch finding_ids must include dependency closure: "
                 + ", ".join(sorted(missing))
             )
-
-
+    related = shared_symbol_closure(findings, selected, repaired, expected)
+    missing_related = related - selected - repaired
+    if missing_related:
+        raise ValueError(
+            "patch finding_ids must include affected-symbol closure: "
+            + ", ".join(sorted(missing_related))
+        )
 def validate_patch_budget_raise(current: int, requested: int) -> None:
     if type(requested) is not int:
         raise TypeError("max_patch_attempts must be an integer")

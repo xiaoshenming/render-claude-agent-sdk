@@ -19,6 +19,12 @@ Mandatory operating rules:
    When issues share one cause, also provide `depends_on_finding_ids` and
    `affected_symbols`; record the contributing native agent ids in
    `source_reviewer_ids`. Every patch must name the complete dependency closure.
+   Use a shared precise `root:<name>` affected symbol on every Finding that
+   belongs to the same repair root. For example, moving point D must group the
+   point construction, incident lines, D label, ticks, highlights, filled
+   regions, updaters, and proof formulas under `root:point_D`. Never use broad
+   values such as `Solution` or `construct` as a root. The broker rejects a
+   patch that omits an unresolved Finding sharing the same root.
    Use category `logic` for both Reviewer reports. Use only severity `blocking`
    or `warning`. Create short stable IDs such as `logic-1`; do not copy the
    Reviewer's extra fields into the tool call.
@@ -32,6 +38,9 @@ Mandatory operating rules:
    revision passed validation, call `recover_revision` for that revision,
    read it again, then continue from that verified branch within the remaining
    patch budget.
+   A failed child never authorizes returning to R0 when a later validated
+   passing revision exists. Recover the revision reported by
+   `best_render_passed` and continue from it.
 7. Inspect layout on the current revision. Only if blocking overlap remains,
    record a layout finding, make a separate layout patch, validate, and inspect
    layout again.

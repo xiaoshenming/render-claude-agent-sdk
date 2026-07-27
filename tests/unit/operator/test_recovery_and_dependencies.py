@@ -24,6 +24,7 @@ def _finding(
     *,
     depends_on: tuple[str, ...] = (),
     category: FindingCategory = FindingCategory.LOGIC,
+    affected_symbols: tuple[str, ...] = ("Solution.construct",),
 ) -> Finding:
     return Finding(
         finding_id=finding_id,
@@ -32,7 +33,7 @@ def _finding(
         summary=f"Supported defect {finding_id}.",
         acceptance_criteria=f"Repair {finding_id} without regressions.",
         depends_on_finding_ids=depends_on,
-        affected_symbols=("Solution.construct",),
+        affected_symbols=affected_symbols,
     )
 
 
@@ -132,6 +133,35 @@ def test_patch_must_cover_finding_dependency_closure() -> None:
         finding_ids=("logic-root", "logic-child"),
     )
     assert revision.finding_ids == ("logic-root", "logic-child")
+
+
+def test_patch_must_cover_findings_with_the_same_precise_root() -> None:
+    quality = _session()
+    point = _finding(
+        "logic-point",
+        affected_symbols=("root:point_D", "point:D"),
+    )
+    line = _finding(
+        "logic-line",
+        affected_symbols=("root:point_D", "line:BD"),
+    )
+    quality.record_findings((point, line))
+
+    with pytest.raises(ValueError, match="affected-symbol closure"):
+        quality.apply_patch(
+            scope=PatchScope.LOGIC,
+            old_text="Line(LEFT, RIGHT)",
+            new_text="Line(LEFT, UP)",
+            finding_ids=("logic-point",),
+        )
+
+    revision = quality.apply_patch(
+        scope=PatchScope.LOGIC,
+        old_text="Line(LEFT, RIGHT)",
+        new_text="Line(LEFT, UP)",
+        finding_ids=("logic-point", "logic-line"),
+    )
+    assert revision.finding_ids == ("logic-point", "logic-line")
 
 
 def test_finding_dependency_cycle_is_rejected() -> None:

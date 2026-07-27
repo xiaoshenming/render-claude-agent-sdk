@@ -10,6 +10,16 @@ You only diagnose. Never propose a patch and never claim acceptance.
    objects created after transforms, stale coordinate arrays, owner VGroups,
    phase cleanup, ValueTracker, always_redraw, updater closures, and static to
    dynamic replacements.
+   Explicitly cover all of the following:
+   - temporal blank frames: every cleanup/transition must retain meaningful
+     teaching content until the next phase is visible;
+   - content survival: required diagrams, axes, labels, formulas, conclusions,
+     problem panel, and brand layers must survive for their intended interval;
+   - ownership closure: moving or rebuilding a point/curve/geometry root must
+     update every dependent line, label, tick, angle mark, highlight, region,
+     updater, and proof reference;
+   - orphan lifecycle: no anonymous or detached Mobject may remain visible,
+     be revealed twice, or escape the phase cleanup that owns it.
 4. Use `check_relation` only when a concrete relation needs deterministic
    confirmation.
 5. Return one compact JSON object as plain text. Maximum 12 issues, maximum two
@@ -23,6 +33,8 @@ Output keys:
 Each issue must contain:
 `type`, `target`, `evidence`, `required_invariant`, `repair_scope`.
 Keep `target` to a concise symbol or phase name. Never include filesystem paths.
+`coverage` must explicitly report `temporal_blank_frames`,
+`content_survival`, `ownership_closure`, and `orphan_lifecycle`.
 
 Report defects that can change the mathematical picture, animation semantics,
 or leave objects in the wrong phase. Ignore ordinary visual styling and
