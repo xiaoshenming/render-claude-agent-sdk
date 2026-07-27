@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from manim_quality.agents.budget import BudgetLimits
@@ -16,6 +17,7 @@ from manim_quality.assurance.dataset import (
     load_curated_cases,
     load_successful_cases,
 )
+from manim_quality.assurance.metrics import summarize
 from manim_quality.assurance.risk_frames import inspect_risk_frames
 from manim_quality.assurance.tools import (
     inspect_artifact,
@@ -23,8 +25,8 @@ from manim_quality.assurance.tools import (
     inspect_consistency,
     inspect_execution,
     inspect_layout,
-    inspect_tts,
 )
+from manim_quality.assurance.tts import inspect_tts
 from manim_quality.assurance.verification import VerificationConfig
 
 
@@ -38,6 +40,8 @@ class Sink(UsageSink):
 
 def main() -> int:
     args = arguments()
+    if args.with_agent and not args.full_verification:
+        raise SystemExit("--with-agent requires --full-verification")
     if args.case_manifest:
         cases = load_curated_cases(args.case_manifest, args.logs)
     elif args.all_successful:
@@ -49,40 +53,72 @@ def main() -> int:
         cases = tuple(case for case in cases if case.key in wanted)
     cases = cases[: args.limit or None]
     args.output.mkdir(parents=True, exist_ok=True)
-    agent = build_agent(args) if args.with_agent else None
+    shared_agent = build_agent(args) if args.with_agent and args.workers == 1 else None
     rows = []
-    for index, case in enumerate(cases, 1):
-        print(f"[{index}/{len(cases)}] {case.key}", flush=True)
-        reports = deterministic_reports(case, args.output / "frames")
-        row = {
-            "key": case.key,
-            "human_tags": list(case.human_tags),
-            "expected_verdict": case.expected_verdict,
-            "deterministic": {report.tool: report.as_dict() for report in reports},
-            "detected_by_tools": any(report.detected for report in reports),
-        }
-        if agent is not None:
-            case_output = args.output / "agent" / case.key
-            case_output.mkdir(parents=True, exist_ok=True)
-            try:
-                result = agent.run(case, case_output)
-                row["agent"] = result.output
-                row["agent_reports"] = result.reports
-                row["reviewers"] = list(result.reviewers)
-                row["agent_usage"] = {
-                    "tokens": result.call_record.usage.total_tokens,
-                    "turns": result.call_record.turns,
-                    "tool_calls": len(result.call_record.tool_calls),
-                }
-            except Exception as error:
-                row["agent_error"] = f"{type(error).__name__}: {error}"
-        rows.append(row)
-        write_json(args.output / "partial-results.json", rows)
+    indexed = tuple(enumerate(cases, 1))
+    if args.workers == 1:
+        generated = (
+            process_case(case, args, index, len(cases), shared_agent)
+            for index, case in indexed
+        )
+    else:
+        executor = ThreadPoolExecutor(max_workers=args.workers)
+        generated = executor.map(
+            lambda item: process_case(item[1], args, item[0], len(cases)),
+            indexed,
+        )
+    try:
+        for row in generated:
+            rows.append(row)
+            write_json(args.output / "partial-results.json", rows)
+    finally:
+        if args.workers != 1:
+            executor.shutdown(wait=True)
     summary = summarize(rows)
     write_json(args.output / "results.json", {"summary": summary, "cases": rows})
     write_markdown(args.output / "report.md", summary, rows)
     print(json.dumps(summary, ensure_ascii=False))
     return 0
+
+
+def process_case(case, args, index: int, total: int, agent=None) -> dict:
+    print(f"[{index}/{total}] {case.key}", flush=True)
+    row = {
+        "key": case.key,
+        "human_tags": list(case.human_tags),
+        "expected_verdict": case.expected_verdict,
+    }
+    if not args.with_agent:
+        reports = deterministic_reports(case, args.output / "frames")
+        row["deterministic"] = {
+            report.tool: report.as_dict() for report in reports
+        }
+        row["detected_by_tools"] = any(report.detected for report in reports)
+        return row
+    return run_agent_case(case, args, row, agent or build_agent(args))
+
+
+def run_agent_case(case, args, row: dict, agent) -> dict:
+    case_output = args.output / "agent" / case.key
+    case_output.mkdir(parents=True, exist_ok=True)
+    try:
+        result = agent.run(case, case_output)
+        row["agent"] = result.output
+        row["deterministic"] = result.reports
+        row["detected_by_tools"] = any(
+            report["status"] == "risk" for report in result.reports.values()
+        )
+        row["reviewers"] = list(result.reviewers)
+        row["agent_usage"] = {
+            "tokens": result.call_record.usage.total_tokens,
+            "turns": result.call_record.turns,
+            "tool_calls": len(result.call_record.tool_calls),
+        }
+    except Exception as error:
+        row["agent_error"] = f"{type(error).__name__}: {error}"
+        row["deterministic"] = {}
+        row["detected_by_tools"] = False
+    return row
 
 
 def deterministic_reports(case, frame_root: Path):
@@ -95,39 +131,6 @@ def deterministic_reports(case, frame_root: Path):
         inspect_tts(case),
         inspect_consistency(case),
     )
-
-
-def summarize(rows: list[dict]) -> dict[str, object]:
-    total = len(rows)
-    detected = sum(bool(row["detected_by_tools"]) for row in rows)
-    labeled_bad = sum(
-        bool(row.get("human_tags") or row.get("expected_verdict")) for row in rows
-    )
-    agent_completed = [row for row in rows if isinstance(row.get("agent"), dict)]
-    agent_reviewed = sum(
-        row["agent"].get("status") in {"review", "incomplete"}
-        for row in agent_completed
-    )
-    by_tool: dict[str, int] = {}
-    for row in rows:
-        for name, report in row["deterministic"].items():
-            by_tool[name] = by_tool.get(name, 0) + (report["status"] == "risk")
-    return {
-        "total": total,
-        "deterministic_detected": detected,
-        "deterministic_flag_rate": detected / total if total else 0,
-        "labeled_bad": labeled_bad,
-        "deterministic_recall": (
-            detected / labeled_bad if labeled_bad == total and total else None
-        ),
-        "agent_completed": len(agent_completed),
-        "agent_reviewed": agent_reviewed,
-        "agent_recall": (
-            agent_reviewed / len(agent_completed) if agent_completed else None
-        ),
-        "risk_count_by_tool": by_tool,
-        "agent_errors": sum("agent_error" in row for row in rows),
-    }
 
 
 def build_agent(args) -> FinalAssuranceAgent:
@@ -194,6 +197,7 @@ def arguments() -> argparse.Namespace:
     parser.add_argument("--model", default="gpt-5.6-sol")
     parser.add_argument("--limit", type=int, default=0)
     parser.add_argument("--keys", default="")
+    parser.add_argument("--workers", type=int, choices=range(1, 17), default=1)
     return parser.parse_args()
 
 

@@ -3,6 +3,7 @@ from pathlib import Path
 
 from manim_quality.assurance.dataset import (
     load_annotated_cases,
+    load_curated_cases,
     load_successful_cases,
 )
 
@@ -74,3 +75,27 @@ def _gallery_item(key: str, status: str, path: str | None) -> dict:
         "question": "question",
         "stages": stages,
     }
+
+
+def test_curated_case_binds_optional_comparison_media(tmp_path: Path) -> None:
+    manifest = tmp_path / "manifest.json"
+    manifest.write_text(
+        json.dumps(
+            [
+                {
+                    "key": "CASE-1",
+                    "video": {"sha256": "abc"},
+                    "original_image_path": "original.png",
+                    "preview_video_path": "preview.mp4",
+                    "subtitle_path": "final.srt",
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    case = load_curated_cases(manifest, tmp_path / "logs")[0]
+
+    assert case.original_image_path == tmp_path / "original.png"
+    assert case.preview_video_path == tmp_path / "preview.mp4"
+    assert case.subtitle_path == tmp_path / "final.srt"

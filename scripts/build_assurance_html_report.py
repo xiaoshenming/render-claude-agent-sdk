@@ -81,12 +81,7 @@ def card(row: dict, human_tags: tuple[str, ...], video: str) -> str:
 def page(cards: list[str], rows: list[dict], tags: dict[str, tuple[str, ...]]) -> str:
     total = len(rows)
     marked = len(set(tags) & {row["key"] for row in rows})
-    blocking = sum(
-        row.get("agent_reports", {}).get("inspect_layout", {}).get(
-            "evidence", [{}]
-        )[0].get("blocking_count", 0) > 0
-        for row in rows
-    )
+    blocking = sum(layout_blocking_count(row) > 0 for row in rows)
     receipts = sum(
         len(row.get("agent", {}).get("tool_receipts", ())) == 7
         and len(row.get("reviewers", ())) == 2
@@ -120,6 +115,14 @@ def page(cards: list[str], rows: list[dict], tags: dict[str, tuple[str, ...]]) -
 <main id="grid">{''.join(cards)}</main>
 <div id="empty">没有符合条件的视频</div>
 <script>{JS}</script></body></html>"""
+
+
+def layout_blocking_count(row: dict) -> int:
+    report = row.get("deterministic", {}).get("inspect_layout", {})
+    evidence = report.get("evidence", ())
+    if not evidence or not isinstance(evidence[0], dict):
+        return 0
+    return int(evidence[0].get("blocking_count") or 0)
 
 
 def selected_video(row: dict) -> str:

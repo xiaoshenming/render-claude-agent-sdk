@@ -7,8 +7,10 @@
 2. 对同一个 case_key 调用全部七个 assurance 工具，每个恰好一次。
 3. 先看产物身份和全新冷渲染终态，再看最终源码审查、全新BBox布局、
    风险帧、TTS和一致性。
-4. `inspect_risk_frames` 返回的联系图是多模态视觉证据；检查题干异常、重叠、
-   越界、空白、错误标注、公式异常、对象清空和明显数学画面不一致。
+4. `inspect_risk_frames` 优先抽取黑屏/冻结窗口，再补全首尾和全程覆盖；
+   返回的实际视频联系图、可选预览联系图以及原始题图是多模态视觉证据。
+   检查题干异常、重叠、越界、空白、错误标注、公式异常、对象清空、
+   预览到交付的退化和明显数学画面不一致。
 5. 工具返回 incomplete 时不得推断通过。
 6. 任何高危、blocking、缺最终 revision、缺视频或交付警告都输出 review 或
    incomplete。
@@ -17,6 +19,10 @@
    数学Reviewer证据 id 使用 `reviewer:math_geometry_reviewer`，动画Reviewer
    证据 id 使用 `reviewer:animation_lifecycle_reviewer`。
 9. 最后通过 StructuredOutput 提交 pass / review / incomplete。
+
+顶层 status 由工具事实确定：任一工具 incomplete 就是 incomplete；否则任一工具
+risk 或存在 issue 就是 review；仅当七个工具全部 complete 且 issues 为空时才是
+pass。不得改写工具 status、虚构 evidence_id 或省略工具实际返回的 evidence_id。
 
 即使已有 Reviewer 声称通过，也必须以最终实际产物和七个工具结果为准。
 全新验证会把已交付最终源码作为只读基线，局部别名固定为 R0；

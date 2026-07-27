@@ -2,10 +2,13 @@ import json
 
 from manim_quality.assurance.models import AssuranceCase
 from manim_quality.assurance.tools import (
-    _effectively_silent,
     inspect_code_review,
     inspect_execution,
     inspect_layout,
+)
+from manim_quality.assurance.tts import (
+    _effectively_silent,
+    _narration_comparison,
 )
 
 
@@ -67,3 +70,21 @@ def test_review_and_layout_preserve_structured_findings(tmp_path) -> None:
 
     assert inspect_code_review(sample).risk_codes == ("blocking_logic_finding",)
     assert inspect_layout(sample).risk_codes == ("blocking_layout_finding",)
+
+
+def test_narration_comparison_matches_source_and_subtitle(tmp_path) -> None:
+    source = tmp_path / "main.py"
+    subtitle = tmp_path / "final.srt"
+    source.write_text(
+        "scene.voiceover(text='三角形ABC是等边三角形')\n",
+        encoding="utf-8",
+    )
+    subtitle.write_text(
+        "1\n00:00:00,000 --> 00:00:03,000\n三角形ABC是等边三角形\n",
+        encoding="utf-8",
+    )
+
+    result = _narration_comparison(source, subtitle)
+
+    assert result["verified"] is True
+    assert result["similarity"] == 1.0

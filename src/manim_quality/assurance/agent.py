@@ -34,9 +34,9 @@ class FinalAssuranceAgent:
         self.runtime = runtime
         self.profile = assurance_profile(
             model=model,
-            prompt_version="final-assurance-demo-v1",
-            schema_version="final-assurance-output-v1",
-            tool_version="final-assurance-tools-v1",
+            prompt_version="final-assurance-v2",
+            schema_version="final-assurance-output-v2",
+            tool_version="final-assurance-tools-v2",
         )
         self.verification_config = verification_config
 
@@ -77,11 +77,26 @@ class FinalAssuranceAgent:
             effort="low",
         )
         result = self.runtime.run(request)
+        reviewers = tuple(
+            thaw_json_object(item) for item in result.subagent_results
+        )
+        _validate_reviewers(reviewers)
         return FinalAssuranceResult(
             output=thaw_json_object(result.structured_output),
             reports={name: report.as_dict() for name, report in tools.reports.items()},
-            reviewers=tuple(
-                thaw_json_object(item) for item in result.subagent_results
-            ),
+            reviewers=reviewers,
             call_record=result.record,
+        )
+
+
+def _validate_reviewers(reviewers: tuple[dict[str, object], ...]) -> None:
+    expected = {"math_geometry_reviewer", "animation_lifecycle_reviewer"}
+    observed = {
+        str(item.get("agent_type"))
+        for item in reviewers
+        if item.get("is_error") is False and isinstance(item.get("payload"), dict)
+    }
+    if observed != expected or len(reviewers) != len(expected):
+        raise RuntimeError(
+            "final assurance requires exactly two completed specialist reviewers"
         )

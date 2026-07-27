@@ -20,8 +20,8 @@ from .tools import (
     inspect_consistency,
     inspect_execution,
     inspect_layout,
-    inspect_tts,
 )
+from .tts import inspect_tts
 from .verification import AssuranceVerification
 
 _SCHEMA = {
@@ -84,10 +84,15 @@ class AssuranceToolset:
     def validate_output(self, value) -> None:
         self._record_output_attempt(value)
         try:
-            validate_assurance_output(value)
             missing = REQUIRED_TOOLS - self.reports.keys()
             if missing:
                 raise ValueError(f"Agent skipped required tools: {sorted(missing)}")
+            validate_assurance_output(
+                value,
+                expected_reports={
+                    name: report.as_dict() for name, report in self.reports.items()
+                },
+            )
         except ValueError as error:
             raise CorrectableOutputError(str(error)) from error
 

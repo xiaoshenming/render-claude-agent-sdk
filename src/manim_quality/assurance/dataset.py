@@ -95,6 +95,11 @@ def load_curated_cases(
             expected_verdict="",
             video_path=root / "videos" / f"{row['key']}.mp4",
             source_path=root / "sources" / str(row["key"]) / "main.py",
+            subtitle_path=_optional_path(root, row.get("subtitle_path")),
+            original_image_path=_optional_path(
+                root, row.get("original_image_path")
+            ),
+            preview_video_path=_optional_path(root, row.get("preview_video_path")),
             log_dir=logs_dir / str(row["key"]),
             delivery_revision_id=(
                 str(row["final_revision_id"]) if row.get("final_revision_id") else None
@@ -118,3 +123,10 @@ def _selected_stage(value: object) -> dict[str, object]:
 def _object(path: Path) -> dict:
     value = json.loads(path.read_text(encoding="utf-8"))
     return value if isinstance(value, dict) else {}
+
+
+def _optional_path(root: Path, value: object) -> Path | None:
+    if not isinstance(value, str) or not value:
+        return None
+    path = Path(value)
+    return path if path.is_absolute() else root / path
