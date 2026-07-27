@@ -38,7 +38,7 @@ class AgentProfile:
             AgentRole.CODER: frozenset({"Read", "Edit"}),
             AgentRole.VERIFIER: frozenset({"Read"}),
             AgentRole.OPERATOR: frozenset({"Agent"}),
-            AgentRole.ASSURANCE: frozenset(),
+            AgentRole.ASSURANCE: frozenset({"Agent"}),
         }[self.role]
         if self.allowed_tools != expected:
             raise ValueError(f"allowed_tools do not match {self.role} profile")
@@ -125,7 +125,7 @@ def assurance_profile(
         prompt_version=prompt_version,
         schema_version=schema_version,
         tool_version=tool_version,
-        allowed_tools=frozenset(),
+        allowed_tools=frozenset({"Agent"}),
     )
 
 

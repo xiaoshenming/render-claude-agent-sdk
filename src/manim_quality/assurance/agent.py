@@ -11,6 +11,7 @@ from manim_quality.contracts._json_values import thaw_json_object
 from .contracts import ASSURANCE_OUTPUT_SCHEMA
 from .models import AssuranceCase
 from .toolset import AssuranceToolset
+from .verification import AssuranceVerification, VerificationConfig
 
 PROMPT = Path(__file__).with_name("prompt.md")
 
@@ -19,11 +20,17 @@ PROMPT = Path(__file__).with_name("prompt.md")
 class FinalAssuranceResult:
     output: dict[str, object]
     reports: dict[str, object]
+    reviewers: tuple[dict[str, object], ...]
     call_record: object
 
 
 class FinalAssuranceAgent:
-    def __init__(self, runtime: AgentRuntime, model: str) -> None:
+    def __init__(
+        self,
+        runtime: AgentRuntime,
+        model: str,
+        verification_config: VerificationConfig | None = None,
+    ) -> None:
         self.runtime = runtime
         self.profile = assurance_profile(
             model=model,
@@ -31,6 +38,7 @@ class FinalAssuranceAgent:
             schema_version="final-assurance-output-v1",
             tool_version="final-assurance-tools-v1",
         )
+        self.verification_config = verification_config
 
     def run(
         self,
@@ -40,7 +48,12 @@ class FinalAssuranceAgent:
         estimated_input_tokens: int = 18_000,
         reserved_output_tokens: int = 4_000,
     ) -> FinalAssuranceResult:
-        tools = AssuranceToolset(case, output_dir)
+        verification = (
+            AssuranceVerification(case, output_dir, self.verification_config)
+            if self.verification_config is not None
+            else None
+        )
+        tools = AssuranceToolset(case, output_dir, verification)
         prompt = PROMPT.read_text(encoding="utf-8") + (
             f"\n\ncase_key: {case.key}\n题目：{case.question}\n"
         )
@@ -60,11 +73,15 @@ class FinalAssuranceAgent:
             reserved_cache_write_tokens=0,
             output_validator=tools.validate_output,
             managed_tools=tools.grants(),
+            subagents=verification.reviewers if verification is not None else (),
             effort="low",
         )
         result = self.runtime.run(request)
         return FinalAssuranceResult(
             output=thaw_json_object(result.structured_output),
             reports={name: report.as_dict() for name, report in tools.reports.items()},
+            reviewers=tuple(
+                thaw_json_object(item) for item in result.subagent_results
+            ),
             call_record=result.record,
         )

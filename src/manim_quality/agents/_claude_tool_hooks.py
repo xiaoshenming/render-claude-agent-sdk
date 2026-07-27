@@ -45,6 +45,11 @@ def _authorize_tool(state, data, tool_use_id):
             raise ClaudeSdkProtocolError(
                 "multiple terminal structured outputs are not allowed"
             )
+        if state._subagents.completed_names != state.required_subagent_names:
+            missing = state.required_subagent_names - state._subagents.completed_names
+            raise OutputRejected(
+                f"required reviewers have not completed: {sorted(missing)}"
+            )
         normalized = state._controls.authorize_output_submission(tool_input)
         state._terminal_tools.add(tool_use_id)
         return normalized

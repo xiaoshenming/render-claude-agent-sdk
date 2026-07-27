@@ -25,6 +25,12 @@ def inspect_artifact(case: AssuranceCase) -> ToolReport:
         "sha256": _sha256(case.video_path),
         **probe,
     }
+    risks = list(risks)
+    if (
+        case.expected_video_sha256
+        and evidence["sha256"] != case.expected_video_sha256
+    ):
+        risks.append("final_video_sha_mismatch")
     return _report(
         "inspect_artifact",
         "risk" if risks else "complete",
@@ -52,7 +58,11 @@ def inspect_execution(case: AssuranceCase) -> ToolReport:
 
 def inspect_code_review(case: AssuranceCase) -> ToolReport:
     source_evidence, source_risks = _inspect_source(case)
-    findings = _findings(case, {"logic", "lifecycle", "code"})
+    findings = (
+        ()
+        if source_evidence
+        else _findings(case, {"logic", "lifecycle", "code"})
+    )
     risks = list(source_risks)
     if _blocking(findings):
         risks.append("blocking_logic_finding")
@@ -116,6 +126,11 @@ def inspect_consistency(case: AssuranceCase) -> ToolReport:
         risks.append("revision_identity_mismatch")
     if result.get("status") == "deliver_with_warning":
         risks.append("delivered_with_warning")
+    source_sha = (
+        _sha256(case.source_path)
+        if case.source_path is not None and case.source_path.is_file()
+        else None
+    )
     return _report(
         "inspect_consistency",
         "risk" if risks else "complete",
@@ -124,6 +139,10 @@ def inspect_consistency(case: AssuranceCase) -> ToolReport:
             "id": f"{case.key}:consistency",
             "run_final_revision": final,
             "result_final_revision": reported,
+            "delivery_revision_id": case.delivery_revision_id,
+            "local_verification_revision": "R0",
+            "local_revision_is_delivery_alias": case.source_path is not None,
+            "delivery_source_sha256": source_sha,
         },
     )
 

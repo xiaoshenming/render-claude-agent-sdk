@@ -84,8 +84,11 @@ class AgentRunRequest:
         names = [item.name for item in self.subagents]
         if len(names) != len(set(names)):
             raise ValueError("subagent names must be unique")
-        if self.subagents and self.profile.role is not AgentRole.OPERATOR:
-            raise ValueError("only the operator profile may define subagents")
+        if self.subagents and self.profile.role not in {
+            AgentRole.OPERATOR,
+            AgentRole.ASSURANCE,
+        }:
+            raise ValueError("only operator or assurance profiles may define subagents")
         if self.effort not in {"low", "medium", "high", "xhigh", "max"}:
             raise ValueError("unsupported Agent effort")
 

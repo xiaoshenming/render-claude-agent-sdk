@@ -25,6 +25,7 @@ from manim_quality.assurance.tools import (
     inspect_layout,
     inspect_tts,
 )
+from manim_quality.assurance.verification import VerificationConfig
 
 
 class Sink(UsageSink):
@@ -66,6 +67,8 @@ def main() -> int:
             try:
                 result = agent.run(case, case_output)
                 row["agent"] = result.output
+                row["agent_reports"] = result.reports
+                row["reviewers"] = list(result.reviewers)
                 row["agent_usage"] = {
                     "tokens": result.call_record.usage.total_tokens,
                     "turns": result.call_record.turns,
@@ -141,7 +144,7 @@ def build_agent(args) -> FinalAssuranceAgent:
     limits = BudgetLimits(
         max_context_bytes=2_000_000,
         max_turns=12,
-        max_tool_calls=12,
+        max_tool_calls=30,
         max_elapsed_ms=900_000,
         max_input_tokens=160_000,
         max_output_tokens=16_000,
@@ -150,7 +153,13 @@ def build_agent(args) -> FinalAssuranceAgent:
         max_total_tokens=300_000,
     )
     runtime = AgentRuntime(ClaudeSdkBackend(provider_env=provider), sink, limits)
-    return FinalAssuranceAgent(runtime, args.model)
+    verification = None
+    if args.full_verification:
+        verification = VerificationConfig(
+            manim_python=args.manim_python,
+            runtime_python_paths=tuple(args.runtime_python_path),
+        )
+    return FinalAssuranceAgent(runtime, args.model, verification)
 
 
 def arguments() -> argparse.Namespace:
@@ -168,6 +177,18 @@ def arguments() -> argparse.Namespace:
     parser.add_argument("--logs", type=Path, default=default / "all-agent-logs")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--with-agent", action="store_true")
+    parser.add_argument("--full-verification", action="store_true")
+    parser.add_argument(
+        "--manim-python",
+        type=Path,
+        default=Path(__file__).with_name("docker_manim_python"),
+    )
+    parser.add_argument(
+        "--runtime-python-path",
+        action="append",
+        type=Path,
+        default=[],
+    )
     parser.add_argument("--all-successful", action="store_true")
     parser.add_argument("--case-manifest", type=Path)
     parser.add_argument("--model", default="gpt-5.6-sol")

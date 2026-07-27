@@ -79,37 +79,40 @@ def card(row: dict, human_tags: tuple[str, ...], video: str) -> str:
 
 
 def page(cards: list[str], rows: list[dict], tags: dict[str, tuple[str, ...]]) -> str:
-    visual = sum(
-        any(":risk-frames" in evidence for issue in row["agent"]["issues"]
-            for evidence in issue.get("evidence_ids", []))
-        for row in rows
-    )
+    total = len(rows)
     marked = len(set(tags) & {row["key"] for row in rows})
     blocking = sum(
-        any(issue.get("severity") == "blocking" for issue in row["agent"]["issues"])
+        row.get("agent_reports", {}).get("inspect_layout", {}).get(
+            "evidence", [{}]
+        )[0].get("blocking_count", 0) > 0
+        for row in rows
+    )
+    receipts = sum(
+        len(row.get("agent", {}).get("tool_receipts", ())) == 7
+        and len(row.get("reviewers", ())) == 2
         for row in rows
     )
     return f"""<!doctype html>
 <html lang="zh-CN"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>154 个最终视频质量审查</title><style>{CSS}</style></head>
+<title>{total} 个最终视频全链路审查</title><style>{CSS}</style></head>
 <body><header>
   <p class="eyebrow">FINAL ASSURANCE · 2026-07-27</p>
-  <h1>154 个最终视频质量审查</h1>
-  <p class="lead">所有成功视频均已完成确定性检查和多模态复核。当前不能判定任何视频
-  “完全通过”，主要原因是缺少字幕/TTS时间轴；这不等于154个视频都有画面错误。</p>
+  <h1>{total} 个最终视频全链路审查</h1>
+  <p class="lead">每个样本均重新执行最终源码冷渲染、逐帧 BBox、代码双 reviewer、
+  多模态风险帧、音轨与最终产物一致性检查。工具风险是分维度证据，不等于视频整体必错。</p>
   <div class="metrics">
-    <div><strong>154</strong><span>视频检查完成</span></div>
-    <div><strong>{visual}</strong><span>多模态提出视觉问题</span></div>
-    <div><strong>{blocking}</strong><span>含 blocking 问题</span></div>
+    <div><strong>{total}</strong><span>完整 Agent 已完成</span></div>
+    <div><strong>{receipts}</strong><span>7 工具 + 2 reviewer 齐全</span></div>
+    <div><strong>{blocking}</strong><span>BBox 有 blocking</span></div>
     <div><strong>{marked}</strong><span>人工标注问题视频</span></div>
   </div>
 </header>
 <section class="notice"><b>怎么看：</b>优先选择“人工标注”和“Blocking”。
-每张卡片可直接播放最终视频。工具显示 incomplete 代表缺证据，不代表视频本身一定错误。</section>
+每张卡片播放的是最终交付 MP4。静音、布局、数学逻辑、版本证据分别展示，不能混成一个总分。</section>
 <nav>
   <input id="search" placeholder="搜索编号、问题或人工标签">
-  <button class="active" data-filter="all">全部 154</button>
+  <button class="active" data-filter="all">全部 {total}</button>
   <button data-filter="marked">只看人工标注</button>
   <button data-filter="blocking">Blocking</button>
   <button data-filter="high">High</button>

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from inspect import isawaitable
 from pathlib import Path
 
 from manim_quality.agents._runtime_models import CorrectableOutputError
@@ -21,6 +22,7 @@ from .tools import (
     inspect_layout,
     inspect_tts,
 )
+from .verification import AssuranceVerification
 
 _SCHEMA = {
     "type": "object",
@@ -31,17 +33,31 @@ _SCHEMA = {
 
 
 class AssuranceToolset:
-    def __init__(self, case: AssuranceCase, output_dir: Path) -> None:
+    def __init__(
+        self,
+        case: AssuranceCase,
+        output_dir: Path,
+        verification: AssuranceVerification | None = None,
+    ) -> None:
         self.case = case
         self.output_dir = output_dir
         self.reports: dict[str, ToolReport] = {}
+        self.verification = verification
 
     def grants(self) -> tuple[ManagedToolGrant, ...]:
         handlers = {
             "inspect_artifact": inspect_artifact,
-            "inspect_execution": inspect_execution,
+            "inspect_execution": (
+                inspect_execution
+                if self.verification is None
+                else lambda _case: self.verification.inspect_render()
+            ),
             "inspect_code_review": inspect_code_review,
-            "inspect_layout": inspect_layout,
+            "inspect_layout": (
+                inspect_layout
+                if self.verification is None
+                else lambda _case: self.verification.inspect_layout()
+            ),
             "inspect_tts": inspect_tts,
             "inspect_consistency": inspect_consistency,
         }
@@ -49,13 +65,21 @@ class AssuranceToolset:
             self._grant(
                 name,
                 lambda _args, fn=fn, tool_name=name: self._run(tool_name, fn),
+                timeout_ms=(
+                    2_700_000
+                    if name in {"inspect_execution", "inspect_layout"}
+                    else 180_000
+                ),
             )
             for name, fn in handlers.items()
         ]
         grants.append(
             self._grant("inspect_risk_frames", self._run_risk_frames, chars=80_000)
         )
-        return tuple(grants)
+        reviewer_tools = (
+            self.verification.reviewer_tools if self.verification is not None else ()
+        )
+        return (*grants, *reviewer_tools)
 
     def validate_output(self, value) -> None:
         self._record_output_attempt(value)
@@ -82,8 +106,10 @@ class AssuranceToolset:
                 + "\n"
             )
 
-    def _run(self, name: str, fn):
+    async def _run(self, name: str, fn):
         report = fn(self.case)
+        if hasattr(report, "__await__"):
+            report = await report
         self.reports[name] = report
         return json.dumps(report.as_dict(), ensure_ascii=False, sort_keys=True)
 
@@ -92,11 +118,18 @@ class AssuranceToolset:
         self.reports[report.tool] = report
         return multimodal_content(report)
 
-    def _grant(self, name: str, handler, chars: int = 30_000) -> ManagedToolGrant:
-        def checked(arguments):
+    def _grant(
+        self,
+        name: str,
+        handler,
+        chars: int = 30_000,
+        timeout_ms: int = 180_000,
+    ) -> ManagedToolGrant:
+        async def checked(arguments):
             if arguments["case_key"] != self.case.key:
                 raise ValueError("case_key does not match bound assurance case")
-            return handler(arguments)
+            result = handler(arguments)
+            return await result if isawaitable(result) else result
 
         return ManagedToolGrant(
             server_name="assurance",
@@ -109,6 +142,6 @@ class AssuranceToolset:
             handler=checked,
             effect=ToolEffect.READ_ONLY,
             max_calls=1,
-            timeout_ms=180_000,
+            timeout_ms=timeout_ms,
             max_result_chars=chars,
         )

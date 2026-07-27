@@ -15,6 +15,8 @@ class AssuranceCase:
     source_path: Path | None = None
     subtitle_path: Path | None = None
     original_image_path: Path | None = None
+    delivery_revision_id: str | None = None
+    expected_video_sha256: str | None = None
 
 
 @dataclass(frozen=True, slots=True)

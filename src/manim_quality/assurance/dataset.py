@@ -96,6 +96,10 @@ def load_curated_cases(
             video_path=root / "videos" / f"{row['key']}.mp4",
             source_path=root / "sources" / str(row["key"]) / "main.py",
             log_dir=logs_dir / str(row["key"]),
+            delivery_revision_id=(
+                str(row["final_revision_id"]) if row.get("final_revision_id") else None
+            ),
+            expected_video_sha256=str(row["video"]["sha256"]),
         )
         for row in rows
     )
