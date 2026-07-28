@@ -109,7 +109,7 @@ def test_recovery_rejects_unvalidated_or_failed_revision() -> None:
         quality.recover_revision("R1")
 
 
-def test_patch_must_cover_finding_dependency_closure() -> None:
+def test_patch_can_fix_one_finding_without_dependency_bookkeeping() -> None:
     quality = _session()
     quality.record_findings(
         (
@@ -118,24 +118,16 @@ def test_patch_must_cover_finding_dependency_closure() -> None:
         )
     )
 
-    with pytest.raises(ValueError, match="dependency closure"):
-        quality.apply_patch(
-            scope=PatchScope.LOGIC,
-            old_text="Line(LEFT, RIGHT)",
-            new_text="Line(LEFT, UP)",
-            finding_ids=("logic-child",),
-        )
-
     revision = quality.apply_patch(
         scope=PatchScope.LOGIC,
         old_text="Line(LEFT, RIGHT)",
         new_text="Line(LEFT, UP)",
-        finding_ids=("logic-root", "logic-child"),
+        finding_ids=("logic-child",),
     )
-    assert revision.finding_ids == ("logic-root", "logic-child")
+    assert revision.finding_ids == ("logic-child",)
 
 
-def test_patch_must_cover_findings_with_the_same_precise_root() -> None:
+def test_patch_can_fix_one_finding_without_shared_root_bookkeeping() -> None:
     quality = _session()
     point = _finding(
         "logic-point",
@@ -147,21 +139,13 @@ def test_patch_must_cover_findings_with_the_same_precise_root() -> None:
     )
     quality.record_findings((point, line))
 
-    with pytest.raises(ValueError, match="affected-symbol closure"):
-        quality.apply_patch(
-            scope=PatchScope.LOGIC,
-            old_text="Line(LEFT, RIGHT)",
-            new_text="Line(LEFT, UP)",
-            finding_ids=("logic-point",),
-        )
-
     revision = quality.apply_patch(
         scope=PatchScope.LOGIC,
         old_text="Line(LEFT, RIGHT)",
         new_text="Line(LEFT, UP)",
-        finding_ids=("logic-point", "logic-line"),
+        finding_ids=("logic-point",),
     )
-    assert revision.finding_ids == ("logic-point", "logic-line")
+    assert revision.finding_ids == ("logic-point",)
 
 
 def test_finding_dependency_cycle_is_rejected() -> None:

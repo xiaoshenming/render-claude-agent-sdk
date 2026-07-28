@@ -2,7 +2,7 @@
 
 from collections.abc import Mapping
 
-from .models import Finding, FindingCategory
+from .models import Finding
 
 
 def validate_finding_dependencies(
@@ -20,39 +20,6 @@ def validate_finding_dependencies(
             )
     for finding_id in additions:
         _visit(finding_id, combined, set(), set())
-
-
-def shared_symbol_closure(
-    findings: Mapping[str, Finding],
-    selected: set[str],
-    repaired: set[str],
-    category: FindingCategory,
-) -> set[str]:
-    """Expand precise `root:*` symbols into a machine-checked repair group."""
-    closure = set(selected)
-    roots = {
-        symbol
-        for finding_id in selected
-        for symbol in findings[finding_id].affected_symbols
-        if symbol.startswith("root:")
-    }
-    changed = True
-    while roots and changed:
-        changed = False
-        for finding_id, item in findings.items():
-            if finding_id in closure or finding_id in repaired:
-                continue
-            if item.category is not category:
-                continue
-            item_roots = {
-                value for value in item.affected_symbols
-                if value.startswith("root:")
-            }
-            if roots.intersection(item_roots):
-                closure.add(finding_id)
-                roots.update(item_roots)
-                changed = True
-    return closure
 
 
 def _visit(

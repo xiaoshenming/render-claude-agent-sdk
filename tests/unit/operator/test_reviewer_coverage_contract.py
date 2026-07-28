@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from manim_quality.operator.tool_schemas import FINDING_SCHEMA
 
 PROMPTS = (
     Path(__file__).parents[3]
@@ -31,9 +32,18 @@ def test_lifecycle_reviewer_requires_temporal_and_survival_coverage():
         assert key in value
 
 
-def test_parent_requires_best_revision_recovery_and_precise_roots():
+def test_parent_keeps_recovery_without_dependency_bookkeeping():
     value = (PROMPTS / "quality_operator_v3.md").read_text()
 
     assert "best_render_passed" in value
-    assert "root:<name>" in value
-    assert "returning to R0" in value
+    assert "depends_on_finding_ids" not in value
+    assert "affected_symbols" not in value
+    assert "root:<name>" not in value
+
+
+def test_coder_finding_schema_hides_audit_bookkeeping():
+    properties = FINDING_SCHEMA["properties"]
+
+    assert "depends_on_finding_ids" not in properties
+    assert "affected_symbols" not in properties
+    assert "source_reviewer_ids" not in properties

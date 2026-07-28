@@ -14,24 +14,6 @@ FINDING_SCHEMA = schema(
             "minLength": 1,
             "maxLength": 2_000,
         },
-        "depends_on_finding_ids": {
-            "type": "array",
-            "items": {"type": "string", "minLength": 1, "maxLength": 200},
-            "maxItems": 12,
-            "uniqueItems": True,
-        },
-        "affected_symbols": {
-            "type": "array",
-            "items": {"type": "string", "minLength": 1, "maxLength": 200},
-            "maxItems": 24,
-            "uniqueItems": True,
-        },
-        "source_reviewer_ids": {
-            "type": "array",
-            "items": {"type": "string", "minLength": 1, "maxLength": 200},
-            "maxItems": 2,
-            "uniqueItems": True,
-        },
     },
     (
         "finding_id",

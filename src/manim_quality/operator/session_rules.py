@@ -8,7 +8,6 @@ from collections.abc import Mapping, Sequence
 from manim_quality.layout.policy import layout_invariant_fingerprint
 from manim_quality.revisions.fingerprint import sha256_text
 
-from .finding_dependencies import shared_symbol_closure
 from .models import CandidateAttempt, Finding, FindingCategory, PatchScope
 from .problem_source import extract_problem_text
 from .session_errors import (
@@ -22,32 +21,18 @@ def validate_finding_scope(
     findings: Mapping[str, Finding],
     scope: PatchScope,
     finding_ids: tuple[str, ...],
-    repaired_finding_ids: set[str] | None = None,
 ) -> None:
     if not finding_ids:
         raise ValueError("patch requires at least one finding_id")
     expected = FindingCategory(scope.value)
-    selected = set(finding_ids)
-    repaired = repaired_finding_ids or set()
     for finding_id in finding_ids:
         item = findings.get(finding_id)
         if item is None:
             raise ValueError(f"unknown finding_id: {finding_id}")
         if item.category is not expected:
             raise ValueError(f"finding category does not match {scope} patch")
-        missing = set(item.depends_on_finding_ids) - selected - repaired
-        if missing:
-            raise ValueError(
-                "patch finding_ids must include dependency closure: "
-                + ", ".join(sorted(missing))
-            )
-    related = shared_symbol_closure(findings, selected, repaired, expected)
-    missing_related = related - selected - repaired
-    if missing_related:
-        raise ValueError(
-            "patch finding_ids must include affected-symbol closure: "
-            + ", ".join(sorted(missing_related))
-        )
+
+
 def validate_patch_budget_raise(current: int, requested: int) -> None:
     if type(requested) is not int:
         raise TypeError("max_patch_attempts must be an integer")
@@ -82,10 +67,7 @@ def validate_patch_transition(
             raise InvalidSessionTransition("current revision must be validated")
         if not getattr(current_validation, "improved", False):
             raise InvalidSessionTransition("previous revision did not improve")
-    repaired = validated_repaired_finding_ids(
-        attempts, validations, current.revision_id
-    )
-    validate_finding_scope(findings, scope, finding_ids, repaired)
+    validate_finding_scope(findings, scope, finding_ids)
 
 
 def validate_session_patch(
