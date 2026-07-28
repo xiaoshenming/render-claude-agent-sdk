@@ -7,7 +7,7 @@ import json
 from collections.abc import Mapping
 from pathlib import Path
 
-from claude_agent_sdk import AssistantMessage, UserMessage
+from claude_agent_sdk import AssistantMessage, ResultMessage, UserMessage
 
 from .usage import TokenUsage
 
@@ -64,7 +64,7 @@ def normalize_sdk_input(value: object, workspace: str) -> object:
 
 
 def message_record(
-    message: AssistantMessage | UserMessage,
+    message: AssistantMessage | UserMessage | ResultMessage,
 ) -> dict[str, object]:
     if isinstance(message, AssistantMessage):
         return {
@@ -77,12 +77,27 @@ def message_record(
             "usage": _json_safe(message.usage),
             "content": _json_safe(message.content),
         }
+    if isinstance(message, UserMessage):
+        return {
+            "kind": "user",
+            "uuid": message.uuid,
+            "parent_tool_use_id": message.parent_tool_use_id,
+            "tool_use_result": _json_safe(message.tool_use_result),
+            "content": _json_safe(message.content),
+        }
     return {
-        "kind": "user",
-        "uuid": message.uuid,
-        "parent_tool_use_id": message.parent_tool_use_id,
-        "tool_use_result": _json_safe(message.tool_use_result),
-        "content": _json_safe(message.content),
+        "kind": "result",
+        "subtype": message.subtype,
+        "is_error": message.is_error,
+        "num_turns": message.num_turns,
+        "session_id": message.session_id,
+        "stop_reason": message.stop_reason,
+        "duration_ms": message.duration_ms,
+        "duration_api_ms": message.duration_api_ms,
+        "usage": _json_safe(message.usage),
+        "model_usage": _json_safe(message.model_usage),
+        "structured_output": _json_safe(message.structured_output),
+        "errors": _json_safe(message.errors),
     }
 
 

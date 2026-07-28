@@ -13,6 +13,11 @@ from pathlib import Path
 
 from batch_runtime import preflight, write_manifest
 
+from manim_quality.operator.defaults import (
+    PARENT_MAX_TOOL_CALLS,
+    PARENT_MAX_TURNS,
+)
+
 
 def main() -> int:
     args = _arguments()
@@ -258,8 +263,12 @@ def _arguments() -> argparse.Namespace:
     parser.add_argument("--case-grace", type=int, default=120)
     parser.add_argument("--allow-ambient-login", action="store_true")
     parser.add_argument("--render-cache", action="store_true")
-    parser.add_argument("--max-turns", type=int, default=5)
-    parser.add_argument("--max-tool-calls", type=int, default=16)
+    parser.add_argument("--max-turns", type=int, default=PARENT_MAX_TURNS)
+    parser.add_argument(
+        "--max-tool-calls",
+        type=int,
+        default=PARENT_MAX_TOOL_CALLS,
+    )
     args = parser.parse_args()
     for name in (
         "agent_concurrency",

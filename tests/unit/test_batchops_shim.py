@@ -7,6 +7,7 @@ if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
 import run_existing_code_e2e as shim  # noqa: E402
+from batchops_result_contract import token_usage  # noqa: E402
 
 
 def _decision(harness: Path, payload: dict) -> None:
@@ -81,6 +82,26 @@ def test_proposed_translates_to_deliver_contract(tmp_path: Path) -> None:
     assert result["token_usage"]["missing_operations"] == ["parent"]
     assert (output / "candidate_final.py").read_text() == "class Solution: fixed\n"
     assert (output / "video_final.mp4").read_bytes() == b"after-video"
+
+
+def test_agent_tree_usage_does_not_double_count_reviewers(tmp_path: Path) -> None:
+    decision = {
+        "tokens": {"total_tokens": 55_842},
+        "tokens_scope": "agent_tree",
+        "reviewer_tokens": 4_659,
+        "reviewer_tokens_included": True,
+        "total_tokens_with_reviewers": 55_842,
+        "usage_complete": True,
+    }
+
+    usage = token_usage(decision)
+
+    assert usage["total_tokens"] == 55_842
+    assert usage["entries"] == [
+        {"operation": "quality_agent", "total_tokens": 55_842}
+    ]
+    assert usage["reviewer_attribution_tokens"] == 4_659
+    assert usage["missing_operations"] == []
 
 
 def test_hold_delivers_untouched_before_with_warning(tmp_path: Path) -> None:

@@ -20,11 +20,12 @@ from claude_agent_sdk import (
 
 from manim_quality.contracts._json_values import thaw_json_object
 
-from ._claude_hooks import ClaudeHookState, ClaudeSdkProtocolError, token_usage
+from ._claude_hooks import ClaudeHookState, ClaudeSdkProtocolError
+from ._claude_result import ClaudeSdkRunError as ClaudeSdkRunError
+from ._claude_result import result_tree_usage, validate_terminal_result
 from ._deadline import _DeadlineExtender
 from ._runtime_models import BackendRequest, BackendResult
 from .runtime import AgentBackend, RuntimeControls
-from .usage import TokenUsage
 
 _DENIED_TOOLS = (
     "Agent",
@@ -43,12 +44,6 @@ _DENIED_TOOLS = (
 )
 
 QueryFunction = Callable[..., AsyncIterator[object]]
-
-
-class ClaudeSdkRunError(RuntimeError):
-    pass
-
-
 
 
 class ClaudeSdkBackend(AgentBackend):
@@ -104,6 +99,7 @@ class ClaudeSdkBackend(AgentBackend):
                         await state.record_user(message)
                     elif isinstance(message, ResultMessage):
                         result = message
+                        await state.record_result(message)
                     state.raise_failure()
             if scope.cancelled_caught:
                 raise TimeoutError(
@@ -115,8 +111,13 @@ class ClaudeSdkBackend(AgentBackend):
         if result is None:
             raise ClaudeSdkProtocolError("Claude Agent SDK returned no ResultMessage")
         controls.record_reported_turns(result.num_turns)
-        aggregate_usage = _validate_result(result, state)
+        aggregate_usage = result_tree_usage(result, state.usage)
         controls.reconcile_usage(aggregate_usage)
+        validate_terminal_result(
+            result,
+            minimum_turns=state.sdk_turn_floor,
+            validate_subagents=state.validate_subagent_protocol,
+        )
         if not isinstance(result.structured_output, Mapping):
             raise ClaudeSdkProtocolError("SDK result has no structured output object")
         completed = controls.complete(result.structured_output)
@@ -257,31 +258,3 @@ def _sdk_tool(
         return {"content": list(content)}
 
     return invoke
-
-
-def _validate_result(result: ResultMessage, state: ClaudeHookState) -> TokenUsage:
-    if result.is_error:
-        details = "; ".join(result.errors or []) or result.subtype
-        raise ClaudeSdkRunError(f"Claude Agent SDK failed: {details}")
-    minimum = state.sdk_turn_floor
-    if result.num_turns < minimum:
-        counts = (
-            f"result={result.num_turns}, model_rounds={state.turns}, "
-            f"minimum_sdk_turns={minimum}"
-        )
-        raise ClaudeSdkProtocolError(f"SDK turn count mismatch: {counts}")
-    result_usage = token_usage(result.usage)
-    if not _usage_dominates(result_usage, state.usage):
-        raise ClaudeSdkProtocolError(
-            "SDK aggregate usage does not match turn usage: "
-            f"result={result_usage}, observed={state.usage}"
-        )
-    state.validate_subagent_protocol()
-    return result_usage
-
-
-def _usage_dominates(aggregate: TokenUsage, observed: TokenUsage) -> bool:
-    return (
-        aggregate.input_accounted_tokens >= observed.input_accounted_tokens
-        and aggregate.output_tokens >= observed.output_tokens
-    )

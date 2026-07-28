@@ -5,6 +5,7 @@ from __future__ import annotations
 import anyio
 from claude_agent_sdk import (
     AssistantMessage,
+    ResultMessage,
     ToolResultBlock,
     ToolUseBlock,
     UserMessage,
@@ -213,6 +214,10 @@ class ClaudeHookState(ClaudeHookAccessors):
                     )
                 except Exception as error:
                     self._failure = error
+
+    async def record_result(self, message: ResultMessage) -> None:
+        async with self._lock:
+            self._sdk_messages.append(message_record(message))
 
     async def subagent_start(self, data, tool_use_id, context) -> dict[str, object]:
         del tool_use_id, context

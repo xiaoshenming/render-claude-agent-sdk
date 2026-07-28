@@ -647,7 +647,7 @@ def test_sdk_backend_requires_per_turn_usage(tmp_path: Path) -> None:
         runtime.run(request(tmp_path, candidate))
 
 
-def test_sdk_backend_reports_safe_usage_mismatch_counts(tmp_path: Path) -> None:
+def test_sdk_backend_uses_observed_usage_when_result_is_lower(tmp_path: Path) -> None:
     candidate = tmp_path / "candidate.py"
     candidate.write_text("pass\n", encoding="utf-8")
 
@@ -667,11 +667,9 @@ def test_sdk_backend_reports_safe_usage_mismatch_counts(tmp_path: Path) -> None:
         ClaudeSdkBackend(query_func=fake_query), MemorySink(), limits()
     )
 
-    with pytest.raises(
-        AgentRunFailed,
-        match=r"result=TokenUsage\(input_tokens=39.*observed=TokenUsage\(input_tokens=40",
-    ):
-        runtime.run(request(tmp_path, candidate))
+    outcome = runtime.run(request(tmp_path, candidate))
+
+    assert outcome.record.usage == TokenUsage(input_tokens=40, output_tokens=10)
 
 
 def test_sdk_backend_reconciles_hidden_output_usage(tmp_path: Path) -> None:
@@ -1191,6 +1189,7 @@ def test_sdk_runs_foreground_native_reviewer_and_archives_tool_result(
         "assistant",
         "user",
         "assistant",
+        "result",
     ]
     assert outcome.sdk_messages[0]["usage"]["input_tokens"] >= 0
 

@@ -17,20 +17,22 @@ from manim_quality.agents.runtime import AgentRuntime
 from manim_quality.agents.usage import AgentCallRecord, UsageSink
 
 from .agent import QualityOperatorAgent
+from .defaults import PARENT_MAX_TOOL_CALLS, PARENT_MAX_TURNS
 from .harness import QualityHarness
 from .problem_source import extract_problem_text
 from .runtime_tools import (
     RealLayoutInspector,
     RealRevisionValidator,
     RuntimeToolchain,
+    geometry_sidecar_runner,
 )
-from .runtime_tools import geometry_sidecar_runner
 from .services import (
     BasicRelationChecker,
     CompileOnlyValidator,
     UnverifiedLayoutInspector,
 )
 from .source_view import extract_solution
+
 
 class MemoryUsageSink(UsageSink):
     def __init__(self) -> None:
@@ -141,8 +143,12 @@ def _arguments(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--compile-only", action="store_true")
     parser.add_argument("--allow-ambient-login", action="store_true")
     parser.add_argument("--render-cache", action="store_true")
-    parser.add_argument("--max-turns", type=int, default=5)
-    parser.add_argument("--max-tool-calls", type=int, default=16)
+    parser.add_argument("--max-turns", type=int, default=PARENT_MAX_TURNS)
+    parser.add_argument(
+        "--max-tool-calls",
+        type=int,
+        default=PARENT_MAX_TOOL_CALLS,
+    )
     parser.add_argument("--estimated-input-tokens", type=int, default=4_000)
     parser.add_argument("--reserved-output-tokens", type=int, default=2_000)
     args = parser.parse_args(argv)

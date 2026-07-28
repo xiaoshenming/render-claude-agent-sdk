@@ -9,7 +9,7 @@ from manim_quality.contracts._json_values import thaw_json_object
 
 from .artifact_session import findings_payload, revisions_payload
 from .artifact_transcripts import reviewer_messages, tool_results
-from .artifact_usage import reviewer_tokens, usage_record
+from .artifact_usage import reviewer_tokens, token_ledger, usage_record
 from .artifacts import (
     _agent_call,
     _validate_existing_root,
@@ -58,6 +58,14 @@ def write_failed_run_artifacts(
             ]
         },
     )
+    _write_json(
+        target / "logs" / "token-ledger.json",
+        token_ledger(
+            record,
+            getattr(error, "sdk_messages", ()),
+            getattr(error, "subagent_results", ()),
+        ),
+    )
     failure = _failure(record, session, error)
     _write_json(target / "logs" / "failure.json", failure)
     _write_json(target / "output" / "decision.json", {"decision": "FAILED", **failure})
@@ -104,6 +112,11 @@ def _tool_call(item) -> dict[str, object]:
 
 def _failure(record, session: QualitySession, error: Exception) -> dict[str, object]:
     reviewers = reviewer_tokens(getattr(error, "subagent_results", ()))
+    known_total = (
+        record.usage.total_tokens
+        if record.usage_complete
+        else max(record.usage.total_tokens, reviewers)
+    )
     return {
         "status": _failure_status(record.error or str(error), session),
         "error_type": type(error).__name__,
@@ -112,8 +125,10 @@ def _failure(record, session: QualitySession, error: Exception) -> dict[str, obj
         "last_revision_code_hash": session.current_revision.code_hash,
         "best_render_passed": session.best_validated_evidence(),
         "tokens": usage_record(record.usage),
+        "tokens_scope": "agent_tree",
         "reviewer_tokens": reviewers,
-        "total_tokens_with_reviewers": record.usage.total_tokens + reviewers,
+        "reviewer_tokens_included": record.usage_complete,
+        "total_tokens_with_reviewers": known_total,
         "usage_complete": record.usage_complete,
         "external_tool_ms": record.external_tool_ms,
         "turns": record.turns,

@@ -40,25 +40,38 @@ def write_result(
 
 
 def token_usage(decision: dict[str, object]) -> dict[str, object]:
-    parent = decision.get("tokens")
-    parent = parent if isinstance(parent, dict) else {}
-    parent_total = int(parent.get("total_tokens") or 0)
+    aggregate = decision.get("tokens")
+    aggregate = aggregate if isinstance(aggregate, dict) else {}
+    aggregate_total = int(aggregate.get("total_tokens") or 0)
     reviewer_total = int(decision.get("reviewer_tokens") or 0)
     entries = []
-    if parent_total:
-        entries.append({"operation": "parent", **parent})
-    if reviewer_total:
+    scope = str(decision.get("tokens_scope") or "legacy_parent")
+    if aggregate_total:
+        operation = "quality_agent" if scope == "agent_tree" else "parent"
+        entries.append({"operation": operation, **aggregate})
+    reviewers_included = bool(decision.get("reviewer_tokens_included"))
+    if reviewer_total and not reviewers_included:
         entries.append({"operation": "reviewers", "total_tokens": reviewer_total})
     complete = bool(decision.get("usage_complete", True))
+    known_total = int(
+        decision.get("total_tokens_with_reviewers")
+        or (
+            aggregate_total
+            if reviewers_included
+            else aggregate_total + reviewer_total
+        )
+    )
     return {
         "schema_version": "batchops.token-usage.v2",
-        "total_tokens": int(
-            decision.get("total_tokens_with_reviewers")
-            or parent_total + reviewer_total
-        ),
+        "total_tokens": known_total,
         "entries": entries,
         "complete": complete,
-        "missing_operations": [] if complete else ["parent"],
+        "missing_operations": (
+            []
+            if complete
+            else ["agent_tree_total" if scope == "agent_tree" else "parent"]
+        ),
+        "reviewer_attribution_tokens": reviewer_total,
     }
 
 

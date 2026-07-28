@@ -11,7 +11,7 @@ from manim_quality.contracts._json_values import thaw_json_object
 from .agent import QualityOperatorResult
 from .artifact_session import findings_payload, revisions_payload
 from .artifact_transcripts import reviewer_messages, tool_results
-from .artifact_usage import reviewer_tokens, usage_record
+from .artifact_usage import reviewer_tokens, token_ledger, usage_record
 from .gate import GateDecision, GateResult
 from .session import QualitySession
 
@@ -138,6 +138,14 @@ def _write_logs(
             ]
         },
     )
+    _write_json(
+        target / "logs" / "token-ledger.json",
+        token_ledger(
+            record,
+            operator_result.sdk_messages,
+            operator_result.subagent_results,
+        ),
+    )
     decision = _decision(session, operator_result, gate_result)
     _write_json(target / "logs" / "run_summary.json", decision)
     _write_json(target / "output" / "decision.json", decision)
@@ -200,6 +208,7 @@ def _decision(
     final, rollback = gate_result.final_revision, gate_result.rollback_revision
     held = operator_result.agent_held
     reviewer_total = reviewer_tokens(operator_result.subagent_results)
+    aggregate_total = record.usage.total_tokens
     return {
         "decision": gate_result.decision.value,
         "agent_held": held,
@@ -218,11 +227,11 @@ def _decision(
         "elapsed_ms": record.elapsed_ms,
         "external_tool_ms": record.external_tool_ms,
         "tokens": usage_record(record.usage),
+        "tokens_scope": "agent_tree",
         "usage_complete": record.usage_complete,
         "reviewer_tokens": reviewer_total,
-        "total_tokens_with_reviewers": (
-            record.usage.total_tokens + reviewer_total
-        ),
+        "reviewer_tokens_included": record.usage_complete,
+        "total_tokens_with_reviewers": aggregate_total,
         "layout_report": gate_result.layout_report,
         "validation": _validation(gate_result.validation),
     }
