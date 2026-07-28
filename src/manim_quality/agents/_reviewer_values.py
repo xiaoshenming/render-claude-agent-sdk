@@ -15,42 +15,74 @@ def reviewer_payload(
         raise error_type("Reviewer ToolResult must be valid JSON") from error
     if not isinstance(value, Mapping):
         raise error_type("Reviewer ToolResult must be a JSON object")
-    required = {"decision", "diagnosis", "issues", "coverage", "confidence"}
-    if not required.issubset(value):
-        raise error_type("Reviewer ToolResult has invalid fields")
-    if value["decision"] not in {"pass", "needs_repair"}:
-        raise error_type("Reviewer decision is invalid")
-    if not isinstance(value["diagnosis"], str):
-        raise error_type("Reviewer diagnosis must be text")
-    issues = value["issues"]
-    if not isinstance(issues, list) or len(issues) > 12:
-        raise error_type("Reviewer issues must contain at most 12 items")
-    normalized_issues = [_normalize_issue(issue, error_type) for issue in issues]
-    if not isinstance(value["coverage"], Mapping):
-        raise error_type("Reviewer coverage must be an object")
-    normalized = {name: value[name] for name in required}
-    normalized["issues"] = normalized_issues
-    normalized["confidence"] = normalize_confidence(value["confidence"], error_type)
+    warnings: list[str] = []
+    decision = value.get("decision")
+    if decision not in {"pass", "needs_repair"}:
+        decision = "needs_repair"
+        warnings.append("invalid_or_missing_decision")
+    diagnosis = value.get("diagnosis")
+    if not isinstance(diagnosis, str) or not diagnosis.strip():
+        diagnosis = "Reviewer 返回了非标准结构，原始结果已保留供父 Agent 核实。"
+        warnings.append("invalid_or_missing_diagnosis")
+    issues = value.get("issues")
+    if not isinstance(issues, list):
+        issues = []
+        warnings.append("invalid_or_missing_issues")
+    if len(issues) > 12:
+        issues = issues[:12]
+        warnings.append("issues_truncated")
+    normalized_issues = [
+        _normalize_issue(issue, warnings) for issue in issues
+    ]
+    coverage = value.get("coverage")
+    if not isinstance(coverage, Mapping):
+        coverage = {}
+        warnings.append("invalid_or_missing_coverage")
+    try:
+        confidence = normalize_confidence(value.get("confidence"), error_type)
+    except error_type:
+        confidence = 0.0
+        warnings.append("invalid_or_missing_confidence")
+    if warnings:
+        decision = "needs_repair"
+        coverage = {**coverage, "protocol_warnings": warnings}
+    normalized = {
+        "decision": decision,
+        "diagnosis": diagnosis,
+        "issues": normalized_issues,
+        "coverage": coverage,
+        "confidence": confidence,
+    }
     return normalized
 
 
 def _normalize_issue(
-    value: object, error_type: type[Exception]
+    value: object, warnings: list[str]
 ) -> Mapping[str, object]:
     required = {"type", "target", "evidence", "required_invariant", "repair_scope"}
-    if not isinstance(value, Mapping) or not required.issubset(value):
-        raise error_type("Reviewer issue has invalid fields")
-    evidence = value["evidence"]
-    if (
-        not isinstance(evidence, list)
-        or len(evidence) > 2
-        or any(not isinstance(item, str) for item in evidence)
-    ):
-        raise error_type("Reviewer issue evidence exceeds its bound")
+    if not isinstance(value, Mapping):
+        warnings.append("non_object_issue")
+        value = {}
+    evidence = value.get("evidence")
+    if isinstance(evidence, str):
+        evidence = [evidence]
+    if not isinstance(evidence, list):
+        evidence = []
+    evidence = [item for item in evidence if isinstance(item, str)][:2]
+    defaults = {
+        "type": "unstructured_reviewer_finding",
+        "target": "Solution",
+        "required_invariant": "核实 Reviewer 原始结论并修复确认的问题。",
+        "repair_scope": "Solution",
+    }
+    normalized: dict[str, object] = {"evidence": evidence}
     for name in required - {"evidence"}:
-        if not isinstance(value[name], str) or not value[name].strip():
-            raise error_type(f"Reviewer issue {name} must be text")
-    return {name: value[name] for name in required}
+        item = value.get(name)
+        if not isinstance(item, str) or not item.strip():
+            item = defaults[name]
+            warnings.append(f"issue_{name}_defaulted")
+        normalized[name] = item
+    return normalized
 
 
 def normalize_confidence(value: object, error_type: type[Exception]) -> float:

@@ -4,6 +4,7 @@ from collections.abc import Mapping
 
 from manim_quality.agents.managed_tools import ManagedToolGrant, ToolEffect
 
+from .defaults import PARENT_MAX_TOOL_CALLS
 from .tool_schemas import (
     APPLY_PATCH_SCHEMA,
     CHECK_RELATION_SCHEMA,
@@ -42,7 +43,7 @@ def _read_tools(handlers) -> tuple[ManagedToolGrant, ...]:
             READ_SOLUTION_SCHEMA,
             handlers.read_solution,
             ToolEffect.READ_ONLY,
-            _patch_budget(handlers) + 1,
+            PARENT_MAX_TOOL_CALLS,
             30_000,
         ),
         _grant(
@@ -61,7 +62,7 @@ def _read_tools(handlers) -> tuple[ManagedToolGrant, ...]:
             CHECK_RELATION_SCHEMA,
             handlers.check_relation,
             ToolEffect.READ_ONLY,
-            6,
+            PARENT_MAX_TOOL_CALLS,
             8_000,
         ),
     )

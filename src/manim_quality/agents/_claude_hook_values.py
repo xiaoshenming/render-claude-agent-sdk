@@ -110,7 +110,10 @@ def _usage_count(value: Mapping[object, object], key: str) -> int:
 
 def _json_safe(value: object) -> object:
     if dataclasses.is_dataclass(value):
-        value = dataclasses.asdict(value)
+        value = {
+            field.name: _json_safe(getattr(value, field.name))
+            for field in dataclasses.fields(value)
+        }
     elif isinstance(value, list):
         value = [_json_safe(item) for item in value]
     elif isinstance(value, tuple):

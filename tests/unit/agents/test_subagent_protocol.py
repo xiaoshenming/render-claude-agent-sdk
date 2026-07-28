@@ -221,18 +221,22 @@ def test_protocol_rejects_forged_or_unknown_sdk_trailers(
         )
 
 
-def test_protocol_rejects_unbounded_or_malformed_issue_contract() -> None:
+def test_protocol_preserves_malformed_issue_as_non_blocking_evidence() -> None:
     protocol = stopped()
     malformed = json.loads(valid_result())
     malformed["issues"] = [{"type": "logic"}]
 
-    with pytest.raises(SubagentProtocolError, match="issue"):
-        protocol.record_result(
-            tool_use_id="tool-1",
-            content=json.dumps(malformed),
-            is_error=False,
-            parent_tool_use_id=None,
-        )
+    protocol.record_result(
+        tool_use_id="tool-1",
+        content=json.dumps(malformed),
+        is_error=False,
+        parent_tool_use_id=None,
+    )
+
+    payload = protocol.results[0]["payload"]
+    assert payload["decision"] == "needs_repair"
+    assert payload["issues"][0]["target"] == "Solution"
+    assert "issue_target_defaulted" in payload["coverage"]["protocol_warnings"]
 
     protocol = stopped()
     detailed = json.loads(valid_result())
