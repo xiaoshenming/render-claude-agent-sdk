@@ -6,6 +6,7 @@ import pytest
 from manim_quality.agents.managed_tools import (
     ManagedToolContent,
     ManagedToolGrant,
+    ManagedToolInputError,
     ManagedToolResultTooLarge,
     ManagedToolTimeout,
     ToolEffect,
@@ -45,6 +46,11 @@ def test_managed_tool_grant_is_immutable_and_declares_effect() -> None:
     assert tool.context_bytes > 0
     with pytest.raises(FrozenInstanceError):
         tool.max_calls = 2  # type: ignore[misc]
+
+
+def test_managed_tool_marks_model_argument_shape_as_correctable() -> None:
+    with pytest.raises(ManagedToolInputError, match="unsupported fields"):
+        grant().normalize_input({"value": "ok", "value2": "extra"})
 
 
 @pytest.mark.parametrize(

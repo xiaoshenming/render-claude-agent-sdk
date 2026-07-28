@@ -11,6 +11,7 @@ from ._claude_hook_values import (
     normalize_sdk_input,
 )
 from ._runtime_models import OutputRejected
+from .managed_tools import ManagedToolInputError
 
 
 async def pre_tool(state, data, tool_use_id, context) -> dict[str, object]:
@@ -20,6 +21,8 @@ async def pre_tool(state, data, tool_use_id, context) -> dict[str, object]:
             normalized = _authorize_tool(state, data, tool_use_id)
         except OutputRejected as error:
             return _handle_output_rejection(state, error, tool_use_id)
+        except ManagedToolInputError as error:
+            return _deny(str(error), continue_run=True)
         except Exception as error:
             state._failure = error
             return _deny("tool authorization failed")

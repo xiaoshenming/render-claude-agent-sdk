@@ -60,6 +60,10 @@ class ManagedToolResultTooLarge(ManagedToolError):
     pass
 
 
+class ManagedToolInputError(ValueError):
+    """A model-authored tool argument error that can be corrected next round."""
+
+
 @dataclass(frozen=True, slots=True)
 class ManagedToolResult:
     text: str
@@ -143,14 +147,17 @@ class ManagedToolGrant:
         return len(text.encode("utf-8"))
 
     def normalize_input(self, value: object) -> Mapping[str, object]:
-        normalized = freeze_json_object(value, "managed_tool_input")
-        _validate_top_level_shape(normalized, self.input_schema)
-        if _json_bytes(normalized) > self.max_input_bytes:
-            raise ValueError(
-                f"managed tool input exceeds {self.max_input_bytes} bytes"
-            )
-        if self.input_validator is not None:
-            self.input_validator(normalized)
+        try:
+            normalized = freeze_json_object(value, "managed_tool_input")
+            _validate_top_level_shape(normalized, self.input_schema)
+            if _json_bytes(normalized) > self.max_input_bytes:
+                raise ValueError(
+                    f"managed tool input exceeds {self.max_input_bytes} bytes"
+                )
+            if self.input_validator is not None:
+                self.input_validator(normalized)
+        except (TypeError, ValueError) as error:
+            raise ManagedToolInputError(str(error)) from error
         return normalized
 
     async def execute(self, value: object) -> ManagedToolResult:
