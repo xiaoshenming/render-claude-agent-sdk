@@ -5,7 +5,6 @@ from __future__ import annotations
 import difflib
 from collections.abc import Mapping, Sequence
 
-from manim_quality.layout.policy import layout_invariant_fingerprint
 from manim_quality.revisions.fingerprint import sha256_text
 
 from .models import CandidateAttempt, Finding, FindingCategory, PatchScope
@@ -218,10 +217,8 @@ def verify_candidate(
     *,
     problem_text: str,
     baseline: CandidateAttempt,
-    current: CandidateAttempt,
     embedded_hash: str | None,
     code: str,
-    scope: PatchScope,
 ) -> None:
     if problem_text in baseline.code and problem_text not in code:
         raise ProblemLockViolation("patch changed the locked problem text")
@@ -231,12 +228,6 @@ def verify_candidate(
     ):
         raise ProblemLockViolation("patch changed the embedded problem source")
     compile(code, "candidate.py", "exec")
-    if (
-        scope is PatchScope.LAYOUT
-        and layout_invariant_fingerprint(code)
-        != layout_invariant_fingerprint(current.code)
-    ):
-        raise ScopeViolation("layout patch changed the semantic invariant")
 
 
 def patch_hash(before: str, after: str) -> str:

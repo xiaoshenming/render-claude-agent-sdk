@@ -194,10 +194,8 @@ class QualitySession:
         verify_candidate(
             problem_text=self._problem_text,
             baseline=self.baseline,
-            current=self.current_revision,
             embedded_hash=self._embedded_problem_hash,
             code=after_code,
-            scope=scope,
         )
         after_hash = code_hash(after_code)
         if after_hash in self._seen_code_hashes:

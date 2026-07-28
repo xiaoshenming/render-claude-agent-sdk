@@ -6,7 +6,6 @@ from manim_quality.operator.session_errors import (
     DuplicatePatch,
     InvalidSessionTransition,
     ProblemLockViolation,
-    ScopeViolation,
 )
 from manim_quality.operator.source_view import SolutionSourceError
 
@@ -313,21 +312,21 @@ def test_submit_rejects_failed_validation_and_blocking_layout() -> None:
         blocked.submit("R0")
 
 
-def test_layout_patch_cannot_change_semantic_invariant() -> None:
+def test_layout_patch_may_rebuild_geometry_when_problem_is_preserved() -> None:
     quality = session()
     quality.record_findings(
         (finding("layout-1", FindingCategory.LAYOUT),)
     )
 
-    with pytest.raises(ScopeViolation, match="semantic"):
-        quality.apply_patch(
-            scope=PatchScope.LAYOUT,
-            old_text="Line(LEFT, RIGHT)",
-            new_text="Line(LEFT, UP)",
-            finding_ids=("layout-1",),
-        )
+    revision = quality.apply_patch(
+        scope=PatchScope.LAYOUT,
+        old_text="Line(LEFT, RIGHT)",
+        new_text="Line(LEFT, UP)",
+        finding_ids=("layout-1",),
+    )
 
-    assert quality.current_revision.revision_id == "R0"
+    assert revision.revision_id == "R1"
+    assert "Line(LEFT, UP)" in revision.code
 
 
 def test_findings_require_current_solution_read() -> None:
