@@ -2,6 +2,12 @@
 
 from collections.abc import Mapping
 
+from manim_quality.contracts._json_values import thaw_json_object
+
+
+def _plain_mapping(value: object) -> object:
+    return thaw_json_object(value) if isinstance(value, Mapping) else value
+
 
 def usage_record(value) -> dict[str, int]:
     return {
@@ -41,7 +47,7 @@ def token_ledger(record, sdk_messages, subagent_results) -> dict[str, object]:
                 ),
                 "parent_tool_use_id": message.get("parent_tool_use_id"),
                 "model": message.get("model"),
-                "usage": message.get("usage"),
+                "usage": _plain_mapping(message.get("usage")),
             })
         elif kind == "result":
             terminal = {
@@ -49,8 +55,8 @@ def token_ledger(record, sdk_messages, subagent_results) -> dict[str, object]:
                 "is_error": message.get("is_error"),
                 "num_turns": message.get("num_turns"),
                 "session_id": message.get("session_id"),
-                "usage": message.get("usage"),
-                "model_usage": message.get("model_usage"),
+                "usage": _plain_mapping(message.get("usage")),
+                "model_usage": _plain_mapping(message.get("model_usage")),
             }
     reviewers = []
     for item in subagent_results:
