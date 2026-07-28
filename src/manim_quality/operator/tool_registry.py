@@ -42,7 +42,7 @@ def _read_tools(handlers) -> tuple[ManagedToolGrant, ...]:
             READ_SOLUTION_SCHEMA,
             handlers.read_solution,
             ToolEffect.READ_ONLY,
-            1,
+            _patch_budget(handlers) + 1,
             30_000,
         ),
         _grant(

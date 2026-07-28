@@ -126,6 +126,8 @@ def test_toolset_exposes_exact_eight_mcp_capabilities() -> None:
         "validate_revision",
         "submit_revision",
     )
+    # One initial read plus one read for each possible recovery branch.
+    assert tools["read_solution"].max_calls == 6
     assert tools["record_findings"].max_calls == 4
     assert tools["apply_patch"].max_calls == 5
     # inspect covers one verification per patch plus the initial R0 pass.
