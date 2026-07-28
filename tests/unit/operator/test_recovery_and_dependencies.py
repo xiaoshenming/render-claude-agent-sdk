@@ -105,7 +105,7 @@ def test_recovery_rejects_unvalidated_or_failed_revision() -> None:
     # Simulate the broker inspecting another branch before requesting recovery.
     quality._active_revision_id = "R0"
 
-    with pytest.raises(ValueError, match="validated passing improved"):
+    with pytest.raises(ValueError, match="baseline or a validated passing"):
         quality.recover_revision("R1")
 
 
@@ -219,7 +219,7 @@ def test_failed_branch_finding_reference_is_not_resolved() -> None:
         quality.submit(revision.revision_id)
 
 
-def test_recovery_rejects_passing_but_non_improving_revision() -> None:
+def test_recovery_accepts_passing_non_improving_revision_as_usable_base() -> None:
     quality = _session()
     quality.record_findings((_finding("logic-1"),))
     first = quality.apply_patch(
@@ -236,8 +236,39 @@ def test_recovery_rejects_passing_but_non_improving_revision() -> None:
     )
     quality._active_revision_id = "R0"
 
-    with pytest.raises(ValueError, match="improved"):
-        quality.recover_revision("R1")
+    recovered = quality.recover_revision("R1")
+
+    assert recovered.revision_id == "R1"
+
+
+def test_failed_first_patch_can_recover_baseline_and_retry() -> None:
+    quality = _session()
+    quality.record_findings((_finding("logic-1"),))
+    first = quality.apply_patch(
+        scope=PatchScope.LOGIC,
+        old_text="Line(LEFT, RIGHT)",
+        new_text="Line(LEFT, UP)",
+        finding_ids=("logic-1",),
+    )
+    quality.record_validation(
+        revision_id=first.revision_id,
+        passed=False,
+        improved=False,
+        fingerprint="sha256:" + "a" * 64,
+    )
+
+    recovered = quality.recover_revision("R0")
+    quality.mark_solution_read("R0")
+    retry = quality.apply_patch(
+        scope=PatchScope.LOGIC,
+        old_text="Line(LEFT, RIGHT)",
+        new_text="Line(LEFT, 2 * RIGHT)",
+        finding_ids=("logic-1",),
+    )
+
+    assert recovered.revision_id == "R0"
+    assert retry.revision_id == "R2"
+    assert retry.parent_revision_id == "R0"
 
 
 def test_abandoned_layout_branch_does_not_block_logic_repair() -> None:

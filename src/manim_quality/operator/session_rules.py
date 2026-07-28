@@ -92,14 +92,12 @@ def validate_recovery_revision(
 ) -> None:
     if target.revision_id == current.revision_id:
         raise ValueError("recovery target is already current")
+    if target.revision_id == "R0":
+        return
     record = validations.get(target.revision_id)
-    if (
-        record is None
-        or not getattr(record, "passed", False)
-        or not getattr(record, "improved", False)
-    ):
+    if record is None or not getattr(record, "passed", False):
         raise ValueError(
-            "recovery target must be a validated passing improved revision"
+            "recovery target must be the baseline or a validated passing revision"
         )
 
 
