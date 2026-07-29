@@ -126,11 +126,6 @@ def _normalize_derived_parameter_issues(
     issues = output.get("issues")
     if not isinstance(issues, list):
         return
-    existing = " ".join(
-        str(item.get("summary", ""))
-        for item in issues
-        if isinstance(item, dict)
-    )
     evidence_ids = [f"{case_key}:final-source"]
     risk_frames = reports.get("inspect_risk_frames")
     if isinstance(risk_frames, dict) and risk_frames.get("evidence"):
@@ -139,7 +134,23 @@ def _normalize_derived_parameter_issues(
         if not isinstance(mismatch, dict):
             continue
         expected, actual = mismatch.get("expected"), mismatch.get("actual")
-        if str(expected) in existing and str(actual) in existing:
+        matched = next(
+            (
+                item
+                for item in issues
+                if isinstance(item, dict)
+                and str(expected) in str(item.get("summary", ""))
+                and str(actual) in str(item.get("summary", ""))
+            ),
+            None,
+        )
+        if matched is not None:
+            matched["severity"] = "high"
+            current_ids = matched.get("evidence_ids")
+            if isinstance(current_ids, list):
+                matched["evidence_ids"] = list(
+                    dict.fromkeys([*current_ids, *evidence_ids])
+                )
             continue
         issues.append(
             {
