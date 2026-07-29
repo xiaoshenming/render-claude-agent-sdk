@@ -137,19 +137,87 @@ def _inspect_source(case: AssuranceCase) -> tuple[tuple[dict, ...], tuple[str, .
         return (), ()
     text = case.source_path.read_text(encoding="utf-8")
     risks = []
+    tree = None
     try:
-        ast.parse(text)
+        tree = ast.parse(text)
     except SyntaxError:
         risks.append("final_source_syntax_error")
+    derived_mismatches = (
+        _derived_parameter_mismatches(tree) if tree is not None else ()
+    )
+    if derived_mismatches:
+        risks.append("derived_function_parameter_mismatch")
     evidence = {
         "id": f"{case.key}:final-source",
         "path": str(case.source_path),
         "sha256": _sha256(case.source_path),
         "lines": text.count("\n") + 1,
         "voiceover_blocks": text.count("voiceover("),
-        "ast_parse_ok": not risks,
+        "ast_parse_ok": tree is not None,
+        "derived_parameter_mismatches": list(derived_mismatches),
     }
     return (evidence,), tuple(risks)
+
+
+def _derived_parameter_mismatches(tree: ast.AST) -> tuple[dict, ...]:
+    """Find numeric helper calls where ``ab_val`` differs from ``a_val*b_val``."""
+    signatures = {}
+    for node in ast.walk(tree):
+        if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            continue
+        names = [item.arg for item in node.args.args]
+        signatures[node.name] = names
+
+    mismatches = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Name):
+            continue
+        names = signatures.get(node.func.id)
+        if not names:
+            continue
+        values = {
+            name: _numeric_literal(value)
+            for name, value in zip(names, node.args, strict=False)
+        }
+        for derived in names:
+            if not derived.endswith("_val"):
+                continue
+            symbol = derived.removesuffix("_val")
+            if len(symbol) != 2:
+                continue
+            left, right = f"{symbol[0]}_val", f"{symbol[1]}_val"
+            actual = values.get(derived)
+            left_value, right_value = values.get(left), values.get(right)
+            if actual is None or left_value is None or right_value is None:
+                continue
+            expected = left_value * right_value
+            if abs(actual - expected) <= 1e-9:
+                continue
+            mismatches.append(
+                {
+                    "line": node.lineno,
+                    "helper": node.func.id,
+                    "parameter": derived,
+                    "expression": f"{left} * {right}",
+                    "expected": expected,
+                    "actual": actual,
+                }
+            )
+    return tuple(mismatches)
+
+
+def _numeric_literal(node: ast.AST) -> float | None:
+    if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)):
+        return float(node.value)
+    if (
+        isinstance(node, ast.UnaryOp)
+        and isinstance(node.op, (ast.USub, ast.UAdd))
+        and isinstance(node.operand, ast.Constant)
+        and isinstance(node.operand.value, (int, float))
+    ):
+        value = float(node.operand.value)
+        return -value if isinstance(node.op, ast.USub) else value
+    return None
 
 
 def _report(tool: str, status: str, risks: tuple[str, ...], *evidence) -> ToolReport:
