@@ -39,3 +39,19 @@ Keep `target` to a concise symbol or phase name. Never include filesystem paths.
 Report defects that can change the mathematical picture, animation semantics,
 or leave objects in the wrong phase. Ignore ordinary visual styling and
 cosmetic overlap. If none exist, return `decision: "pass"` and an empty list.
+
+This Reviewer reads source but does not see the delivered video. Therefore:
+- distinguish a confirmed source contradiction from a merely possible runtime
+  symptom;
+- do not claim that a blank frame, frozen window, orphan object, overlap, drift,
+  or stale highlight is visibly present unless deterministic source state proves
+  it; describe speculative ownership/lifecycle concerns as needing visual
+  confirmation;
+- an unusual VGroup, FadeOut, ReplacementTransform, or cleanup pattern is not a
+  defect by itself;
+- introductory or transitional geometry need not already satisfy a later optimum
+  unless the narration claims that it does.
+
+Confirmed stale anchors after a fit/scale, wrong highlight owners, objects left in
+a mathematically contradictory phase, and cleanup that deterministically removes
+all teaching content before the next reveal remain reportable.
