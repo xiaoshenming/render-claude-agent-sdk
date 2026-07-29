@@ -1,6 +1,7 @@
 import pytest
 
 from manim_quality.assurance.agent import (
+    _normalize_confirmed_anchor_drift,
     _normalize_derived_parameter_issues,
     _validate_reviewers,
 )
@@ -55,6 +56,28 @@ def test_derived_parameter_evidence_becomes_coder_issue() -> None:
     assert "-0.18" in issue["summary"]
     assert "-0.8" in issue["summary"]
     assert issue["evidence_ids"] == ["CASE:final-source", "CASE:risk-frames"]
+
+
+def test_confirmed_anchor_drift_is_always_high() -> None:
+    output = {
+        "issues": [
+            {
+                "severity": "medium",
+                "summary": "旧坐标生成的高亮已与目标边脱离并出现漂移",
+                "evidence_ids": ["CASE:risk-frames"],
+            },
+            {
+                "severity": "medium",
+                "summary": "源码可能存在旧坐标风险",
+                "evidence_ids": ["CASE:final-source"],
+            },
+        ]
+    }
+
+    _normalize_confirmed_anchor_drift(output)
+
+    assert output["issues"][0]["severity"] == "high"
+    assert output["issues"][1]["severity"] == "medium"
 
 
 def reviewer(name: str, *, is_error: bool = False) -> dict:

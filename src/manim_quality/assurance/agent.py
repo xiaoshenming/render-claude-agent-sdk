@@ -86,6 +86,7 @@ class FinalAssuranceAgent:
         }
         output = thaw_json_object(result.structured_output)
         _normalize_derived_parameter_issues(output, reports, case.key)
+        _normalize_confirmed_anchor_drift(output)
         return FinalAssuranceResult(
             output=output,
             reports=reports,
@@ -156,3 +157,21 @@ def _normalize_derived_parameter_issues(
         )
     if output.get("status") != "incomplete":
         output["status"] = "review"
+
+
+def _normalize_confirmed_anchor_drift(output: dict[str, object]) -> None:
+    issues = output.get("issues")
+    if not isinstance(issues, list):
+        return
+    drift_terms = ("漂移", "脱离", "悬空", "旧坐标", "缩放前", "适配前")
+    for issue in issues:
+        if not isinstance(issue, dict):
+            continue
+        summary = str(issue.get("summary", ""))
+        evidence_ids = issue.get("evidence_ids")
+        has_video = (
+            isinstance(evidence_ids, list)
+            and any(str(item).endswith(":risk-frames") for item in evidence_ids)
+        )
+        if has_video and any(term in summary for term in drift_terms):
+            issue["severity"] = "high"
