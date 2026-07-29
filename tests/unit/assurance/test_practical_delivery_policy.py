@@ -26,6 +26,7 @@ def test_specialist_reviewers_distinguish_schematic_and_visible_errors() -> None
     assert "highlighted wrong segment" in math_prompt
     assert "An arrow starting from a" in math_prompt
     assert "function visualization:" in math_prompt
+    assert "`kb_val` must equal `k_val * b_val`" in math_prompt
     assert "merely possible runtime\n  symptom" in animation_prompt
     assert "Confirmed stale anchors after a fit/scale" in animation_prompt
 
