@@ -25,5 +25,15 @@ def test_specialist_reviewers_distinguish_schematic_and_visible_errors() -> None
     assert "schematic diagram is not exactly to scale" in math_prompt
     assert "highlighted wrong segment" in math_prompt
     assert "An arrow starting from a" in math_prompt
+    assert "function visualization:" in math_prompt
     assert "merely possible runtime\n  symptom" in animation_prompt
     assert "Confirmed stale anchors after a fit/scale" in animation_prompt
+
+
+def test_assurance_uses_medium_effort_for_specialist_reviewers() -> None:
+    text = (
+        Path(__file__).parents[3]
+        / "src/manim_quality/assurance/verification.py"
+    ).read_text(encoding="utf-8")
+
+    assert 'build_reviewer_specs(self.reviewer_tools, effort="medium")' in text

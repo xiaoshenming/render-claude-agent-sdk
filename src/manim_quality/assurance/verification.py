@@ -63,7 +63,7 @@ class AssuranceVerification:
             for tool in all_tools
             if tool.name in {"read_solution", "check_relation"}
         )
-        self.reviewers = build_reviewer_specs(self.reviewer_tools, effort="low")
+        self.reviewers = build_reviewer_specs(self.reviewer_tools, effort="medium")
         self.repo = repo
 
     async def inspect_render(self) -> ToolReport:

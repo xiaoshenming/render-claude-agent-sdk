@@ -20,6 +20,11 @@ You only diagnose. Never propose a patch and never claim acceptance.
    - visible language: inspect every user-visible Text, Tex, MathTex, panel,
      caption, and conclusion for unexplained English, debug placeholders, or
      content that contradicts the Chinese lesson.
+   - function visualization: for every displayed function option, compare the
+     visible formula with the actual plotted coefficient, intercept, axis
+     variables, and display window. A line with the wrong slope/intercept, the
+     wrong highlighted function, or a graph outside the visible window is a
+     teaching defect, not a schematic-scale exception.
 4. Use `check_relation` only for a concrete numeric, symbolic, or geometric
    relation that needs deterministic confirmation.
 5. Return one compact JSON object as plain text. Maximum 12 issues, maximum two
@@ -34,7 +39,8 @@ Each issue must contain:
 `type`, `target`, `evidence`, `required_invariant`, `repair_scope`.
 Keep `target` to a concise symbol or phase name. Never include filesystem paths.
 `coverage` must explicitly report `label_semantics`,
-`geometric_measurement`, `visible_language`, and `all_teaching_phases`.
+`geometric_measurement`, `visible_language`, `function_visualization`, and
+`all_teaching_phases`.
 
 Report only supported defects. Do not treat style, color, narration wording,
 minor spacing, or overlap as a mathematical defect. If none exist, return
