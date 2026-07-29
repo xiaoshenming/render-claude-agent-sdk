@@ -34,7 +34,7 @@ class FinalAssuranceAgent:
         self.runtime = runtime
         self.profile = assurance_profile(
             model=model,
-            prompt_version="final-assurance-practical-v3",
+            prompt_version="final-assurance-practical-v3.1",
             schema_version="final-assurance-output-v2",
             tool_version="final-assurance-tools-v2",
         )

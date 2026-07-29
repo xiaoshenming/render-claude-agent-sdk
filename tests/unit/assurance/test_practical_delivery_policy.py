@@ -10,6 +10,7 @@ def test_final_assurance_prompt_contains_practical_delivery_baseline() -> None:
     assert "示意图未严格按比例" in text
     assert "实际视频未见异常时，不得报告为 high/blocking" in text
     assert "错误高亮" in text
+    assert "目标转化”而不是循环论证" in text
 
 
 def test_specialist_reviewers_distinguish_schematic_and_visible_errors() -> None:
@@ -23,5 +24,6 @@ def test_specialist_reviewers_distinguish_schematic_and_visible_errors() -> None
 
     assert "schematic diagram is not exactly to scale" in math_prompt
     assert "highlighted wrong segment" in math_prompt
+    assert "An arrow starting from a" in math_prompt
     assert "merely possible runtime\n  symptom" in animation_prompt
     assert "Confirmed stale anchors after a fit/scale" in animation_prompt

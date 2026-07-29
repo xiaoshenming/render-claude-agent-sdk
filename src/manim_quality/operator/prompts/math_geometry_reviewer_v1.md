@@ -46,7 +46,12 @@ Never report these as defects when the lesson remains mathematically correct:
   collinearity, or perpendicularity than a label;
 - a decimal approximation is used for an exact radical or analytic value;
 - an introductory moving-point position does not yet satisfy a later optimum.
+- a displayed target equation is transformed into an equivalent target and the
+  equivalent target is then independently proved. An arrow starting from a
+  "to prove" expression is not circular reasoning by itself.
 
 Do report wrong conclusions, circular reasoning that changes the proof, labels or
 marks attached to the wrong mathematical owner, a highlighted wrong segment or
 function, and a visible state that contradicts the statement being taught.
+Only call reasoning circular when the target is actually assumed as a known fact
+and no independent later argument closes the transformed goal.
