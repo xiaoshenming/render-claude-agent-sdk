@@ -40,6 +40,9 @@ pass。不得改写工具 status、虚构 evidence_id 或省略工具实际返�
   证据；只有源码或 Reviewer 推测时，最多作为需人工复核的 medium 问题。
 - 示意图未严格按比例、坐标导致长度/角度/面积/高/共线/垂直存在小幅误差、
   小数近似替代根式，但教学结论与可见含义正确时，不得报告。
+- 函数图像的斜率、截距或派生系数必须与同组选项参数一致；这不是几何示意比例
+  问题。`inspect_code_review` 给出 `derived_function_parameter_mismatch` 时必须
+  生成可传给 Coder 的结构化 issue，写明 expected 和 actual。
 - 动点在引入或过渡阶段尚未满足后续最优条件，只要没有把该瞬间声称为最终条件，
   不得报告。
 - 仅从 VGroup、Create/FadeOut、ReplacementTransform 或对象所有权推测可能
