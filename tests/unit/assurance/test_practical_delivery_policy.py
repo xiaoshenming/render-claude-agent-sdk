@@ -27,6 +27,8 @@ def test_specialist_reviewers_distinguish_schematic_and_visible_errors() -> None
     assert "An arrow starting from a" in math_prompt
     assert "function visualization:" in math_prompt
     assert "`kb_val` must equal `k_val * b_val`" in math_prompt
+    assert "`coverage.derived_parameter_checks`" in math_prompt
+    assert "`-0.6 * 0.3 = -0.18`" in math_prompt
     assert "merely possible runtime\n  symptom" in animation_prompt
     assert "Confirmed stale anchors after a fit/scale" in animation_prompt
 

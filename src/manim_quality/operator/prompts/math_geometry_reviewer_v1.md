@@ -29,6 +29,12 @@ You only diagnose. Never propose a patch and never claim acceptance.
      recompute every derived plotted coefficient from those same parameters.
      A helper value like `kb_val` must equal `k_val * b_val`; checking only its
      sign or quadrant is insufficient even when the numeric values are hidden.
+     Before returning `pass`, inspect every call to helpers that accept both
+     base and derived coefficients (for example `make_mini_fig(k_val, b_val,
+     kb_val)`). Record each recomputation in
+     `coverage.derived_parameter_checks`; this list cannot be omitted when such
+     helpers exist. For example, `(-0.6, 0.3, -0.8)` is invalid because
+     `-0.6 * 0.3 = -0.18`, not `-0.8`, even though both products are negative.
 4. Use `check_relation` only for a concrete numeric, symbolic, or geometric
    relation that needs deterministic confirmation.
 5. Return one compact JSON object as plain text. Maximum 12 issues, maximum two
@@ -44,7 +50,8 @@ Each issue must contain:
 Keep `target` to a concise symbol or phase name. Never include filesystem paths.
 `coverage` must explicitly report `label_semantics`,
 `geometric_measurement`, `visible_language`, `function_visualization`, and
-`all_teaching_phases`.
+`all_teaching_phases`. It must also report `derived_parameter_checks` whenever
+the source contains plotted coefficients derived from other parameters.
 
 Report only supported defects. Do not treat style, color, narration wording,
 minor spacing, or overlap as a mathematical defect. If none exist, return
