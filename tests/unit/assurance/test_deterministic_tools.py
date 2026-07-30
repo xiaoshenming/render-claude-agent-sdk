@@ -72,6 +72,37 @@ def test_review_and_layout_preserve_structured_findings(tmp_path) -> None:
     assert inspect_layout(sample).risk_codes == ("blocking_layout_finding",)
 
 
+def test_code_review_detects_wrong_derived_function_coefficient(tmp_path) -> None:
+    source = tmp_path / "main.py"
+    source.write_text(
+        """
+def make_mini_fig(center, label, k_val, b_val, kb_val):
+    return k_val, b_val, kb_val
+
+make_mini_fig(None, "A", -0.6, 0.3, -0.8)
+""",
+        encoding="utf-8",
+    )
+    sample = case(tmp_path)
+    sample = AssuranceCase(
+        key=sample.key,
+        question=sample.question,
+        human_tags=sample.human_tags,
+        expected_verdict=sample.expected_verdict,
+        video_path=sample.video_path,
+        log_dir=sample.log_dir,
+        source_path=source,
+    )
+
+    report = inspect_code_review(sample)
+
+    assert report.status == "risk"
+    assert report.risk_codes == ("derived_function_parameter_mismatch",)
+    mismatch = report.evidence[0]["derived_parameter_mismatches"][0]
+    assert mismatch["expected"] == -0.18
+    assert mismatch["actual"] == -0.8
+
+
 def test_narration_comparison_matches_source_and_subtitle(tmp_path) -> None:
     source = tmp_path / "main.py"
     subtitle = tmp_path / "final.srt"

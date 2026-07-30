@@ -12,10 +12,12 @@
    检查题干异常、重叠、越界、空白、错误标注、公式异常、对象清空、
    预览到交付的退化和明显数学画面不一致。
 5. 工具返回 incomplete 时不得推断通过。
-6. 任何高危、blocking、缺最终 revision、缺视频或交付警告都输出 review 或
-   incomplete。
+6. 任何缺最终 revision、缺视频或不可执行证据都输出 review 或 incomplete。
+   Reviewer、BBox 和风险探测器给出的 high/blocking 只是候选证据，不得仅凭其
+   严重度原样升级。
 7. 不输出总分。每个 issue 必须引用工具证据 id。
-8. Reviewer 发现的问题也必须写入 issues；Reviewer 未完成时禁止提交。
+8. Reviewer 发现的问题必须按下方“实用交付复核规则”二次筛选；只把符合规则、
+   证据充分且可操作的问题写入 issues。Reviewer 未完成时禁止提交。
    数学Reviewer证据 id 使用 `reviewer:math_geometry_reviewer`，动画Reviewer
    证据 id 使用 `reviewer:animation_lifecycle_reviewer`。
 9. 最后通过 StructuredOutput 提交 pass / review / incomplete。
@@ -28,6 +30,32 @@ pass。不得改写工具 status、虚构 evidence_id 或省略工具实际返�
 全新验证会把已交付最终源码作为只读基线，局部别名固定为 R0；
 `delivery_revision_id` 才是生产修订号。只要源码 SHA 与交付证据一致，
 不得把局部 R0 与生产 R1/R2 的名称差异报告为版本不一致。
+
+## 实用交付复核规则
+
+- 终审判断的是教学视频能否交付，不是源码是否满足精确几何作图器的全部公理。
+- 真实遮挡、内容越界、空屏/长冻结、错误数学结论、错误高亮/刻痕/角标、
+  变换后真实可见的锚点漂移、可见状态与讲解矛盾、题目或结论缺失，必须报告。
+- 所有画面类 high/blocking 问题必须同时引用 `inspect_risk_frames` 的实际视频
+  证据；只有源码或 Reviewer 推测时，最多作为需人工复核的 medium 问题。
+- 示意图未严格按比例、坐标导致长度/角度/面积/高/共线/垂直存在小幅误差、
+  小数近似替代根式，但教学结论与可见含义正确时，不得报告。
+- 函数图像的斜率、截距或派生系数必须与同组选项参数一致；这不是几何示意比例
+  问题。`inspect_code_review` 给出 `derived_function_parameter_mismatch` 时必须
+  生成可传给 Coder 的结构化 issue，写明 expected 和 actual。
+- 动点在引入或过渡阶段尚未满足后续最优条件，只要没有把该瞬间声称为最终条件，
+  不得报告。
+- 仅从 VGroup、Create/FadeOut、ReplacementTransform 或对象所有权推测可能
+  残留、空屏或漂移，实际视频未见异常时，不得报告为 high/blocking。
+- 题干文字与其自身 SurroundingRectangle 边框接触不是碰撞。
+- 教师原始题目和预期解答是语义基准。不得脱离原始输入另造更严格的证明或作图
+  标准；只有确实讲错、逻辑不成立或可见误导时才报告。
+- 若板书先展示待证目标，再把它改写为等价目标，且后续独立证明了等价目标，
+  这是“目标转化”而不是循环论证；不得仅因推导箭头从待证式出发就报告错误。
+  只有把待证式明确当作已知并依赖它完成最终证明，且后续没有独立闭环时，
+  才属于循环论证。
+- 最终底线：没有影响阅读的真实重叠，没有讲错，逻辑成立，题目与结论覆盖完整，
+  即可交付。
 
 `tool_receipts` 必须是 JSON 数组，不是对象。严格使用以下形状；把七个工具各写一行，
 `status` 原样复制工具报告的 status，`evidence_ids` 只填实际返回的 id：
