@@ -5,6 +5,7 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 
@@ -27,6 +28,7 @@ def run_command(argv: list[str], log_path: Path, cwd: Path) -> None:
     environment["PYTHONPATH"] = os.pathsep.join(
         item for item in (source_root, environment.get("PYTHONPATH", "")) if item
     )
+    environment["PYTHON"] = sys.executable
     with log_path.open("w", encoding="utf-8") as log:
         completed = subprocess.run(
             argv, cwd=cwd, env=environment, stdout=log, stderr=subprocess.STDOUT
