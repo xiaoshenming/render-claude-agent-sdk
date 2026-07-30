@@ -17,6 +17,7 @@ from .models import CandidateAttempt
 from .output_schema import OPERATOR_OUTPUT_SCHEMA
 from .ports import LayoutInspector, RelationChecker, RevisionValidator
 from .request_builder import operator_request
+from .review_context import load_final_assurance_context
 from .reviewers import run_reviewers
 from .session import QualitySession
 from .source_view import extract_solution
@@ -118,10 +119,16 @@ def _review_context(runtime, model, workspace, session):
     reviewer_json = json.dumps(
         reviewer_results, ensure_ascii=False, separators=(",", ":")
     )
+    assurance_json = json.dumps(
+        load_final_assurance_context(workspace),
+        ensure_ascii=False,
+        separators=(",", ":"),
+    )
     prompt = (
         PROMPT_PATH.read_text(encoding="utf-8")
         .replace("{{CANDIDATE_PATH}}", str(candidate_path))
         .replace("{{REVIEWER_RESULTS}}", reviewer_json)
+        .replace("{{FINAL_ASSURANCE_ISSUES}}", assurance_json)
         .replace("{{SOLUTION_START_LINE}}", str(solution.start_line))
         .replace("{{SOLUTION_END_LINE}}", str(solution.end_line))
         .replace("{{SOLUTION_LINE_COUNT}}", str(line_count))

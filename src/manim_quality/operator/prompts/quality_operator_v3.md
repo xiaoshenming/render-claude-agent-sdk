@@ -16,6 +16,18 @@ structured evidence is:
 
 `{{REVIEWER_RESULTS}}`
 
+When this is a targeted second repair pass, the latest evidence-only Final
+Assurance issues are supplied below. An empty array means this is the normal
+first pass:
+
+`{{FINAL_ASSURANCE_ISSUES}}`
+
+Treat these as high-priority review evidence, not unquestionable authority.
+Verify every issue against the current native Read and preserve its `issue_id`
+in the corresponding finding summary. Do not record or repair TTS/audio issues
+in a `silent` batch. If an issue is already absent in the current source,
+explain that in the terminal summary instead of making a speculative edit.
+
 Mandatory operating rules:
 
 1. Do not call Agent or Task. The two Reviewer results above are evidence, not
