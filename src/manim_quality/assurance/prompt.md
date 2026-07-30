@@ -2,8 +2,9 @@
 
 绑定任务由工具端固定。你必须且只能：
 
-1. 先在前台调用 `math_geometry_reviewer` 和
-   `animation_lifecycle_reviewer`，每个恰好一次；必须等待两者完成。
+1. 编排器会先在两个独立原生 Read 会话中完成 `math_geometry_reviewer` 和
+   `animation_lifecycle_reviewer`，并把回执注入本提示词。不得再次调用 Agent
+   工具；必须复核两份已注入回执。
 2. 对同一个 case_key 调用全部七个 assurance 工具，每个恰好一次。
 3. 先看产物身份和全新冷渲染终态，再看最终源码审查、全新BBox布局、
    风险帧、TTS和一致性。
@@ -16,7 +17,7 @@
    Reviewer、BBox 和风险探测器给出的 high/blocking 只是候选证据，不得仅凭其
    严重度原样升级。
 7. 不输出总分。每个 issue 必须引用工具证据 id。
-8. Reviewer 发现的问题必须按下方“实用交付复核规则”二次筛选；只把符合规则、
+8. 已注入 Reviewer 回执中的问题必须按下方“实用交付复核规则”二次筛选；只把符合规则、
    证据充分且可操作的问题写入 issues。Reviewer 未完成时禁止提交。
    数学Reviewer证据 id 使用 `reviewer:math_geometry_reviewer`，动画Reviewer
    证据 id 使用 `reviewer:animation_lifecycle_reviewer`。

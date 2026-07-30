@@ -58,8 +58,12 @@ class FinalAssuranceAgent:
         reviewers, reviewer_records = _native_reviewers(
             self.runtime, self.profile.model, case, verification
         )
+        _validate_reviewers(reviewers)
         prompt = PROMPT.read_text(encoding="utf-8") + (
             f"\n\ncase_key: {case.key}\n题目：{case.question}\n"
+            "两路 Reviewer 已由编排器在独立原生 Read 会话中完成，"
+            "不要再调用 Agent 工具。以下回执是本次终审的只读证据：\n"
+            f"{json.dumps(reviewers, ensure_ascii=False)}\n"
         )
         request = AgentRunRequest(
             run_id=f"assurance-{case.key}",
@@ -81,7 +85,6 @@ class FinalAssuranceAgent:
             effort="low",
         )
         result = self.runtime.run(request)
-        _validate_reviewers(reviewers)
         reports = {
             name: report.as_dict() for name, report in tools.reports.items()
         }

@@ -11,6 +11,8 @@ def test_final_assurance_prompt_contains_practical_delivery_baseline() -> None:
     assert "实际视频未见异常时，不得报告为 high/blocking" in text
     assert "错误高亮" in text
     assert "目标转化”而不是循环论证" in text
+    assert "不得再次调用 Agent" in text
+    assert "两个独立原生 Read 会话" in text
 
 
 def test_specialist_reviewers_distinguish_schematic_and_visible_errors() -> None:
