@@ -44,9 +44,7 @@ class RuntimeToolchain:
             python_executable=python_executable,
             environment=environment,
             scene_name=scene_name,
-            cache_dir=(
-                Path(artifact_root) / "render_cache" if render_cache else None
-            ),
+            cache_dir=(Path(artifact_root) / "render_cache" if render_cache else None),
         )
         self._probe = BBoxProbe(
             source_workspace=source_workspace,
@@ -181,6 +179,9 @@ class RealRevisionValidator:
             "video_path": str(result.video_path) if result.video_path else None,
             "duration_seconds": result.duration_seconds,
             "error": result.error,
+            "render_diagnostic": (
+                None if result.ok else _render_diagnostic(result.revision_dir)
+            ),
         }
         _persist_report(
             self._toolchain,
@@ -198,15 +199,40 @@ class RealRevisionValidator:
             passed=result.ok,
             improved=result.ok,
             summary=(
-                "real Manim render passed"
-                if result.ok
-                else "real Manim render failed"
+                "real Manim render passed" if result.ok else "real Manim render failed"
             ),
             details=details,
             revision_id=revision.revision_id,
             code_hash=revision.code_hash,
             problem_hash=problem_hash,
         )
+
+
+def _render_diagnostic(revision_dir: Path) -> dict[str, object]:
+    stderr_path = revision_dir / "render.stderr.log"
+    stdout_path = revision_dir / "render.stdout.log"
+    stderr_tail = _bounded_log_tail(stderr_path)
+    return {
+        "stderr_tail": stderr_tail,
+        "stdout_tail": "" if stderr_tail else _bounded_log_tail(stdout_path),
+        "stderr_log_path": str(stderr_path),
+        "stdout_log_path": str(stdout_path),
+        "truncated": (_log_size(stderr_path) > len(stderr_tail.encode("utf-8"))),
+    }
+
+
+def _bounded_log_tail(
+    path: Path, *, max_lines: int = 80, max_chars: int = 6_000
+) -> str:
+    if not path.is_file():
+        return ""
+    text = path.read_text(encoding="utf-8", errors="replace")
+    tail = "\n".join(text.splitlines()[-max_lines:])
+    return tail[-max_chars:]
+
+
+def _log_size(path: Path) -> int:
+    return path.stat().st_size if path.is_file() else 0
 
 
 class RealLayoutInspector:

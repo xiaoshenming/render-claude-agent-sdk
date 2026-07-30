@@ -1,0 +1,11 @@
+#!/bin/sh
+set -eu
+
+exec docker run --rm \
+  --network none \
+  --volume /data:/data \
+  --volume /tmp:/tmp \
+  --workdir "$PWD" \
+  --entrypoint ffprobe \
+  "${MANIM_DOCKER_IMAGE:-mathpi-manim-rsvg:20260729}" \
+  "$@"

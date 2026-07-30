@@ -17,7 +17,11 @@ from manim_quality.agents._runtime_models import CorrectableOutputError
 from manim_quality.agents.budget import BudgetLimits
 from manim_quality.agents.claude_sdk import ClaudeSdkBackend
 from manim_quality.agents.managed_tools import ManagedToolGrant, ToolEffect
-from manim_quality.agents.profile import operator_profile, reviewer_profile
+from manim_quality.agents.profile import (
+    assurance_profile,
+    operator_profile,
+    reviewer_profile,
+)
 from manim_quality.agents.read_tools import ReadonlyToolGrant
 from manim_quality.agents.runtime import AgentRunFailed, AgentRunRequest, AgentRuntime
 from manim_quality.agents.subagents import NativeSubagentSpec
@@ -345,17 +349,18 @@ def test_sdk_operator_mounts_and_audits_mutating_managed_tool(
     solution = solution_tool()
 
     async def fake_query(*, prompt, options):
-        assert options.tools == ["Agent"]
+        assert options.tools == ["Edit", "Read"]
         assert options.allowed_tools == [
-            "Agent",
+            "Edit",
+            "Read",
             solution.sdk_name,
             managed.sdk_name,
         ]
-        assert "Agent" not in options.disallowed_tools
-        assert "Task" not in options.disallowed_tools
+        assert "Agent" in options.disallowed_tools
+        assert "Task" in options.disallowed_tools
         assert "Bash" in options.disallowed_tools
-        assert "Edit" in options.disallowed_tools
-        assert "Read" in options.disallowed_tools
+        assert "Edit" not in options.disallowed_tools
+        assert "Read" not in options.disallowed_tools
         assert "Write" in options.disallowed_tools
         pre = options.hooks["PreToolUse"][0].hooks[0]
         post = options.hooks["PostToolUse"][0].hooks[0]
@@ -1162,9 +1167,9 @@ def test_sdk_runs_foreground_native_reviewer_and_archives_tool_result(
 
     run_request = replace(
         request(tmp_path, candidate),
-        profile=operator_profile(
+        profile=assurance_profile(
             model="fake-model",
-            prompt_version="quality-operator-v2",
+            prompt_version="quality-assurance-v2",
         ),
         readable_paths=(),
         read_tools=(relation,),

@@ -127,6 +127,20 @@ def test_apply_replacement_rejects_invalid_result() -> None:
         )
 
 
+def test_extract_reports_accidental_latex_control_character() -> None:
+    source = (
+        "class Solution(BaseConfigScene):\n"
+        "    def construct(self):\n"
+        '        MathTex("$\x0crac{1}{2}$")\n'
+    )
+
+    with pytest.raises(
+        SolutionSourceError,
+        match="form-feed control character.*escape LaTeX",
+    ):
+        extract_solution(source)
+
+
 @pytest.mark.parametrize(
     "escaped",
     [

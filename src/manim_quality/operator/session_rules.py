@@ -28,7 +28,7 @@ def validate_finding_scope(
         item = findings.get(finding_id)
         if item is None:
             raise ValueError(f"unknown finding_id: {finding_id}")
-        if item.category is not expected:
+        if expected is FindingCategory.LAYOUT and item.category is not expected:
             raise ValueError(f"finding category does not match {scope} patch")
 
 
@@ -56,10 +56,6 @@ def validate_patch_transition(
         raise InvalidSessionTransition("findings must be recorded before patch")
     if len(attempts) - 1 >= max_patch_attempts:
         raise InvalidSessionTransition("patch attempt budget exhausted")
-    lineage = _revision_lineage(attempts, current.revision_id)
-    if any(item.scope is PatchScope.LAYOUT for item in lineage):
-        if scope is PatchScope.LOGIC:
-            raise InvalidSessionTransition("logic patch is forbidden after layout")
     current_validation = validations.get(current.revision_id)
     if current.revision_id != "R0":
         if current_validation is None:
@@ -90,7 +86,7 @@ def validate_recovery_revision(
     validations: Mapping[str, object],
 ) -> None:
     if target.revision_id == current.revision_id:
-        raise ValueError("recovery target is already current")
+        return
     if target.revision_id == "R0":
         return
     record = validations.get(target.revision_id)
@@ -161,10 +157,10 @@ def patch_budget_for_blocking(blocking_count: int) -> int:
     if isinstance(blocking_count, bool) or not isinstance(blocking_count, int):
         raise TypeError("blocking_count must be an integer")
     if blocking_count <= 2:
-        return 5
+        return 12
     if blocking_count <= 8:
-        return 6
-    return 7
+        return 16
+    return 20
 
 
 def require_blocking_findings_repaired(

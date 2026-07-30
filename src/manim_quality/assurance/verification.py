@@ -2,20 +2,17 @@ from __future__ import annotations
 
 import os
 import sys
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from pathlib import Path
 
 from manim_quality.contracts._json_values import thaw_json_object
-from manim_quality.operator.reviewers import build_reviewer_specs
 from manim_quality.operator.runtime_tools import (
     RealLayoutInspector,
     RealRevisionValidator,
     RuntimeToolchain,
     geometry_sidecar_runner,
 )
-from manim_quality.operator.services import BasicRelationChecker
 from manim_quality.operator.session import QualitySession
-from manim_quality.operator.toolset import build_quality_tools
 
 from .models import AssuranceCase, ToolReport
 
@@ -52,18 +49,6 @@ class AssuranceVerification:
         )
         self.layout = RealLayoutInspector(toolchain)
         self.validator = RealRevisionValidator(toolchain)
-        all_tools = build_quality_tools(
-            session=self.session,
-            relation_checker=BasicRelationChecker(),
-            layout_inspector=self.layout,
-            revision_validator=self.validator,
-        )
-        self.reviewer_tools = tuple(
-            replace(tool, max_calls=12) if tool.name == "check_relation" else tool
-            for tool in all_tools
-            if tool.name in {"read_solution", "check_relation"}
-        )
-        self.reviewers = build_reviewer_specs(self.reviewer_tools, effort="low")
         self.repo = repo
 
     async def inspect_render(self) -> ToolReport:

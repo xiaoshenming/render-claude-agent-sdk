@@ -76,6 +76,7 @@ def apply_solution_replacement(
 def _locate_solution(source: str) -> _LocatedSolution:
     if not isinstance(source, str):
         raise TypeError("source must be str")
+    _reject_control_characters(source)
     try:
         tree = ast.parse(source)
     except SyntaxError as error:
@@ -122,3 +123,13 @@ def _locate_solution(source: str) -> _LocatedSolution:
         sha256=sha256_text(solution),
     )
     return _LocatedSolution(view, start_offset, end_offset)
+
+
+def _reject_control_characters(source: str) -> None:
+    for value, label in (("\x0c", "form-feed"), ("\x0b", "vertical-tab")):
+        if value in source:
+            line = source[: source.index(value)].count("\n") + 1
+            raise SolutionSourceError(
+                f"invalid {label} control character at line {line}; "
+                "escape LaTeX backslashes explicitly"
+            )

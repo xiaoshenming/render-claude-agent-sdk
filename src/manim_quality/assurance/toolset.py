@@ -76,10 +76,7 @@ class AssuranceToolset:
         grants.append(
             self._grant("inspect_risk_frames", self._run_risk_frames, chars=80_000)
         )
-        reviewer_tools = (
-            self.verification.reviewer_tools if self.verification is not None else ()
-        )
-        return (*grants, *reviewer_tools)
+        return tuple(grants)
 
     def validate_output(self, value) -> None:
         self._record_output_attempt(value)

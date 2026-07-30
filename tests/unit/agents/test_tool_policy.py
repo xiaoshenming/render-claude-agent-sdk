@@ -38,3 +38,19 @@ def test_tool_input_policy_can_explicitly_clamp_safe_integer_maximums() -> None:
 
     assert normalized["limit"] == 160
     assert normalized["file_path"] == "candidate.py"
+
+
+def test_tool_input_policy_can_normalize_against_live_state() -> None:
+    current = {"offset": 20, "limit": 40}
+    policy = ToolInputPolicy(
+        max_calls=2,
+        required_fields=("offset", "limit"),
+        input_normalizer=lambda value: {**value, **current},
+    )
+
+    first = policy.normalize({"file_path": "candidate.py", "offset": 1, "limit": 2})
+    current.update(offset=22, limit=47)
+    second = policy.normalize({"file_path": "candidate.py", "offset": 20, "limit": 40})
+
+    assert (first["offset"], first["limit"]) == (20, 40)
+    assert (second["offset"], second["limit"]) == (22, 47)

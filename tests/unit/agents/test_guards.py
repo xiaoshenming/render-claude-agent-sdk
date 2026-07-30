@@ -11,8 +11,8 @@ from manim_quality.agents.guards import (
 )
 from manim_quality.agents.managed_tools import ManagedToolGrant, ToolEffect
 from manim_quality.agents.profile import (
+    assurance_profile,
     coder_profile,
-    operator_profile,
     reviewer_profile,
 )
 from manim_quality.agents.read_tools import ReadonlyToolGrant
@@ -323,7 +323,7 @@ def test_guard_enforces_foreground_named_reviewer_boundaries(
 
     guard = ToolGuard(
         workspace=tmp_path,
-        profile=operator_profile(model="test", prompt_version="v1"),
+        profile=assurance_profile(model="test", prompt_version="v1"),
         readable_paths=(),
         editable_paths=(),
         read_tools=(tool,),
@@ -375,7 +375,7 @@ def test_guard_rejects_background_or_implicit_reviewer(
     )
     guard = ToolGuard(
         workspace=tmp_path,
-        profile=operator_profile(model="test", prompt_version="v1"),
+        profile=assurance_profile(model="test", prompt_version="v1"),
         readable_paths=(),
         editable_paths=(),
         read_tools=(tool,),
@@ -396,7 +396,7 @@ def test_failed_parent_mutation_can_refund_per_tool_quota(tmp_path: Path) -> Non
     tool = mutation_grant()
     guard = ToolGuard(
         workspace=tmp_path,
-        profile=operator_profile(model="test", prompt_version="v1"),
+        profile=assurance_profile(model="test", prompt_version="v1"),
         readable_paths=(),
         editable_paths=(),
         managed_tools=(tool,),

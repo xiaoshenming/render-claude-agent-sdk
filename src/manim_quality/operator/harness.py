@@ -34,7 +34,7 @@ def _prepared_session_impl(
     session = QualitySession(
         problem_text=problem_text,
         candidate_code=candidate_code,
-        max_patch_attempts=max_patch_attempts or 5,
+        max_patch_attempts=max_patch_attempts or 12,
     )
     baseline_layout = anyio.run(
         inspector.inspect,

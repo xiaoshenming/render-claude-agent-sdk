@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 from manim_quality.agents.profile import assurance_profile
 from manim_quality.agents.runtime import AgentRunRequest, AgentRuntime
 from manim_quality.contracts._json_values import thaw_json_object
+from manim_quality.operator.reviewers import run_reviewers
 
 from .contracts import ASSURANCE_OUTPUT_SCHEMA
 from .models import AssuranceCase
@@ -54,6 +55,9 @@ class FinalAssuranceAgent:
             else None
         )
         tools = AssuranceToolset(case, output_dir, verification)
+        reviewers, reviewer_records = _native_reviewers(
+            self.runtime, self.profile.model, case, verification
+        )
         prompt = PROMPT.read_text(encoding="utf-8") + (
             f"\n\ncase_key: {case.key}\n题目：{case.question}\n"
         )
@@ -73,20 +77,43 @@ class FinalAssuranceAgent:
             reserved_cache_write_tokens=0,
             output_validator=tools.validate_output,
             managed_tools=tools.grants(),
-            subagents=verification.reviewers if verification is not None else (),
+            subagents=(),
             effort="low",
         )
         result = self.runtime.run(request)
-        reviewers = tuple(
-            thaw_json_object(item) for item in result.subagent_results
-        )
         _validate_reviewers(reviewers)
         return FinalAssuranceResult(
             output=thaw_json_object(result.structured_output),
             reports={name: report.as_dict() for name, report in tools.reports.items()},
             reviewers=reviewers,
-            call_record=result.record,
+            call_record=_merge_reviewer_records(result.record, reviewer_records),
         )
+
+
+def _native_reviewers(runtime, model, case, verification):
+    if verification is None or case.source_path is None:
+        return (), ()
+    return run_reviewers(
+        runtime,
+        candidate_path=case.source_path,
+        model=model,
+        effort="low",
+    )
+
+
+def _merge_reviewer_records(record, reviewer_records):
+    for reviewer in reviewer_records:
+        record = replace(
+            record,
+            usage=record.usage.plus(reviewer.usage),
+            turns=record.turns + reviewer.turns,
+            observed_model_rounds=(
+                record.observed_model_rounds + reviewer.observed_model_rounds
+            ),
+            tool_calls=tuple(reviewer.tool_calls) + tuple(record.tool_calls),
+            elapsed_ms=record.elapsed_ms + reviewer.elapsed_ms,
+        )
+    return record
 
 
 def _validate_reviewers(reviewers: tuple[dict[str, object], ...]) -> None:

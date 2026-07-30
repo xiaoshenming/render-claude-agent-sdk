@@ -43,11 +43,11 @@ def test_profile_versions_and_model_must_be_explicit() -> None:
         )
 
 
-def test_operator_profile_exposes_only_native_agent_builtin() -> None:
+def test_operator_profile_exposes_native_read_and_edit() -> None:
     operator = operator_profile(
         model="model-a",
         prompt_version="quality-operator-v1",
     )
 
     assert operator.role is AgentRole.OPERATOR
-    assert operator.allowed_tools == frozenset({"Agent"})
+    assert operator.allowed_tools == frozenset({"Read", "Edit"})

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 
 from manim_quality.contracts._json_values import freeze_json_object
@@ -15,6 +15,9 @@ class ToolInputPolicy:
     integer_minimums: Mapping[str, int] = field(default_factory=dict)
     integer_maximums: Mapping[str, int] = field(default_factory=dict)
     clamp_integer_maximums: bool = False
+    input_normalizer: Callable[[Mapping[str, object]], Mapping[str, object]] | None = (
+        None
+    )
 
     def __post_init__(self) -> None:
         if (
@@ -43,20 +46,24 @@ class ToolInputPolicy:
         _validate_bounds(self.integer_maximums, "integer_maximums")
         if not isinstance(self.clamp_integer_maximums, bool):
             raise TypeError("clamp_integer_maximums must be bool")
+        if self.input_normalizer is not None and not callable(self.input_normalizer):
+            raise TypeError("input_normalizer must be callable or None")
 
     def validate(self, value: Mapping[str, object]) -> None:
         self.normalize(value)
 
     def normalize(self, value: Mapping[str, object]) -> Mapping[str, object]:
-        missing = set(self.required_fields) - value.keys()
+        normalized = dict(value)
+        if self.input_normalizer is not None:
+            normalized = dict(self.input_normalizer(normalized))
+        missing = set(self.required_fields) - normalized.keys()
         if missing:
             raise ValueError(f"required tool fields are missing: {sorted(missing)}")
-        _check_bounds(value, self.integer_minimums, minimum=True)
-        normalized = dict(value)
+        _check_bounds(normalized, self.integer_minimums, minimum=True)
         if self.clamp_integer_maximums:
             _clamp_maximums(normalized, self.integer_maximums)
         else:
-            _check_bounds(value, self.integer_maximums, minimum=False)
+            _check_bounds(normalized, self.integer_maximums, minimum=False)
         return freeze_json_object(normalized, "normalized_tool_policy_input")
 
 

@@ -24,7 +24,6 @@ FINDING_SCHEMA = schema(
     ),
 )
 
-READ_SOLUTION_SCHEMA = schema({"revision_id": STRING}, ("revision_id",))
 CHECK_RELATION_SCHEMA = schema(
     {
         "relation": STRING,
@@ -43,22 +42,16 @@ RECORD_FINDINGS_SCHEMA = schema(
     },
     ("findings",),
 )
-APPLY_PATCH_SCHEMA = schema(
-    {
-        "base_revision_id": STRING,
-        "base_code_hash": STRING,
-        "scope": {"type": "string", "enum": ["logic", "layout"]},
-        "old_text": STRING,
-        "new_text": STRING,
-        "finding_ids": {"type": "array", "minItems": 1, "maxItems": 12},
-    },
-    (
-        "base_revision_id",
-        "base_code_hash",
-        "scope",
-        "old_text",
-        "new_text",
-        "finding_ids",
-    ),
-)
 REVISION_INPUT_SCHEMA = schema({"revision_id": STRING}, ("revision_id",))
+CURRENT_REVISION_SCHEMA = schema(
+    {
+        "revision_id": STRING,
+        "finding_ids": {
+            "type": "array",
+            "items": STRING,
+            "maxItems": 12,
+            "uniqueItems": True,
+        },
+    },
+    ("revision_id", "finding_ids"),
+)

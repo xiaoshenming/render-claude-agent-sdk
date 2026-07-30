@@ -10,6 +10,12 @@ from ._claude_hook_values import (
     ClaudeSdkProtocolError,
     normalize_sdk_input,
 )
+from ._guard_primitives import (
+    DuplicatePatch,
+    DuplicateRead,
+    PathDenied,
+    ToolDenied,
+)
 from ._runtime_models import OutputRejected
 from .managed_tools import ManagedToolInputError
 
@@ -23,6 +29,19 @@ async def pre_tool(state, data, tool_use_id, context) -> dict[str, object]:
             return _handle_output_rejection(state, error, tool_use_id)
         except ManagedToolInputError as error:
             return _deny(str(error), continue_run=True)
+        except (DuplicatePatch, DuplicateRead) as error:
+            return _deny(str(error), continue_run=True)
+        except PathDenied as error:
+            if data.get("tool_name") == "Read":
+                return _deny(
+                    f"{error}. Read only the authorized Solution range.",
+                    continue_run=True,
+                )
+            raise
+        except ToolDenied as error:
+            if "tool call limit exceeded" in str(error):
+                return _deny(str(error), continue_run=True)
+            raise
         except Exception as error:
             state._failure = error
             return _deny("tool authorization failed")
@@ -78,7 +97,9 @@ def _authorize_tool(state, data, tool_use_id):
             str(normalized["subagent_type"]),
             tool_use_id,
         )
-    if tool_name.endswith("__read_solution") and agent_id is None:
+    if (
+        tool_name == "Read" or tool_name.endswith("__read_solution")
+    ) and agent_id is None:
         state._parent_solution_read = True
     return normalized
 
@@ -87,9 +108,7 @@ def _enforce_findings_prerequisites(state, tool_name, agent_id) -> None:
     if agent_id is not None or not tool_name.endswith("__record_findings"):
         return
     if not state._parent_solution_read:
-        raise ClaudeSdkProtocolError(
-            "parent must call read_solution before findings"
-        )
+        raise ClaudeSdkProtocolError("parent must use native Read before findings")
     if state._subagents.completed_names != state.required_subagent_names:
         raise ClaudeSdkProtocolError(
             "both Reviewer ToolResults are required before findings"
@@ -98,9 +117,7 @@ def _enforce_findings_prerequisites(state, tool_name, agent_id) -> None:
 
 def _handle_output_rejection(state, error, tool_use_id) -> dict[str, object]:
     if state._output_corrections != 0:
-        failure = ClaudeSdkProtocolError(
-            "structured output correction limit exceeded"
-        )
+        failure = ClaudeSdkProtocolError("structured output correction limit exceeded")
         state._failure = failure
         return _deny("structured output correction limit exceeded")
     state._controls.record_output_correction(str(error))
@@ -158,9 +175,7 @@ def _prepare_structured_retry(state, tool_id: str, error_text: str):
         state._failure = error
         return error
     if state._output_corrections >= 2:
-        error = ClaudeSdkProtocolError(
-            "structured output correction limit exceeded"
-        )
+        error = ClaudeSdkProtocolError("structured output correction limit exceeded")
         state._failure = error
         return error
     state._pending_tools.remove(tool_id)

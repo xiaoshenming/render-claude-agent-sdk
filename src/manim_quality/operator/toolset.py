@@ -1,20 +1,21 @@
-"""Eight structured MCP tools exposed to the parent and Reviewers."""
+"""Evidence and validation tools used alongside native Read/Edit."""
 
 from __future__ import annotations
 
 import json
+from pathlib import Path
+from threading import Lock
 
-from manim_quality.agents.managed_tools import ManagedToolGrant, ToolEffect
+from manim_quality.agents.managed_tools import ManagedToolGrant
 from manim_quality.contracts._json_values import thaw_json_object
 from manim_quality.revisions.fingerprint import sha256_text
 
-from .models import ValidationOutcome
+from .models import FindingCategory, PatchScope, ValidationOutcome
 from .ports import LayoutInspector, RelationChecker, RevisionValidator
 from .session import QualitySession
 from .source_view import extract_solution
 from .tool_contracts import (
     bind_findings,
-    bind_patch,
     bind_relation,
     bind_revision_id,
 )
@@ -27,43 +28,39 @@ def build_quality_tools(
     relation_checker: RelationChecker,
     layout_inspector: LayoutInspector,
     revision_validator: RevisionValidator,
+    candidate_path: Path | None = None,
 ) -> tuple[ManagedToolGrant, ...]:
     handlers = _Handlers(
         session,
         relation_checker,
         layout_inspector,
         revision_validator,
+        candidate_path,
     )
     return register_quality_tools(handlers)
 
 
 class _Handlers:
-    def __init__(self, session, relation, layout, validator) -> None:
+    def __init__(self, session, relation, layout, validator, candidate_path) -> None:
         self.session = session
         self.relation = relation
         self.layout = layout
         self.validator = validator
-
-    async def read_solution(self, arguments):
-        revision_id = bind_revision_id(arguments)
-        revision = self.session.get_revision(revision_id)
-        self.session.mark_solution_read(revision_id)
-        solution = extract_solution(revision.code)
-        return _json_text(
-            {
-                "revision_id": revision.revision_id,
-                "code_hash": revision.code_hash,
-                "solution_hash": solution.sha256,
-                "start_line": solution.start_line,
-                "end_line": solution.end_line,
-                "source": solution.source,
-            }
+        self.candidate_path = (
+            Path(candidate_path).resolve(strict=True)
+            if candidate_path is not None
+            else None
         )
+        # Managed tools may execute in different event-loop threads.  An
+        # anyio.Lock only serializes tasks in one loop and allowed two
+        # validators to create the same immutable revision concurrently.
+        self._sync_lock = Lock()
 
     async def check_relation(self, arguments):
         return _json_text(await self.relation.check(bind_relation(arguments)))
 
     async def record_findings(self, arguments):
+        self.session.mark_solution_read(self.session.current_revision.revision_id)
         findings = bind_findings(arguments)
         self.session.record_findings(findings)
         return _json_text(
@@ -74,23 +71,16 @@ class _Handlers:
             }
         )
 
-    async def apply_patch(self, arguments):
-        values = bind_patch(arguments)
-        current = self.session.current_revision
-        if values["base_revision_id"] != current.revision_id:
-            raise ValueError("base revision is stale")
-        if values["base_code_hash"] != current.code_hash:
-            raise ValueError("base code hash is stale")
-        revision = self.session.apply_patch(
-            scope=values["scope"],
-            old_text=values["old_text"],
-            new_text=values["new_text"],
-            finding_ids=values["finding_ids"],
-        )
-        return _json_text(_patch_receipt(current, revision))
-
     async def recover_revision(self, arguments):
-        revision = self.session.recover_revision(bind_revision_id(arguments))
+        revision_id = bind_revision_id(arguments)
+        if revision_id == "best_render_passed":
+            evidence = self.session.best_validated_evidence()
+            revision_id = (
+                str(evidence["revision_id"]) if evidence is not None else "R0"
+            )
+        revision = self.session.recover_revision(revision_id)
+        if self.candidate_path is not None:
+            self.candidate_path.write_text(revision.code, encoding="utf-8")
         return _json_text(
             {
                 "status": "recovered",
@@ -101,9 +91,8 @@ class _Handlers:
         )
 
     async def inspect_layout(self, arguments):
-        revision = _current_revision(
-            self.session,
-            bind_revision_id(arguments),
+        revision = await self._sync_native_candidate(
+            _bind_finding_ids(arguments)
         )
         report = await self.layout.inspect(
             revision,
@@ -134,9 +123,8 @@ class _Handlers:
         return text
 
     async def validate_revision(self, arguments):
-        revision = _current_revision(
-            self.session,
-            bind_revision_id(arguments),
+        revision = await self._sync_native_candidate(
+            _bind_finding_ids(arguments)
         )
         outcome = await self.validator.validate(
             revision,
@@ -163,7 +151,14 @@ class _Handlers:
         return _json_text({**receipt, **_budget_signal(self.session)})
 
     async def submit_revision(self, arguments):
-        revision = self.session.submit(bind_revision_id(arguments))
+        del arguments
+        current = self.session.current_revision
+        if (
+            self.candidate_path is not None
+            and self.candidate_path.read_text(encoding="utf-8") != current.code
+        ):
+            raise ValueError("native Edit must be validated before submission")
+        revision = self.session.submit(current.revision_id)
         return _json_text(
             {
                 "status": "submitted",
@@ -173,18 +168,67 @@ class _Handlers:
             }
         )
 
+    async def _sync_native_candidate(self, finding_ids=()):
+        with self._sync_lock:
+            current = self.session.current_revision
+            if self.candidate_path is None:
+                return current
+            edited = self.candidate_path.read_text(encoding="utf-8")
+            if edited == current.code:
+                _require_current_binding(current, finding_ids)
+                return current
+            before = extract_solution(current.code)
+            after = extract_solution(edited)
+            scope = _native_edit_scope(self.session, finding_ids)
+            self.session.mark_solution_read(current.revision_id)
+            return self.session.apply_patch(
+                scope=scope,
+                old_text=before.source,
+                new_text=after.source,
+                finding_ids=finding_ids,
+            )
 
-def _patch_receipt(current, revision) -> dict[str, object]:
-    return {
-        "status": "applied",
-        "effect": ToolEffect.REVISION_MUTATION.value,
-        "base_revision_id": revision.parent_revision_id,
-        "parent_code_hash": current.code_hash,
-        "new_revision_id": revision.revision_id,
-        "new_code_hash": revision.code_hash,
-        "patch_hash": revision.patch_hash,
-        "scope": revision.scope.value,
-    }
+
+def _bind_finding_ids(arguments) -> tuple[str, ...]:
+    values = arguments.get("finding_ids")
+    if not isinstance(values, (list, tuple)) or len(values) > 12:
+        raise ValueError("finding_ids must be an array of at most 12 items")
+    finding_ids = tuple(values)
+    if any(not isinstance(item, str) or not item.strip() for item in finding_ids):
+        raise ValueError("finding_ids must contain non-empty strings")
+    if len(set(finding_ids)) != len(finding_ids):
+        raise ValueError("finding_ids must not contain duplicates")
+    return finding_ids
+
+
+def _native_edit_scope(session, finding_ids: tuple[str, ...]) -> PatchScope:
+    if not finding_ids:
+        raise ValueError("native Edit validation requires addressed finding_ids")
+    findings = {item.finding_id: item for item in session.findings}
+    unknown = set(finding_ids) - set(findings)
+    if unknown:
+        raise ValueError(f"unknown finding_ids: {sorted(unknown)}")
+    categories = {findings[item].category for item in finding_ids}
+    # A native Edit can accumulate several independently authored changes
+    # before the next managed validation call. Treat that combined revision as
+    # logic-capable when any bound finding is logical, while preserving all
+    # finding IDs in the revision ledger.
+    return (
+        PatchScope.LOGIC
+        if FindingCategory.LOGIC in categories
+        else PatchScope.LAYOUT
+    )
+
+
+def _require_current_binding(current, finding_ids: tuple[str, ...]) -> None:
+    if current.revision_id == "R0":
+        if finding_ids:
+            raise ValueError("R0 validation must use empty finding_ids")
+        return
+    if finding_ids != current.finding_ids:
+        raise ValueError(
+            "finding_ids must exactly match the current native Edit revision"
+        )
 
 
 def _validation_receipt(
@@ -208,13 +252,6 @@ def _budget_signal(session: QualitySession) -> dict[str, int]:
         "patches_remaining": session.patches_remaining,
         "findings_batches_remaining": session.finding_batches_remaining,
     }
-
-
-def _current_revision(session: QualitySession, revision_id: str):
-    current = session.current_revision
-    if revision_id != current.revision_id:
-        raise ValueError("revision_id is stale")
-    return current
 
 
 def _json_text(value: object) -> str:

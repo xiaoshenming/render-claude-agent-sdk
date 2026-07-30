@@ -1,339 +1,332 @@
+import asyncio
 import json
+from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 
 import anyio
 import pytest
 
 from manim_quality.operator.models import ValidationOutcome
 from manim_quality.operator.session import QualitySession
+from manim_quality.operator.session_errors import InvalidSessionTransition
 from manim_quality.operator.toolset import build_quality_tools
 
-PROBLEM = "Prove that the two constructed lines are parallel."
+PROBLEM = "Show why the line points right."
 CODE = f'''"""{PROBLEM}"""
 from manim import *
 
 class Solution(BaseConfigScene):
     def construct(self):
-        line = Line(LEFT, RIGHT)
-        self.add(line)
+        arrow = Arrow(LEFT, RIGHT)
+        self.add(arrow)
 '''
 
 
-class RelationStub:
-    def __init__(self) -> None:
-        self.calls = []
-
+class Relation:
     async def check(self, request):
-        self.calls.append(request)
-        return {"holds": True, "residual": 0.0}
+        return {"holds": request["expected"] is True}
 
 
-class LayoutStub:
-    def __init__(self) -> None:
-        self.revisions = []
-
+class Layout:
     async def inspect(self, revision, problem_hash):
-        self.revisions.append(revision.revision_id)
         return {
             "revision_id": revision.revision_id,
             "code_hash": revision.code_hash,
             "problem_hash": problem_hash,
-            "blocking_count": 1 if revision.revision_id == "R0" else 0,
-            "issues": (
-                [{"issue_id": "overlap-1", "kind": "overlap"}]
-                if revision.revision_id == "R0"
-                else []
-            ),
+            "blocking_count": 0,
+            "issues": [],
         }
 
 
-class ValidatorStub:
-    def __init__(self) -> None:
-        self.revisions = []
-
+class Validator:
     async def validate(self, revision, findings, problem_hash):
-        self.revisions.append(revision.revision_id)
         return ValidationOutcome(
-            passed=True,
-            improved=True,
-            summary="compile and directed checks passed",
-            details={"blocking_count": 0},
-            revision_id=revision.revision_id,
-            code_hash=revision.code_hash,
-            problem_hash=problem_hash,
+            True,
+            True,
+            "passed",
+            {"finding_count": len(findings)},
+            revision.revision_id,
+            revision.code_hash,
+            problem_hash,
         )
 
 
-class RegistryHandlers:
-    async def read_solution(self, arguments):
-        return "{}"
-
-    async def check_relation(self, arguments):
-        return "{}"
-
-    async def record_findings(self, arguments):
-        return "{}"
-
-    async def apply_patch(self, arguments):
-        return "{}"
-
-    async def recover_revision(self, arguments):
-        return "{}"
-
-    async def inspect_layout(self, arguments):
-        return "{}"
-
-    async def validate_revision(self, arguments):
-        return "{}"
-
-    async def submit_revision(self, arguments):
-        return "{}"
-
-
-def tool_fixture():
-    session = QualitySession(problem_text=PROBLEM, candidate_code=CODE)
-    relation = RelationStub()
-    layout = LayoutStub()
-    validator = ValidatorStub()
-    tools = build_quality_tools(
-        session=session,
-        relation_checker=relation,
-        layout_inspector=layout,
-        revision_validator=validator,
-    )
-    return session, relation, layout, validator, {
-        tool.name: tool for tool in tools
-    }
-
-
-def execute(tool, arguments):
+def _execute(tool, arguments):
     return json.loads(anyio.run(tool.execute, arguments).text)
 
 
-def prime_tools(tools, revision_id: str = "R0") -> None:
-    execute(tools["read_solution"], {"revision_id": revision_id})
+def _fixture(tmp_path: Path):
+    candidate = tmp_path / "candidate.py"
+    candidate.write_text(CODE, encoding="utf-8")
+    session = QualitySession(problem_text=PROBLEM, candidate_code=CODE)
+    tools = build_quality_tools(
+        session=session,
+        relation_checker=Relation(),
+        layout_inspector=Layout(),
+        revision_validator=Validator(),
+        candidate_path=candidate,
+    )
+    return session, candidate, {tool.name: tool for tool in tools}
 
 
-def test_toolset_exposes_exact_eight_mcp_capabilities() -> None:
-    *_items, tools = tool_fixture()
+def test_custom_read_and_edit_substitutes_are_removed(tmp_path: Path) -> None:
+    _session, _candidate, tools = _fixture(tmp_path)
 
-    assert tuple(tools) == (
-        "read_solution",
+    assert set(tools) == {
         "check_relation",
         "record_findings",
-        "apply_patch",
         "recover_revision",
         "inspect_layout",
         "validate_revision",
         "submit_revision",
-    )
-    # One initial read plus one read for each possible recovery branch.
-    assert tools["read_solution"].max_calls == 40
-    assert tools["record_findings"].max_calls == 4
-    assert tools["apply_patch"].max_calls == 5
-    # inspect covers one verification per patch plus the initial R0 pass.
-    assert tools["inspect_layout"].max_calls == 6
-    assert tools["validate_revision"].max_calls == 5
-    assert tools["check_relation"].max_calls == 40
+    }
+    assert "read_solution" not in tools
+    assert "apply_patch" not in tools
 
 
-def test_read_solution_returns_only_exact_solution_class() -> None:
-    session, *_items, tools = tool_fixture()
-
-    candidate = execute(tools["read_solution"], {"revision_id": "R0"})
-
-    assert candidate["revision_id"] == "R0"
-    assert candidate["code_hash"] == session.baseline.code_hash
-    assert candidate["start_line"] == 4
-    assert candidate["source"].startswith("class Solution(BaseConfigScene):")
-    assert "from manim import" not in candidate["source"]
-    assert PROBLEM not in candidate["source"]
-
-
-def test_relation_and_layout_tools_delegate_without_model_paths() -> None:
-    _session, relation, layout, _validator, tools = tool_fixture()
-
-    relation_result = execute(
-        tools["check_relation"],
-        {
-            "relation": "parallel",
-            "operands": [[1, 0], [2, 0]],
-            "expected": True,
-        },
-    )
-    layout_result = execute(
-        tools["inspect_layout"],
-        {"revision_id": "R0"},
+def test_native_file_edit_becomes_immutable_revision_on_validation(
+    tmp_path: Path,
+) -> None:
+    session, candidate, tools = _fixture(tmp_path)
+    finding = {
+        "finding_id": "logic-1",
+        "category": "logic",
+        "severity": "blocking",
+        "summary": "Direction explanation is missing.",
+        "acceptance_criteria": "Show and explain the rightward direction.",
+    }
+    _execute(tools["record_findings"], {"findings": [finding]})
+    candidate.write_text(
+        CODE.replace(
+            "self.add(arrow)",
+            'self.add(arrow, Text("right").next_to(arrow, UP))',
+        ),
+        encoding="utf-8",
     )
 
-    assert relation_result["holds"] is True
-    assert relation.calls[0]["relation"] == "parallel"
-    assert layout_result["blocking_count"] == 1
-    assert layout.revisions == ["R0"]
-
-
-def test_findings_patch_validation_and_submission_return_bound_receipts() -> None:
-    session, _relation, _layout, validator, tools = tool_fixture()
-    prime_tools(tools)
-    execute(
-        tools["record_findings"],
-        {
-            "findings": [
-                {
-                    "finding_id": "logic-1",
-                    "category": "logic",
-                    "severity": "blocking",
-                    "summary": "The line relation is incorrect.",
-                    "acceptance_criteria": "Directed relation check passes.",
-                }
-            ]
-        },
-    )
-    receipt = execute(
-        tools["apply_patch"],
-        {
-            "base_revision_id": "R0",
-            "base_code_hash": session.baseline.code_hash,
-            "scope": "logic",
-            "old_text": "Line(LEFT, RIGHT)",
-            "new_text": "Line(LEFT, 2 * RIGHT)",
-            "finding_ids": ["logic-1"],
-        },
-    )
-
-    assert receipt["base_revision_id"] == "R0"
-    assert receipt["parent_code_hash"] == session.baseline.code_hash
-    assert receipt["new_revision_id"] == "R1"
-    assert receipt["new_code_hash"] == session.current_revision.code_hash
-    assert receipt["patch_hash"] == session.current_revision.patch_hash
-    assert receipt["effect"] == "revision_mutation"
-
-    validation = execute(
+    receipt = _execute(
         tools["validate_revision"],
-        {"revision_id": "R1"},
-    )
-    execute(
-        tools["inspect_layout"],
-        {"revision_id": "R1"},
-    )
-    submitted = execute(
-        tools["submit_revision"],
-        {"revision_id": "R1"},
+        {"revision_id": "R0", "finding_ids": ["logic-1"]},
     )
 
-    assert validation["passed"] is True
-    assert validation["fingerprint"].startswith("sha256:")
-    assert validator.revisions == ["R1"]
-    assert submitted["submitted_revision_id"] == "R1"
-    assert submitted["code_hash"] == session.current_revision.code_hash
+    assert receipt["revision_id"] == "R1"
+    assert session.current_revision.revision_id == "R1"
+    assert session.current_revision.parent_revision_id == "R0"
+    assert session.current_revision.finding_ids == ("logic-1",)
 
 
-def test_record_findings_schema_declares_the_runtime_item_contract() -> None:
-    session, _relation, _layout, _validator, tools = tool_fixture()
-    del session
-    schema = tools["record_findings"].input_schema
-    item = schema["properties"]["findings"]["items"]
-
-    assert item["required"] == (
-        "finding_id",
-        "category",
-        "severity",
-        "summary",
-        "acceptance_criteria",
-    )
-    assert item["additionalProperties"] is False
-    assert item["properties"]["category"]["enum"] == ("logic", "layout")
-    assert item["properties"]["severity"]["enum"] == ("blocking", "warning")
-
-
-def test_patch_rejects_stale_revision_identity() -> None:
-    session, *_items, tools = tool_fixture()
-    prime_tools(tools)
-    execute(
-        tools["record_findings"],
+def test_combined_native_edit_binds_logic_and_layout_findings(
+    tmp_path: Path,
+) -> None:
+    session, candidate, tools = _fixture(tmp_path)
+    findings = [
         {
-            "findings": [
-                {
-                    "finding_id": "logic-1",
-                    "category": "logic",
-                    "severity": "blocking",
-                    "summary": "Wrong relation.",
-                    "acceptance_criteria": "Relation passes.",
-                }
-            ]
+            "finding_id": "logic-1",
+            "category": "logic",
+            "severity": "blocking",
+            "summary": "Direction explanation is missing.",
+            "acceptance_criteria": "Explain the direction.",
         },
+        {
+            "finding_id": "layout-1",
+            "category": "layout",
+            "severity": "blocking",
+            "summary": "Direction label overlaps the arrow.",
+            "acceptance_criteria": "Move the label above the arrow.",
+        },
+    ]
+    _execute(tools["record_findings"], {"findings": findings})
+    candidate.write_text(
+        CODE.replace(
+            "self.add(arrow)",
+            'self.add(arrow, Text("right").next_to(arrow, UP))',
+        ),
+        encoding="utf-8",
+    )
+    binding = {
+        "revision_id": "R0",
+        "finding_ids": ["logic-1", "layout-1"],
+    }
+
+    receipt = _execute(tools["validate_revision"], binding)
+    _execute(tools["inspect_layout"], binding)
+    submitted = _execute(
+        tools["submit_revision"],
+        {"revision_id": receipt["revision_id"]},
     )
 
-    with pytest.raises(ValueError, match="base code hash"):
-        execute(
-            tools["apply_patch"],
-            {
-                "base_revision_id": "R0",
-                "base_code_hash": "sha256:" + "0" * 64,
-                "scope": "logic",
-                "old_text": "Line(LEFT, RIGHT)",
-                "new_text": "Line(LEFT, UP)",
-                "finding_ids": ["logic-1"],
-            },
+    assert session.current_revision.finding_ids == ("logic-1", "layout-1")
+    assert submitted["submitted_revision_id"] == "R1"
+
+
+def test_submit_tool_has_retry_budget(tmp_path: Path) -> None:
+    _session, _candidate, tools = _fixture(tmp_path)
+
+    assert tools["submit_revision"].max_calls >= 4
+
+
+def test_parallel_validation_and_layout_share_one_native_revision(
+    tmp_path: Path,
+) -> None:
+    session, candidate, tools = _fixture(tmp_path)
+    finding = {
+        "finding_id": "logic-1",
+        "category": "logic",
+        "severity": "blocking",
+        "summary": "Direction explanation is missing.",
+        "acceptance_criteria": "Show the direction label.",
+    }
+    _execute(tools["record_findings"], {"findings": [finding]})
+    candidate.write_text(
+        CODE.replace("self.add(arrow)", "self.add(arrow.shift(UP))"),
+        encoding="utf-8",
+    )
+
+    async def run_both():
+        return await asyncio.gather(
+            tools["validate_revision"].execute(
+                {"revision_id": "R0", "finding_ids": ["logic-1"]}
+            ),
+            tools["inspect_layout"].execute(
+                {"revision_id": "R0", "finding_ids": ["logic-1"]}
+            ),
         )
 
+    validation, layout = anyio.run(run_both)
+
+    assert json.loads(validation.text)["revision_id"] == "R1"
+    assert json.loads(layout.text)["revision_id"] == "R1"
+    assert len(session.attempts) == 2
+
+
+def test_cross_thread_validation_and_layout_share_one_native_revision(
+    tmp_path: Path,
+) -> None:
+    session, candidate, tools = _fixture(tmp_path)
+    finding = {
+        "finding_id": "logic-1",
+        "category": "logic",
+        "severity": "blocking",
+        "summary": "Direction explanation is missing.",
+        "acceptance_criteria": "Show the direction label.",
+    }
+    _execute(tools["record_findings"], {"findings": [finding]})
+    candidate.write_text(
+        CODE.replace("self.add(arrow)", "self.add(arrow.shift(UP))"),
+        encoding="utf-8",
+    )
+    binding = {"revision_id": "R0", "finding_ids": ["logic-1"]}
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        futures = (
+            pool.submit(_execute, tools["validate_revision"], binding),
+            pool.submit(_execute, tools["inspect_layout"], binding),
+        )
+        validation, layout = (item.result() for item in futures)
+
+    assert validation["revision_id"] == "R1"
+    assert layout["revision_id"] == "R1"
+    assert len(session.attempts) == 2
+
+
+def test_recover_revision_restores_native_candidate_file(tmp_path: Path) -> None:
+    session, candidate, tools = _fixture(tmp_path)
+    finding = {
+        "finding_id": "logic-1",
+        "category": "logic",
+        "severity": "blocking",
+        "summary": "Direction explanation is missing.",
+        "acceptance_criteria": "Show the direction label.",
+    }
+    _execute(tools["record_findings"], {"findings": [finding]})
+    candidate.write_text(
+        CODE.replace("self.add(arrow)", "self.add(arrow.shift(UP))"),
+        encoding="utf-8",
+    )
+    _execute(
+        tools["validate_revision"],
+        {"revision_id": "R0", "finding_ids": ["logic-1"]},
+    )
+
+    receipt = _execute(tools["recover_revision"], {"revision_id": "R0"})
+
+    assert receipt["revision_id"] == "R0"
+    assert candidate.read_text(encoding="utf-8") == CODE
     assert session.current_revision.revision_id == "R0"
 
 
-def test_layout_tool_rejects_stale_evidence_identity() -> None:
-    class StaleLayout(LayoutStub):
-        async def inspect(self, revision, problem_hash):
-            report = await super().inspect(revision, problem_hash)
-            report["revision_id"] = "OTHER"
-            return report
+def test_recover_current_revision_overwrites_invalid_native_edit(
+    tmp_path: Path,
+) -> None:
+    session, candidate, tools = _fixture(tmp_path)
+    candidate.write_text("this is not valid Python )", encoding="utf-8")
 
-    session = QualitySession(problem_text=PROBLEM, candidate_code=CODE)
-    tools = build_quality_tools(
-        session=session,
-        relation_checker=RelationStub(),
-        layout_inspector=StaleLayout(),
-        revision_validator=ValidatorStub(),
+    receipt = _execute(tools["recover_revision"], {"revision_id": "R0"})
+
+    assert receipt["revision_id"] == "R0"
+    assert candidate.read_text(encoding="utf-8") == CODE
+    assert session.current_revision.revision_id == "R0"
+
+
+def test_recover_best_render_passed_falls_back_to_r0(
+    tmp_path: Path,
+) -> None:
+    session, candidate, tools = _fixture(tmp_path)
+    candidate.write_text("this is not valid Python )", encoding="utf-8")
+
+    receipt = _execute(
+        tools["recover_revision"],
+        {"revision_id": "best_render_passed"},
     )
-    by_name = {tool.name: tool for tool in tools}
 
-    with pytest.raises(ValueError, match="stale evidence"):
-        execute(by_name["inspect_layout"], {"revision_id": "R0"})
+    assert receipt["revision_id"] == "R0"
+    assert candidate.read_text(encoding="utf-8") == CODE
+    assert session.current_revision.revision_id == "R0"
 
 
-def test_findings_contract_rejects_malformed_nested_item() -> None:
-    *_items, tools = tool_fixture()
+def test_native_edit_requires_recorded_finding(tmp_path: Path) -> None:
+    _session, candidate, tools = _fixture(tmp_path)
+    candidate.write_text(
+        CODE.replace("self.add(arrow)", "self.add(arrow.shift(UP))"),
+        encoding="utf-8",
+    )
 
-    with pytest.raises(ValueError, match="finding"):
-        execute(
-            tools["record_findings"],
-            {"findings": [{"finding_id": "missing-fields"}]},
+    with pytest.raises(ValueError, match="addressed finding_ids"):
+        _execute(
+            tools["validate_revision"],
+            {"revision_id": "R0", "finding_ids": []},
         )
 
 
-def test_validation_tools_cover_the_real_render_and_probe_chain() -> None:
-    from manim_quality.operator.tool_registry import (
-        _EXTERNAL_VALIDATION_TIMEOUT_MS,
-        register_quality_tools,
+def test_native_edit_cannot_claim_unaddressed_blocking_finding(
+    tmp_path: Path,
+) -> None:
+    session, candidate, tools = _fixture(tmp_path)
+    findings = [
+        {
+            "finding_id": finding_id,
+            "category": "logic",
+            "severity": "blocking",
+            "summary": summary,
+            "acceptance_criteria": criteria,
+        }
+        for finding_id, summary, criteria in (
+            ("logic-1", "Direction label is missing.", "Add the direction label."),
+            ("logic-2", "Endpoint label is missing.", "Add the endpoint label."),
+        )
+    ]
+    _execute(tools["record_findings"], {"findings": findings})
+    candidate.write_text(
+        CODE.replace("self.add(arrow)", "self.add(arrow.shift(UP))"),
+        encoding="utf-8",
     )
+    binding = {"revision_id": "R0", "finding_ids": ["logic-1"]}
+    _execute(tools["validate_revision"], binding)
+    _execute(tools["inspect_layout"], binding)
 
-    grants = {
-        item.name: item for item in register_quality_tools(RegistryHandlers())
-    }
+    with pytest.raises(
+        InvalidSessionTransition, match="blocking findings require"
+    ):
+        _execute(tools["submit_revision"], {"revision_id": "R1"})
 
-    assert _EXTERNAL_VALIDATION_TIMEOUT_MS >= 2 * 1_200_000
-    for name in ("inspect_layout", "validate_revision"):
-        assert grants[name].timeout_ms == _EXTERNAL_VALIDATION_TIMEOUT_MS
-    for name in ("read_solution", "record_findings", "apply_patch", "submit_revision"):
-        assert grants[name].timeout_ms == 30_000
-
-
-def test_verification_receipts_carry_remaining_budget_signal() -> None:
-    session, _relation, _layout, _validator, tools = tool_fixture()
-    prime_tools(tools)
-
-    report = execute(tools["inspect_layout"], {"revision_id": "R0"})
-    assert report["patches_remaining"] == 5
-    assert report["findings_batches_remaining"] == 4
-
-    session.raise_patch_budget(7)
-    report = execute(tools["inspect_layout"], {"revision_id": "R0"})
-    assert report["patches_remaining"] == 7
+    assert session.submitted_revision_id is None

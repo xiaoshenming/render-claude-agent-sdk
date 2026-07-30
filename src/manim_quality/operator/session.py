@@ -31,14 +31,14 @@ from .source_view import apply_solution_replacement, extract_solution
 
 
 class QualitySession:
-    """Own immutable inputs and at most five Agent-authored candidate attempts."""
+    """Own immutable inputs and a configured number of candidate attempts."""
 
     def __init__(
         self,
         *,
         problem_text: str,
         candidate_code: str,
-        max_patch_attempts: int = 5,
+        max_patch_attempts: int = 12,
     ) -> None:
         if not isinstance(problem_text, str) or not problem_text.strip():
             raise ValueError("problem_text must be non-empty")
@@ -113,7 +113,7 @@ class QualitySession:
 
     @property
     def finding_batches_remaining(self) -> int:
-        return 4 - self._finding_batches
+        return 12 - self._finding_batches
 
     def raise_patch_budget(self, max_patch_attempts: int) -> None:
         self._require_open()
@@ -150,7 +150,7 @@ class QualitySession:
             raise InvalidSessionTransition(
                 "read_solution must cover the current revision before findings"
             )
-        if self._finding_batches >= 4:
+        if self._finding_batches >= 12:
             raise InvalidSessionTransition("finding batch budget exhausted")
         if (
             self.current_revision.revision_id != "R0"

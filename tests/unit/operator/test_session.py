@@ -134,7 +134,7 @@ def test_logic_and_layout_are_separate_validated_candidate_attempts() -> None:
     assert quality.baseline.code == BASELINE
 
 
-def test_logic_patch_is_forbidden_after_layout_patch() -> None:
+def test_logic_patch_is_allowed_after_layout_patch() -> None:
     quality = session()
     quality.record_findings(
         (
@@ -155,13 +155,16 @@ def test_logic_patch_is_forbidden_after_layout_patch() -> None:
         fingerprint="sha256:" + "2" * 64,
     )
 
-    with pytest.raises(InvalidSessionTransition, match="after layout"):
-        quality.apply_patch(
-            scope=PatchScope.LOGIC,
-            old_text="Line(LEFT, RIGHT)",
-            new_text="Line(LEFT, UP)",
-            finding_ids=("logic-1",),
-        )
+    quality.mark_solution_read("R1")
+    revision = quality.apply_patch(
+        scope=PatchScope.LOGIC,
+        old_text="Line(LEFT, RIGHT)",
+        new_text="Line(LEFT, UP)",
+        finding_ids=("logic-1",),
+    )
+
+    assert revision.revision_id == "R2"
+    assert revision.parent_revision_id == "R1"
 
 
 def test_duplicate_patch_and_non_improving_retry_are_stopped() -> None:
@@ -451,24 +454,24 @@ def test_best_validated_revision_ignores_failed_validation() -> None:
 
 def test_patch_budget_can_only_be_raised_before_findings() -> None:
     quality = session()
-    quality.raise_patch_budget(7)
-    assert quality.max_patch_attempts == 7
-    assert quality.patches_remaining == 7
+    quality.raise_patch_budget(16)
+    assert quality.max_patch_attempts == 16
+    assert quality.patches_remaining == 16
 
     with pytest.raises(InvalidSessionTransition, match="raised"):
-        quality.raise_patch_budget(6)
+        quality.raise_patch_budget(12)
 
     quality.record_findings((finding(),))
     with pytest.raises(InvalidSessionTransition, match="frozen"):
-        quality.raise_patch_budget(8)
+        quality.raise_patch_budget(20)
 
 
 def test_patch_budget_for_blocking_maps_pressure_to_budget() -> None:
     from manim_quality.operator.session_rules import patch_budget_for_blocking
 
-    assert patch_budget_for_blocking(0) == 5
-    assert patch_budget_for_blocking(2) == 5
-    assert patch_budget_for_blocking(3) == 6
-    assert patch_budget_for_blocking(8) == 6
-    assert patch_budget_for_blocking(9) == 7
-    assert patch_budget_for_blocking(36) == 7
+    assert patch_budget_for_blocking(0) == 12
+    assert patch_budget_for_blocking(2) == 12
+    assert patch_budget_for_blocking(3) == 16
+    assert patch_budget_for_blocking(8) == 16
+    assert patch_budget_for_blocking(9) == 20
+    assert patch_budget_for_blocking(36) == 20

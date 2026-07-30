@@ -12,6 +12,7 @@ from manim_quality.operator.runtime_tools.services import (
     RealLayoutInspector,
     RealRevisionValidator,
     RuntimeToolchain,
+    _render_diagnostic,
 )
 from manim_quality.operator.services import (
     BasicRelationChecker,
@@ -47,9 +48,12 @@ def test_problem_source_prefers_module_docstring_then_leading_comments() -> None
     assert extract_problem_text('"""Prove AB = CD."""\nclass Scene:\n    pass\n') == (
         "Prove AB = CD."
     )
-    assert extract_problem_text(
-        "# Problem: prove AB = CD.\n# Solution: use congruence.\nimport math\n"
-    ) == "Problem: prove AB = CD.\nSolution: use congruence."
+    assert (
+        extract_problem_text(
+            "# Problem: prove AB = CD.\n# Solution: use congruence.\nimport math\n"
+        )
+        == "Problem: prove AB = CD.\nSolution: use congruence."
+    )
 
 
 def test_problem_source_rejects_code_without_locked_statement() -> None:
@@ -57,13 +61,28 @@ def test_problem_source_rejects_code_without_locked_statement() -> None:
         extract_problem_text("import math\n")
 
 
+def test_render_diagnostic_returns_bounded_actionable_tail(tmp_path: Path) -> None:
+    stderr = tmp_path / "render.stderr.log"
+    stderr.write_text(
+        ("unhelpful prelude\n" * 200)
+        + "candidate.py:1565 in make_ctex_row\n"
+        + "ValueError: xelatex error converting to xdv\n",
+        encoding="utf-8",
+    )
+
+    diagnostic = _render_diagnostic(tmp_path)
+
+    assert "candidate.py:1565" in diagnostic["stderr_tail"]
+    assert "xelatex error" in diagnostic["stderr_tail"]
+    assert len(diagnostic["stderr_tail"]) <= 6_000
+    assert diagnostic["truncated"] is True
+
+
 def test_smoke_services_never_claim_full_acceptance() -> None:
     session = QualitySession(
         problem_text="Construct a line.",
         candidate_code=(
-            "class Solution(BaseConfigScene):\n"
-            "    def construct(self):\n"
-            "        pass\n"
+            "class Solution(BaseConfigScene):\n    def construct(self):\n        pass\n"
         ),
     )
     revision: CandidateAttempt = session.baseline
@@ -168,9 +187,7 @@ def test_concurrent_validate_and_inspect_render_revision_once(
     session = QualitySession(
         problem_text="Construct a line.",
         candidate_code=(
-            "class Solution(BaseConfigScene):\n"
-            "    def construct(self):\n"
-            "        pass\n"
+            "class Solution(BaseConfigScene):\n    def construct(self):\n        pass\n"
         ),
     )
     revision: CandidateAttempt = session.baseline
@@ -213,9 +230,7 @@ def test_in_session_verification_facts_survive_on_disk(tmp_path) -> None:
     session = QualitySession(
         problem_text="Construct a line.",
         candidate_code=(
-            "class Solution(BaseConfigScene):\n"
-            "    def construct(self):\n"
-            "        pass\n"
+            "class Solution(BaseConfigScene):\n    def construct(self):\n        pass\n"
         ),
     )
     revision = session.baseline

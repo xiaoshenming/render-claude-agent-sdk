@@ -54,8 +54,8 @@ def normalize_sdk_input(value: object, workspace: str) -> object:
         return value
     if portable.casefold().startswith(prefix):
         relative = portable[len(prefix) :]
-    elif portable.startswith("/"):
-        relative = portable[1:]
+    elif path.startswith("\\"):
+        relative = portable.lstrip("/")
     else:
         return value
     normalized = dict(value)

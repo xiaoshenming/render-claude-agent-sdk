@@ -99,7 +99,8 @@ class _SdkDriver:
         self.post = options.hooks["PostToolUse"][0].hooks[0]
         self.start = options.hooks["SubagentStart"][0].hooks[0]
         self.stop = options.hooks["SubagentStop"][0].hooks[0]
-        self.server = options.mcp_servers["quality"]["instance"]
+        quality = options.mcp_servers.get("quality")
+        self.server = quality["instance"] if quality else None
         self.cwd = cwd
 
     def hook_data(self, name, arguments, tool_id, **extra):
@@ -163,7 +164,28 @@ async def _parent_tool(driver, index, name, arguments):
     await driver.finish(data)
 
 
-async def _reviewer_round(driver, index, reviewer):
+async def _native_tool(
+    driver,
+    index,
+    name,
+    arguments,
+    *,
+    parent_tool_use_id=None,
+    **extra,
+):
+    tool_id = f"native-{index}"
+    data = await driver.allow(name, arguments, tool_id, **extra)
+    yield _message(
+        tool_id,
+        name,
+        arguments,
+        f"native-message-{index}",
+        parent_tool_use_id=parent_tool_use_id,
+    )
+    await driver.finish(data)
+
+
+async def _reviewer_round(driver, index, reviewer, candidate):
     agent_id = f"reviewer-id-{index}"
     tool_id = f"agent-tool-{index}"
     agent_input = {
@@ -179,23 +201,17 @@ async def _reviewer_round(driver, index, reviewer):
         None,
         {"signal": None},
     )
-    read_args = {"revision_id": "R0"}
-    child_data = await driver.allow(
-        "mcp__quality__read_solution",
+    read_args = {"file_path": str(candidate)}
+    async for message in _native_tool(
+        driver,
+        f"review-{index}",
+        "Read",
         read_args,
-        f"agent-read-{index}",
+        parent_tool_use_id=tool_id,
         agent_id=agent_id,
         agent_type=reviewer,
-    )
-    await driver.invoke("read_solution", read_args)
-    yield _message(
-        f"agent-read-{index}",
-        "mcp__quality__read_solution",
-        read_args,
-        f"agent-child-{index}",
-        parent_tool_use_id=tool_id,
-    )
-    await driver.finish(child_data)
+    ):
+        yield message
     await driver.stop(
         driver.lifecycle_data(
             "SubagentStop",
@@ -229,14 +245,14 @@ async def _structured_output(driver, session):
         "summary": "No blocking issue found.",
     }
     data = await driver.allow("StructuredOutput", output, "structured-1")
-    yield _message("structured-1", "StructuredOutput", output, "message-7")
+    yield _message("structured-1", "StructuredOutput", output, "message-8")
     await driver.finish(data)
     yield ResultMessage(
         subtype="success",
         duration_ms=100,
         duration_api_ms=80,
         is_error=False,
-        num_turns=7,
+        num_turns=8,
         session_id="sdk-session",
         usage={"input_tokens": 40, "output_tokens": 20},
         structured_output=output,
@@ -250,19 +266,43 @@ def test_real_sdk_backend_runs_clean_operator_tool_sequence(
 
     async def fake_query(*, prompt, options):
         driver = _SdkDriver(options, str(tmp_path))
+        candidate = tmp_path / "candidate.py"
+        if options.tools == ["Read"]:
+            async for message in _native_tool(
+                driver,
+                1,
+                "Read",
+                {"file_path": str(candidate), "offset": 2, "limit": 3},
+            ):
+                yield message
+            yield AssistantMessage(
+                content=[],
+                model="fake-model",
+                message_id="reviewer-output",
+                usage={"input_tokens": 10, "output_tokens": 5},
+            )
+            yield ResultMessage(
+                subtype="success",
+                duration_ms=20,
+                duration_api_ms=15,
+                is_error=False,
+                num_turns=2,
+                session_id="reviewer-session",
+                usage={"input_tokens": 10, "output_tokens": 5},
+                structured_output=json.loads(REVIEWER_RESULT),
+            )
+            return
         parent_script = (
-            (1, "read_solution", {"revision_id": "R0"}),
-            (4, "record_findings", {"findings": []}),
-            (5, "inspect_layout", {"revision_id": "R0"}),
-            (6, "submit_revision", {"revision_id": "R0"}),
+            (2, "record_findings", {"findings": []}),
+            (3, "validate_revision", {"revision_id": "R0", "finding_ids": []}),
+            (4, "inspect_layout", {"revision_id": "R0", "finding_ids": []}),
+            (5, "submit_revision", {"revision_id": "R0"}),
         )
-        for index, name, arguments in parent_script[:1]:
-            async for message in _parent_tool(driver, index, name, arguments):
-                yield message
-        for index, reviewer in enumerate(REVIEWERS, start=1):
-            async for message in _reviewer_round(driver, index, reviewer):
-                yield message
-        for index, name, arguments in parent_script[1:]:
+        async for message in _native_tool(
+            driver, 1, "Read", {"file_path": str(candidate)}
+        ):
+            yield message
+        for index, name, arguments in parent_script:
             async for message in _parent_tool(driver, index, name, arguments):
                 yield message
         async for message in _structured_output(driver, session):
@@ -294,8 +334,8 @@ def test_real_sdk_backend_runs_clean_operator_tool_sequence(
     )
 
     assert result.revision.revision_id == "R0"
-    assert result.call_record.turns == 7
-    assert len(result.call_record.tool_calls) == 9
+    assert result.call_record.turns == 12
+    assert len(result.call_record.tool_calls) == 8
     assert len(result.subagent_results) == 2
     assert {item["agent_type"] for item in result.subagent_results} == set(REVIEWERS)
     assert session.submitted_revision_id == "R0"

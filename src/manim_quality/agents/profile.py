@@ -37,7 +37,7 @@ class AgentProfile:
             AgentRole.REVIEWER: frozenset({"Read"}),
             AgentRole.CODER: frozenset({"Read", "Edit"}),
             AgentRole.VERIFIER: frozenset({"Read"}),
-            AgentRole.OPERATOR: frozenset({"Agent"}),
+            AgentRole.OPERATOR: frozenset({"Read", "Edit"}),
             AgentRole.ASSURANCE: frozenset({"Agent"}),
         }[self.role]
         if self.allowed_tools != expected:
@@ -108,7 +108,7 @@ def operator_profile(
         prompt_version=prompt_version,
         schema_version=schema_version,
         tool_version=tool_version,
-        allowed_tools=frozenset({"Agent"}),
+        allowed_tools=frozenset({"Read", "Edit"}),
     )
 
 

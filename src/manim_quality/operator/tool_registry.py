@@ -1,4 +1,4 @@
-"""Declarative registration of the eight Quality Operator MCP tools."""
+"""Declarative registration of Quality Operator evidence tools."""
 
 from collections.abc import Mapping
 
@@ -6,9 +6,8 @@ from manim_quality.agents.managed_tools import ManagedToolGrant, ToolEffect
 
 from .defaults import PARENT_MAX_TOOL_CALLS
 from .tool_schemas import (
-    APPLY_PATCH_SCHEMA,
     CHECK_RELATION_SCHEMA,
-    READ_SOLUTION_SCHEMA,
+    CURRENT_REVISION_SCHEMA,
     RECORD_FINDINGS_SCHEMA,
     REVISION_INPUT_SCHEMA,
 )
@@ -22,8 +21,7 @@ _EXTERNAL_VALIDATION_TIMEOUT_MS = 2_700_000
 
 def register_quality_tools(handlers) -> tuple[ManagedToolGrant, ...]:
     return (
-        *_read_tools(handlers),
-        *_edit_tools(handlers),
+        *_evidence_tools(handlers),
         *_validation_tools(handlers),
         _submit_tool(handlers),
     )
@@ -31,21 +29,12 @@ def register_quality_tools(handlers) -> tuple[ManagedToolGrant, ...]:
 
 def _patch_budget(handlers) -> int:
     session = getattr(handlers, "session", None)
-    budget = getattr(session, "max_patch_attempts", 5)
-    return budget if isinstance(budget, int) and budget > 0 else 5
+    budget = getattr(session, "max_patch_attempts", 12)
+    return budget if isinstance(budget, int) and budget > 0 else 12
 
 
-def _read_tools(handlers) -> tuple[ManagedToolGrant, ...]:
+def _evidence_tools(handlers) -> tuple[ManagedToolGrant, ...]:
     return (
-        _grant(
-            "read_solution",
-            "Read the complete Solution class and no surrounding framework code.",
-            READ_SOLUTION_SCHEMA,
-            handlers.read_solution,
-            ToolEffect.READ_ONLY,
-            PARENT_MAX_TOOL_CALLS,
-            30_000,
-        ),
         _grant(
             "check_relation",
             (
@@ -65,29 +54,14 @@ def _read_tools(handlers) -> tuple[ManagedToolGrant, ...]:
             PARENT_MAX_TOOL_CALLS,
             8_000,
         ),
-    )
-
-
-def _edit_tools(handlers) -> tuple[ManagedToolGrant, ...]:
-    return (
         _grant(
             "record_findings",
             "Freeze issues and acceptance criteria before any patch.",
             RECORD_FINDINGS_SCHEMA,
             handlers.record_findings,
             ToolEffect.SESSION_MUTATION,
-            4,
+            12,
             12_000,
-        ),
-        _grant(
-            "apply_patch",
-            "Apply one exact block replacement to create a child revision.",
-            APPLY_PATCH_SCHEMA,
-            handlers.apply_patch,
-            ToolEffect.REVISION_MUTATION,
-            _patch_budget(handlers),
-            8_000,
-            max_input_bytes=48_000,
         ),
         _grant(
             "recover_revision",
@@ -106,20 +80,20 @@ def _validation_tools(handlers) -> tuple[ManagedToolGrant, ...]:
         _grant(
             "inspect_layout",
             "Run the bound overlap detector against the current revision.",
-            REVISION_INPUT_SCHEMA,
+            CURRENT_REVISION_SCHEMA,
             handlers.inspect_layout,
             ToolEffect.VALIDATION,
-            _patch_budget(handlers) + 1,
+            _patch_budget(handlers) + 6,
             30_000,
             timeout_ms=_EXTERNAL_VALIDATION_TIMEOUT_MS,
         ),
         _grant(
             "validate_revision",
             "Run bounded external checks and return facts without accepting.",
-            REVISION_INPUT_SCHEMA,
+            CURRENT_REVISION_SCHEMA,
             handlers.validate_revision,
             ToolEffect.VALIDATION,
-            _patch_budget(handlers),
+            _patch_budget(handlers) + 4,
             30_000,
             timeout_ms=_EXTERNAL_VALIDATION_TIMEOUT_MS,
         ),
@@ -133,7 +107,7 @@ def _submit_tool(handlers) -> ManagedToolGrant:
         REVISION_INPUT_SCHEMA,
         handlers.submit_revision,
         ToolEffect.SESSION_MUTATION,
-        1,
+        max(4, _patch_budget(handlers) // 3),
         4_000,
     )
 

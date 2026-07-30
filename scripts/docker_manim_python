@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """Expose the existing Manim Docker image as a Python executable."""
 
-import os
 import fcntl
+import os
 import subprocess
 import sys
 import time
 from pathlib import Path
 
 IMAGE = os.environ.get("MANIM_DOCKER_IMAGE", "docker-manim-worker-1:latest")
+CPUS = os.environ.get("MANIM_DOCKER_CPUS", "4")
 REPO = Path(__file__).resolve().parents[1]
 
 
@@ -18,6 +19,8 @@ def main() -> int:
         "docker",
         "run",
         "--rm",
+        "--cpus",
+        CPUS,
         "--user",
         f"{os.getuid()}:{os.getgid()}",
         "--env",

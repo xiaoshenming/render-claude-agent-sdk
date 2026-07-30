@@ -1,4 +1,3 @@
-import json
 from pathlib import Path
 
 import anyio
@@ -17,7 +16,7 @@ from manim_quality.agents.usage import AgentCallRecord, TokenUsage, UsageSink
 from manim_quality.operator.agent import QualityOperatorAgent
 from manim_quality.operator.models import ValidationOutcome
 from manim_quality.operator.session import QualitySession
-from manim_quality.revisions.fingerprint import sha256_text
+from manim_quality.revisions.fingerprint import code_hash, sha256_text
 
 PROBLEM = "Show a line and explain its direction."
 CODE = f'''"""{PROBLEM}"""
@@ -73,20 +72,36 @@ class CleanScriptBackend(AgentBackend):
     def run(self, request: BackendRequest, controls: RuntimeControls):
         self.request = request
         controls.record_round_usage(TokenUsage(input_tokens=20, output_tokens=5))
-        candidate = json.loads(
-            self._invoke(
-                controls,
-                request,
-                "read_solution",
-                {"revision_id": "R0"},
+        if request.profile.role.value == "reviewer":
+            controls.authorize_tool(
+                "Read",
+                {
+                    "file_path": request.readable_paths[0],
+                    "offset": 4,
+                    "limit": 3,
+                },
             )
-        )
+            return controls.complete(
+                {
+                    "decision": "pass",
+                    "diagnosis": "No supported defect.",
+                    "issues": [],
+                    "coverage": {"source": "complete"},
+                    "confidence": 0.9,
+                }
+            )
         self._invoke(controls, request, "record_findings", {"findings": []})
         self._invoke(
             controls,
             request,
+            "validate_revision",
+            {"revision_id": "R0", "finding_ids": []},
+        )
+        self._invoke(
+            controls,
+            request,
             "inspect_layout",
-            {"revision_id": "R0"},
+            {"revision_id": "R0", "finding_ids": []},
         )
         self._invoke(
             controls,
@@ -98,7 +113,7 @@ class CleanScriptBackend(AgentBackend):
             {
                 "status": "submitted",
                 "submitted_revision_id": "R0",
-                "code_hash": candidate["code_hash"],
+                "code_hash": code_hash(CODE),
                 "problem_hash": sha256_text(PROBLEM),
                 "summary": "No blocking issue found.",
             }
@@ -117,6 +132,24 @@ class CleanScriptBackend(AgentBackend):
 class DirectOutputBackend(AgentBackend):
     def run(self, request: BackendRequest, controls: RuntimeControls):
         controls.record_round_usage(TokenUsage(input_tokens=1, output_tokens=1))
+        if request.profile.role.value == "reviewer":
+            controls.authorize_tool(
+                "Read",
+                {
+                    "file_path": request.readable_paths[0],
+                    "offset": 4,
+                    "limit": 3,
+                },
+            )
+            return controls.complete(
+                {
+                    "decision": "pass",
+                    "diagnosis": "No supported defect.",
+                    "issues": [],
+                    "coverage": {"source": "complete"},
+                    "confidence": 0.9,
+                }
+            )
         return controls.complete(
             {
                 "status": "submitted",
@@ -176,14 +209,15 @@ def test_operator_runs_clean_candidate_through_tools_without_prompt_source(
     assert result.summary == "No blocking issue found."
     assert session.submitted_revision_id == "R0"
     assert backend.request is not None
-    assert backend.request.allowed_tools == ("Agent",)
-    assert len(backend.request.managed_tools) == 8
-    assert {item.name for item in backend.request.subagents} == {
-        "math_geometry_reviewer",
-        "animation_lifecycle_reviewer",
-    }
+    assert backend.request.allowed_tools == ("Edit", "Read")
+    assert len(backend.request.managed_tools) == 6
+    assert backend.request.subagents == ()
     assert CODE not in backend.request.prompt
-    assert sink.records[0].role == "operator"
+    assert [item.role for item in sink.records] == [
+        "reviewer",
+        "reviewer",
+        "operator",
+    ]
 
 
 def test_operator_rejects_structured_output_without_tool_submission(

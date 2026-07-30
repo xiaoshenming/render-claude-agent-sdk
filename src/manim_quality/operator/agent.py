@@ -4,20 +4,22 @@ from __future__ import annotations
 
 import json
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 from manim_quality.agents._runtime_models import AgentRunFailed, CorrectableOutputError
 from manim_quality.agents.profile import AgentProfile, AgentRole
-from manim_quality.agents.runtime import AgentRunRequest, AgentRuntime
+from manim_quality.agents.runtime import AgentRuntime
 from manim_quality.agents.usage import AgentCallRecord
 
+from .candidate_io import find_baseline_candidate
 from .models import CandidateAttempt
 from .output_schema import OPERATOR_OUTPUT_SCHEMA
 from .ports import LayoutInspector, RelationChecker, RevisionValidator
-from .reviewers import build_reviewer_specs
+from .request_builder import operator_request
+from .reviewers import run_reviewers
 from .session import QualitySession
-from .toolset import build_quality_tools
+from .source_view import extract_solution
 
 PROMPT_PATH = Path(__file__).with_name("prompts") / "quality_operator_v3.md"
 
@@ -65,31 +67,28 @@ class QualityOperatorAgent:
     ) -> QualityOperatorResult:
         if not isinstance(session, QualitySession):
             raise TypeError("session must be QualitySession")
-        prompt = PROMPT_PATH.read_text(encoding="utf-8")
-        tools = build_quality_tools(
+        candidate_path, prompt, reviewer_results, reviewer_records = _review_context(
+            self._runtime,
+            self._profile.model,
+            workspace,
+            session,
+        )
+        request = operator_request(
+            run_id=run_id,
+            profile=self._profile,
+            prompt=prompt,
+            workspace=workspace,
+            candidate_path=candidate_path,
             session=session,
             relation_checker=relation_checker,
             layout_inspector=layout_inspector,
             revision_validator=revision_validator,
-        )
-        reviewers = build_reviewer_specs(tools, effort="low")
-        request = AgentRunRequest(
-            run_id=run_id,
-            profile=self._profile,
-            prompt=prompt,
-            output_schema=OPERATOR_OUTPUT_SCHEMA,
-            workspace=workspace,
-            readable_paths=(),
-            editable_paths=(),
             context_bytes=_context_bytes(prompt),
+            output_validator=_output_validator(session),
             estimated_input_tokens=estimated_input_tokens,
             reserved_output_tokens=reserved_output_tokens,
             reserved_cache_read_tokens=reserved_cache_read_tokens,
             reserved_cache_write_tokens=reserved_cache_write_tokens,
-            output_validator=_output_validator(session),
-            managed_tools=tools,
-            subagents=reviewers,
-            effort="low",
         )
         try:
             result = self._runtime.run(request)
@@ -98,19 +97,66 @@ class QualityOperatorAgent:
             if recovered is None:
                 raise
             return recovered
-        return _terminal_result(session, result)
+        return _terminal_result(
+            session,
+            result,
+            reviewer_results=reviewer_results,
+            reviewer_records=reviewer_records,
+        )
 
 
-def _terminal_result(session: QualitySession, result) -> QualityOperatorResult:
+def _review_context(runtime, model, workspace, session):
+    candidate_path = find_baseline_candidate(workspace, session.baseline.code)
+    solution = extract_solution(candidate_path.read_text(encoding="utf-8"))
+    line_count = solution.end_line - solution.start_line + 1
+    reviewer_results, reviewer_records = run_reviewers(
+        runtime,
+        candidate_path=candidate_path,
+        model=model,
+        effort="low",
+    )
+    reviewer_json = json.dumps(
+        reviewer_results, ensure_ascii=False, separators=(",", ":")
+    )
+    prompt = (
+        PROMPT_PATH.read_text(encoding="utf-8")
+        .replace("{{CANDIDATE_PATH}}", str(candidate_path))
+        .replace("{{REVIEWER_RESULTS}}", reviewer_json)
+        .replace("{{SOLUTION_START_LINE}}", str(solution.start_line))
+        .replace("{{SOLUTION_END_LINE}}", str(solution.end_line))
+        .replace("{{SOLUTION_LINE_COUNT}}", str(line_count))
+    )
+    return candidate_path, prompt, reviewer_results, reviewer_records
+
+
+def _terminal_result(
+    session: QualitySession,
+    result,
+    *,
+    reviewer_results=(),
+    reviewer_records=(),
+) -> QualityOperatorResult:
     summary = _bind_output(result.structured_output, session)
     held = result.structured_output.get("status") == "held"
     reason = result.structured_output.get("hold_reason")
+    record = result.record
+    for reviewer in reviewer_records:
+        record = replace(
+            record,
+            usage=record.usage.plus(reviewer.usage),
+            turns=record.turns + reviewer.turns,
+            observed_model_rounds=(
+                record.observed_model_rounds + reviewer.observed_model_rounds
+            ),
+            tool_calls=tuple(reviewer.tool_calls) + tuple(record.tool_calls),
+            elapsed_ms=record.elapsed_ms + reviewer.elapsed_ms,
+        )
     return QualityOperatorResult(
         revision=session.current_revision,
         summary=summary,
-        call_record=result.record,
+        call_record=record,
         sdk_messages=tuple(result.sdk_messages),
-        subagent_results=tuple(result.subagent_results),
+        subagent_results=tuple(reviewer_results),
         agent_held=held,
         hold_reason=str(reason) if held and reason is not None else None,
     )
