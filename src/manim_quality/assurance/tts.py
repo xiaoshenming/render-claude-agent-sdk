@@ -10,6 +10,20 @@ from .models import AssuranceCase, ToolReport
 
 
 def inspect_tts(case: AssuranceCase) -> ToolReport:
+    mode = case.tts_mode.strip().lower()
+    if mode in {"silent", "disabled", "off"}:
+        return _report(
+            "complete",
+            (),
+            {
+                "id": f"{case.key}:tts-audio",
+                "tts_mode": mode,
+                "audio_required": False,
+                "inspection": "not_applicable",
+                "reason": "tts_disabled_by_sample_contract",
+                "subtitle": str(case.subtitle_path) if case.subtitle_path else None,
+            },
+        )
     audio = _audio_levels(case.video_path)
     risks = []
     if not audio.get("has_audio"):
@@ -18,6 +32,8 @@ def inspect_tts(case: AssuranceCase) -> ToolReport:
         risks.append("silent_audio_stream")
     evidence = {
         "id": f"{case.key}:tts-audio",
+        "tts_mode": mode,
+        "audio_required": True,
         **audio,
         "subtitle": str(case.subtitle_path) if case.subtitle_path else None,
     }

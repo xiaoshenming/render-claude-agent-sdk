@@ -105,6 +105,7 @@ def load_curated_cases(
                 str(row["final_revision_id"]) if row.get("final_revision_id") else None
             ),
             expected_video_sha256=str(row["video"]["sha256"]),
+            tts_mode=str(row.get("tts_mode") or "required"),
         )
         for row in rows
     )

@@ -9,6 +9,7 @@ from manim_quality.assurance.tools import (
 from manim_quality.assurance.tts import (
     _effectively_silent,
     _narration_comparison,
+    inspect_tts,
 )
 
 
@@ -16,6 +17,26 @@ def test_effective_silence_uses_audible_threshold() -> None:
     assert _effectively_silent("-inf")
     assert _effectively_silent("-91.0")
     assert not _effectively_silent("-12.5")
+
+
+def test_tts_disabled_contract_skips_audio_probe(tmp_path) -> None:
+    sample = case(tmp_path)
+    sample = AssuranceCase(
+        key=sample.key,
+        question=sample.question,
+        human_tags=sample.human_tags,
+        expected_verdict=sample.expected_verdict,
+        video_path=sample.video_path,
+        log_dir=sample.log_dir,
+        tts_mode="silent",
+    )
+
+    report = inspect_tts(sample)
+
+    assert report.status == "complete"
+    assert report.risk_codes == ()
+    assert report.evidence[0]["audio_required"] is False
+    assert report.evidence[0]["reason"] == "tts_disabled_by_sample_contract"
 
 
 def case(tmp_path) -> AssuranceCase:

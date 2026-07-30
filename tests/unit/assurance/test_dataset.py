@@ -88,6 +88,7 @@ def test_curated_case_binds_optional_comparison_media(tmp_path: Path) -> None:
                     "original_image_path": "original.png",
                     "preview_video_path": "preview.mp4",
                     "subtitle_path": "final.srt",
+                    "tts_mode": "silent",
                 }
             ]
         ),
@@ -99,3 +100,4 @@ def test_curated_case_binds_optional_comparison_media(tmp_path: Path) -> None:
     assert case.original_image_path == tmp_path / "original.png"
     assert case.preview_video_path == tmp_path / "preview.mp4"
     assert case.subtitle_path == tmp_path / "final.srt"
+    assert case.tts_mode == "silent"

@@ -18,6 +18,7 @@ class AssuranceCase:
     preview_video_path: Path | None = None
     delivery_revision_id: str | None = None
     expected_video_sha256: str | None = None
+    tts_mode: str = "required"
 
 
 @dataclass(frozen=True, slots=True)
