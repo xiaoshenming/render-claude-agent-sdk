@@ -54,7 +54,13 @@ def run_reviewers(
                 "agent_type": name,
                 "is_error": False,
                 "payload": thaw_json_object(outcome.structured_output),
-                "usage": asdict(outcome.record.usage),
+                "usage": (
+                    asdict(outcome.record.usage)
+                    if outcome.record.usage.total_tokens else None
+                ),
+                "usage_complete": outcome.record.usage_complete,
+                "model": outcome.record.model,
+                "duration_ms": outcome.record.elapsed_ms,
                 "turns": outcome.record.turns,
                 "tool_calls": [
                     item.name for item in outcome.record.tool_calls

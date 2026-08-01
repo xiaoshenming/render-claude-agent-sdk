@@ -23,6 +23,7 @@ class FinalAssuranceResult:
     reports: dict[str, object]
     reviewers: tuple[dict[str, object], ...]
     call_record: object
+    parent_call_record: object
 
 
 class FinalAssuranceAgent:
@@ -96,6 +97,7 @@ class FinalAssuranceAgent:
             reports=reports,
             reviewers=reviewers,
             call_record=_merge_reviewer_records(result.record, reviewer_records),
+            parent_call_record=result.record,
         )
 
 
@@ -143,15 +145,8 @@ def _normalize_derived_parameter_issues(
     reports: dict[str, object],
     case_key: str,
 ) -> None:
-    code_review = reports.get("inspect_code_review")
-    if not isinstance(code_review, dict):
-        return
-    evidence = code_review.get("evidence")
-    if not isinstance(evidence, list) or not evidence:
-        return
-    source = evidence[0] if isinstance(evidence[0], dict) else {}
-    mismatches = source.get("derived_parameter_mismatches")
-    if not isinstance(mismatches, list) or not mismatches:
+    mismatches = _derived_parameter_mismatches(reports)
+    if not mismatches:
         return
     issues = output.get("issues")
     if not isinstance(issues, list):
@@ -198,6 +193,18 @@ def _normalize_derived_parameter_issues(
         )
     if output.get("status") != "incomplete":
         output["status"] = "review"
+
+
+def _derived_parameter_mismatches(reports: dict[str, object]) -> list[object]:
+    code_review = reports.get("inspect_code_review")
+    if not isinstance(code_review, dict):
+        return []
+    evidence = code_review.get("evidence")
+    if not isinstance(evidence, list) or not evidence:
+        return []
+    source = evidence[0] if isinstance(evidence[0], dict) else {}
+    mismatches = source.get("derived_parameter_mismatches")
+    return mismatches if isinstance(mismatches, list) else []
 
 
 def _normalize_confirmed_anchor_drift(output: dict[str, object]) -> None:

@@ -109,8 +109,17 @@ def run_agent_case(case, args, row: dict, agent) -> dict:
             report["status"] == "risk" for report in result.reports.values()
         )
         row["reviewers"] = list(result.reviewers)
+        row["agent"] = {
+            **row["agent"],
+            "model": result.parent_call_record.model,
+            "duration_ms": result.parent_call_record.elapsed_ms,
+            "token_usage": usage_dict(result.parent_call_record),
+            "usage_complete": result.parent_call_record.usage_complete,
+        }
         row["agent_usage"] = {
             "tokens": result.call_record.usage.total_tokens,
+            "token_usage": usage_dict(result.call_record),
+            "usage_complete": result.call_record.usage_complete,
             "turns": result.call_record.turns,
             "tool_calls": len(result.call_record.tool_calls),
         }
@@ -119,6 +128,19 @@ def run_agent_case(case, args, row: dict, agent) -> dict:
         row["deterministic"] = {}
         row["detected_by_tools"] = False
     return row
+
+
+def usage_dict(record) -> dict | None:
+    usage = record.usage
+    if not usage.total_tokens:
+        return None
+    return {
+        "input_tokens": usage.input_tokens,
+        "output_tokens": usage.output_tokens,
+        "cache_read_tokens": usage.cache_read_tokens,
+        "cache_write_tokens": usage.cache_write_tokens,
+        "total_tokens": usage.total_tokens,
+    }
 
 
 def deterministic_reports(case, frame_root: Path):
