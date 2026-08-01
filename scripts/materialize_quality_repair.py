@@ -46,6 +46,7 @@ def materialize(archive: Path, target: Path) -> None:
     target.parent.mkdir(parents=True, exist_ok=True)
     staging = Path(tempfile.mkdtemp(prefix="quality-repair-", dir=target.parent))
     try:
+        staging.chmod(0o755)
         for relative, payload in sorted(files.items()):
             destination = staging / relative
             destination.parent.mkdir(parents=True, exist_ok=True)

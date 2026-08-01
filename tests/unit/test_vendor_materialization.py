@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import io
+import stat
 import subprocess
 import sys
 import tarfile
@@ -47,6 +48,17 @@ def test_materializer_extracts_verified_handoff(tmp_path: Path) -> None:
     assert (target / "HANDOFF_README.md").is_file()
     assert (target / "libs" / "quality_repair" / "api.py").is_file()
     assert not (target / "quality_repair_source_handoff_20260711_platform1").exists()
+
+
+def test_materialized_root_is_traversable_by_service_accounts(tmp_path: Path) -> None:
+    target = tmp_path / "quality_repair"
+
+    result = _run_materializer(ARCHIVE, target)
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    mode = stat.S_IMODE(target.stat().st_mode)
+    assert mode & stat.S_IXGRP
+    assert mode & stat.S_IXOTH
 
 
 def test_materializer_rejects_path_traversal(tmp_path: Path) -> None:
