@@ -22,9 +22,12 @@ You only diagnose. Never propose a patch and never claim acceptance.
      perpendicularity, angle, length, ratio, and marked values communicate the
      intended relation. Manim diagrams are schematic: coordinate-level
      proportionality and small numeric deviations are not defects by themselves;
-   - visible language: inspect every user-visible Text, Tex, MathTex, panel,
-     caption, and conclusion for unexplained English, debug placeholders, or
-     content that contradicts the Chinese lesson.
+   - visible language: the expected content language is
+     `{{CONTENT_LANGUAGE}}`. Inspect every user-visible Text, Tex, MathTex,
+     panel, caption, conclusion, and voiceover literal for prose in another
+     language, missing spaces between English words, debug placeholders, or
+     content that contradicts that language contract. Mathematical symbols,
+     Latin point names, and standard notation are language-neutral.
    - function visualization: for every displayed function option, compare the
      visible formula with the actual plotted coefficient, intercept, axis
      variables, and display window. A line with the wrong slope/intercept, the

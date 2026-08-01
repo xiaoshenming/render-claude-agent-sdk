@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ast
 from dataclasses import asdict
 from pathlib import Path
 
@@ -104,6 +105,7 @@ def _reviewer_request(name, prompt_name, candidate_path, model, effort):
 
 def _prompt(name: str, candidate_path: Path) -> str:
     start_line, end_line, line_count = _solution_range(candidate_path)
+    content_language = _content_language(candidate_path)
     return (
         (_PROMPTS / name)
         .read_text(encoding="utf-8")
@@ -111,8 +113,24 @@ def _prompt(name: str, candidate_path: Path) -> str:
         .replace("{{SOLUTION_START_LINE}}", str(start_line))
         .replace("{{SOLUTION_END_LINE}}", str(end_line))
         .replace("{{SOLUTION_LINE_COUNT}}", str(line_count))
+        .replace("{{CONTENT_LANGUAGE}}", content_language)
         .strip()
     )
+
+
+def _content_language(candidate_path: Path) -> str:
+    tree = ast.parse(candidate_path.read_text(encoding="utf-8"))
+    for node in tree.body:
+        if not isinstance(node, ast.Assign):
+            continue
+        if not any(
+            isinstance(target, ast.Name) and target.id == "BATCHOPS_CONTENT_LANGUAGE"
+            for target in node.targets
+        ):
+            continue
+        if isinstance(node.value, ast.Constant) and isinstance(node.value.value, str):
+            return node.value.value
+    return "zh-CN"
 
 
 def _solution_range(candidate_path: Path) -> tuple[int, int, int]:
