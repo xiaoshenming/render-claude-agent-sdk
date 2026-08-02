@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import replace
+import time
 
 from ._runtime_models import (
     CorrectableOutputError,
@@ -25,6 +26,8 @@ class ControlRecordMixin:
         *,
         agent_id: str | None = None,
         agent_type: str | None = None,
+        call_id: str | None = None,
+        started_at_ms: int | None = None,
     ) -> None:
         self._tool_calls.append(
             ToolCallRecord(
@@ -35,6 +38,10 @@ class ControlRecordMixin:
                 caller=agent_type or "parent",
                 agent_id=agent_id,
                 agent_type=agent_type,
+                call_id=call_id,
+                started_at_ms=started_at_ms,
+                finished_at_ms=started_at_ms,
+                duration_ms=0 if started_at_ms is not None else None,
             )
         )
 
@@ -60,6 +67,9 @@ class ControlRecordMixin:
                     result_status=status,
                     result_hash=result_hash,
                     error=error,
+                    finished_at_ms=(finished := time.time_ns() // 1_000_000),
+                    duration_ms=max(
+                        0, finished - (record.started_at_ms or finished)),
                 )
                 return
         raise RuntimeProtocolError("read tool result has no authorized call record")

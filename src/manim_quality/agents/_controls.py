@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
+from dataclasses import replace
+import time
 
 from manim_quality.contracts._json_values import freeze_json_object
 from manim_quality.revisions.fingerprint import sha256_text
@@ -110,6 +112,7 @@ class RuntimeControls(ControlRecordMixin):
         *,
         agent_id: str | None = None,
         agent_type: str | None = None,
+        call_id: str | None = None,
     ) -> Mapping[str, object]:
         try:
             self._budget.before_tool_call()
@@ -126,6 +129,8 @@ class RuntimeControls(ControlRecordMixin):
                 error,
                 agent_id=agent_id,
                 agent_type=agent_type,
+                call_id=call_id,
+                started_at_ms=_now_ms(),
             )
             raise
         self._tool_calls.append(
@@ -136,11 +141,15 @@ class RuntimeControls(ControlRecordMixin):
                 caller=agent_type or "parent",
                 agent_id=agent_id,
                 agent_type=agent_type,
+                call_id=call_id,
+                started_at_ms=_now_ms(),
             )
         )
         return normalized
 
-    def authorize_output_submission(self, input_data: object) -> Mapping[str, object]:
+    def authorize_output_submission(
+        self, input_data: object, *, call_id: str | None = None,
+    ) -> Mapping[str, object]:
         name = "StructuredOutput"
         try:
             self._budget.before_tool_call()
@@ -150,7 +159,10 @@ class RuntimeControls(ControlRecordMixin):
             self._record_denied(name, input_data, error)
             raise
         self._tool_calls.append(
-            ToolCallRecord(name=name, input=normalized, allowed=True)
+            ToolCallRecord(
+                name=name, input=normalized, allowed=True,
+                call_id=call_id, started_at_ms=_now_ms(),
+            )
         )
         return normalized
 
@@ -215,6 +227,21 @@ class RuntimeControls(ControlRecordMixin):
             )
         )
 
+    def finish_tool_timing(self, call_id: str) -> None:
+        """Record one SDK tool wall time without changing its result semantics."""
+        finished = _now_ms()
+        for index in range(len(self._tool_calls) - 1, -1, -1):
+            record = self._tool_calls[index]
+            if record.call_id != call_id or record.finished_at_ms is not None:
+                continue
+            started = record.started_at_ms or finished
+            self._tool_calls[index] = replace(
+                record,
+                finished_at_ms=finished,
+                duration_ms=max(0, finished - started),
+            )
+            return
+
     def reconcile_usage(self, aggregate: TokenUsage) -> None:
         if self._round_usage_pending:
             raise RuntimeProtocolError("round usage must be recorded before reconcile")
@@ -257,3 +284,7 @@ class RuntimeControls(ControlRecordMixin):
             raise RuntimeProtocolError(
                 "backend result was not finalized through runtime controls"
             )
+
+
+def _now_ms() -> int:
+    return time.time_ns() // 1_000_000

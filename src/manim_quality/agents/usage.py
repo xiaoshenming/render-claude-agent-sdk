@@ -63,6 +63,10 @@ class ToolCallRecord:
     caller: str = "parent"
     agent_id: str | None = None
     agent_type: str | None = None
+    call_id: str | None = None
+    started_at_ms: int | None = None
+    finished_at_ms: int | None = None
+    duration_ms: int | None = None
 
     def __post_init__(self) -> None:
         _require_text(self.name, "name")
@@ -82,6 +86,16 @@ class ToolCallRecord:
             _require_text(self.agent_id, "agent_id")
         if self.agent_type is not None:
             _require_text(self.agent_type, "agent_type")
+        if self.call_id is not None:
+            _require_text(self.call_id, "call_id")
+        for name in ("started_at_ms", "finished_at_ms", "duration_ms"):
+            value = getattr(self, name)
+            if value is not None:
+                _require_non_negative_int(value, name)
+        if self.finished_at_ms is not None and self.started_at_ms is None:
+            raise ValueError("finished_at_ms requires started_at_ms")
+        if self.duration_ms is not None and self.finished_at_ms is None:
+            raise ValueError("duration_ms requires finished_at_ms")
 
 
 @dataclass(frozen=True, slots=True)

@@ -147,6 +147,10 @@ def test_usage_models_reject_invalid_values_and_keep_fallback_error() -> None:
         ToolCallRecord(name="Read", input={}, allowed=1)  # type: ignore[arg-type]
     with pytest.raises(ValueError, match="non-empty"):
         ToolCallRecord(name="Read", input={}, allowed=False, error="")
+    with pytest.raises(ValueError, match="requires started_at_ms"):
+        ToolCallRecord(
+            name="Read", input={}, allowed=True, finished_at_ms=1,
+        )
     with pytest.raises(TypeError, match="TokenUsage"):
         call_record(usage=object())
     with pytest.raises(ValueError, match="non-negative"):

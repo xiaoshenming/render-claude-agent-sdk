@@ -72,7 +72,8 @@ def _authorize_tool(state, data, tool_use_id):
             raise OutputRejected(
                 f"required reviewers have not completed: {sorted(missing)}"
             )
-        normalized = state._controls.authorize_output_submission(tool_input)
+        normalized = state._controls.authorize_output_submission(
+            tool_input, call_id=tool_use_id)
         state._terminal_tools.add(tool_use_id)
         return normalized
     _enforce_findings_prerequisites(state, tool_name, agent_id)
@@ -87,6 +88,7 @@ def _authorize_tool(state, data, tool_use_id):
         tool_input,
         agent_id=agent_id,
         agent_type=agent_type,
+        call_id=tool_use_id,
     )
     if (
         agent_id is None

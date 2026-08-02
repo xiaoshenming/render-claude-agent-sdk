@@ -36,6 +36,10 @@ def agent_record() -> AgentCallRecord:
                 allowed=True,
                 result_status="ok",
                 result_hash="sha256:" + "1" * 64,
+                call_id="tool-1",
+                started_at_ms=100,
+                finished_at_ms=160,
+                duration_ms=60,
             ),
         ),
         usage=TokenUsage(input_tokens=100, output_tokens=20),
@@ -118,6 +122,11 @@ def test_artifact_writer_persists_replayable_run_pack(tmp_path: Path) -> None:
     assert (tmp_path / "revisions" / "R0.baseline.py").is_file()
     assert (tmp_path / "logs" / "agent_call.json").is_file()
     assert (tmp_path / "logs" / "tool_calls.jsonl").is_file()
+    tool_call = json.loads(
+        (tmp_path / "logs" / "tool_calls.jsonl").read_text(encoding="utf-8")
+    )
+    assert tool_call["call_id"] == "tool-1"
+    assert tool_call["duration_ms"] == 60
     assert "reviewer-call-1" in (
         tmp_path / "logs" / "reviewer-sdk-messages.jsonl"
     ).read_text(encoding="utf-8")

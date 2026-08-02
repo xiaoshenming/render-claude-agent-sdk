@@ -107,6 +107,10 @@ def _tool_call(item) -> dict[str, object]:
         "caller": item.caller,
         "agent_id": item.agent_id,
         "agent_type": item.agent_type,
+        "call_id": item.call_id,
+        "started_at_ms": item.started_at_ms,
+        "finished_at_ms": item.finished_at_ms,
+        "duration_ms": item.duration_ms,
     }
 
 

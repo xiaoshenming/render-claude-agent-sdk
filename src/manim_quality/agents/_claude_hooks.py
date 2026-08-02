@@ -58,6 +58,7 @@ class ClaudeHookState(ClaudeHookAccessors):
 
     async def post_tool(self, data, tool_use_id, context) -> dict[str, object]:
         del tool_use_id, context
+        self._controls.finish_tool_timing(data["tool_use_id"])
         if data.get("tool_name") in {"Agent", "Task"}:
             try:
                 self._subagents.validate_agent_completion(data["tool_use_id"])
@@ -69,6 +70,7 @@ class ClaudeHookState(ClaudeHookAccessors):
 
     async def failed_tool(self, data, tool_use_id, context) -> dict[str, object]:
         del tool_use_id, context
+        self._controls.finish_tool_timing(data["tool_use_id"])
         if data.get("tool_name") == "StructuredOutput":
             return await self._retry_structured_output(
                 data["tool_use_id"], str(data.get("error", "schema mismatch"))
