@@ -14,7 +14,7 @@ from manim_quality.agents.budget import BudgetLimits
 from manim_quality.agents.claude_sdk import ClaudeSdkBackend
 from manim_quality.agents.profile import operator_profile
 from manim_quality.agents.runtime import AgentRuntime
-from manim_quality.agents.usage import AgentCallRecord, UsageSink
+from manim_quality.agents.usage_ledger import RecordingJsonlUsageLedger
 
 from .agent import QualityOperatorAgent
 from .defaults import PARENT_MAX_TOOL_CALLS, PARENT_MAX_TURNS
@@ -32,14 +32,6 @@ from .services import (
     UnverifiedLayoutInspector,
 )
 from .source_view import extract_solution
-
-
-class MemoryUsageSink(UsageSink):
-    def __init__(self) -> None:
-        self.records: list[AgentCallRecord] = []
-
-    def save(self, record: AgentCallRecord) -> None:
-        self.records.append(record)
 
 
 def _install_sigterm_handler() -> None:
@@ -69,7 +61,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     workspace = args.workspace.resolve(strict=True)
     if not workspace.is_dir():
         raise SystemExit("--workspace must be a directory")
-    sink = MemoryUsageSink()
+    sink = RecordingJsonlUsageLedger(args.output / "logs/usage-events.jsonl")
     backend = ClaudeSdkBackend(
         provider_env=_provider_environment(
             os.environ,

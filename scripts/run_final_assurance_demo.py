@@ -10,7 +10,7 @@ from pathlib import Path
 from manim_quality.agents.budget import BudgetLimits
 from manim_quality.agents.claude_sdk import ClaudeSdkBackend
 from manim_quality.agents.runtime import AgentRuntime
-from manim_quality.agents.usage import UsageSink
+from manim_quality.agents.usage_ledger import RecordingJsonlUsageLedger
 from manim_quality.assurance.agent import FinalAssuranceAgent
 from manim_quality.assurance.dataset import (
     load_annotated_cases,
@@ -28,14 +28,6 @@ from manim_quality.assurance.tools import (
 )
 from manim_quality.assurance.tts import inspect_tts
 from manim_quality.assurance.verification import VerificationConfig
-
-
-class Sink(UsageSink):
-    def __init__(self) -> None:
-        self.records = []
-
-    def save(self, record) -> None:
-        self.records.append(record)
 
 
 def main() -> int:
@@ -175,7 +167,7 @@ def build_agent(args) -> FinalAssuranceAgent:
         "ANTHROPIC_AUTH_TOKEN"
     ):
         raise SystemExit("Agent mode requires provider credentials")
-    sink = Sink()
+    sink = RecordingJsonlUsageLedger(args.output / "usage-events.jsonl")
     limits = BudgetLimits(
         max_context_bytes=2_000_000,
         max_turns=12,

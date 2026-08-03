@@ -2,9 +2,12 @@ import json
 
 from manim_quality.agents.usage import (
     AgentCallRecord,
-    JsonlUsageLedger,
     TokenUsage,
     ToolCallRecord,
+)
+from manim_quality.agents.usage_ledger import (
+    JsonlUsageLedger,
+    RecordingJsonlUsageLedger,
     aggregate_job_usage,
 )
 
@@ -25,6 +28,16 @@ def test_ledger_is_append_only_and_receipt_aggregates_all_dimensions(tmp_path) -
     assert receipt.elapsed_ms == 50
     assert receipt.external_tool_ms == 12
     assert len(receipt.record_hashes) == 2
+
+
+def test_recording_ledger_keeps_records_for_summary(tmp_path) -> None:
+    record = _record("parent", TokenUsage(2, 1, 0, 0), 5, 1)
+    ledger = RecordingJsonlUsageLedger(tmp_path / "usage.jsonl")
+
+    ledger.save(record)
+
+    assert ledger.records == [record]
+    assert json.loads(ledger.path.read_text())["role"] == "parent"
 
 
 def _record(role, usage, elapsed, tool_ms):
