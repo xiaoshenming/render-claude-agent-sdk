@@ -9,13 +9,12 @@ from pathlib import Path
 from manim_quality.contracts._json_values import thaw_json_object
 
 from .agent import QualityOperatorResult
+from .artifact_root import validate_existing_root
 from .artifact_session import findings_payload, revisions_payload
 from .artifact_transcripts import reviewer_messages, tool_results
 from .artifact_usage import reviewer_tokens, token_ledger, usage_record
 from .gate import GateDecision, GateResult
 from .session import QualitySession
-
-_OWNED_RUNTIME_DIRECTORIES = {"agent_runtime", "acceptance_runtime"}
 
 
 def write_run_artifacts(
@@ -27,28 +26,15 @@ def write_run_artifacts(
     baseline_layout_report: Mapping[str, object] | None = None,
 ) -> None:
     target = Path(root)
-    _validate_existing_root(target)
+    validate_existing_root(target)
     target.mkdir(parents=True, exist_ok=True)
     for name in ("input", "revisions", "evidence", "logs", "output"):
-        (target / name).mkdir()
+        (target / name).mkdir(exist_ok=True)
     _write_inputs(target, session)
     _write_revisions(target, session)
     _write_evidence(target, session, gate_result, baseline_layout_report or {})
     _write_logs(target, session, operator_result, gate_result)
     _write_output(target, session, gate_result)
-
-
-def _validate_existing_root(target: Path) -> None:
-    if not target.exists():
-        return
-    unknown = {
-        item.name
-        for item in target.iterdir()
-        if item.name not in _OWNED_RUNTIME_DIRECTORIES or not item.is_dir()
-    }
-    if unknown:
-        names = ", ".join(sorted(unknown))
-        raise ValueError(f"artifact root has unknown existing content: {names}")
 
 
 def _write_inputs(target: Path, session: QualitySession) -> None:

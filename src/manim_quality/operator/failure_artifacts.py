@@ -7,12 +7,12 @@ from pathlib import Path
 
 from manim_quality.contracts._json_values import thaw_json_object
 
+from .artifact_root import validate_existing_root
 from .artifact_session import findings_payload, revisions_payload
 from .artifact_transcripts import reviewer_messages, tool_results
 from .artifact_usage import reviewer_tokens, token_ledger, usage_record
 from .artifacts import (
     _agent_call,
-    _validate_existing_root,
     _write_inputs,
     _write_json,
     _write_jsonl,
@@ -31,7 +31,7 @@ def write_failed_run_artifacts(
     error: Exception,
 ) -> None:
     target = Path(root)
-    _validate_existing_root(target)
+    validate_existing_root(target)
     target.mkdir(parents=True, exist_ok=True)
     for name in ("input", "revisions", "evidence", "logs", "output"):
         (target / name).mkdir(exist_ok=True)

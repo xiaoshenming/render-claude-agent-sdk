@@ -161,3 +161,21 @@ def test_failed_run_artifacts_classify_timeout_and_keep_best_candidate(
         "math_geometry_reviewer"
     ]
     assert revisions["active_revision_id"] == "R1"
+
+
+def test_failed_artifacts_preserve_preexisting_usage_ledger(tmp_path) -> None:
+    root = tmp_path / "run"
+    ledger = root / "logs" / "usage-events.jsonl"
+    ledger.parent.mkdir(parents=True)
+    ledger.write_text('{"role":"operator"}\n', encoding="utf-8")
+
+    write_failed_run_artifacts(
+        root=root,
+        session=repaired_session(submit=False),
+        record=record("TimeoutError: session exceeded"),
+        baseline_layout_report={"blocking_count": 1},
+        error=TimeoutError("session exceeded"),
+    )
+
+    assert ledger.read_text(encoding="utf-8") == '{"role":"operator"}\n'
+    assert (root / "logs" / "failure.json").is_file()

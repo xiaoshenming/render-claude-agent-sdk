@@ -168,6 +168,38 @@ def test_artifact_writer_preserves_owned_runtime_directories(
     assert runtime_file.read_text(encoding="utf-8") == "rendered"
 
 
+def test_artifact_writer_preserves_preexisting_usage_ledger(tmp_path: Path) -> None:
+    session, operator, gate = accepted_fixture()
+    ledger = tmp_path / "logs" / "usage-events.jsonl"
+    ledger.parent.mkdir()
+    ledger.write_text('{"role":"reviewer"}\n', encoding="utf-8")
+
+    write_run_artifacts(
+        root=tmp_path,
+        session=session,
+        operator_result=operator,
+        gate_result=gate,
+    )
+
+    assert ledger.read_text(encoding="utf-8") == '{"role":"reviewer"}\n'
+    assert (tmp_path / "logs" / "agent_call.json").is_file()
+
+
+def test_artifact_writer_rejects_unknown_preexisting_log(tmp_path: Path) -> None:
+    session, operator, gate = accepted_fixture()
+    log = tmp_path / "logs" / "foreign.log"
+    log.parent.mkdir()
+    log.write_text("do not overwrite", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="unknown existing content: logs"):
+        write_run_artifacts(
+            root=tmp_path,
+            session=session,
+            operator_result=operator,
+            gate_result=gate,
+        )
+
+
 def test_artifact_writer_rejects_unknown_existing_content(tmp_path: Path) -> None:
     session, operator, gate = accepted_fixture()
     (tmp_path / "unowned.txt").write_text("do not overwrite", encoding="utf-8")
