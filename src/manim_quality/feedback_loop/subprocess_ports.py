@@ -26,8 +26,8 @@ class ProcessConfig:
     model: str
     manim_python: Path
     runtime_python_paths: tuple[Path, ...]
-    max_turns: int = 120
-    max_tool_calls: int = 320
+    max_turns: int = 24
+    max_tool_calls: int = 40
     tts_mode: str = "disabled"
 
 
@@ -61,12 +61,13 @@ class SubprocessCoder:
             "--repo", str(self.config.repo),
             "--model", self.config.model,
             "--manim-python", str(self.config.manim_python),
-            "--runtime-python-path", str(self.config.runtime_python_paths[0]),
             "--agent-concurrency", "1",
             "--render-concurrency", "1",
             "--max-turns", str(self.config.max_turns),
             "--max-tool-calls", str(self.config.max_tool_calls),
         ]
+        for path in self.config.runtime_python_paths:
+            argv.extend(("--runtime-python-path", str(path)))
         run_command(argv, round_root / "batch.log", self.config.repo)
         summary = read_json(output / "batch_summary.json")
         rows = summary.get("results") or []
@@ -80,8 +81,15 @@ class SubprocessCoder:
         video = Path(str(details.get("video_path") or ""))
         if not validation.get("passed") or not source.is_file() or not video.is_file():
             raise RuntimeError("Coder candidate lacks fresh render evidence")
+        revision_id = str(
+            decision.get("final_revision_id")
+            or decision.get("submitted_revision_id")
+            or ""
+        )
+        if not revision_id:
+            raise RuntimeError("Coder candidate lacks a real revision identity")
         return Candidate(
-            revision_id=f"loop-R{repair_round}",
+            revision_id=revision_id,
             source_sha256=sha256(source),
             video_sha256=sha256(video),
             source_path=str(source),
@@ -121,20 +129,7 @@ class SubprocessAssurance:
             "video": {"sha256": candidate.video_sha256},
         }])
         output = pass_root / "output"
-        argv = [
-            sys.executable,
-            str(self.config.repo / "scripts/run_final_assurance_demo.py"),
-            "--case-manifest", str(package / "cases.json"),
-            "--logs", str(pass_root / "logs"),
-            "--output", str(output),
-            "--with-agent",
-            "--full-verification",
-            "--manim-python", str(self.config.manim_python),
-            "--workers", "1",
-            "--model", self.config.model,
-        ]
-        for path in self.config.runtime_python_paths:
-            argv.extend(("--runtime-python-path", str(path)))
+        argv = _assurance_argv(self.config, package, pass_root, output)
         run_command(argv, pass_root / "assurance.log", self.config.repo)
         rows = read_json(output / "results.json").get("cases") or []
         if len(rows) != 1:
@@ -156,3 +151,20 @@ class SubprocessAssurance:
             issues=tuple(agent.get("issues") or ()),
             usage={key: int(value) for key, value in usage.items()},
         )
+
+
+def _assurance_argv(config, package, pass_root, output) -> list[str]:
+    argv = [
+        sys.executable,
+        str(config.repo / "scripts/run_final_assurance_demo.py"),
+        "--case-manifest", str(package / "cases.json"),
+        "--logs", str(pass_root / "logs"),
+        "--output", str(output),
+        "--with-agent", "--full-verification",
+        "--manim-python", str(config.manim_python),
+        "--workers", "1",
+        "--model", config.model,
+    ]
+    for path in config.runtime_python_paths:
+        argv.extend(("--runtime-python-path", str(path)))
+    return argv

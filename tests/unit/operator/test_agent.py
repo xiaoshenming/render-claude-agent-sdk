@@ -90,6 +90,14 @@ class CleanScriptBackend(AgentBackend):
                     "confidence": 0.9,
                 }
             )
+        controls.authorize_tool(
+            "Read",
+            {
+                "file_path": request.readable_paths[0],
+                "offset": 1,
+                "limit": 999,
+            },
+        )
         self._invoke(controls, request, "record_findings", {"findings": []})
         self._invoke(
             controls,

@@ -2,7 +2,7 @@ from pathlib import Path
 
 from manim_quality.agents.usage import AgentCallRecord, TokenUsage
 from manim_quality.operator.agent import QualityOperatorResult
-from manim_quality.operator.harness import QualityHarness
+from manim_quality.operator.harness import QualityHarness, _prepared_session_impl
 from manim_quality.operator.models import ValidationOutcome
 
 PROBLEM = "Construct a line."
@@ -133,11 +133,19 @@ def test_harness_rejects_same_agent_and_acceptance_adapter_instances() -> None:
         raise AssertionError("shared validation adapters must be rejected")
 
 
-def test_harness_scales_patch_budget_with_baseline_blocking() -> None:
-    from manim_quality.operator.harness import _patch_budget
+def test_harness_does_not_scale_patch_budget_from_bbox_count(tmp_path) -> None:
+    harness = QualityHarness(
+        operator=OperatorStub(),
+        relation_checker=Relation(),
+        agent_layout_inspector=Layout("agent"),
+        agent_revision_validator=Validator("agent"),
+        acceptance_layout_inspector=Layout("outer"),
+        acceptance_revision_validator=Validator("outer"),
+    )
 
-    assert _patch_budget({"blocking_count": 0}) == 12
-    assert _patch_budget({"blocking_count": 5}) == 16
-    assert _patch_budget({"blocking_count": 23}) == 20
-    assert _patch_budget({}) == 12
-    assert _patch_budget({"blocking_count": "bad"}) == 12
+    session, report = _prepared_session_impl(
+        harness._agent_layout, PROBLEM, CODE, max_patch_attempts=None
+    )
+
+    assert report["blocking_count"] == 0
+    assert session.max_patch_attempts == 12

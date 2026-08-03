@@ -22,7 +22,7 @@ def validate_finding_scope(
     finding_ids: tuple[str, ...],
 ) -> None:
     if not finding_ids:
-        raise ValueError("patch requires at least one finding_id")
+        return
     expected = FindingCategory(scope.value)
     for finding_id in finding_ids:
         item = findings.get(finding_id)
@@ -46,22 +46,16 @@ def validate_patch_transition(
     validations: Mapping[str, object],
     current: CandidateAttempt,
     max_patch_attempts: int,
-    finding_batches: int,
     scope: PatchScope,
     finding_ids: tuple[str, ...],
 ) -> None:
     if not isinstance(scope, PatchScope):
         raise TypeError("scope must be a PatchScope")
-    if finding_batches == 0:
-        raise InvalidSessionTransition("findings must be recorded before patch")
     if len(attempts) - 1 >= max_patch_attempts:
         raise InvalidSessionTransition("patch attempt budget exhausted")
     current_validation = validations.get(current.revision_id)
-    if current.revision_id != "R0":
-        if current_validation is None:
-            raise InvalidSessionTransition("current revision must be validated")
-        if not getattr(current_validation, "improved", False):
-            raise InvalidSessionTransition("previous revision did not improve")
+    if current.revision_id != "R0" and current_validation is None:
+        raise InvalidSessionTransition("current revision must be validated")
     validate_finding_scope(findings, scope, finding_ids)
 
 
@@ -74,7 +68,6 @@ def validate_session_patch(
         validations=session._validations,
         current=session.current_revision,
         max_patch_attempts=session._max_patch_attempts,
-        finding_batches=session._finding_batches,
         scope=scope,
         finding_ids=finding_ids,
     )
@@ -149,64 +142,6 @@ def best_validated_revision(
         "blocking_count": None if inspection is None else inspection[1],
         "layout_inspected": inspection is not None,
     }
-
-
-def patch_budget_for_blocking(blocking_count: int) -> int:
-    """Scale the patch budget to the baseline blocking pressure."""
-
-    if isinstance(blocking_count, bool) or not isinstance(blocking_count, int):
-        raise TypeError("blocking_count must be an integer")
-    if blocking_count <= 2:
-        return 12
-    if blocking_count <= 8:
-        return 16
-    return 20
-
-
-def require_blocking_findings_repaired(
-    findings: Mapping[str, Finding],
-    attempts: Sequence[CandidateAttempt],
-    validations: Mapping[str, object],
-    current_revision_id: str,
-) -> None:
-    blocking = {
-        item.finding_id
-        for item in findings.values()
-        if item.severity == "blocking"
-    }
-    repaired = validated_repaired_finding_ids(
-        attempts, validations, current_revision_id
-    )
-    if not blocking.issubset(repaired):
-        raise InvalidSessionTransition(
-            "blocking findings require a validated repair revision"
-        )
-
-
-def validated_repaired_finding_ids(
-    attempts: Sequence[CandidateAttempt],
-    validations: Mapping[str, object],
-    current_revision_id: str,
-) -> set[str]:
-    return {
-        finding_id
-        for attempt in _revision_lineage(attempts, current_revision_id)
-        if getattr(validations.get(attempt.revision_id), "passed", False)
-        for finding_id in attempt.finding_ids
-    }
-
-
-def _revision_lineage(
-    attempts: Sequence[CandidateAttempt],
-    current_revision_id: str,
-) -> tuple[CandidateAttempt, ...]:
-    by_id = {item.revision_id: item for item in attempts}
-    lineage = []
-    revision = by_id[current_revision_id]
-    while revision.parent_revision_id is not None:
-        lineage.append(revision)
-        revision = by_id[revision.parent_revision_id]
-    return tuple(reversed(lineage))
 
 
 def verify_candidate(

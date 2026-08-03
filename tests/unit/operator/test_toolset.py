@@ -59,6 +59,8 @@ def _fixture(tmp_path: Path):
     candidate = tmp_path / "candidate.py"
     candidate.write_text(CODE, encoding="utf-8")
     session = QualitySession(problem_text=PROBLEM, candidate_code=CODE)
+    # Direct unit calls bypass the native Read normalizer; model its receipt.
+    session.mark_solution_read("R0")
     tools = build_quality_tools(
         session=session,
         relation_checker=Relation(),
@@ -67,6 +69,25 @@ def _fixture(tmp_path: Path):
         candidate_path=candidate,
     )
     return session, candidate, {tool.name: tool for tool in tools}
+
+
+def test_record_findings_cannot_forge_native_read_receipt(tmp_path: Path) -> None:
+    candidate = tmp_path / "candidate.py"
+    candidate.write_text(CODE, encoding="utf-8")
+    session = QualitySession(problem_text=PROBLEM, candidate_code=CODE)
+    tools = build_quality_tools(
+        session=session,
+        relation_checker=Relation(),
+        layout_inspector=Layout(),
+        revision_validator=Validator(),
+        candidate_path=candidate,
+    )
+
+    with pytest.raises(InvalidSessionTransition, match="read_solution"):
+        _execute(
+            {tool.name: tool for tool in tools}["record_findings"],
+            {"findings": []},
+        )
 
 
 def test_custom_read_and_edit_substitutes_are_removed(tmp_path: Path) -> None:
@@ -284,18 +305,22 @@ def test_recover_best_render_passed_falls_back_to_r0(
     assert session.current_revision.revision_id == "R0"
 
 
-def test_native_edit_requires_recorded_finding(tmp_path: Path) -> None:
-    _session, candidate, tools = _fixture(tmp_path)
+def test_native_edit_does_not_require_finding_control_metadata(
+    tmp_path: Path,
+) -> None:
+    session, candidate, tools = _fixture(tmp_path)
     candidate.write_text(
         CODE.replace("self.add(arrow)", "self.add(arrow.shift(UP))"),
         encoding="utf-8",
     )
 
-    with pytest.raises(ValueError, match="addressed finding_ids"):
-        _execute(
-            tools["validate_revision"],
-            {"revision_id": "R0", "finding_ids": []},
-        )
+    receipt = _execute(
+        tools["validate_revision"],
+        {"revision_id": "R0"},
+    )
+
+    assert receipt["revision_id"] == "R1"
+    assert session.current_revision.finding_ids == ()
 
 
 def test_native_edit_may_submit_with_findings_retained_as_evidence(

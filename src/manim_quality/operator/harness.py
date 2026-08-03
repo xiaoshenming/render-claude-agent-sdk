@@ -14,7 +14,6 @@ from .failure_artifacts import write_failed_run_artifacts
 from manim_quality.agents._runtime_models import AgentRunFailed
 from .gate import GateResult, OuterAcceptanceGate
 from .session import QualitySession
-from .session_rules import patch_budget_for_blocking
 
 
 @dataclass(frozen=True, slots=True)
@@ -41,16 +40,7 @@ def _prepared_session_impl(
         session.baseline,
         session.problem_hash,
     )
-    if max_patch_attempts is None:
-        session.raise_patch_budget(_patch_budget(baseline_layout))
     return session, baseline_layout
-
-
-def _patch_budget(baseline_layout: Mapping[str, object]) -> int:
-    blocking = baseline_layout.get("blocking_count")
-    if isinstance(blocking, bool) or not isinstance(blocking, int) or blocking < 0:
-        blocking = 0
-    return patch_budget_for_blocking(blocking)
 
 
 class QualityHarness:

@@ -7,7 +7,13 @@ import tempfile
 from dataclasses import asdict
 from pathlib import Path
 
-from .models import AssuranceOutcome, Candidate, LoopState, PassRecord
+from .models import (
+    AssuranceOutcome,
+    Candidate,
+    LoopExecutionIdentity,
+    LoopState,
+    PassRecord,
+)
 
 
 class JsonLoopStore:
@@ -25,7 +31,7 @@ class JsonLoopStore:
 
     def save(self, state: LoopState) -> None:
         value = asdict(state)
-        payload = {"schema_version": "feedback-loop-v1", "state": value}
+        payload = {"schema_version": "feedback-loop-v2", "state": value}
         payload["checksum"] = _checksum(value)
         self.path.parent.mkdir(parents=True, exist_ok=True)
         fd, temporary = tempfile.mkstemp(
@@ -64,13 +70,21 @@ def _decode(value: dict) -> LoopState:
         )
         for row in value.get("records", ())
     )
+    identity = value.get("execution_identity")
+    score = value.get("best_issue_score")
     return LoopState(
         initial_candidate=Candidate(**value["initial_candidate"]),
         current_candidate=Candidate(**value["current_candidate"]),
         best_candidate=Candidate(**value["best_candidate"]),
         best_grade=value.get("best_grade"),
+        best_issue_score=tuple(score) if score is not None else None,
         assurance_passes=value.get("assurance_passes", 0),
         repair_rounds=value.get("repair_rounds", 0),
+        coder_calls=value.get("coder_calls", value.get("repair_rounds", 0)),
+        bootstrap_completed=value.get("bootstrap_completed", False),
+        execution_identity=(
+            LoopExecutionIdentity(**identity) if identity is not None else None
+        ),
         records=records,
         pending_issues=tuple(value.get("pending_issues", ())),
         terminal_reason=value.get("terminal_reason"),

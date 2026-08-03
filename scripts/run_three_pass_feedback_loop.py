@@ -7,7 +7,7 @@ import json
 from dataclasses import asdict
 from pathlib import Path
 
-from manim_quality.feedback_loop.models import Candidate
+from manim_quality.feedback_loop.models import Candidate, LoopExecutionIdentity
 from manim_quality.feedback_loop.runner import FeedbackLoopRunner
 from manim_quality.feedback_loop.store import JsonLoopStore
 from manim_quality.feedback_loop.subprocess_ports import (
@@ -41,14 +41,19 @@ def main() -> int:
         source_path=str(args.source.resolve()),
         video_path=str(args.video.resolve()),
     )
-    initial = coder.repair(generated, (), 0)
+    identity = execution_identity(args, generated)
     runner = FeedbackLoopRunner(
         coder=coder,
         assurance=SubprocessAssurance(config),
         store=JsonLoopStore(args.output / "loop-state.json"),
         tts_mode=args.tts_mode,
     )
-    result = runner.run(initial, resume=args.resume)
+    result = runner.run(
+        generated,
+        identity=identity,
+        bootstrap=True,
+        resume=args.resume,
+    )
     payload = asdict(result)
     (args.output / "loop-result.json").write_text(
         json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
@@ -81,10 +86,29 @@ def arguments() -> argparse.Namespace:
     parser.add_argument(
         "--tts-mode", choices=("disabled", "required"), default="disabled"
     )
-    parser.add_argument("--max-turns", type=int, default=120)
-    parser.add_argument("--max-tool-calls", type=int, default=320)
+    parser.add_argument("--max-turns", type=int, default=24)
+    parser.add_argument("--max-tool-calls", type=int, default=40)
+    parser.add_argument("--prompt-version", default="quality-operator-v3")
+    parser.add_argument("--tool-version", default="quality-tools-v2")
+    parser.add_argument("--policy-version", default="feedback-loop-v2")
+    parser.add_argument("--runtime-version", default="claude-agent-sdk")
     parser.add_argument("--resume", action="store_true")
     return parser.parse_args()
+
+
+def execution_identity(args, generated: Candidate) -> LoopExecutionIdentity:
+    return LoopExecutionIdentity(
+        job_id=args.case_id,
+        question_sha256=text_sha256(args.question),
+        source_sha256=generated.source_sha256,
+        video_sha256=generated.video_sha256,
+        model_id=args.model,
+        prompt_version=args.prompt_version,
+        tool_version=args.tool_version,
+        policy_version=args.policy_version,
+        runtime_version=args.runtime_version,
+        schema_version="feedback-loop-v2",
+    )
 
 
 def sha256(path: Path) -> str:
@@ -93,6 +117,10 @@ def sha256(path: Path) -> str:
         for chunk in iter(lambda: stream.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def text_sha256(value: str) -> str:
+    return hashlib.sha256(value.encode("utf-8")).hexdigest()
 
 
 if __name__ == "__main__":

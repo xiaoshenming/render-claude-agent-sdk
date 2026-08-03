@@ -53,5 +53,5 @@ CURRENT_REVISION_SCHEMA = schema(
             "uniqueItems": True,
         },
     },
-    ("revision_id", "finding_ids"),
+    ("revision_id",),
 )

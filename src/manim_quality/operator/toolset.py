@@ -60,7 +60,6 @@ class _Handlers:
         return _json_text(await self.relation.check(bind_relation(arguments)))
 
     async def record_findings(self, arguments):
-        self.session.mark_solution_read(self.session.current_revision.revision_id)
         findings = bind_findings(arguments)
         self.session.record_findings(findings)
         return _json_text(
@@ -180,7 +179,6 @@ class _Handlers:
             before = extract_solution(current.code)
             after = extract_solution(edited)
             scope = _native_edit_scope(self.session, finding_ids)
-            self.session.mark_solution_read(current.revision_id)
             return self.session.apply_patch(
                 scope=scope,
                 old_text=before.source,
@@ -190,7 +188,7 @@ class _Handlers:
 
 
 def _bind_finding_ids(arguments) -> tuple[str, ...]:
-    values = arguments.get("finding_ids")
+    values = arguments.get("finding_ids", ())
     if not isinstance(values, (list, tuple)) or len(values) > 12:
         raise ValueError("finding_ids must be an array of at most 12 items")
     finding_ids = tuple(values)
@@ -203,7 +201,7 @@ def _bind_finding_ids(arguments) -> tuple[str, ...]:
 
 def _native_edit_scope(session, finding_ids: tuple[str, ...]) -> PatchScope:
     if not finding_ids:
-        raise ValueError("native Edit validation requires addressed finding_ids")
+        return PatchScope.LOGIC
     findings = {item.finding_id: item for item in session.findings}
     unknown = set(finding_ids) - set(findings)
     if unknown:

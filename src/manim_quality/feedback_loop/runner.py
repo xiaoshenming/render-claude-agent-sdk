@@ -6,6 +6,7 @@ from typing import Protocol
 from .models import (
     AssuranceOutcome,
     Candidate,
+    LoopExecutionIdentity,
     LoopResult,
     LoopState,
     PassRecord,
@@ -47,14 +48,30 @@ class FeedbackLoopRunner:
         self.max_passes = max_assurance_passes
         self.tts_mode = tts_mode
 
-    def run(self, initial: Candidate, *, resume: bool = False) -> LoopResult:
+    def run(
+        self,
+        initial: Candidate,
+        *,
+        identity: LoopExecutionIdentity | None = None,
+        bootstrap: bool = False,
+        resume: bool = False,
+    ) -> LoopResult:
         state = self.store.load() if resume else None
-        state = state or LoopState.initial(initial)
+        if state is not None:
+            _require_matching_identity(state, identity)
+        else:
+            _require_initial_identity(initial, identity)
+            state = LoopState.initial(initial, identity)
+            self.store.save(state)
         if resume and state.terminal_reason in {"assurance_error", "coder_error"}:
             state = replace(state, terminal_reason=None)
             self.store.save(state)
         if state.terminal_reason:
             return _result(state)
+        if bootstrap and not state.bootstrap_completed:
+            state = self._bootstrap(state)
+            if state.terminal_reason:
+                return _result(state)
         while state.assurance_passes < self.max_passes:
             state = self._assure(state)
             if state.terminal_reason:
@@ -66,6 +83,22 @@ class FeedbackLoopRunner:
             if state.terminal_reason:
                 break
         return _result(state)
+
+    def _bootstrap(self, state: LoopState) -> LoopState:
+        state = replace(state, coder_calls=state.coder_calls + 1)
+        self.store.save(state)
+        try:
+            candidate = self.coder.repair(state.current_candidate, (), 0)
+        except Exception:
+            return self._finish(state, "coder_error")
+        state = replace(
+            state,
+            current_candidate=candidate,
+            best_candidate=candidate,
+            bootstrap_completed=True,
+        )
+        self.store.save(state)
+        return state
 
     def _assure(self, state: LoopState) -> LoopState:
         number = state.assurance_passes + 1
@@ -80,15 +113,22 @@ class FeedbackLoopRunner:
             tts_mode=self.tts_mode,
         )
         record = PassRecord(number, state.current_candidate, outcome)
+        score = _issue_score(issues)
         improved = better_grade(state.best_grade, outcome.grade)
+        same_grade_better = (
+            state.best_grade == outcome.grade
+            and (state.best_issue_score is None or score < state.best_issue_score)
+        )
+        selected = improved or same_grade_better
         state = replace(
             state,
             assurance_passes=number,
             records=state.records + (record,),
             pending_issues=issues,
-            best_grade=outcome.grade if improved else state.best_grade,
+            best_grade=outcome.grade if selected else state.best_grade,
+            best_issue_score=score if selected else state.best_issue_score,
             best_candidate=(
-                state.current_candidate if improved else state.best_candidate
+                state.current_candidate if selected else state.best_candidate
             ),
         )
         self.store.save(state)
@@ -102,6 +142,8 @@ class FeedbackLoopRunner:
 
     def _repair(self, state: LoopState) -> LoopState:
         repair_round = state.repair_rounds + 1
+        state = replace(state, coder_calls=state.coder_calls + 1)
+        self.store.save(state)
         try:
             candidate = self.coder.repair(
                 state.current_candidate,
@@ -133,6 +175,38 @@ def _result(state: LoopState) -> LoopResult:
         final_grade=state.best_grade,
         assurance_passes=state.assurance_passes,
         repair_rounds=state.repair_rounds,
+        coder_calls=state.coder_calls,
         terminal_reason=state.terminal_reason or "assurance_budget_exhausted",
         records=state.records,
     )
+
+
+def _issue_score(issues: tuple[dict[str, object], ...]) -> tuple[int, int]:
+    high = sum(
+        1
+        for issue in issues
+        if str(issue.get("severity", "")).lower() in {"blocking", "critical", "high"}
+    )
+    return high, len(issues)
+
+
+def _require_matching_identity(
+    state: LoopState,
+    expected: LoopExecutionIdentity | None,
+) -> None:
+    actual = state.execution_identity
+    if actual != expected:
+        raise ValueError("feedback loop execution identity mismatch")
+
+
+def _require_initial_identity(
+    initial: Candidate,
+    identity: LoopExecutionIdentity | None,
+) -> None:
+    if identity is None:
+        return
+    if (
+        identity.source_sha256 != initial.source_sha256
+        or identity.video_sha256 != initial.video_sha256
+    ):
+        raise ValueError("feedback loop execution identity mismatch")

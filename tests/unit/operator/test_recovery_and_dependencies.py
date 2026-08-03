@@ -241,6 +241,32 @@ def test_recovery_accepts_passing_non_improving_revision_as_usable_base() -> Non
     assert recovered.revision_id == "R1"
 
 
+def test_passing_non_improving_revision_can_continue_natural_repair() -> None:
+    quality = _session()
+    quality.record_findings((_finding("logic-1"),))
+    first = quality.apply_patch(
+        scope=PatchScope.LOGIC,
+        old_text="Line(LEFT, RIGHT)",
+        new_text="Line(LEFT, 2 * RIGHT)",
+        finding_ids=(),
+    )
+    quality.record_validation(
+        revision_id=first.revision_id,
+        passed=True,
+        improved=False,
+        fingerprint="sha256:" + "b" * 64,
+    )
+
+    second = quality.apply_patch(
+        scope=PatchScope.LOGIC,
+        old_text="Line(LEFT, 2 * RIGHT)",
+        new_text="Line(LEFT, 3 * RIGHT)",
+        finding_ids=(),
+    )
+
+    assert second.parent_revision_id == "R1"
+
+
 def test_failed_first_patch_can_recover_baseline_and_retry() -> None:
     quality = _session()
     quality.record_findings((_finding("logic-1"),))

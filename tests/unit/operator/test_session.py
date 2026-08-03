@@ -62,16 +62,17 @@ def test_current_r0_can_bind_real_validation_evidence() -> None:
     assert record.revision_id == "R0"
 
 
-def test_patch_requires_frozen_findings() -> None:
+def test_patch_does_not_require_finding_control_metadata() -> None:
     quality = session()
 
-    with pytest.raises(InvalidSessionTransition, match="findings"):
-        quality.apply_patch(
-            scope=PatchScope.LOGIC,
-            old_text="Line(LEFT, RIGHT)",
-            new_text="Line(LEFT, UP)",
-            finding_ids=("logic-1",),
-        )
+    revision = quality.apply_patch(
+        scope=PatchScope.LOGIC,
+        old_text="Line(LEFT, RIGHT)",
+        new_text="Line(LEFT, UP)",
+        finding_ids=(),
+    )
+
+    assert revision.revision_id == "R1"
 
 
 def test_problem_text_cannot_be_changed_by_patch() -> None:
@@ -167,7 +168,7 @@ def test_logic_patch_is_allowed_after_layout_patch() -> None:
     assert revision.parent_revision_id == "R1"
 
 
-def test_duplicate_patch_and_non_improving_retry_are_stopped() -> None:
+def test_duplicate_patch_is_stopped_even_after_non_improving_result() -> None:
     quality = session()
     quality.record_findings((finding(),))
     quality.apply_patch(
@@ -183,7 +184,7 @@ def test_duplicate_patch_and_non_improving_retry_are_stopped() -> None:
         fingerprint="sha256:" + "3" * 64,
     )
 
-    with pytest.raises(InvalidSessionTransition, match="did not improve"):
+    with pytest.raises(DuplicatePatch, match="already seen"):
         quality.apply_patch(
             scope=PatchScope.LOGIC,
             old_text="Line(LEFT, UP)",
@@ -463,14 +464,3 @@ def test_patch_budget_can_only_be_raised_before_findings() -> None:
     quality.record_findings((finding(),))
     with pytest.raises(InvalidSessionTransition, match="frozen"):
         quality.raise_patch_budget(20)
-
-
-def test_patch_budget_for_blocking_maps_pressure_to_budget() -> None:
-    from manim_quality.operator.session_rules import patch_budget_for_blocking
-
-    assert patch_budget_for_blocking(0) == 12
-    assert patch_budget_for_blocking(2) == 12
-    assert patch_budget_for_blocking(3) == 16
-    assert patch_budget_for_blocking(8) == 16
-    assert patch_budget_for_blocking(9) == 20
-    assert patch_budget_for_blocking(36) == 20
