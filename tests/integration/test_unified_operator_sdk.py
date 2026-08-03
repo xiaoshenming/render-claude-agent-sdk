@@ -266,7 +266,8 @@ def test_real_sdk_backend_runs_clean_operator_tool_sequence(
 
     async def fake_query(*, prompt, options):
         driver = _SdkDriver(options, str(tmp_path))
-        candidate = tmp_path / "candidate.py"
+        candidates = tuple(tmp_path.glob(".quality-agent-session-*/candidate.py"))
+        candidate = candidates[0] if candidates else tmp_path / "candidate.py"
         if options.tools == ["Read"]:
             async for message in _native_tool(
                 driver,

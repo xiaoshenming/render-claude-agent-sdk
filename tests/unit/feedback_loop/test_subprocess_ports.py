@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 from manim_quality.feedback_loop.models import Candidate
@@ -28,10 +29,17 @@ def test_coder_preserves_revision_and_all_runtime_paths(tmp_path, monkeypatch):
         rendered = case / "rendered.mp4"
         rendered.write_bytes(b"new-video")
         (output / "batch_summary.json").write_text(
-            """{"results":[{"status":"PROPOSED",\
-"output":"%s","decision":{"final_revision_id":"R5",\
-"validation":{"passed":true,"details":{"video_path":"%s"}}}}]}"""
-            % (case, rendered),
+            json.dumps({"results": [{
+                "status": "PROPOSED",
+                "output": str(case),
+                "decision": {
+                    "final_revision_id": "R5",
+                    "validation": {
+                        "passed": True,
+                        "details": {"video_path": str(rendered)},
+                    },
+                },
+            }]}),
             encoding="utf-8",
         )
 

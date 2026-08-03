@@ -100,25 +100,13 @@ def _write_logs(
     _write_json(target / "logs" / "agent_call.json", _agent_call(record))
     _write_jsonl(
         target / "logs" / "tool_calls.jsonl",
-        [
-            {
-                "name": item.name,
-                "input": thaw_json_object(item.input),
-                "allowed": item.allowed,
-                "error": item.error,
-                "result_status": item.result_status,
-                "result_hash": item.result_hash,
-                "caller": item.caller,
-                "agent_id": item.agent_id,
-                "agent_type": item.agent_type,
-                "call_id": item.call_id,
-                "started_at_ms": item.started_at_ms,
-                "finished_at_ms": item.finished_at_ms,
-                "duration_ms": item.duration_ms,
-            }
-            for item in record.tool_calls
-        ],
+        [_tool_call_row(item) for item in record.tool_calls],
     )
+    _write_message_logs(target, operator_result)
+    _write_summary_logs(target, session, operator_result, gate_result)
+
+
+def _write_message_logs(target: Path, operator_result) -> None:
     _write_jsonl(
         target / "logs" / "parent-sdk-messages.jsonl",
         [thaw_json_object(item) for item in operator_result.sdk_messages],
@@ -142,6 +130,10 @@ def _write_logs(
             ]
         },
     )
+
+
+def _write_summary_logs(target, session, operator_result, gate_result) -> None:
+    record = operator_result.call_record
     _write_json(
         target / "logs" / "token-ledger.json",
         token_ledger(
@@ -153,6 +145,24 @@ def _write_logs(
     decision = _decision(session, operator_result, gate_result)
     _write_json(target / "logs" / "run_summary.json", decision)
     _write_json(target / "output" / "decision.json", decision)
+
+
+def _tool_call_row(item) -> dict:
+    return {
+        "name": item.name,
+        "input": thaw_json_object(item.input),
+        "allowed": item.allowed,
+        "error": item.error,
+        "result_status": item.result_status,
+        "result_hash": item.result_hash,
+        "caller": item.caller,
+        "agent_id": item.agent_id,
+        "agent_type": item.agent_type,
+        "call_id": item.call_id,
+        "started_at_ms": item.started_at_ms,
+        "finished_at_ms": item.finished_at_ms,
+        "duration_ms": item.duration_ms,
+    }
 
 
 def _write_output(target: Path, session, gate_result: GateResult) -> None:

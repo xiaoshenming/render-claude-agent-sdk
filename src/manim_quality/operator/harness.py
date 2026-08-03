@@ -2,16 +2,17 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from collections.abc import Mapping
+from dataclasses import dataclass
 from pathlib import Path
 
 import anyio
 
+from manim_quality.agents._runtime_models import AgentRunFailed
+
 from .agent import QualityOperatorResult
 from .artifacts import write_run_artifacts
 from .failure_artifacts import write_failed_run_artifacts
-from manim_quality.agents._runtime_models import AgentRunFailed
 from .gate import GateResult, OuterAcceptanceGate
 from .session import QualitySession
 
