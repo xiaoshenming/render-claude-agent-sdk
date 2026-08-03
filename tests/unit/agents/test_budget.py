@@ -150,7 +150,7 @@ def test_budget_reconciles_cache_reclassified_from_input_tokens() -> None:
     assert tracker.snapshot().usage == aggregate
 
 
-def test_budget_rejects_aggregate_below_observed_usage() -> None:
+def test_budget_keeps_observed_usage_when_aggregate_is_incomplete() -> None:
     tracker = BudgetTracker(limits())
     tracker.before_round(
         estimated_input_tokens=10,
@@ -160,8 +160,11 @@ def test_budget_rejects_aggregate_below_observed_usage() -> None:
     )
     tracker.record_usage(TokenUsage(input_tokens=10, output_tokens=5))
 
-    with pytest.raises(ValueError, match="aggregate usage cannot be lower"):
-        tracker.reconcile_usage(TokenUsage(input_tokens=9, output_tokens=5))
+    tracker.reconcile_usage(TokenUsage(input_tokens=9, output_tokens=5))
+
+    snapshot = tracker.snapshot()
+    assert snapshot.usage == TokenUsage(input_tokens=10, output_tokens=5)
+    assert snapshot.usage_reconciled is False
 
 
 def test_external_call_time_is_excluded_from_reasoning_elapsed() -> None:

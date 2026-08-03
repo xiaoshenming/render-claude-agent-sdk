@@ -87,6 +87,13 @@ class OverBudgetBackend(AgentBackend):
         return controls.complete({"decision": "PASS"})
 
 
+class IncompleteAggregateBackend(AgentBackend):
+    def run(self, request: BackendRequest, controls: RuntimeControls) -> BackendResult:
+        controls.record_round_usage(TokenUsage(input_tokens=10, output_tokens=5))
+        controls.reconcile_usage(TokenUsage(input_tokens=9, output_tokens=5))
+        return controls.complete({"decision": "PASS"})
+
+
 def budget(**changes: int) -> BudgetLimits:
     values = {
         "max_context_bytes": 1_000,
@@ -166,6 +173,21 @@ def test_runtime_returns_candidate_and_persists_complete_usage(tmp_path: Path) -
     assert len(result.record.tool_calls) == 1
     assert result.record.turns == 1
     assert result.record.error is None
+
+
+def test_runtime_keeps_output_when_terminal_usage_is_incomplete(tmp_path: Path) -> None:
+    candidate = tmp_path / "candidate.py"
+    candidate.write_text("pass\n", encoding="utf-8")
+    sink = MemorySink()
+
+    result = AgentRuntime(
+        IncompleteAggregateBackend(), sink, budget()
+    ).run(request(tmp_path, candidate))
+
+    assert result.structured_output == {"decision": "PASS"}
+    assert result.record.error is None
+    assert result.record.usage == TokenUsage(input_tokens=10, output_tokens=5)
+    assert result.record.usage_complete is False
 
 
 def test_runtime_does_not_classify_validator_bug_as_correctable_output(

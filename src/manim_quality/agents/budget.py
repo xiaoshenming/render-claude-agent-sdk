@@ -117,7 +117,8 @@ class BudgetTracker:
             aggregate.input_accounted_tokens < observed.input_accounted_tokens
             or aggregate.output_tokens < observed.output_tokens
         ):
-            raise ValueError("aggregate usage cannot be lower than observed usage")
+            self._check_usage(observed)
+            return
         self._usage = aggregate
         self._usage_reconciled = True
         self._check_usage(aggregate)
