@@ -1,15 +1,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from enum import StrEnum
 from pathlib import Path
 
 
 @dataclass(frozen=True, slots=True)
-class AssuranceCase:
+class AssuranceInput:
     key: str
     question: str
-    human_tags: tuple[str, ...]
-    expected_verdict: str
     video_path: Path
     log_dir: Path
     source_path: Path | None = None
@@ -18,7 +17,31 @@ class AssuranceCase:
     preview_video_path: Path | None = None
     delivery_revision_id: str | None = None
     expected_video_sha256: str | None = None
+    expected_source_sha256: str | None = None
+    render_manifest_path: Path | None = None
+    expected_render_manifest_sha256: str | None = None
     tts_mode: str = "required"
+
+
+# Compatibility name for production callers. Labels deliberately do not live here.
+AssuranceCase = AssuranceInput
+
+
+class AssuranceLabel(StrEnum):
+    GOOD = "GOOD"
+    BAD = "BAD"
+    UNLABELED = "UNLABELED"
+
+
+@dataclass(frozen=True, slots=True)
+class LabeledAssuranceCase:
+    assurance_input: AssuranceInput
+    label: AssuranceLabel
+    human_tags: tuple[str, ...] = ()
+    expected_verdict: str = ""
+
+    def __getattr__(self, name: str):
+        return getattr(self.assurance_input, name)
 
 
 @dataclass(frozen=True, slots=True)

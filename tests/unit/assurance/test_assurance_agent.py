@@ -1,9 +1,11 @@
 import pytest
 
 from manim_quality.assurance.agent import (
-    _normalize_confirmed_anchor_drift,
-    _normalize_derived_parameter_issues,
     _validate_reviewers,
+)
+from manim_quality.assurance.policy import (
+    _normalize_anchor_drift,
+    _normalize_derived_parameters,
 )
 
 
@@ -48,7 +50,7 @@ def test_derived_parameter_evidence_becomes_coder_issue() -> None:
         "inspect_risk_frames": {"evidence": [{"id": "CASE:risk-frames"}]},
     }
 
-    _normalize_derived_parameter_issues(output, reports, "CASE")
+    _normalize_derived_parameters(output, reports, "CASE")
 
     assert output["status"] == "review"
     issue = output["issues"][0]
@@ -91,7 +93,7 @@ def test_existing_derived_parameter_issue_is_upgraded() -> None:
         "inspect_risk_frames": {"evidence": [{"id": "CASE:risk-frames"}]},
     }
 
-    _normalize_derived_parameter_issues(output, reports, "CASE")
+    _normalize_derived_parameters(output, reports, "CASE")
 
     issue = output["issues"][0]
     assert issue["severity"] == "high"
@@ -118,7 +120,7 @@ def test_confirmed_anchor_drift_is_always_high() -> None:
         ]
     }
 
-    _normalize_confirmed_anchor_drift(output)
+    _normalize_anchor_drift(output)
 
     assert output["issues"][0]["severity"] == "high"
     assert output["issues"][1]["severity"] == "medium"

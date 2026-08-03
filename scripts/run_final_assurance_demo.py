@@ -85,6 +85,7 @@ def process_case(case, args, index: int, total: int, agent=None) -> dict:
     print(f"[{index}/{total}] {case.key}", flush=True)
     row = {
         "key": case.key,
+        "label": str(case.label),
         "human_tags": list(case.human_tags),
         "expected_verdict": case.expected_verdict,
     }
@@ -109,6 +110,15 @@ def run_agent_case(case, args, row: dict, agent) -> dict:
             report["status"] == "risk" for report in result.reports.values()
         )
         row["reviewers"] = list(result.reviewers)
+        policy = getattr(result, "policy_assessment", None)
+        if policy is not None:
+            row["assurance_policy"] = {
+                "version": policy.policy_version,
+                "sha256": policy.policy_sha256,
+                "change_reasons": list(policy.change_reasons),
+                "raw_sha256": policy.raw_sha256,
+                "adjusted_sha256": policy.adjusted_sha256,
+            }
         row["agent"] = {
             **row["agent"],
             "model": result.parent_call_record.model,

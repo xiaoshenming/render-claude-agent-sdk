@@ -34,10 +34,13 @@ def summarize(rows: list[dict]) -> dict[str, object]:
 
 
 def label_value(row: dict) -> bool | None:
+    explicit = row.get("label")
+    if explicit in {"GOOD", "BAD", "UNLABELED"}:
+        return {"GOOD": False, "BAD": True, "UNLABELED": None}[explicit]
     tags = set(row.get("human_tags", ()))
     if "control" in tags:
         return False
-    if "human_bad" in tags or tags:
+    if "human_bad" in tags:
         return True
     verdict = str(row.get("expected_verdict") or "").lower()
     if verdict in {"pass", "通过", "正确"}:

@@ -6,6 +6,7 @@ from manim_quality.assurance.dataset import (
     load_curated_cases,
     load_successful_cases,
 )
+from manim_quality.assurance.models import AssuranceLabel
 
 
 def test_dataset_binds_annotations_gallery_and_logs(tmp_path) -> None:
@@ -41,6 +42,7 @@ def test_dataset_binds_annotations_gallery_and_logs(tmp_path) -> None:
 
     assert len(cases) == 1
     assert cases[0].human_tags == ("overlap",)
+    assert cases[0].label is AssuranceLabel.BAD
     assert cases[0].video_path == gallery / "media/a.mp4"
 
 
@@ -65,6 +67,7 @@ def test_load_successful_cases_uses_only_complete_final_videos(tmp_path: Path) -
 
     assert [case.key for case in cases] == ["OK-1"]
     assert cases[0].video_path == gallery / "media/final.mp4"
+    assert cases[0].label is AssuranceLabel.UNLABELED
 
 
 def _gallery_item(key: str, status: str, path: str | None) -> dict:
@@ -101,3 +104,4 @@ def test_curated_case_binds_optional_comparison_media(tmp_path: Path) -> None:
     assert case.preview_video_path == tmp_path / "preview.mp4"
     assert case.subtitle_path == tmp_path / "final.srt"
     assert case.tts_mode == "silent"
+    assert case.label is AssuranceLabel.UNLABELED

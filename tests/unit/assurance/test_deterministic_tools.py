@@ -24,8 +24,6 @@ def test_tts_disabled_contract_skips_audio_probe(tmp_path) -> None:
     sample = AssuranceCase(
         key=sample.key,
         question=sample.question,
-        human_tags=sample.human_tags,
-        expected_verdict=sample.expected_verdict,
         video_path=sample.video_path,
         log_dir=sample.log_dir,
         tts_mode="silent",
@@ -45,8 +43,6 @@ def case(tmp_path) -> AssuranceCase:
     return AssuranceCase(
         key="CASE-001",
         question="test",
-        human_tags=("overlap",),
-        expected_verdict="命中但未交付",
         video_path=tmp_path / "video.mp4",
         log_dir=logs,
     )
@@ -108,8 +104,6 @@ make_mini_fig(None, "A", -0.6, 0.3, -0.8)
     sample = AssuranceCase(
         key=sample.key,
         question=sample.question,
-        human_tags=sample.human_tags,
-        expected_verdict=sample.expected_verdict,
         video_path=sample.video_path,
         log_dir=sample.log_dir,
         source_path=source,

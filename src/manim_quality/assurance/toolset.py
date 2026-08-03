@@ -12,6 +12,7 @@ from manim_quality.agents.managed_tools import (
 from manim_quality.contracts._json_values import thaw_json_object
 
 from .contracts import REQUIRED_TOOLS, validate_assurance_output
+from .identity import ArtifactIdentityReceipt, inspect_artifact_identity
 from .models import AssuranceCase, ToolReport
 from .risk_frames import inspect_risk_frames, multimodal_content
 from .tools import (
@@ -43,6 +44,7 @@ class AssuranceToolset:
         self.output_dir = output_dir
         self.reports: dict[str, ToolReport] = {}
         self.verification = verification
+        self.identity = inspect_artifact_identity(case)
 
     def grants(self) -> tuple[ManagedToolGrant, ...]:
         handlers = {
@@ -112,6 +114,8 @@ class AssuranceToolset:
         report = fn(self.case)
         if hasattr(report, "__await__"):
             report = await report
+        if name == "inspect_consistency":
+            report = _with_identity(report, self.identity)
         self.reports[name] = report
         return json.dumps(report.as_dict(), ensure_ascii=False, sort_keys=True)
 
@@ -147,3 +151,18 @@ class AssuranceToolset:
             timeout_ms=timeout_ms,
             max_result_chars=chars,
         )
+
+
+def _with_identity(
+    report: ToolReport,
+    identity: ArtifactIdentityReceipt,
+) -> ToolReport:
+    risks = tuple(dict.fromkeys((*report.risk_codes, *identity.risk_codes)))
+    evidence = (*report.evidence, {"id": "artifact-identity", **identity.as_dict()})
+    return ToolReport(
+        tool=report.tool,
+        status="risk" if risks else report.status,
+        risk_codes=risks,
+        evidence=evidence,
+        artifacts=report.artifacts,
+    )

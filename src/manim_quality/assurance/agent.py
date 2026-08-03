@@ -11,6 +11,13 @@ from manim_quality.operator.reviewers import run_reviewers
 
 from .contracts import ASSURANCE_OUTPUT_SCHEMA
 from .models import AssuranceCase
+from .policy import (
+    POLICY_SHA256,
+    POLICY_VERSION,
+    PolicyAdjustedAssessment,
+    RawAgentAssessment,
+    apply_assurance_policy,
+)
 from .toolset import AssuranceToolset
 from .verification import AssuranceVerification, VerificationConfig
 
@@ -24,6 +31,8 @@ class FinalAssuranceResult:
     reviewers: tuple[dict[str, object], ...]
     call_record: object
     parent_call_record: object
+    raw_assessment: RawAgentAssessment
+    policy_assessment: PolicyAdjustedAssessment
 
 
 class FinalAssuranceAgent:
@@ -36,7 +45,7 @@ class FinalAssuranceAgent:
         self.runtime = runtime
         self.profile = assurance_profile(
             model=model,
-            prompt_version="final-assurance-practical-v3.1",
+            prompt_version=f"final-assurance-practical-v3.1+{POLICY_VERSION}",
             schema_version="final-assurance-output-v2",
             tool_version="final-assurance-tools-v2",
         )
@@ -61,6 +70,7 @@ class FinalAssuranceAgent:
         )
         _validate_reviewers(reviewers)
         prompt = PROMPT.read_text(encoding="utf-8") + (
+            f"\n\nassurance_policy: {POLICY_VERSION}@{POLICY_SHA256}\n"
             f"\n\ncase_key: {case.key}\n题目：{case.question}\n"
             "两路 Reviewer 已由编排器在独立原生 Read 会话中完成，"
             "不要再调用 Agent 工具。以下回执是本次终审的只读证据：\n"
@@ -89,15 +99,16 @@ class FinalAssuranceAgent:
         reports = {
             name: report.as_dict() for name, report in tools.reports.items()
         }
-        output = thaw_json_object(result.structured_output)
-        _normalize_derived_parameter_issues(output, reports, case.key)
-        _normalize_confirmed_anchor_drift(output)
+        raw = RawAgentAssessment(thaw_json_object(result.structured_output))
+        adjusted = apply_assurance_policy(raw, reports, case.key)
         return FinalAssuranceResult(
-            output=output,
+            output=adjusted.output,
             reports=reports,
             reviewers=reviewers,
             call_record=_merge_reviewer_records(result.record, reviewer_records),
             parent_call_record=result.record,
+            raw_assessment=raw,
+            policy_assessment=adjusted,
         )
 
 
@@ -138,88 +149,3 @@ def _validate_reviewers(reviewers: tuple[dict[str, object], ...]) -> None:
         raise RuntimeError(
             "final assurance requires exactly two completed specialist reviewers"
         )
-
-
-def _normalize_derived_parameter_issues(
-    output: dict[str, object],
-    reports: dict[str, object],
-    case_key: str,
-) -> None:
-    mismatches = _derived_parameter_mismatches(reports)
-    if not mismatches:
-        return
-    issues = output.get("issues")
-    if not isinstance(issues, list):
-        return
-    evidence_ids = [f"{case_key}:final-source"]
-    risk_frames = reports.get("inspect_risk_frames")
-    if isinstance(risk_frames, dict) and risk_frames.get("evidence"):
-        evidence_ids.append(f"{case_key}:risk-frames")
-    for mismatch in mismatches:
-        if not isinstance(mismatch, dict):
-            continue
-        expected, actual = mismatch.get("expected"), mismatch.get("actual")
-        matched = next(
-            (
-                item
-                for item in issues
-                if isinstance(item, dict)
-                and str(expected) in str(item.get("summary", ""))
-                and str(actual) in str(item.get("summary", ""))
-            ),
-            None,
-        )
-        if matched is not None:
-            matched["severity"] = "high"
-            current_ids = matched.get("evidence_ids")
-            if isinstance(current_ids, list):
-                matched["evidence_ids"] = list(
-                    dict.fromkeys([*current_ids, *evidence_ids])
-                )
-            continue
-        issues.append(
-            {
-                "severity": "high",
-                "category": "function_visualization",
-                "summary": (
-                    f"函数图像派生系数错误：{mismatch.get('helper')} 第"
-                    f"{mismatch.get('line')}行将 {mismatch.get('parameter')} "
-                    f"设为 {actual}，但按 {mismatch.get('expression')} "
-                    f"复算应为 {expected}。这会使所绘函数斜率与同组选项参数"
-                    "不一致，不能按几何示意图未严格按比例降级。"
-                ),
-                "evidence_ids": evidence_ids,
-            }
-        )
-    if output.get("status") != "incomplete":
-        output["status"] = "review"
-
-
-def _derived_parameter_mismatches(reports: dict[str, object]) -> list[object]:
-    code_review = reports.get("inspect_code_review")
-    if not isinstance(code_review, dict):
-        return []
-    evidence = code_review.get("evidence")
-    if not isinstance(evidence, list) or not evidence:
-        return []
-    source = evidence[0] if isinstance(evidence[0], dict) else {}
-    mismatches = source.get("derived_parameter_mismatches")
-    return mismatches if isinstance(mismatches, list) else []
-
-
-def _normalize_confirmed_anchor_drift(output: dict[str, object]) -> None:
-    issues = output.get("issues")
-    if not isinstance(issues, list):
-        return
-    drift_terms = ("漂移", "脱离", "悬空", "旧坐标", "缩放前", "适配前")
-    for issue in issues:
-        if not isinstance(issue, dict):
-            continue
-        summary = str(issue.get("summary", ""))
-        evidence_ids = issue.get("evidence_ids")
-        has_video = (
-            isinstance(evidence_ids, list)
-            and any(str(item).endswith(":risk-frames") for item in evidence_ids)
-        )
-        if has_video and any(term in summary for term in drift_terms):
-            issue["severity"] = "high"
