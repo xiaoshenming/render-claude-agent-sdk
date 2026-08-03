@@ -341,7 +341,7 @@ def test_findings_require_current_solution_read() -> None:
     quality.record_findings(())
 
 
-def test_r0_submission_rejects_unrepaired_blocking_finding() -> None:
+def test_r0_submission_treats_findings_as_evidence() -> None:
     quality = session()
     quality.record_findings((finding(),))
     quality.record_layout_inspection(
@@ -350,8 +350,7 @@ def test_r0_submission_rejects_unrepaired_blocking_finding() -> None:
         blocking_count=0,
     )
 
-    with pytest.raises(InvalidSessionTransition, match="blocking findings"):
-        quality.submit("R0")
+    assert quality.submit("R0").revision_id == "R0"
 
 
 def test_leading_comment_problem_source_is_outside_patch_boundary() -> None:

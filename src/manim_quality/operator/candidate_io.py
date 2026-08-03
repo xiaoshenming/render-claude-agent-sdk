@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from pathlib import Path
+from tempfile import mkdtemp
 
 from .source_view import extract_solution
 
@@ -17,18 +18,19 @@ def find_baseline_candidate(workspace: Path, baseline_code: str) -> Path:
                 matches.append(path.resolve(strict=True))
         except (OSError, UnicodeError):
             continue
-    if not matches and not any(root.glob("*.py")):
-        candidate = root / "candidate.py"
-        candidate.write_text(baseline_code, encoding="utf-8")
-        return candidate.resolve(strict=True)
-    if len(matches) != 1:
+    if len(matches) > 1 or (not matches and any(root.glob("*.py"))):
         raise ValueError("workspace must contain exactly one baseline candidate.py")
-    return matches[0]
+    session = Path(mkdtemp(prefix=".quality-agent-session-", dir=root))
+    candidate = session / "candidate.py"
+    candidate.write_text(baseline_code, encoding="utf-8")
+    return candidate.resolve(strict=True)
 
 
-def live_solution_read(candidate_path: Path):
+def live_solution_read(candidate_path: Path, *, on_read=None):
     def normalize(value: Mapping[str, object]) -> Mapping[str, object]:
         solution = extract_solution(candidate_path.read_text(encoding="utf-8"))
+        if on_read is not None:
+            on_read()
         return {
             **value,
             "offset": solution.start_line,

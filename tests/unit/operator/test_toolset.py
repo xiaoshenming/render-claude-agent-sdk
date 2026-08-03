@@ -298,7 +298,7 @@ def test_native_edit_requires_recorded_finding(tmp_path: Path) -> None:
         )
 
 
-def test_native_edit_cannot_claim_unaddressed_blocking_finding(
+def test_native_edit_may_submit_with_findings_retained_as_evidence(
     tmp_path: Path,
 ) -> None:
     session, candidate, tools = _fixture(tmp_path)
@@ -324,9 +324,6 @@ def test_native_edit_cannot_claim_unaddressed_blocking_finding(
     _execute(tools["validate_revision"], binding)
     _execute(tools["inspect_layout"], binding)
 
-    with pytest.raises(
-        InvalidSessionTransition, match="blocking findings require"
-    ):
-        _execute(tools["submit_revision"], {"revision_id": "R1"})
-
-    assert session.submitted_revision_id is None
+    result = _execute(tools["submit_revision"], {"revision_id": "R1"})
+    assert result["status"] == "submitted"
+    assert session.submitted_revision_id == "R1"

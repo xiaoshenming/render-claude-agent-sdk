@@ -43,7 +43,7 @@ def _args(tmp_path: Path):
     )
 
 
-def test_proposed_translates_to_deliver_contract(tmp_path: Path) -> None:
+def test_proposed_is_candidate_ready_for_assurance(tmp_path: Path) -> None:
     args = _args(tmp_path)
     output = args.output
     harness = output / "harness"
@@ -72,6 +72,8 @@ def test_proposed_translates_to_deliver_contract(tmp_path: Path) -> None:
     assert code == 0
     result = json.loads((output / "result.json").read_text())
     assert result["status"] == "deliver"
+    assert result["agent_outcome"]["status"] == "candidate_ready_for_assurance"
+    assert result["delivery_authorized"] is False
     assert result["logic"]["status"] == "candidate_ready"
     assert result["token_usage"]["total_tokens"] == 70001
     assert result["token_usage"]["entries"] == [
@@ -82,6 +84,8 @@ def test_proposed_translates_to_deliver_contract(tmp_path: Path) -> None:
     assert result["token_usage"]["missing_operations"] == ["parent"]
     assert (output / "candidate_final.py").read_text() == "class Solution: fixed\n"
     assert (output / "video_final.mp4").read_bytes() == b"after-video"
+    assert result["artifact_identity"]["revision_id"] == "R2"
+    assert result["artifact_identity"]["manifest_sha256"]
 
 
 def test_agent_tree_usage_does_not_double_count_reviewers(tmp_path: Path) -> None:
@@ -125,6 +129,29 @@ def test_hold_delivers_untouched_before_with_warning(tmp_path: Path) -> None:
         == args.code.read_bytes()
     )
     assert (output / "video_final.mp4").read_bytes() == b"before-video"
+    assert result["artifact_identity"]["revision_id"] == "R0"
+    assert result["artifact_identity"]["source_revision_id"] == "R0"
+    assert result["artifact_identity"]["video_revision_id"] == "R0"
+
+
+def test_operator_edits_session_copy_not_caller_source(
+    tmp_path: Path, monkeypatch
+) -> None:
+    args = _args(tmp_path)
+    original = args.code.read_text(encoding="utf-8")
+    captured = {}
+
+    def fake_main(argv):
+        candidate = Path(argv[argv.index("--candidate") + 1])
+        captured["candidate"] = candidate
+        candidate.write_text("class Solution: changed\n", encoding="utf-8")
+        return 0
+
+    monkeypatch.setattr("manim_quality.operator.cli.main", fake_main)
+
+    assert shim._run_operator(args, tmp_path / "harness") == 0
+    assert captured["candidate"] != args.code
+    assert args.code.read_text(encoding="utf-8") == original
 
 
 def test_failed_exits_nonzero_for_fail_open(tmp_path: Path, monkeypatch) -> None:

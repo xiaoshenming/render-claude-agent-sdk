@@ -99,9 +99,10 @@ def _run_operator(args: argparse.Namespace, harness_root: Path) -> int:
     if args.base_url:
         os.environ["ANTHROPIC_BASE_URL"] = args.base_url
     workspace = args.code.resolve(strict=True).parent
+    candidate = _session_candidate(args.code, harness_root)
     argv = [
         "--candidate",
-        str(args.code.resolve()),
+        str(candidate),
         "--problem",
         str(args.problem.resolve(strict=True)),
         "--workspace",
@@ -127,6 +128,15 @@ def _run_operator(args: argparse.Namespace, harness_root: Path) -> int:
     except Exception as error:
         print(f"quality harness crashed: {error}", file=sys.stderr)
         return 4
+
+
+def _session_candidate(source: Path, harness_root: Path) -> Path:
+    """Create the only Agent-editable copy while preserving caller R0."""
+    session = harness_root.parent / "session_workspace"
+    session.mkdir(parents=True, exist_ok=True)
+    candidate = session / "candidate.py"
+    shutil.copyfile(source.resolve(strict=True), candidate)
+    return candidate.resolve(strict=True)
 
 
 def _read_decision(harness_root: Path) -> dict[str, object]:

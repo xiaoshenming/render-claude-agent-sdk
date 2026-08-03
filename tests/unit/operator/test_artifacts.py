@@ -143,6 +143,10 @@ def test_artifact_writer_persists_replayable_run_pack(tmp_path: Path) -> None:
         (tmp_path / "output" / "decision.json").read_text(encoding="utf-8")
     )
     assert decision["decision"] == "PROPOSED"
+    assert decision["workflow_status"] == "candidate_ready_for_assurance"
+    assert decision["delivery_authorized"] is False
+    assert decision["final_revision_id"] == "R0"
+    assert decision["final_revision_code_hash"] == session.baseline.code_hash
     assert decision["tokens"]["total_tokens"] == 120
 
 

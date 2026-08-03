@@ -215,6 +215,12 @@ def _decision(
     aggregate_total = record.usage.total_tokens
     return {
         "decision": gate_result.decision.value,
+        "workflow_status": (
+            "candidate_ready_for_assurance"
+            if gate_result.decision is GateDecision.PROPOSED
+            else "held_with_baseline_retained"
+        ),
+        "delivery_authorized": False,
         "agent_held": held,
         "hold_reason": operator_result.hold_reason,
         "submitted_revision_id": (
@@ -222,7 +228,11 @@ def _decision(
         ),
         "last_revision_id": operator_result.revision.revision_id,
         "final_revision_id": None if final is None else final.revision_id,
+        "final_revision_code_hash": None if final is None else final.code_hash,
         "rollback_revision_id": None if rollback is None else rollback.revision_id,
+        "rollback_revision_code_hash": (
+            None if rollback is None else rollback.code_hash
+        ),
         "best_render_passed": session.best_validated_evidence(),
         "reasons": list(gate_result.reasons),
         "agent_summary": operator_result.summary,

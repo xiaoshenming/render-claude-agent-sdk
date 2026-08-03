@@ -54,7 +54,12 @@ def operator_request(
             "Read": ToolInputPolicy(
                 max_calls=120,
                 required_fields=("offset", "limit"),
-                input_normalizer=live_solution_read(candidate_path),
+                input_normalizer=live_solution_read(
+                    candidate_path,
+                    on_read=lambda: session.mark_solution_read(
+                        session.current_revision.revision_id
+                    ),
+                ),
             )
         },
         subagents=(),

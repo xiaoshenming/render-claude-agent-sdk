@@ -19,7 +19,6 @@ from .session_rules import (
     best_validated_revision,
     embedded_problem_hash,
     patch_hash,
-    require_blocking_findings_repaired,
     validate_layout_inspection,
     validate_patch_budget_raise,
     validate_patch_text,
@@ -275,12 +274,6 @@ class QualitySession:
             )
         if self._finding_batches == 0:
             raise InvalidSessionTransition("findings must be recorded before submit")
-        require_blocking_findings_repaired(
-            self._findings,
-            self._attempts,
-            self._validations,
-            current.revision_id,
-        )
         if revision_id not in self._layout_inspections:
             raise InvalidSessionTransition(
                 "current revision requires a fresh layout inspection"

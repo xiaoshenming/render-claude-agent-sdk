@@ -13,9 +13,13 @@ def write_result(
     logic: dict[str, object],
     layout: dict[str, object],
 ) -> None:
+    identity = _artifact_identity(output, decision)
+    manifest_sha = _write_manifest(output, status, identity)
+    identity["manifest_sha256"] = manifest_sha
     payload = {
         "schema_version": "batchops.quality-agent.result.v2",
         "status": status,
+        "delivery_authorized": False,
         "logic": logic,
         "layout": layout,
         "harness_decision": decision.get("decision"),
@@ -26,7 +30,7 @@ def write_result(
             "recoverable": bool(decision.get("best_render_passed")),
             "last_verified_revision_id": _best_revision(decision),
         },
-        "artifact_identity": _artifact_identity(output, decision),
+        "artifact_identity": identity,
         "turns": decision.get("turns"),
         "tokens": decision.get("tokens"),
         "token_usage": token_usage(decision),
@@ -80,7 +84,7 @@ def _outcome_status(status: str, decision: dict[str, object]) -> str:
         return "failed"
     if decision.get("decision") == "HOLD":
         return "held"
-    return "delivered"
+    return "candidate_ready_for_assurance"
 
 
 def _best_revision(decision: dict[str, object]) -> object:
@@ -89,15 +93,30 @@ def _best_revision(decision: dict[str, object]) -> object:
 
 
 def _artifact_identity(output: Path, decision: dict[str, object]) -> dict:
+    revision_id = (
+        decision.get("final_revision_id")
+        or decision.get("submitted_revision_id")
+        or "R0"
+    )
     return {
-        "revision_id": (
-            decision.get("final_revision_id")
-            or decision.get("submitted_revision_id")
-            or "R0"
-        ),
+        "revision_id": revision_id,
+        "source_revision_id": revision_id,
+        "video_revision_id": revision_id,
         "candidate_code_sha256": _file_sha256(output / "candidate_final.py"),
         "video_sha256": _file_sha256(output / "video_final.mp4"),
     }
+
+
+def _write_manifest(output: Path, status: str, identity: dict) -> str:
+    manifest = {
+        "schema_version": "batchops.quality-artifacts.v1",
+        "status": status,
+        **identity,
+    }
+    text = json.dumps(manifest, ensure_ascii=False, sort_keys=True) + "\n"
+    path = output / "artifact_manifest.json"
+    path.write_text(text, encoding="utf-8")
+    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def _file_sha256(path: Path) -> str | None:
