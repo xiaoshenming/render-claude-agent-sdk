@@ -113,6 +113,7 @@ def _review_context(runtime, model, workspace, session):
     reviewer_results, reviewer_records = run_reviewers(
         runtime,
         candidate_path=candidate_path,
+        problem_text=session.problem_text,
         model=model,
         effort="low",
     )

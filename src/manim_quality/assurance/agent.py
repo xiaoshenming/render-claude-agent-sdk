@@ -118,6 +118,7 @@ def _native_reviewers(runtime, model, case, verification):
     return run_reviewers(
         runtime,
         candidate_path=case.source_path,
+        problem_text=case.question,
         model=model,
         effort="medium",
     )

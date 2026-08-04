@@ -31,6 +31,7 @@ def run_reviewers(
     runtime: AgentRuntime,
     *,
     candidate_path: Path,
+    problem_text: str,
     model: str,
     effort: str = "low",
 ) -> tuple[tuple[dict[str, object], ...], tuple[object, ...]]:
@@ -42,7 +43,7 @@ def run_reviewers(
     ):
         outcome = runtime.run(
             _reviewer_request(
-                name, prompt_name, candidate_path, model, effort
+                name, prompt_name, candidate_path, problem_text, model, effort
             )
         )
         if not any(
@@ -72,8 +73,10 @@ def run_reviewers(
     return tuple(results), tuple(records)
 
 
-def _reviewer_request(name, prompt_name, candidate_path, model, effort):
-    prompt = _prompt(prompt_name, candidate_path)
+def _reviewer_request(
+    name, prompt_name, candidate_path, problem_text, model, effort
+):
+    prompt = _prompt(prompt_name, candidate_path, problem_text)
     start_line, _end_line, line_count = _solution_range(candidate_path)
     exact_read = ToolInputPolicy(
         max_calls=1,
@@ -103,9 +106,12 @@ def _reviewer_request(name, prompt_name, candidate_path, model, effort):
     )
 
 
-def _prompt(name: str, candidate_path: Path) -> str:
+def _prompt(name: str, candidate_path: Path, problem_text: str) -> str:
     start_line, end_line, line_count = _solution_range(candidate_path)
     content_language = _content_language(candidate_path)
+    authoritative_problem = problem_text.strip()
+    if not authoritative_problem:
+        raise ValueError("reviewer problem_text must be non-empty")
     return (
         (_PROMPTS / name)
         .read_text(encoding="utf-8")
@@ -114,6 +120,7 @@ def _prompt(name: str, candidate_path: Path) -> str:
         .replace("{{SOLUTION_END_LINE}}", str(end_line))
         .replace("{{SOLUTION_LINE_COUNT}}", str(line_count))
         .replace("{{CONTENT_LANGUAGE}}", content_language)
+        .replace("{{PROBLEM_TEXT}}", authoritative_problem)
         .strip()
     )
 
