@@ -134,6 +134,7 @@ def _failure(record, session: QualitySession, error: Exception) -> dict[str, obj
         "reviewer_tokens_included": record.usage_complete,
         "total_tokens_with_reviewers": known_total,
         "usage_complete": record.usage_complete,
+        "token_limit_observations": list(record.token_limit_observations),
         "external_tool_ms": record.external_tool_ms,
         "turns": record.turns,
         "tool_calls": len(record.tool_calls),

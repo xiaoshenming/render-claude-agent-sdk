@@ -72,6 +72,7 @@ def token_ledger(record, sdk_messages, subagent_results) -> dict[str, object]:
     return {
         "schema_version": "manim-quality.token-ledger.v1",
         "complete": record.usage_complete,
+        "token_limit_observations": list(record.token_limit_observations),
         "aggregate": usage_record(record.usage),
         "rounds": rounds,
         "terminal_result": terminal,

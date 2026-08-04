@@ -61,7 +61,7 @@ def test_budget_checks_context_rounds_tools_and_elapsed_before_work() -> None:
         tracker.check_elapsed()
 
 
-def test_budget_refuses_next_round_that_cannot_fit_hard_token_caps() -> None:
+def test_token_reservation_limit_is_observed_without_stopping_round() -> None:
     tracker = BudgetTracker(limits(max_total_tokens=40))
     tracker.before_round(
         estimated_input_tokens=20,
@@ -71,13 +71,16 @@ def test_budget_refuses_next_round_that_cannot_fit_hard_token_caps() -> None:
     )
     tracker.record_usage(TokenUsage(input_tokens=20, output_tokens=10))
 
-    with pytest.raises(BudgetExceeded, match="total tokens"):
-        tracker.before_round(
-            estimated_input_tokens=5,
-            reserved_output_tokens=6,
-            reserved_cache_read_tokens=0,
-            reserved_cache_write_tokens=0,
-        )
+    tracker.before_round(
+        estimated_input_tokens=5,
+        reserved_output_tokens=6,
+        reserved_cache_read_tokens=0,
+        reserved_cache_write_tokens=0,
+    )
+
+    assert "reservation:total tokens:41>40" in (
+        tracker.snapshot().token_limit_observations
+    )
 
 
 def test_actual_usage_is_accounted_by_token_category() -> None:
@@ -98,20 +101,27 @@ def test_actual_usage_is_accounted_by_token_category() -> None:
     tracker.record_usage(usage)
 
     assert tracker.snapshot().usage == usage
-    with pytest.raises(BudgetExceeded, match="cache read"):
-        tracker.record_usage(TokenUsage(cache_read_tokens=18))
+    tracker.record_usage(TokenUsage(cache_read_tokens=18))
+
+    assert "observed:cache read tokens:21>20" in (
+        tracker.snapshot().token_limit_observations
+    )
 
 
-def test_budget_reserves_cache_capacity_before_starting_round() -> None:
+def test_cache_reservation_limit_is_observed_without_stopping_round() -> None:
     tracker = BudgetTracker(limits(max_cache_read_tokens=5))
 
-    with pytest.raises(BudgetExceeded, match="cache read"):
-        tracker.before_round(
-            estimated_input_tokens=1,
-            reserved_output_tokens=1,
-            reserved_cache_read_tokens=6,
-            reserved_cache_write_tokens=0,
-        )
+    tracker.before_round(
+        estimated_input_tokens=1,
+        reserved_output_tokens=1,
+        reserved_cache_read_tokens=6,
+        reserved_cache_write_tokens=0,
+    )
+
+    assert tracker.snapshot().turns == 1
+    assert "reservation:cache read tokens:6>5" in (
+        tracker.snapshot().token_limit_observations
+    )
 
 
 def test_budget_reconciles_authoritative_aggregate_without_adding_turn() -> None:

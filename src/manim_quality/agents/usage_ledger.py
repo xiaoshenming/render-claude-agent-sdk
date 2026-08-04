@@ -93,6 +93,7 @@ def _record_payload(record: AgentCallRecord) -> dict[str, object]:
         "elapsed_ms": record.elapsed_ms,
         "external_tool_ms": record.external_tool_ms,
         "usage_complete": record.usage_complete,
+        "token_limit_observations": list(record.token_limit_observations),
         "tool_calls": [
             {
                 "name": call.name,

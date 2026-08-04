@@ -432,7 +432,7 @@ def test_runtime_requires_usage_for_every_completed_round(tmp_path: Path) -> Non
         runtime.run(request(tmp_path, candidate))
 
 
-def test_runtime_audit_keeps_actual_usage_when_sdk_exceeds_limit(
+def test_runtime_keeps_running_and_audits_usage_when_token_limit_is_exceeded(
     tmp_path: Path,
 ) -> None:
     candidate = tmp_path / "candidate.py"
@@ -440,10 +440,13 @@ def test_runtime_audit_keeps_actual_usage_when_sdk_exceeds_limit(
     sink = MemorySink()
     runtime = AgentRuntime(OverBudgetBackend(), sink, budget())
 
-    with pytest.raises(AgentRunFailed, match="input tokens"):
-        runtime.run(request(tmp_path, candidate))
+    result = runtime.run(request(tmp_path, candidate))
 
     assert sink.records[0].usage.input_tokens == 101
+    assert result.record.error is None
+    assert "observed:input tokens:101>100" in (
+        result.record.token_limit_observations
+    )
 
 
 def test_tool_budget_rejection_is_included_in_audit(tmp_path: Path) -> None:

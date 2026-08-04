@@ -195,6 +195,7 @@ def _agent_call(record) -> dict[str, object]:
         "elapsed_ms": record.elapsed_ms,
         "external_tool_ms": record.external_tool_ms,
         "usage_complete": record.usage_complete,
+        "token_limit_observations": list(record.token_limit_observations),
         "error": record.error,
     }
 
@@ -239,6 +240,7 @@ def _decision(
         "tokens": usage_record(record.usage),
         "tokens_scope": "agent_tree",
         "usage_complete": record.usage_complete,
+        "token_limit_observations": list(record.token_limit_observations),
         "reviewer_tokens": reviewer_total,
         "reviewer_tokens_included": record.usage_complete,
         "total_tokens_with_reviewers": aggregate_total,

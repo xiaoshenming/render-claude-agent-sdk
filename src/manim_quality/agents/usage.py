@@ -116,6 +116,7 @@ class AgentCallRecord:
     error: str | None
     external_tool_ms: int = 0
     usage_complete: bool = True
+    token_limit_observations: Sequence[str] = ()
 
     def __post_init__(self) -> None:
         for name in (
@@ -143,6 +144,11 @@ class AgentCallRecord:
         _require_non_negative_int(self.external_tool_ms, "external_tool_ms")
         if not isinstance(self.usage_complete, bool):
             raise TypeError("usage_complete must be bool")
+        object.__setattr__(
+            self, "token_limit_observations", tuple(self.token_limit_observations)
+        )
+        for value in self.token_limit_observations:
+            _require_text(value, "token_limit_observation")
         if self.error is not None:
             _require_text(self.error, "error")
 
@@ -173,6 +179,7 @@ def build_agent_call_record(
     error: str | None,
     external_tool_ms: int = 0,
     usage_complete: bool = True,
+    token_limit_observations: Sequence[str] = (),
 ) -> AgentCallRecord:
     profile = request.profile
     return AgentCallRecord(
@@ -192,6 +199,7 @@ def build_agent_call_record(
         error=error,
         external_tool_ms=external_tool_ms,
         usage_complete=usage_complete,
+        token_limit_observations=token_limit_observations,
     )
 
 

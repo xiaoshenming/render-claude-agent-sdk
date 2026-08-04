@@ -1,4 +1,4 @@
-"""Hard pre-call and per-round Agent budget enforcement."""
+"""Runtime safety limits with observational token budgets."""
 
 from __future__ import annotations
 
@@ -41,6 +41,7 @@ class BudgetSnapshot:
     elapsed_ms: int
     external_ms: int = 0
     usage_reconciled: bool = False
+    token_limit_observations: tuple[str, ...] = ()
 
 
 class BudgetTracker:
@@ -62,6 +63,7 @@ class BudgetTracker:
         self._external_depth = 0
         self._external_started = 0.0
         self._usage_reconciled = False
+        self._token_limit_observations: list[str] = []
 
     def check_context(self, context_bytes: int) -> None:
         _require_count(context_bytes, "context_bytes")
@@ -88,7 +90,7 @@ class BudgetTracker:
         self.check_elapsed()
         if self._turns >= self._limits.max_turns:
             raise BudgetExceeded("turns exceed hard limit")
-        self._check_round_capacity(
+        self._observe_round_capacity(
             estimated_input_tokens,
             reserved_output_tokens,
             reserved_cache_read_tokens,
@@ -107,7 +109,7 @@ class BudgetTracker:
             raise TypeError("usage must be TokenUsage")
         prospective = self._usage.plus(usage)
         self._usage = prospective
-        self._check_usage(prospective)
+        self._observe_usage(prospective)
 
     def reconcile_usage(self, aggregate: TokenUsage) -> None:
         if not isinstance(aggregate, TokenUsage):
@@ -117,11 +119,11 @@ class BudgetTracker:
             aggregate.input_accounted_tokens < observed.input_accounted_tokens
             or aggregate.output_tokens < observed.output_tokens
         ):
-            self._check_usage(observed)
+            self._observe_usage(observed)
             return
         self._usage = aggregate
         self._usage_reconciled = True
-        self._check_usage(aggregate)
+        self._observe_usage(aggregate)
 
     def check_elapsed(self) -> None:
         if self._elapsed_ms() > self._limits.max_elapsed_ms:
@@ -154,12 +156,13 @@ class BudgetTracker:
             elapsed_ms=self._elapsed_ms(),
             external_ms=self._external_ms,
             usage_reconciled=self._usage_reconciled,
+            token_limit_observations=tuple(self._token_limit_observations),
         )
 
     def remaining_elapsed_ms(self) -> int:
         return max(0, self._limits.max_elapsed_ms - self._elapsed_ms())
 
-    def _check_round_capacity(
+    def _observe_round_capacity(
         self,
         input_tokens: int,
         output_tokens: int,
@@ -190,14 +193,19 @@ class BudgetTracker:
         )
         for actual, limit, label in checks:
             if actual > limit:
-                raise BudgetExceeded(f"{label} exceed hard limit")
+                self._observe_token_limit(label, actual, limit, "reservation")
         reservation = (
             input_tokens + output_tokens + cache_read_tokens + cache_write_tokens
         )
         if self._usage.total_tokens + reservation > self._limits.max_total_tokens:
-            raise BudgetExceeded("total tokens exceed hard limit")
+            self._observe_token_limit(
+                "total tokens",
+                self._usage.total_tokens + reservation,
+                self._limits.max_total_tokens,
+                "reservation",
+            )
 
-    def _check_usage(self, usage: TokenUsage) -> None:
+    def _observe_usage(self, usage: TokenUsage) -> None:
         checks = (
             (usage.input_tokens, self._limits.max_input_tokens, "input tokens"),
             (usage.output_tokens, self._limits.max_output_tokens, "output tokens"),
@@ -215,7 +223,14 @@ class BudgetTracker:
         )
         for actual, limit, label in checks:
             if actual > limit:
-                raise BudgetExceeded(f"{label} exceed hard limit")
+                self._observe_token_limit(label, actual, limit, "observed")
+
+    def _observe_token_limit(
+        self, label: str, actual: int, limit: int, phase: str,
+    ) -> None:
+        observation = f"{phase}:{label}:{actual}>{limit}"
+        if observation not in self._token_limit_observations:
+            self._token_limit_observations.append(observation)
 
     def _elapsed_ms(self) -> int:
         wall_ms = int((self._clock() - self._started) * 1_000)
