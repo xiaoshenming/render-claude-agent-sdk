@@ -10,7 +10,7 @@ ARCHIVE = (
     ROOT / "vendor/source_archives/server3_render_logic_overlap_runtime_20260804.tar.gz"
 )
 EXPECTED_ARCHIVE_SHA = (
-    "5267e9766d8f9580edd64e1d6439c94ae64d9ade78b898d1d871ddc6e52f9d51"
+    "1ee04445f1ac88a2d894f175088c3ef9a1cce87f1eaf6a0278854d3e5da01473"
 )
 
 
