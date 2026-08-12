@@ -21,6 +21,7 @@ from claude_agent_sdk import (
 from manim_quality.contracts._json_values import thaw_json_object
 
 from ._claude_hooks import ClaudeHookState, ClaudeSdkProtocolError
+from ._claude_message_compat import install_claude_sdk_message_compat
 from ._claude_result import ClaudeSdkRunError as ClaudeSdkRunError
 from ._claude_result import result_tree_usage, validate_terminal_result
 from ._deadline import _DeadlineExtender
@@ -44,6 +45,9 @@ _DENIED_TOOLS = (
 )
 
 QueryFunction = Callable[..., AsyncIterator[object]]
+
+
+install_claude_sdk_message_compat()
 
 
 class ClaudeSdkBackend(AgentBackend):
