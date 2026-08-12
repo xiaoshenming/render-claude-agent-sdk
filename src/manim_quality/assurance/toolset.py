@@ -87,13 +87,33 @@ class AssuranceToolset:
             if missing:
                 raise ValueError(f"Agent skipped required tools: {sorted(missing)}")
             validate_assurance_output(
-                value,
+                self.normalize_output(value),
                 expected_reports={
                     name: report.as_dict() for name, report in self.reports.items()
                 },
             )
         except ValueError as error:
             raise CorrectableOutputError(str(error)) from error
+
+    def normalize_output(self, value) -> dict[str, object]:
+        """Bind mechanical receipt fields to immutable observed tool reports."""
+        payload = thaw_json_object(value)
+        receipts = payload.get("tool_receipts")
+        if not isinstance(receipts, list):
+            return payload
+        for receipt in receipts:
+            if not isinstance(receipt, dict):
+                continue
+            report = self.reports.get(str(receipt.get("tool") or ""))
+            if report is None:
+                continue
+            receipt["status"] = report.status
+            receipt["evidence_ids"] = [
+                str(row["id"])
+                for row in report.evidence
+                if isinstance(row.get("id"), str)
+            ]
+        return payload
 
     def _record_output_attempt(self, value) -> None:
         path = self.output_dir / "structured-output-attempts.jsonl"

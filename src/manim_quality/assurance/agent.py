@@ -6,7 +6,6 @@ from pathlib import Path
 
 from manim_quality.agents.profile import assurance_profile
 from manim_quality.agents.runtime import AgentRunRequest, AgentRuntime
-from manim_quality.contracts._json_values import thaw_json_object
 from manim_quality.operator.reviewers import run_reviewers
 
 from .contracts import ASSURANCE_OUTPUT_SCHEMA
@@ -99,7 +98,7 @@ class FinalAssuranceAgent:
         reports = {
             name: report.as_dict() for name, report in tools.reports.items()
         }
-        raw = RawAgentAssessment(thaw_json_object(result.structured_output))
+        raw = RawAgentAssessment(tools.normalize_output(result.structured_output))
         adjusted = apply_assurance_policy(raw, reports, case.key)
         return FinalAssuranceResult(
             output=adjusted.output,
