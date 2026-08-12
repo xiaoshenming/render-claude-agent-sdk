@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import ast
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from pathlib import Path
 
 from manim_quality.agents.profile import reviewer_profile
@@ -41,15 +41,22 @@ def run_reviewers(
         ("math_geometry_reviewer", "math_geometry_reviewer_v1.md"),
         ("animation_lifecycle_reviewer", "animation_lifecycle_reviewer_v1.md"),
     ):
-        outcome = runtime.run(
-            _reviewer_request(
-                name, prompt_name, candidate_path, problem_text, model, effort
-            )
+        request = _reviewer_request(
+            name, prompt_name, candidate_path, problem_text, model, effort
         )
-        if not any(
-            item.allowed and item.name == "Read"
-            for item in outcome.record.tool_calls
-        ):
+        outcome = runtime.run(request)
+        if not _used_native_read(outcome):
+            outcome = runtime.run(replace(
+                request,
+                run_id=f"{request.run_id}-native-read-retry",
+                prompt=(
+                    f"{request.prompt}\n\n"
+                    "PROTOCOL REPAIR: the previous response was discarded because "
+                    "it did not call native Read. Call the allowed Read tool exactly "
+                    "once with the required offset and limit before returning JSON."
+                ),
+            ))
+        if not _used_native_read(outcome):
             raise RuntimeError(f"{name} did not read the candidate with native Read")
         results.append(
             {
@@ -71,6 +78,13 @@ def run_reviewers(
         )
         records.append(outcome.record)
     return tuple(results), tuple(records)
+
+
+def _used_native_read(outcome) -> bool:
+    return any(
+        item.allowed and item.name == "Read"
+        for item in outcome.record.tool_calls
+    )
 
 
 def _reviewer_request(
