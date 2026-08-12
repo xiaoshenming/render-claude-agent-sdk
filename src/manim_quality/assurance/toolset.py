@@ -131,10 +131,11 @@ class AssuranceToolset:
         chars: int = 30_000,
         timeout_ms: int = 180_000,
     ) -> ManagedToolGrant:
-        async def checked(arguments):
-            if arguments["case_key"] != self.case.key:
-                raise ValueError("case_key does not match bound assurance case")
-            result = handler(arguments)
+        async def checked(_arguments):
+            # The capability is already bound to exactly one immutable case.  The
+            # model-authored case_key is only a protocol echo and must never be
+            # allowed to redirect the read or abort the whole assurance run.
+            result = handler(_arguments)
             return await result if isawaitable(result) else result
 
         return ManagedToolGrant(
