@@ -53,6 +53,25 @@ def test_live_solution_read_recomputes_after_edit(tmp_path: Path) -> None:
     assert (second["offset"], second["limit"]) == (3, 5)
 
 
+def test_live_solution_read_rebinds_mistyped_candidate_path(tmp_path: Path) -> None:
+    candidate = tmp_path / "candidate.py"
+    candidate.write_text(
+        "class Solution(BaseConfigScene):\n    pass\n", encoding="utf-8"
+    )
+    normalize = live_solution_read(candidate)
+
+    result = normalize(
+        {
+            "file_path": str(tmp_path / "candidate.p"),
+            "offset": 999,
+            "limit": 999,
+        }
+    )
+
+    assert result["file_path"] == str(candidate)
+    assert (result["offset"], result["limit"]) == (1, 2)
+
+
 def test_live_solution_read_records_real_native_read(tmp_path: Path) -> None:
     candidate = tmp_path / "candidate.py"
     candidate.write_text(

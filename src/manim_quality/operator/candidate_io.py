@@ -33,6 +33,7 @@ def live_solution_read(candidate_path: Path, *, on_read=None):
             on_read()
         return {
             **value,
+            "file_path": str(candidate_path),
             "offset": solution.start_line,
             "limit": solution.end_line - solution.start_line + 1,
         }
