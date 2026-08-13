@@ -114,6 +114,7 @@ def _review_context(runtime, model, workspace, session):
         runtime,
         candidate_path=candidate_path,
         problem_text=session.problem_text,
+        solution_steps=session.solution_steps,
         model=model,
         effort="low",
     )
@@ -129,6 +130,16 @@ def _review_context(runtime, model, workspace, session):
         PROMPT_PATH.read_text(encoding="utf-8")
         .replace("{{CANDIDATE_PATH}}", str(candidate_path))
         .replace("{{REVIEWER_RESULTS}}", reviewer_json)
+        .replace("{{PROBLEM_TEXT}}", session.problem_text)
+        .replace("{{SOLUTION_STEPS}}", session.solution_steps)
+        .replace(
+            "{{REPAIR_FEEDBACK}}",
+            json.dumps(
+                session.repair_feedback,
+                ensure_ascii=False,
+                separators=(",", ":"),
+            ),
+        )
         .replace("{{FINAL_ASSURANCE_ISSUES}}", assurance_json)
         .replace("{{SOLUTION_START_LINE}}", str(solution.start_line))
         .replace("{{SOLUTION_END_LINE}}", str(solution.end_line))

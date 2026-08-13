@@ -32,6 +32,7 @@ def run_reviewers(
     *,
     candidate_path: Path,
     problem_text: str,
+    solution_steps: str = "",
     model: str,
     effort: str = "low",
 ) -> tuple[tuple[dict[str, object], ...], tuple[object, ...]]:
@@ -42,7 +43,8 @@ def run_reviewers(
         ("animation_lifecycle_reviewer", "animation_lifecycle_reviewer_v1.md"),
     ):
         request = _reviewer_request(
-            name, prompt_name, candidate_path, problem_text, model, effort
+            name, prompt_name, candidate_path, problem_text, solution_steps,
+            model, effort
         )
         outcome = runtime.run(request)
         if not _used_native_read(outcome):
@@ -88,9 +90,9 @@ def _used_native_read(outcome) -> bool:
 
 
 def _reviewer_request(
-    name, prompt_name, candidate_path, problem_text, model, effort
+    name, prompt_name, candidate_path, problem_text, solution_steps, model, effort
 ):
-    prompt = _prompt(prompt_name, candidate_path, problem_text)
+    prompt = _prompt(prompt_name, candidate_path, problem_text, solution_steps)
     start_line, _end_line, line_count = _solution_range(candidate_path)
     exact_read = ToolInputPolicy(
         max_calls=1,
@@ -120,7 +122,9 @@ def _reviewer_request(
     )
 
 
-def _prompt(name: str, candidate_path: Path, problem_text: str) -> str:
+def _prompt(
+    name: str, candidate_path: Path, problem_text: str, solution_steps: str = ""
+) -> str:
     start_line, end_line, line_count = _solution_range(candidate_path)
     content_language = _content_language(candidate_path)
     authoritative_problem = problem_text.strip()
@@ -135,6 +139,7 @@ def _prompt(name: str, candidate_path: Path, problem_text: str) -> str:
         .replace("{{SOLUTION_LINE_COUNT}}", str(line_count))
         .replace("{{CONTENT_LANGUAGE}}", content_language)
         .replace("{{PROBLEM_TEXT}}", authoritative_problem)
+        .replace("{{SOLUTION_STEPS}}", solution_steps.strip())
         .strip()
     )
 

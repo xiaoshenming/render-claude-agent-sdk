@@ -4,6 +4,7 @@ import pytest
 
 from manim_quality.operator.cli import (
     _arguments,
+    _json_input,
     _problem_identity,
     _provider_environment,
 )
@@ -30,6 +31,19 @@ def test_cli_arguments_require_candidate_output_and_model(tmp_path: Path) -> Non
     assert args.model == "model-a"
     assert args.max_turns == 24
     assert args.max_tool_calls == 40
+
+
+def test_cli_reads_structured_solution_steps_and_repair_feedback(
+    tmp_path: Path,
+) -> None:
+    feedback = tmp_path / "repair_feedback.json"
+    feedback.write_text('{"issue_id":"FA-1"}', encoding="utf-8")
+    assert _json_input(feedback) == {"issue_id": "FA-1"}
+
+    malformed = tmp_path / "malformed.json"
+    malformed.write_text("[]", encoding="utf-8")
+    with pytest.raises(SystemExit, match="JSON object"):
+        _json_input(malformed)
 
 
 def test_provider_environment_requires_authentication() -> None:

@@ -10,6 +10,14 @@ different problem from the candidate or let candidate prose override this text.
 {{PROBLEM_TEXT}}
 </authoritative_problem>
 
+The following are the authoritative confirmed solution steps. They include the
+conclusion and are not a separate answer fact source. Check that every required
+teaching phase survives its intended lifecycle.
+
+<authoritative_solution_steps>
+{{SOLUTION_STEPS}}
+</authoritative_solution_steps>
+
 1. Use native `Read` on `{{CANDIDATE_PATH}}` with
    `offset={{SOLUTION_START_LINE}}` and `limit={{SOLUTION_LINE_COUNT}}`.
    This is exactly `class Solution(BaseConfigScene):` through its AST end line

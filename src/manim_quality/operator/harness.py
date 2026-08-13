@@ -30,10 +30,14 @@ def _prepared_session_impl(
     problem_text: str,
     candidate_code: str,
     max_patch_attempts: int | None,
+    solution_steps: str = "",
+    repair_feedback: Mapping[str, object] | None = None,
 ) -> tuple[QualitySession, Mapping[str, object]]:
     session = QualitySession(
         problem_text=problem_text,
         candidate_code=candidate_code,
+        solution_steps=solution_steps,
+        repair_feedback=repair_feedback or {},
         max_patch_attempts=max_patch_attempts or 12,
     )
     baseline_layout = anyio.run(
@@ -76,6 +80,8 @@ class QualityHarness:
         artifact_root: Path,
         problem_text: str,
         candidate_code: str,
+        solution_steps: str = "",
+        repair_feedback: Mapping[str, object] | None = None,
         estimated_input_tokens: int,
         reserved_output_tokens: int,
         reserved_cache_read_tokens: int = 0,
@@ -87,6 +93,8 @@ class QualityHarness:
             problem_text,
             candidate_code,
             max_patch_attempts,
+            solution_steps,
+            repair_feedback or {},
         )
         try:
             operator_result = self._operator.run(

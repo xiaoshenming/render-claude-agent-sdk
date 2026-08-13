@@ -58,6 +58,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     _install_sigterm_handler()
     candidate = args.candidate.resolve(strict=True).read_text(encoding="utf-8")
     problem = _problem_identity(candidate, args.problem)
+    solution_steps = _text_input(args.solution_steps)
+    repair_feedback = _json_input(args.repair_feedback)
     workspace = args.workspace.resolve(strict=True)
     if not workspace.is_dir():
         raise SystemExit("--workspace must be a directory")
@@ -84,6 +86,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         workspace=workspace,
         artifact_root=args.output,
         problem_text=problem,
+        solution_steps=solution_steps,
+        repair_feedback=repair_feedback,
         candidate_code=candidate,
         estimated_input_tokens=args.estimated_input_tokens,
         reserved_output_tokens=args.reserved_output_tokens,
@@ -115,6 +119,8 @@ def _arguments(argv: Sequence[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--candidate", type=Path, required=True)
     parser.add_argument("--problem", type=Path)
+    parser.add_argument("--solution-steps", type=Path)
+    parser.add_argument("--repair-feedback", type=Path)
     parser.add_argument("--workspace", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--model", required=True)
@@ -254,6 +260,19 @@ def _problem_identity(candidate: str, problem_path: Path | None) -> str:
         return extract_problem_text(candidate)
     except ValueError:
         return f"solution-source:{extract_solution(candidate).sha256}"
+
+
+def _text_input(path: Path | None) -> str:
+    return path.resolve(strict=True).read_text(encoding="utf-8") if path else ""
+
+
+def _json_input(path: Path | None) -> dict[str, object]:
+    if path is None:
+        return {}
+    value = json.loads(path.resolve(strict=True).read_text(encoding="utf-8"))
+    if not isinstance(value, dict):
+        raise SystemExit("--repair-feedback must contain one JSON object")
+    return value
 
 
 def _limits(args: argparse.Namespace) -> BudgetLimits:

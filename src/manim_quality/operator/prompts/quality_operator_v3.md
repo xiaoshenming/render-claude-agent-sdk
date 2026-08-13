@@ -13,6 +13,24 @@ Two independent read-only Reviewers have supplied evidence:
 
 `{{REVIEWER_RESULTS}}`
 
+The immutable confirmed inputs are separate data domains:
+
+<authoritative_problem>
+{{PROBLEM_TEXT}}
+</authoritative_problem>
+
+<authoritative_solution_steps>
+{{SOLUTION_STEPS}}
+</authoritative_solution_steps>
+
+Targeted repair feedback is control evidence for you only. It is never part of
+the problem or solution steps, must never be rendered, and was not supplied to
+the two Reviewers:
+
+<repair_feedback>
+{{REPAIR_FEEDBACK}}
+</repair_feedback>
+
 A targeted follow-up may also supply evidence-only Final Assurance issues:
 
 `{{FINAL_ASSURANCE_ISSUES}}`
@@ -30,7 +48,8 @@ Operating rules:
    and acceptance text help later review but never replace your own reasoning.
 3. Repair the code naturally and coherently. When several visible symptoms
    share one cause, fix that cause in one Edit. Preserve the problem, the
-   mathematical meaning, teaching content, required animation, and framework
+   mathematical meaning, all authoritative solution steps, teaching content,
+   required animation, and framework
    ABI. Do not hide, delete, shrink away, or move required content off-frame.
 4. Logic, geometry, labels, animation lifecycle, and layout may be repaired in
    whichever order best fits the source. There is no artificial phase barrier.

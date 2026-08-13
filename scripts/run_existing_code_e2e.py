@@ -75,7 +75,10 @@ def _arguments(argv: list[str] | None) -> argparse.Namespace:
     parser.add_argument("--job-id", required=True)
     parser.add_argument("--model", required=True)
     parser.add_argument("--base-url", default="")
-    # Accepted for contract compatibility; recorded but not interpreted.
+    parser.add_argument("--solution-steps", type=Path)
+    parser.add_argument("--repair-feedback", type=Path)
+    # Deprecated compatibility alias; interpreted as solution_steps when the
+    # canonical argument is absent.
     parser.add_argument("--expected-solution", type=Path)
     parser.add_argument("--logic-mode", default="one_shot")
     parser.add_argument("--layout-token-budget", type=int, default=180_000)
@@ -116,6 +119,14 @@ def _run_operator(args: argparse.Namespace, harness_root: Path) -> int:
         "--run-id",
         args.job_id,
     ]
+    steps = args.solution_steps or args.expected_solution
+    if steps is not None:
+        argv.extend(("--solution-steps", str(steps.resolve(strict=True))))
+    if args.repair_feedback is not None:
+        argv.extend((
+            "--repair-feedback",
+            str(args.repair_feedback.resolve(strict=True)),
+        ))
     assets = workspace / "assets"
     if assets.is_dir():
         argv.extend(("--assets-dir", str(assets)))

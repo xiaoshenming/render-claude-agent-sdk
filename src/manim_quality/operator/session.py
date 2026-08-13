@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import json
+from collections.abc import Mapping
+
 from manim_quality.revisions.fingerprint import code_hash, sha256_text
 
 from .finding_dependencies import validate_finding_dependencies
@@ -37,6 +40,8 @@ class QualitySession:
         *,
         problem_text: str,
         candidate_code: str,
+        solution_steps: str = "",
+        repair_feedback: Mapping[str, object] | None = None,
         max_patch_attempts: int = 12,
     ) -> None:
         if not isinstance(problem_text, str) or not problem_text.strip():
@@ -49,6 +54,13 @@ class QualitySession:
         extract_solution(candidate_code)
         self._problem_text = problem_text
         self._problem_hash = sha256_text(problem_text)
+        self._solution_steps = solution_steps.strip()
+        self._solution_steps_hash = sha256_text(self._solution_steps)
+        feedback = dict(repair_feedback or {})
+        self._repair_feedback = feedback
+        self._repair_feedback_hash = sha256_text(json.dumps(
+            feedback, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+        ))
         self._embedded_problem_hash = embedded_problem_hash(
             candidate_code,
             problem_text,
@@ -81,6 +93,22 @@ class QualitySession:
     @property
     def problem_hash(self) -> str:
         return self._problem_hash
+
+    @property
+    def solution_steps(self) -> str:
+        return self._solution_steps
+
+    @property
+    def solution_steps_hash(self) -> str:
+        return self._solution_steps_hash
+
+    @property
+    def repair_feedback(self) -> Mapping[str, object]:
+        return dict(self._repair_feedback)
+
+    @property
+    def repair_feedback_hash(self) -> str:
+        return self._repair_feedback_hash
 
     @property
     def baseline(self) -> CandidateAttempt:
