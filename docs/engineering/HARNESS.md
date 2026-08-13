@@ -53,6 +53,20 @@ frozen issue and edit scope, not the Reviewer's free-form reasoning history. A
 Verifier sees only the original requirement, frozen issue, candidate diff, and
 changed Scene evidence.
 
+Current native source review consists of two required Reviewers and one
+best-effort visual-layout Reviewer:
+
+- `math_geometry_reviewer`: mathematical and geometric semantics;
+- `animation_lifecycle_reviewer`: reveal, ownership, survival, and cleanup;
+- `visual_layout_reviewer`: typography, page composition, density, safe-region
+  usage, and cross-page continuity from source only.
+
+The Quality Coder receives their structured receipts, not Reviewer conversation
+history. Final Assurance independently reruns the same three Reviewer
+definitions against the final delivered source. Failure of the visual Reviewer
+is evidence unavailability and remains fail-open; it never becomes a quality
+hard gate by itself.
+
 ## Tool Security
 
 Production role profiles use an explicit allowlist and deny-by-default hooks.

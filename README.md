@@ -2,6 +2,15 @@
 
 Independent quality-control workspace for AI-generated Manim code.
 
+> **DEPLOY CANDIDATE · 2026-08-13**
+>
+> Visual layout source review and Coder page normalization are available on
+> `stable/native-agent`. Deploy the annotated tag
+> `visual-layout-normalization-v1-20260813`; do not deploy the backup branch.
+> Final Assurance reruns the same visual Reviewer as best-effort,
+> evidence-only review. See the
+> [release evidence](docs/evidence/2026-08-13-visual-layout-normalization-v1.md).
+
 Current status: Tasks 1-5 are complete. The production Logic Reviewer and its
 frozen shadow-evaluation harness are under Task 6 validation; logic repair,
 overlap integration, orchestration, and delivery remain disabled.
