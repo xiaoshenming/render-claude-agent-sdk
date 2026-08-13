@@ -49,6 +49,19 @@ def test_visual_reviewer_requires_layout_and_typography_coverage():
     assert "shared page-level" in value
     assert "A shared scale across related pages is preferred" in value
     assert "do not flag an outlier-width risk" in value
+    assert "wrapper around already scattered objects" in value
+    assert "is not normalized layout" in value
+    assert "fixed shrink" in value
+    assert "normalization_contract" in value
+    assert "page_members" in value
+    assert "Do not accept \"create a VGroup\" alone" in value
+    assert "stack/composition helper" in value
+    assert "one common fit scale" in value
+    assert "make_aligned_relation_panel" in value
+    assert "make_aligned_relation_stack" in value
+    assert "GlobalConfig.RIGHT_X" in value
+    assert "Never recommend invented board" in value
+    assert "RIGHT_X` is the left boundary" in value
 
 
 def test_parent_keeps_recovery_without_dependency_bookkeeping():
@@ -58,6 +71,25 @@ def test_parent_keeps_recovery_without_dependency_bookkeeping():
     assert "depends_on_finding_ids" not in value
     assert "affected_symbols" not in value
     assert "root:<name>" not in value
+
+
+def test_parent_requires_real_page_normalization_before_submit():
+    value = (PROMPTS / "quality_operator_v3.md").read_text()
+
+    assert "wrapping" in value
+    assert "already positioned children" in value
+    assert "measured bounds" in value
+    assert "arbitrary fixed scale plus magic" in value
+    assert "local stack/composition variant" in value
+    assert "one common fit scale" in value
+    assert "make_aligned_relation_stack" in value
+    assert "before the first" in value
+    assert "comment-only change" in value
+    assert "GlobalConfig.RIGHT_X" in value
+    assert "do not invent board width" in value
+    assert "RIGHT_X` is the left boundary" in value
+    assert "normalization_contract" in value
+    assert "blocking_count` 0 only" in value
 
 
 def test_coder_finding_schema_hides_audit_bookkeeping():

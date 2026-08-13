@@ -40,6 +40,8 @@ def test_specialist_reviewers_distinguish_schematic_and_visible_errors() -> None
     assert "Do not inspect video frames" in visual_prompt
     assert "do not report mathematics" in visual_prompt
     assert "page-level VGroup" in visual_prompt
+    assert "wrapper around already scattered objects" in visual_prompt
+    assert "normalization_contract" in visual_prompt
 
 
 def test_assurance_uses_medium_effort_for_specialist_reviewers() -> None:

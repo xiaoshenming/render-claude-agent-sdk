@@ -29,9 +29,15 @@ wording; the other Reviewers own those concerns.
      stable base size; detect arbitrary local font overrides, repeated shrinking,
      or page-to-page scale jumps;
    - `page_grouping`: page content should be composed as a shared page-level VGroup
-     or equivalent before fitting. Flag loops that apply the same scale,
-     shift, or move to many independent objects while preserving unrelated
-     original coordinates;
+     or equivalent before fitting. A wrapper around already scattered objects
+     is not normalized layout: verify that the page is rebuilt in reading order
+     with one coherent vertical/horizontal arrangement. Flag loops that apply
+     the same scale, shift, or move to many independent objects while preserving
+     unrelated original coordinates. Also flag scene-positioning helpers used to
+     build a child that is later inserted into a page-level layout when a local
+     stack/composition helper is available. In the standard Header ABI, if both
+     `make_aligned_relation_panel` and `make_aligned_relation_stack` exist, a
+     relation nested inside a larger page must use the local `stack` variant;
    - `alignment_rhythm`: related rows should share a clear edge or equation
      anchor and stable vertical spacing. Flag scattered magic coordinates,
      mixed anchors, and post-arrange per-row drift;
@@ -40,7 +46,18 @@ wording; the other Reviewers own those concerns.
      nearly empty continuation pages;
    - `safe_region_usage`: verify the code fits each page as a whole into the
      declared left/right/full-screen region instead of hiding, clipping, or
-     moving required content away;
+     moving required content away. Prefer an existing Header placement helper
+     or named region constants found in the Solution context. A fixed shrink
+     such as `scale(0.35)` followed by a magic shift is not a fit policy when it
+     does not compare the complete page bounds with the target region. For a
+     standard `BaseConfigScene` teaching board, treat
+     `GlobalConfig.RIGHT_X`, `GlobalConfig.RIGHT_W`,
+     `GlobalConfig.STEP_MAX_TOP`, and `GlobalConfig.STEP_MIN_BOTTOM` as the
+     canonical right-board bounds even when their declarations are outside the
+     readable Solution slice. `RIGHT_X` is the left boundary, not the region
+     center: use `RIGHT_X + padding` as the page left edge and
+     `RIGHT_W - 2 * padding` as usable width. Never recommend invented board
+     coordinates;
    - `cross_page_continuity`: related pages should reuse the same top edge,
      content width, body-size policy, and fitting strategy unless the teaching
      structure clearly changes.
@@ -58,14 +75,33 @@ wording; the other Reviewers own those concerns.
    may use a different size or color when its hierarchy is clear.
 6. Report only delivery-relevant defects with a narrow repair scope. Cosmetic
    taste, tiny spacing differences, and schematic geometry are not defects.
+7. For every supported page-composition defect, make the repair request
+   executable without supplying reference source code. The issue must name:
+   - every required visible member of the affected page and their reading order;
+   - the existing target region/helper/constants, when discoverable;
+   - one page-level arrangement policy, normally `DOWN` with a shared left edge
+     for teaching rows while preserving semantic equation panels;
+   - a bounds-driven fit policy that only shrinks when the complete page exceeds
+     the target width or height, never an arbitrary universal scale;
+   - one common fit scale for related pages that share the same visual role,
+     derived from the most demanding page and capped at 1.0;
+   - a common top/left or center anchor shared by related pages;
+   - the exact content, mathematics, animation order, and diagram geometry that
+     must remain unchanged.
+   Do not accept "create a VGroup" alone as a sufficient required invariant.
+   Do not prescribe copied coordinates from another task.
 
 Return one compact JSON object as plain text with keys:
 `decision`, `diagnosis`, `issues`, `coverage`, `confidence`.
 
 `decision` must be `"pass"` or `"needs_repair"`. Maximum 10 issues and 8000
 characters. Each issue must contain `type`, `target`, `evidence`,
-`required_invariant`, and `repair_scope`. Evidence must cite concise source
-patterns or line references, never video observations or filesystem paths.
+`required_invariant`, `repair_scope`, and `normalization_contract`.
+`normalization_contract` must be an object with `page_members`, `reading_order`,
+`target_region`, `arrangement`, `fit_policy`, `anchor_policy`, and `preserve`.
+Evidence must cite concise source patterns or line references, never video
+observations or filesystem paths. For a non-page-composition issue, populate the
+same object with the smallest applicable scope rather than inventing a redesign.
 
 `coverage` must explicitly contain `typography_consistency`, `page_grouping`,
 `alignment_rhythm`, `content_density`, `safe_region_usage`, and

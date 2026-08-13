@@ -51,6 +51,40 @@ Operating rules:
    mathematical meaning, all authoritative solution steps, teaching content,
    required animation, and framework
    ABI. Do not hide, delete, shrink away, or move required content off-frame.
+   For confirmed visual page-composition findings, perform real layout
+   normalization rather than a wrapper-only patch:
+   - inventory every visible member of each affected page exactly once and keep
+     the intended reading order;
+   - rebuild the page with one coherent arrangement before placement; wrapping
+     already positioned children in `VGroup` without arranging them is not a
+     repair;
+   - when a child helper places content directly in scene coordinates, prefer
+     the existing local stack/composition variant before inserting that child
+     into the page-level arrangement. In the standard Header ABI, a relation
+     nested inside a larger page must use `make_aligned_relation_stack`, not the
+     scene-positioning `make_aligned_relation_panel`;
+   - use an existing Header placement helper and named safe-region constants
+     when the source provides them. For a standard `BaseConfigScene` teaching
+     board, derive the right-board rectangle from `GlobalConfig.RIGHT_X`,
+     `GlobalConfig.RIGHT_W`, `GlobalConfig.STEP_MAX_TOP`, and
+     `GlobalConfig.STEP_MIN_BOTTOM`; do not invent board width, height, or anchor
+     literals when this ABI is available. `RIGHT_X` is the left boundary, not
+     the region center: with padding `p`, use left edge `RIGHT_X + p`, usable
+     width `RIGHT_W - 2*p`, top `STEP_MAX_TOP`, and height
+     `STEP_MAX_TOP - STEP_MIN_BOTTOM`;
+   - fit the complete page from its measured bounds, shrinking only when it
+     exceeds the target region. Do not use an arbitrary fixed scale plus magic
+     shift as a substitute for fitting;
+   - when related pages share one visual role, compute one common fit scale from
+     the most demanding page, capped at 1.0, instead of independent scales that
+     create page-to-page size jumps;
+   - give related pages the same anchor edge/top policy and do not transform
+     individual children after the page has been normalized;
+   - preserve equation-anchor helpers, mathematical content, diagram geometry,
+     reveal order, and lifecycle ownership.
+   Complete this normalization across every listed page before the first
+   validation. Do not spend a candidate revision on a wrapper-only intermediate
+   edit or comment-only change.
 4. Logic, geometry, labels, animation lifecycle, and layout may be repaired in
    whichever order best fits the source. There is no artificial phase barrier.
    A revision may be an intermediate step; it does not have to improve every
@@ -68,8 +102,11 @@ Operating rules:
    in the current Solution. In particular, a `visual_layout_reviewer` finding
    about fragmented page composition, unstable typography, or inconsistent
    cross-page placement is not optional cosmetic polish. Once confirmed findings
-   are addressed, submit as soon as the revision renders successfully and the
-   current layout inspection reports `blocking_count` 0. Do not invent extra
+   are addressed, re-read the edited layout block and explicitly verify each
+   supplied `normalization_contract` against the current source.
+   `blocking_count` 0 only proves the collision probe is clean; it does not prove
+   page normalization. Submit only after that source audit, successful rendering,
+   and current layout inspection with `blocking_count` 0. Do not invent extra
    aesthetic work beyond the supplied evidence. Submission is only a candidate
    proposal to the independent outer assurance process.
 9. If the available turn/tool budget ends before a safe candidate exists,
