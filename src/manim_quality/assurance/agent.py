@@ -99,7 +99,8 @@ class FinalAssuranceAgent:
             name: report.as_dict() for name, report in tools.reports.items()
         }
         raw = RawAgentAssessment(tools.normalize_output(result.structured_output))
-        adjusted = apply_assurance_policy(raw, reports, case.key)
+        adjusted = apply_assurance_policy(
+            raw, reports, case.key, reviewers=reviewers)
         return FinalAssuranceResult(
             output=adjusted.output,
             reports=reports,
