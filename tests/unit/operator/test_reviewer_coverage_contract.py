@@ -32,6 +32,25 @@ def test_lifecycle_reviewer_requires_temporal_and_survival_coverage():
         assert key in value
 
 
+def test_visual_reviewer_requires_layout_and_typography_coverage():
+    value = (PROMPTS / "visual_layout_reviewer_v1.md").read_text()
+
+    for key in (
+        "typography_consistency",
+        "page_grouping",
+        "alignment_rhythm",
+        "content_density",
+        "safe_region_usage",
+        "cross_page_continuity",
+    ):
+        assert key in value
+    assert "Do not inspect video frames" in value
+    assert "independent objects" in value
+    assert "shared page-level" in value
+    assert "A shared scale across related pages is preferred" in value
+    assert "do not flag an outlier-width risk" in value
+
+
 def test_parent_keeps_recovery_without_dependency_bookkeeping():
     value = (PROMPTS / "quality_operator_v3.md").read_text()
 

@@ -85,6 +85,26 @@ def test_output_rejects_unknown_issue_evidence() -> None:
         validate_assurance_output(value, expected_reports=reports)
 
 
+def test_visual_reviewer_evidence_is_allowed() -> None:
+    value = valid_output()
+    value["status"] = "review"
+    value["issues"] = [{
+        "severity": "medium",
+        "category": "visual_layout",
+        "summary": "同级正文使用了不一致的缩放策略",
+        "evidence_ids": ["reviewer:visual_layout_reviewer"],
+    }]
+    reports = {
+        row["tool"]: {
+            "status": "complete",
+            "evidence": [{"id": "e-1"}],
+        }
+        for row in value["tool_receipts"]
+    }
+
+    validate_assurance_output(value, expected_reports=reports)
+
+
 def valid_output() -> dict:
     return {
         "status": "pass",

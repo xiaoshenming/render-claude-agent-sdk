@@ -152,6 +152,7 @@ def _validate_issues(
     allowed_ids = receipt_ids | {
         "reviewer:math_geometry_reviewer",
         "reviewer:animation_lifecycle_reviewer",
+        "reviewer:visual_layout_reviewer",
     }
     for issue in issues:
         if not isinstance(issue, Mapping):

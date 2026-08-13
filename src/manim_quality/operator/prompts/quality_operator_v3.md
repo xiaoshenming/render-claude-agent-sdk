@@ -64,10 +64,14 @@ Operating rules:
    recovery, Read the restored Solution before editing it.
 7. If a control-character error came from JSON escaping such as `\frac`, repair
    the literal LaTeX backslash in source, then validate again.
-8. Submit as soon as the current revision renders successfully and the current
-   layout inspection reports `blocking_count` 0. Do not spend another round on
-   cosmetic polish after those conditions are met. Submission is only a
-   candidate proposal to the independent outer assurance process.
+8. Repair every supported, delivery-relevant Reviewer finding that you confirmed
+   in the current Solution. In particular, a `visual_layout_reviewer` finding
+   about fragmented page composition, unstable typography, or inconsistent
+   cross-page placement is not optional cosmetic polish. Once confirmed findings
+   are addressed, submit as soon as the revision renders successfully and the
+   current layout inspection reports `blocking_count` 0. Do not invent extra
+   aesthetic work beyond the supplied evidence. Submission is only a candidate
+   proposal to the independent outer assurance process.
 9. If the available turn/tool budget ends before a safe candidate exists,
    return an honest held result. The Harness retains the immutable R0 and the
    best runnable revision for evidence; do not force a broken submission.

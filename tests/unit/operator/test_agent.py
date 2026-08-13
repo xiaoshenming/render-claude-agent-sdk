@@ -224,6 +224,7 @@ def test_operator_runs_clean_candidate_through_tools_without_prompt_source(
     assert [item.role for item in sink.records] == [
         "reviewer",
         "reviewer",
+        "reviewer",
         "operator",
     ]
 

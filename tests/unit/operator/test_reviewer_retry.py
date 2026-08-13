@@ -34,10 +34,19 @@ class Runtime:
             _outcome(read=False),
             _outcome(read=True),
             _outcome(read=True),
+            _outcome(read=True),
         ))
 
     def run(self, request):
         self.requests.append(request)
+        return next(self.outcomes)
+
+
+class VisualFailureRuntime(Runtime):
+    def run(self, request):
+        self.requests.append(request)
+        if request.run_id.startswith("visual_layout_reviewer"):
+            raise RuntimeError("visual provider unavailable")
         return next(self.outcomes)
 
 
@@ -58,8 +67,36 @@ def test_reviewer_retries_once_after_missing_native_read(tmp_path) -> None:
         model="test-model",
     )
 
-    assert len(reviewers) == 2
-    assert len(records) == 2
-    assert len(runtime.requests) == 3
+    assert len(reviewers) == 3
+    assert len(records) == 3
+    assert len(runtime.requests) == 4
+    assert [row["agent_type"] for row in reviewers] == [
+        "math_geometry_reviewer",
+        "animation_lifecycle_reviewer",
+        "visual_layout_reviewer",
+    ]
     assert runtime.requests[1].run_id.endswith("-native-read-retry")
     assert "PROTOCOL REPAIR" in runtime.requests[1].prompt
+
+
+def test_visual_reviewer_failure_is_recorded_without_blocking(tmp_path) -> None:
+    candidate = tmp_path / "main.py"
+    candidate.write_text(
+        "class Solution(BaseConfigScene):\n"
+        "    def construct(self):\n"
+        "        pass\n",
+        encoding="utf-8",
+    )
+    runtime = VisualFailureRuntime()
+
+    reviewers, records = run_reviewers(
+        runtime,
+        candidate_path=candidate,
+        problem_text="求解。",
+        model="test-model",
+    )
+
+    assert len(records) == 2
+    assert reviewers[-1]["agent_type"] == "visual_layout_reviewer"
+    assert reviewers[-1]["is_error"] is True
+    assert reviewers[-1]["payload"] is None

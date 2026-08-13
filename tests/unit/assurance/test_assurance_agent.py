@@ -9,10 +9,11 @@ from manim_quality.assurance.policy import (
 )
 
 
-def test_specialist_reviewers_must_both_complete() -> None:
+def test_all_three_specialist_reviewers_can_complete() -> None:
     reviewers = (
         reviewer("math_geometry_reviewer"),
         reviewer("animation_lifecycle_reviewer"),
+        reviewer("visual_layout_reviewer"),
     )
 
     _validate_reviewers(reviewers)
@@ -22,10 +23,21 @@ def test_specialist_reviewer_error_is_rejected() -> None:
     reviewers = (
         reviewer("math_geometry_reviewer"),
         reviewer("animation_lifecycle_reviewer", is_error=True),
+        reviewer("visual_layout_reviewer"),
     )
 
-    with pytest.raises(RuntimeError, match="exactly two"):
+    with pytest.raises(RuntimeError, match="both core"):
         _validate_reviewers(reviewers)
+
+
+def test_visual_reviewer_failure_is_evidence_only() -> None:
+    reviewers = (
+        reviewer("math_geometry_reviewer"),
+        reviewer("animation_lifecycle_reviewer"),
+        reviewer("visual_layout_reviewer", is_error=True),
+    )
+
+    _validate_reviewers(reviewers)
 
 
 def test_derived_parameter_evidence_becomes_coder_issue() -> None:

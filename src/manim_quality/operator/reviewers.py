@@ -13,6 +13,12 @@ from manim_quality.contracts._json_values import thaw_json_object
 from manim_quality.operator.source_view import extract_solution
 
 _PROMPTS = Path(__file__).with_name("prompts")
+REVIEWER_SPECS = (
+    ("math_geometry_reviewer", "math_geometry_reviewer_v1.md"),
+    ("animation_lifecycle_reviewer", "animation_lifecycle_reviewer_v1.md"),
+    ("visual_layout_reviewer", "visual_layout_reviewer_v1.md"),
+)
+OPTIONAL_REVIEWERS = {"visual_layout_reviewer"}
 REVIEWER_OUTPUT_SCHEMA = {
     "type": "object",
     "properties": {
@@ -38,28 +44,21 @@ def run_reviewers(
 ) -> tuple[tuple[dict[str, object], ...], tuple[object, ...]]:
     results = []
     records = []
-    for name, prompt_name in (
-        ("math_geometry_reviewer", "math_geometry_reviewer_v1.md"),
-        ("animation_lifecycle_reviewer", "animation_lifecycle_reviewer_v1.md"),
-    ):
+    for name, prompt_name in REVIEWER_SPECS:
         request = _reviewer_request(
             name, prompt_name, candidate_path, problem_text, solution_steps,
             model, effort
         )
-        outcome = runtime.run(request)
-        if not _used_native_read(outcome):
-            outcome = runtime.run(replace(
-                request,
-                run_id=f"{request.run_id}-native-read-retry",
-                prompt=(
-                    f"{request.prompt}\n\n"
-                    "PROTOCOL REPAIR: the previous response was discarded because "
-                    "it did not call native Read. Call the allowed Read tool exactly "
-                    "once with the required offset and limit before returning JSON."
-                ),
-            ))
-        if not _used_native_read(outcome):
-            raise RuntimeError(f"{name} did not read the candidate with native Read")
+        try:
+            outcome = _run_with_native_read(runtime, request, name)
+        except Exception as error:
+            if name not in OPTIONAL_REVIEWERS:
+                raise
+            results.append(_unavailable_result(name, error))
+            record = getattr(error, "record", None)
+            if record is not None:
+                records.append(record)
+            continue
         results.append(
             {
                 "agent_type": name,
@@ -80,6 +79,39 @@ def run_reviewers(
         )
         records.append(outcome.record)
     return tuple(results), tuple(records)
+
+
+def _run_with_native_read(runtime, request, name):
+    outcome = runtime.run(request)
+    if not _used_native_read(outcome):
+        outcome = runtime.run(replace(
+            request,
+            run_id=f"{request.run_id}-native-read-retry",
+            prompt=(
+                f"{request.prompt}\n\n"
+                "PROTOCOL REPAIR: the previous response was discarded because "
+                "it did not call native Read. Call the allowed Read tool exactly "
+                "once with the required offset and limit before returning JSON."
+            ),
+        ))
+    if not _used_native_read(outcome):
+        raise RuntimeError(f"{name} did not read the candidate with native Read")
+    return outcome
+
+
+def _unavailable_result(name, error):
+    return {
+        "agent_type": name,
+        "is_error": True,
+        "payload": None,
+        "error": f"{type(error).__name__}: {error}",
+        "usage": None,
+        "usage_complete": False,
+        "model": None,
+        "duration_ms": 0,
+        "turns": 0,
+        "tool_calls": [],
+    }
 
 
 def _used_native_read(outcome) -> bool:

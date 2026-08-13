@@ -12,7 +12,8 @@ def test_final_assurance_prompt_contains_practical_delivery_baseline() -> None:
     assert "错误高亮" in text
     assert "目标转化”而不是循环论证" in text
     assert "不得再次调用 Agent" in text
-    assert "两个独立原生 Read 会话" in text
+    assert "两路必需 Reviewer" in text
+    assert "不得据此阻断" in text
 
 
 def test_specialist_reviewers_distinguish_schematic_and_visible_errors() -> None:
@@ -22,6 +23,9 @@ def test_specialist_reviewers_distinguish_schematic_and_visible_errors() -> None
     )
     animation_prompt = (
         prompts / "animation_lifecycle_reviewer_v1.md"
+    ).read_text(encoding="utf-8")
+    visual_prompt = (
+        prompts / "visual_layout_reviewer_v1.md"
     ).read_text(encoding="utf-8")
 
     assert "schematic diagram is not exactly to scale" in math_prompt
@@ -33,6 +37,9 @@ def test_specialist_reviewers_distinguish_schematic_and_visible_errors() -> None
     assert "`-0.6 * 0.3 = -0.18`" in math_prompt
     assert "merely possible runtime\n  symptom" in animation_prompt
     assert "Confirmed stale anchors after a fit/scale" in animation_prompt
+    assert "Do not inspect video frames" in visual_prompt
+    assert "do not report mathematics" in visual_prompt
+    assert "page-level VGroup" in visual_prompt
 
 
 def test_assurance_uses_medium_effort_for_specialist_reviewers() -> None:

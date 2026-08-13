@@ -2,9 +2,10 @@
 
 绑定任务由工具端固定。你必须且只能：
 
-1. 编排器会先在两个独立原生 Read 会话中完成 `math_geometry_reviewer` 和
-   `animation_lifecycle_reviewer`，并把回执注入本提示词。不得再次调用 Agent
-   工具；必须复核两份已注入回执。
+1. 编排器会先完成两路必需 Reviewer：`math_geometry_reviewer`、
+   `animation_lifecycle_reviewer`，并尽力执行只看源码的
+   `visual_layout_reviewer`。不得再次调用 Agent 工具；必须复核已注入回执。
+   视觉 Reviewer 若标记为 `is_error=true`，只表示该路证据不可用，不得据此阻断。
 2. 对同一个 case_key 调用全部七个 assurance 工具，每个恰好一次。
 3. 先看产物身份和全新冷渲染终态，再看最终源码审查、全新BBox布局、
    风险帧、TTS和一致性。
@@ -20,7 +21,8 @@
 8. 已注入 Reviewer 回执中的问题必须按下方“实用交付复核规则”二次筛选；只把符合规则、
    证据充分且可操作的问题写入 issues。Reviewer 未完成时禁止提交。
    数学Reviewer证据 id 使用 `reviewer:math_geometry_reviewer`，动画Reviewer
-   证据 id 使用 `reviewer:animation_lifecycle_reviewer`。
+   证据 id 使用 `reviewer:animation_lifecycle_reviewer`，视觉版式Reviewer证据 id
+   使用 `reviewer:visual_layout_reviewer`。
 9. 最后通过 StructuredOutput 提交 pass / review / incomplete。
 
 顶层 status 由工具事实确定：任一工具 incomplete 就是 incomplete；否则任一工具

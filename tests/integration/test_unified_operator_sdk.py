@@ -26,7 +26,11 @@ CODE = (
     "    def construct(self):\n"
     "        self.wait()\n"
 )
-REVIEWERS = ("math_geometry_reviewer", "animation_lifecycle_reviewer")
+REVIEWERS = (
+    "math_geometry_reviewer",
+    "animation_lifecycle_reviewer",
+    "visual_layout_reviewer",
+)
 REVIEWER_RESULT = json.dumps(
     {
         "decision": "pass",
@@ -335,8 +339,8 @@ def test_real_sdk_backend_runs_clean_operator_tool_sequence(
     )
 
     assert result.revision.revision_id == "R0"
-    assert result.call_record.turns == 12
-    assert len(result.call_record.tool_calls) == 8
-    assert len(result.subagent_results) == 2
+    assert result.call_record.turns == 14
+    assert len(result.call_record.tool_calls) == 9
+    assert len(result.subagent_results) == 3
     assert {item["agent_type"] for item in result.subagent_results} == set(REVIEWERS)
     assert session.submitted_revision_id == "R0"
