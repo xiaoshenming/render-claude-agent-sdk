@@ -1,13 +1,11 @@
-"""Bounded state machine owned by one Quality Operator tool broker."""
-
 from __future__ import annotations
 
-import json
 from collections.abc import Mapping
 
-from manim_quality.revisions.fingerprint import code_hash, sha256_text
+from manim_quality.revisions.fingerprint import code_hash
 
 from .finding_dependencies import validate_finding_dependencies
+from .immutable_inputs import ImmutableReviewInputs
 from .models import (
     CandidateAttempt,
     Finding,
@@ -52,15 +50,9 @@ class QualitySession:
             raise ValueError("max_patch_attempts must be positive")
         compile(candidate_code, "candidate.py", "exec")
         extract_solution(candidate_code)
-        self._problem_text = problem_text
-        self._problem_hash = sha256_text(problem_text)
-        self._solution_steps = solution_steps.strip()
-        self._solution_steps_hash = sha256_text(self._solution_steps)
-        feedback = dict(repair_feedback or {})
-        self._repair_feedback = feedback
-        self._repair_feedback_hash = sha256_text(json.dumps(
-            feedback, ensure_ascii=False, sort_keys=True, separators=(",", ":")
-        ))
+        self._review_inputs = ImmutableReviewInputs.build(
+            problem_text, solution_steps, repair_feedback
+        )
         self._embedded_problem_hash = embedded_problem_hash(
             candidate_code,
             problem_text,
@@ -86,29 +78,18 @@ class QualitySession:
         self._submitted_revision_id: str | None = None
         self._solution_reads: set[str] = set()
 
-    @property
-    def problem_text(self) -> str:
-        return self._problem_text
-
-    @property
-    def problem_hash(self) -> str:
-        return self._problem_hash
-
-    @property
-    def solution_steps(self) -> str:
-        return self._solution_steps
-
-    @property
-    def solution_steps_hash(self) -> str:
-        return self._solution_steps_hash
-
-    @property
-    def repair_feedback(self) -> Mapping[str, object]:
-        return dict(self._repair_feedback)
-
-    @property
-    def repair_feedback_hash(self) -> str:
-        return self._repair_feedback_hash
+    problem_text = property(lambda self: self._review_inputs.problem_text)
+    problem_hash = property(lambda self: self._review_inputs.problem_hash)
+    solution_steps = property(lambda self: self._review_inputs.solution_steps)
+    solution_steps_hash = property(
+        lambda self: self._review_inputs.solution_steps_hash
+    )
+    repair_feedback = property(
+        lambda self: dict(self._review_inputs.repair_feedback)
+    )
+    repair_feedback_hash = property(
+        lambda self: self._review_inputs.repair_feedback_hash
+    )
 
     @property
     def baseline(self) -> CandidateAttempt:
@@ -219,7 +200,7 @@ class QualitySession:
             new_text=new_text,
         )
         verify_candidate(
-            problem_text=self._problem_text,
+            problem_text=self.problem_text,
             baseline=self.baseline,
             embedded_hash=self._embedded_problem_hash,
             code=after_code,
@@ -291,12 +272,14 @@ class QualitySession:
         current = self.current_revision
         if revision_id != current.revision_id:
             raise InvalidSessionTransition("only the current revision can be submitted")
+        self._validate_submission(revision_id)
+        self._submitted_revision_id = revision_id
+        return current
+
+    def _validate_submission(self, revision_id: str) -> None:
         if revision_id != "R0" and revision_id not in self._validations:
             raise InvalidSessionTransition("latest revision must be validated")
-        if (
-            revision_id != "R0"
-            and not self._validations[revision_id].passed
-        ):
+        if revision_id != "R0" and not self._validations[revision_id].passed:
             raise InvalidSessionTransition(
                 "latest revision must pass validation before submit"
             )
@@ -310,8 +293,6 @@ class QualitySession:
             raise InvalidSessionTransition(
                 "current revision still has blocking layout issues"
             )
-        self._submitted_revision_id = revision_id
-        return current
 
     def _require_open(self) -> None:
         if self._submitted_revision_id is not None:
