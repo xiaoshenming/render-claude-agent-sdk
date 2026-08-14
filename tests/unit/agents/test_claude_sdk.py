@@ -229,7 +229,6 @@ def test_sdk_backend_binds_options_hooks_rounds_and_usage(
     assert options.skills == []
     assert options.strict_mcp_config is True
     assert options.max_turns == 2
-    assert options.max_thinking_tokens == 8_192
     assert options.output_format["schema"] == {
         "type": "object",
         "required": ["decision"],

@@ -13,7 +13,6 @@ from manim_quality.agents.runtime import AgentRuntime
 from manim_quality.agents.usage import AgentCallRecord
 
 from .candidate_io import find_baseline_candidate
-from .directed_feedback import directed_reviewer_context
 from .models import CandidateAttempt
 from .output_schema import OPERATOR_OUTPUT_SCHEMA
 from .ports import LayoutInspector, RelationChecker, RevisionValidator
@@ -111,17 +110,14 @@ def _review_context(runtime, model, workspace, session):
     candidate_path = find_baseline_candidate(workspace, session.baseline.code)
     solution = extract_solution(candidate_path.read_text(encoding="utf-8"))
     line_count = solution.end_line - solution.start_line + 1
-    reviewer_results = directed_reviewer_context(session.repair_feedback)
-    reviewer_records = ()
-    if reviewer_results is None:
-        reviewer_results, reviewer_records = run_reviewers(
-            runtime,
-            candidate_path=candidate_path,
-            problem_text=session.problem_text,
-            solution_steps=session.solution_steps,
-            model=model,
-            effort="low",
-        )
+    reviewer_results, reviewer_records = run_reviewers(
+        runtime,
+        candidate_path=candidate_path,
+        problem_text=session.problem_text,
+        solution_steps=session.solution_steps,
+        model=model,
+        effort="low",
+    )
     reviewer_json = json.dumps(
         reviewer_results, ensure_ascii=False, separators=(",", ":")
     )

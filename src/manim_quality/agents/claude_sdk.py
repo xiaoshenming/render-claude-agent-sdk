@@ -45,7 +45,6 @@ _DENIED_TOOLS = (
 )
 
 QueryFunction = Callable[..., AsyncIterator[object]]
-DEFAULT_MAX_THINKING_TOKENS = 8_192
 
 
 install_claude_sdk_message_compat()
@@ -57,19 +56,11 @@ class ClaudeSdkBackend(AgentBackend):
         *,
         query_func: QueryFunction = query,
         provider_env: Mapping[str, str] | None = None,
-        max_thinking_tokens: int = DEFAULT_MAX_THINKING_TOKENS,
     ) -> None:
         if not callable(query_func):
             raise TypeError("query_func must be callable")
-        if (
-            isinstance(max_thinking_tokens, bool)
-            or not isinstance(max_thinking_tokens, int)
-            or not 1_024 <= max_thinking_tokens <= 32_768
-        ):
-            raise ValueError("max_thinking_tokens must be between 1024 and 32768")
         self._query = query_func
         self._provider_env = dict(provider_env or {})
-        self._max_thinking_tokens = max_thinking_tokens
 
     def run(self, request: BackendRequest, controls: RuntimeControls) -> BackendResult:
         return anyio.run(self._run_async, request, controls)
@@ -79,13 +70,7 @@ class ClaudeSdkBackend(AgentBackend):
     ) -> BackendResult:
         state = ClaudeHookState(controls, request)
         extender = _DeadlineExtender()
-        options = _options(
-            request,
-            state,
-            self._provider_env,
-            extender,
-            self._max_thinking_tokens,
-        )
+        options = _options(request, state, self._provider_env, extender)
         try:
             return await self._consume(request, controls, state, options, extender)
         except Exception as error:
@@ -152,7 +137,6 @@ def _options(
     state: ClaudeHookState,
     provider_env: Mapping[str, str],
     extender: _DeadlineExtender,
-    max_thinking_tokens: int,
 ) -> ClaudeAgentOptions:
     tools = list(request.allowed_tools)
     read_tool_names = [item.sdk_name for item in request.read_tools]
@@ -175,7 +159,6 @@ def _options(
         cwd=request.workspace,
         model=request.profile.model,
         max_turns=request.max_turns,
-        max_thinking_tokens=max_thinking_tokens,
         output_format={
             "type": "json_schema",
             "schema": thaw_json_object(request.output_schema),

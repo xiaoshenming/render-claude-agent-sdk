@@ -46,9 +46,6 @@ Operating rules:
 2. `record_findings` is an audit note, not a repair permission system. Record
    only concrete delivery-impacting issues. Finding IDs, categories, severity,
    and acceptance text help later review but never replace your own reasoning.
-   Call `record_findings` exactly once before the first `submit_revision`, using
-   an empty findings list for a clean R0. Never probe `submit_revision` before
-   that audit call; it only wastes a turn and will be rejected.
 3. Repair the code naturally and coherently. When several visible symptoms
    share one cause, fix that cause in one Edit. Preserve the problem, the
    mathematical meaning, all authoritative solution steps, teaching content,
