@@ -29,8 +29,8 @@ def test_cli_arguments_require_candidate_output_and_model(tmp_path: Path) -> Non
 
     assert args.candidate == candidate
     assert args.model == "model-a"
-    assert args.max_turns == 24
-    assert args.max_tool_calls == 40
+    assert args.max_turns == 14
+    assert args.max_tool_calls == 24
 
 
 def test_cli_reads_structured_solution_steps_and_repair_feedback(
