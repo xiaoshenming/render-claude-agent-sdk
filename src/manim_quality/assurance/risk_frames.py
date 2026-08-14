@@ -1,13 +1,9 @@
 from __future__ import annotations
 
-import base64
 import json
-import mimetypes
 import re
 import subprocess
 from pathlib import Path
-
-from manim_quality.agents.managed_tools import ManagedToolContent
 
 from .models import AssuranceCase, ToolReport
 
@@ -71,21 +67,9 @@ def inspect_risk_frames(case: AssuranceCase, output_dir: Path) -> ToolReport:
     )
 
 
-def multimodal_content(report: ToolReport) -> ManagedToolContent:
-    audit = json.dumps(report.as_dict(), ensure_ascii=False, sort_keys=True)
-    blocks: list[dict[str, object]] = [{"type": "text", "text": audit}]
-    for path in report.artifacts:
-        image = Path(path)
-        if image.is_file():
-            mime = mimetypes.guess_type(image.name)[0] or "image/jpeg"
-            blocks.append(
-                {
-                    "type": "image",
-                    "data": base64.b64encode(image.read_bytes()).decode("ascii"),
-                    "mimeType": mime,
-                }
-            )
-    return ManagedToolContent(audit_text=audit, blocks=tuple(blocks))
+def text_evidence(report: ToolReport) -> str:
+    """Return deterministic frame telemetry without attaching image blocks."""
+    return json.dumps(report.as_dict(), ensure_ascii=False, sort_keys=True)
 
 
 def _duration(video: Path) -> float:

@@ -14,7 +14,7 @@ from manim_quality.contracts._json_values import thaw_json_object
 from .contracts import REQUIRED_TOOLS, validate_assurance_output
 from .identity import ArtifactIdentityReceipt, inspect_artifact_identity
 from .models import AssuranceCase, ToolReport
-from .risk_frames import inspect_risk_frames, multimodal_content
+from .risk_frames import inspect_risk_frames, text_evidence
 from .tools import (
     inspect_artifact,
     inspect_code_review,
@@ -142,7 +142,7 @@ class AssuranceToolset:
     def _run_risk_frames(self, _arguments):
         report = inspect_risk_frames(self.case, self.output_dir)
         self.reports[report.tool] = report
-        return multimodal_content(report)
+        return text_evidence(report)
 
     def _grant(
         self,
