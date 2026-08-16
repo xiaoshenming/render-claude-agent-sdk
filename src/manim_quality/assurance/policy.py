@@ -5,13 +5,15 @@ import json
 from dataclasses import dataclass
 
 from .contracts import validate_assurance_output
+from .detector_policy import normalize_detector_issues
 
-POLICY_VERSION = "final-assurance-policy-v3"
+POLICY_VERSION = "final-assurance-policy-v4"
 POLICY_RULES = (
     "derived_parameter_mismatch_promoted",
     "confirmed_anchor_drift_promoted",
     "unreported_consistency_issue_removed",
     "unconfirmed_detector_medium_downgraded",
+    "unconfirmed_freeze_telemetry_downgraded",
 )
 
 
@@ -44,8 +46,7 @@ def apply_assurance_policy(
         reasons.append("confirmed_anchor_drift_promoted")
     if _remove_unreported_consistency_issues(output, reports, case_key):
         reasons.append("unreported_consistency_issue_removed")
-    if _downgrade_unconfirmed_detector_medium(output, reviewers):
-        reasons.append("unconfirmed_detector_medium_downgraded")
+    reasons.extend(normalize_detector_issues(output, reports, reviewers))
     expected = {
         name: report
         for name, report in reports.items()
@@ -156,30 +157,6 @@ def _remove_unreported_consistency_issues(output, reports, case_key) -> bool:
     if output["status"] == "pass":
         output["summary"] = "终审只读证据完整，未发现可报告问题。"
     return True
-
-
-def _downgrade_unconfirmed_detector_medium(output, reviewers) -> bool:
-    """Keep detector-only candidates as evidence when both core reviewers pass."""
-    decisions = {
-        str(row.get("agent_type")): str(
-            (row.get("payload") or {}).get("decision") or ""
-        ).strip().lower()
-        for row in reviewers if isinstance(row.get("payload"), dict)
-    }
-    core = {"math_geometry_reviewer", "animation_lifecycle_reviewer"}
-    if not core.issubset(decisions) or any(
-        decisions[name] != "pass" for name in core
-    ):
-        return False
-    changed = False
-    for issue in output.get("issues", []):
-        ids = [str(item) for item in issue.get("evidence_ids", [])]
-        detector_only = not any(item.startswith("reviewer:") for item in ids)
-        risk_frame = any(item.endswith(":risk-frames") for item in ids)
-        if issue.get("severity") == "medium" and detector_only and not risk_frame:
-            issue["severity"] = "warning"
-            changed = True
-    return changed
 
 
 def _sha(value: object) -> str:
