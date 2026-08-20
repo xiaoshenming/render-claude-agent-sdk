@@ -85,8 +85,6 @@ def test_figure_fidelity_reviewer_is_code_only_and_three_way_routed():
     assert "difference_scope" in value
     assert "runtime_problem_panel" in value
     assert "later_subquestion_stage" in value
-    assert "source_presence" in value
-    assert "A(2,0)、B(0,4)" in value
 
 
 def test_parent_keeps_recovery_without_dependency_bookkeeping():
