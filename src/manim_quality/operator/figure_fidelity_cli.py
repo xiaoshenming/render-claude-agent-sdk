@@ -84,7 +84,7 @@ def _limits() -> BudgetLimits:
     return BudgetLimits(
         max_context_bytes=2_000_000,
         max_turns=6,
-        max_tool_calls=3,
+        max_tool_calls=4,
         max_elapsed_ms=900_000,
         max_input_tokens=250_000,
         max_output_tokens=20_000,
