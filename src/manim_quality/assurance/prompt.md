@@ -4,7 +4,8 @@
 
 1. 编排器会先完成两路必需 Reviewer：`math_geometry_reviewer`、
    `animation_lifecycle_reviewer`，并尽力执行只看源码的
-   `visual_layout_reviewer`。不得再次调用 Agent 工具；必须复核已注入回执。
+   `visual_layout_reviewer`，以及题图资产存在时的
+   `figure_fidelity_reviewer`。不得再次调用 Agent 工具；必须复核已注入回执。
    视觉 Reviewer 若标记为 `is_error=true`，只表示该路证据不可用，不得据此阻断。
 2. 对同一个 case_key 调用全部七个 assurance 工具，每个恰好一次。
 3. 先看产物身份和全新冷渲染终态，再看最终源码审查、全新BBox布局、
@@ -24,7 +25,8 @@
    证据充分且可操作的问题写入 issues。Reviewer 未完成时禁止提交。
    数学Reviewer证据 id 使用 `reviewer:math_geometry_reviewer`，动画Reviewer
    证据 id 使用 `reviewer:animation_lifecycle_reviewer`，视觉版式Reviewer证据 id
-   使用 `reviewer:visual_layout_reviewer`。
+   使用 `reviewer:visual_layout_reviewer`，题图保真 Reviewer 证据 id 使用
+   `reviewer:figure_fidelity_reviewer`。
 9. 最后通过 StructuredOutput 提交 pass / review / incomplete。
 
 顶层 status 由工具事实确定：任一工具 incomplete 就是 incomplete；否则任一工具

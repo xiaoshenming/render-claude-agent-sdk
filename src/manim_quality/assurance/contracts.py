@@ -153,6 +153,7 @@ def _validate_issues(
         "reviewer:math_geometry_reviewer",
         "reviewer:animation_lifecycle_reviewer",
         "reviewer:visual_layout_reviewer",
+        "reviewer:figure_fidelity_reviewer",
     }
     for issue in issues:
         if not isinstance(issue, Mapping):

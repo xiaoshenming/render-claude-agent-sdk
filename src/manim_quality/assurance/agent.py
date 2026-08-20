@@ -71,7 +71,7 @@ class FinalAssuranceAgent:
         prompt = PROMPT.read_text(encoding="utf-8") + (
             f"\n\nassurance_policy: {POLICY_VERSION}@{POLICY_SHA256}\n"
             f"\n\ncase_key: {case.key}\n题目：{case.question}\n"
-            "两路必需 Reviewer 与一路尽力执行的视觉 Reviewer 已由编排器处理，"
+            "两路必需 Reviewer、视觉版式与可用时的题图保真 Reviewer 已由编排器处理，"
             "不要再调用 Agent 工具。以下回执是本次终审的只读证据：\n"
             f"{json.dumps(reviewers, ensure_ascii=False)}\n"
         )
@@ -150,7 +150,7 @@ def _validate_reviewers(reviewers: tuple[dict[str, object], ...]) -> None:
         if item.get("is_error") is False and isinstance(item.get("payload"), dict)
     }
     observed = [str(item.get("agent_type")) for item in reviewers]
-    allowed = required | {"visual_layout_reviewer"}
+    allowed = required | {"visual_layout_reviewer", "figure_fidelity_reviewer"}
     if (
         not required.issubset(completed)
         or not set(observed).issubset(allowed)

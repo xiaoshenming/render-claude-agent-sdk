@@ -64,6 +64,17 @@ def test_visual_reviewer_requires_layout_and_typography_coverage():
     assert "RIGHT_X` is the left boundary" in value
 
 
+def test_figure_fidelity_reviewer_is_code_only_and_three_way_routed():
+    value = (PROMPTS / "figure_fidelity_reviewer_v1.md").read_text()
+
+    assert "{{FIGURE_PATH}}" in value
+    assert "{{CANDIDATE_PATH}}" in value
+    assert "auto_repair" in value
+    assert "evidence_only" in value
+    assert "human_review" in value
+    assert "不读取图片、视频、帧或联系图" in value
+
+
 def test_parent_keeps_recovery_without_dependency_bookkeeping():
     value = (PROMPTS / "quality_operator_v3.md").read_text()
 

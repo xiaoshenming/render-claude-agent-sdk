@@ -104,6 +104,10 @@ Operating rules:
    cross-page placement is not optional cosmetic polish. Once confirmed findings
    are addressed, re-read the edited layout block and explicitly verify each
    supplied `normalization_contract` against the current source.
+   A `figure_fidelity_reviewer` issue may be edited only when its
+   `repair_action` is `auto_repair`. Keep the edit inside its stated
+   `repair_scope`. Never edit `evidence_only` or `human_review` observations,
+   and never rewrite the whole figure merely to resemble the confirmed source.
    `blocking_count` 0 only proves the collision probe is clean; it does not prove
    page normalization. Submit only after that source audit, successful rendering,
    and current layout inspection with `blocking_count` 0. Do not invent extra

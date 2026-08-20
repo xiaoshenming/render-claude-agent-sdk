@@ -12,6 +12,8 @@ from manim_quality.agents.tool_policy import ToolInputPolicy
 from manim_quality.contracts._json_values import thaw_json_object
 from manim_quality.operator.source_view import extract_solution
 
+from .figure_fidelity import run_figure_fidelity_reviewer
+
 _PROMPTS = Path(__file__).with_name("prompts")
 REVIEWER_SPECS = (
     ("math_geometry_reviewer", "math_geometry_reviewer_v1.md"),
@@ -78,7 +80,33 @@ def run_reviewers(
             }
         )
         records.append(outcome.record)
+    _append_figure_reviewer(
+        results, records, runtime, candidate_path, problem_text,
+        solution_steps, model, effort,
+    )
     return tuple(results), tuple(records)
+
+
+def _append_figure_reviewer(
+    results, records, runtime, candidate_path, problem_text,
+    solution_steps, model, effort,
+):
+    try:
+        result, record = run_figure_fidelity_reviewer(
+            runtime,
+            candidate_path=candidate_path,
+            problem_text=problem_text,
+            solution_steps=solution_steps,
+            model=model,
+            effort=effort,
+        )
+    except Exception as error:
+        results.append(_unavailable_result("figure_fidelity_reviewer", error))
+        return
+    if result is not None:
+        results.append(result)
+    if record is not None:
+        records.append(record)
 
 
 def _run_with_native_read(runtime, request, name):

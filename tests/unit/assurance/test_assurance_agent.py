@@ -40,6 +40,17 @@ def test_visual_reviewer_failure_is_evidence_only() -> None:
     _validate_reviewers(reviewers)
 
 
+def test_figure_fidelity_reviewer_is_optional_evidence() -> None:
+    reviewers = (
+        reviewer("math_geometry_reviewer"),
+        reviewer("animation_lifecycle_reviewer"),
+        reviewer("visual_layout_reviewer"),
+        reviewer("figure_fidelity_reviewer"),
+    )
+
+    _validate_reviewers(reviewers)
+
+
 def test_derived_parameter_evidence_becomes_coder_issue() -> None:
     output = {"status": "review", "summary": "review", "issues": []}
     reports = {
