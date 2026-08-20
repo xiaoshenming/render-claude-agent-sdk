@@ -21,6 +21,7 @@
 
 - `authority_status`：`supported / contradicted / not_stated / unclear`。
 - `source_role`：`required_input / source_extra_or_answer / unclear`。
+- `source_presence`：`present / absent / unclear`。只有确认题图源码实际创建或显示的对象才是 `present`；题目要求但两份源码都没画的对象必须是 `absent`，交给其他 Reviewer，不能冒充输入输出差异。
 - `temporal_status`：`corresponding_stage_mismatch / candidate_earlier_leak / delayed_but_present / not_applicable`。
 - `semantic_equivalence`：是否保持同一对象、数值和关系绑定。
 - `difference_scope`：
@@ -46,23 +47,26 @@
 - 把直角三角形改正三角形、横/竖长方形改正方形、交换展开图编号：`base_figure + auto_repair`。
 - 题目明确要求直线/射线/坐标轴却丢失对应方向，或遗漏题目使用的 O/B 等身份标签：`base_figure + auto_repair`。
 - 读题阶段直接使用最值构型、中点条件、待求坐标或待求函数：`base_figure + candidate_earlier_leak + auto_repair`。
+- 确认图只显示点名 A、B，候选在读题阶段改成 A(2,0)、B(0,4)，而坐标本应后续求出：`base_figure + candidate_earlier_leak + auto_repair`。
 - 整个 Solution 讲了另一道题：以权威题目为准；确认题图支持本题时，`base_figure + auto_repair`。
 - figure.py 额外含完整题干卡片，而 Solution 没有重复：`runtime_problem_panel + evidence_only`，严禁 auto。
 - Dot/Brace/页脚缺失但身份与数值关系清楚，或 Brace 改成区域内等式：`decorative + semantic_equivalence=true + evidence_only`。
 - 截距点、动点或后续小问对象被延迟到对应推导/小问，后续完整出现：`later_subquestion_stage + delayed_but_present + evidence_only`。
 - 候选给出另一套合法火柴解、运算或证明：不产生题图保真 issue。
 - 最终答案与老师脚本冲突但确认题图没有答案 Panel：`later_solution_content + human_review`，交给数学 Reviewer。
+- 题目要求 DM/EN 等对象，但确认 figure.py 与候选都没有创建它：`source_presence=absent + later_solution_content + human_review`，不能由本 Reviewer auto。
 
 ## 自动返修硬条件
 
 只有同时满足以下条件才可 `auto_repair`：
 
 1. `difference_scope=base_figure`；
-2. `authority_status=supported`；
-3. `source_role=required_input`；
-4. `temporal_status` 为 `corresponding_stage_mismatch` 或 `candidate_earlier_leak`；
-5. `semantic_equivalence=false`；
-6. 差异真正改变必要对象、身份/数值绑定、空间拓扑、题目明确的线方向、Panel/选项身份或新增答案泄露。
+2. `source_presence=present`；
+3. `authority_status=supported`；
+4. `source_role=required_input`；
+5. `temporal_status` 为 `corresponding_stage_mismatch` 或 `candidate_earlier_leak`；
+6. `semantic_equivalence=false`；
+7. 差异真正改变必要对象、身份/数值绑定、空间拓扑、题目明确的线方向、Panel/选项身份或新增答案泄露。
 
 其余差异：等价/装饰/运行时题干/合法延迟用 `evidence_only`；上游冲突或证据不足用 `human_review`。confidence 至少0.85，repair_scope 限定到具体对象；禁止全局重写。
 

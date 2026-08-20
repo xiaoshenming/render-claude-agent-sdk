@@ -142,6 +142,7 @@ def test_action_normalization_prevents_unsafe_auto_repair() -> None:
     conflict = {
         "repair_action": "auto_repair", "authority_status": "contradicted",
         "source_role": "required_input",
+        "source_presence": "present",
         "temporal_status": "corresponding_stage_mismatch",
         "semantic_equivalence": False,
         "difference_scope": "base_figure",
@@ -149,12 +150,14 @@ def test_action_normalization_prevents_unsafe_auto_repair() -> None:
     equivalent = {
         "repair_action": "auto_repair", "authority_status": "supported",
         "source_role": "required_input", "temporal_status": "not_applicable",
+        "source_presence": "present",
         "semantic_equivalence": True,
         "difference_scope": "decorative",
     }
     supported = {
         "repair_action": "auto_repair", "authority_status": "supported",
         "source_role": "required_input",
+        "source_presence": "present",
         "temporal_status": "corresponding_stage_mismatch",
         "semantic_equivalence": False,
         "difference_scope": "base_figure",
@@ -162,6 +165,7 @@ def test_action_normalization_prevents_unsafe_auto_repair() -> None:
     runtime_panel = {
         "repair_action": "auto_repair", "authority_status": "supported",
         "source_role": "required_input",
+        "source_presence": "present",
         "temporal_status": "corresponding_stage_mismatch",
         "semantic_equivalence": False,
         "difference_scope": "runtime_problem_panel",
@@ -169,16 +173,25 @@ def test_action_normalization_prevents_unsafe_auto_repair() -> None:
     later_solution = {
         "repair_action": "auto_repair", "authority_status": "supported",
         "source_role": "required_input",
+        "source_presence": "present",
         "temporal_status": "corresponding_stage_mismatch",
         "semantic_equivalence": False,
         "difference_scope": "later_solution_content",
     }
+    absent_source = {
+        "repair_action": "auto_repair", "authority_status": "supported",
+        "source_role": "required_input", "source_presence": "absent",
+        "temporal_status": "corresponding_stage_mismatch",
+        "semantic_equivalence": False, "difference_scope": "base_figure",
+    }
 
     assert _normalize_actions([
         conflict, equivalent, supported, runtime_panel, later_solution,
-    ]) == 4
+        absent_source,
+    ]) == 5
     assert conflict["repair_action"] == "human_review"
     assert equivalent["repair_action"] == "evidence_only"
     assert supported["repair_action"] == "auto_repair"
     assert runtime_panel["repair_action"] == "evidence_only"
     assert later_solution["repair_action"] == "human_review"
+    assert absent_source["repair_action"] == "human_review"

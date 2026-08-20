@@ -47,6 +47,9 @@ OUTPUT_SCHEMA = {
                     "source_role": {"type": "string", "enum": [
                         "required_input", "source_extra_or_answer", "unclear",
                     ]},
+                    "source_presence": {"type": "string", "enum": [
+                        "present", "absent", "unclear",
+                    ]},
                     "temporal_status": {"type": "string", "enum": [
                         "corresponding_stage_mismatch", "candidate_earlier_leak",
                         "delayed_but_present", "not_applicable",
@@ -62,6 +65,7 @@ OUTPUT_SCHEMA = {
                     "issue_id", "category", "repair_action", "confidence",
                     "source_evidence", "candidate_evidence", "repair_scope",
                     "description", "authority_status", "source_role",
+                    "source_presence",
                     "temporal_status", "semantic_equivalence",
                     "difference_scope",
                 ],
@@ -141,8 +145,8 @@ def _request(candidate, figure, problem, steps, model, effort):
         run_id=f"{REVIEWER_NAME}-{candidate.parent.name}",
         profile=reviewer_profile(
             model=model,
-            prompt_version="figure-fidelity-native-read-v4",
-            schema_version="figure-fidelity-output-v3",
+            prompt_version="figure-fidelity-native-read-v4.1",
+            schema_version="figure-fidelity-output-v4",
         ),
         prompt=prompt,
         output_schema=OUTPUT_SCHEMA,
@@ -238,7 +242,8 @@ def _normalize_actions(issues) -> int:
             issue["repair_action"] = "evidence_only"
             changed += 1
         elif issue.get("difference_scope") == "later_solution_content" or (
-            issue.get("authority_status") != "supported"
+            issue.get("source_presence") != "present"
+            or issue.get("authority_status") != "supported"
             or issue.get("source_role") != "required_input"
             or issue.get("temporal_status") not in {
                 "corresponding_stage_mismatch", "candidate_earlier_leak",
