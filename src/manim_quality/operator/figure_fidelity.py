@@ -15,7 +15,7 @@ from manim_quality.contracts._json_values import thaw_json_object
 from .source_view import extract_solution
 
 REVIEWER_NAME = "figure_fidelity_reviewer"
-PROMPT_PATH = Path(__file__).with_name("prompts") / "figure_fidelity_reviewer_v3.md"
+PROMPT_PATH = Path(__file__).with_name("prompts") / "figure_fidelity_reviewer_v4.md"
 REPAIR_ACTIONS = {"auto_repair", "evidence_only", "human_review"}
 OUTPUT_SCHEMA = {
     "type": "object",
@@ -52,12 +52,18 @@ OUTPUT_SCHEMA = {
                         "delayed_but_present", "not_applicable",
                     ]},
                     "semantic_equivalence": {"type": "boolean"},
+                    "difference_scope": {"type": "string", "enum": [
+                        "base_figure", "runtime_problem_panel",
+                        "later_subquestion_stage", "later_solution_content",
+                        "decorative",
+                    ]},
                 },
                 "required": [
                     "issue_id", "category", "repair_action", "confidence",
                     "source_evidence", "candidate_evidence", "repair_scope",
                     "description", "authority_status", "source_role",
                     "temporal_status", "semantic_equivalence",
+                    "difference_scope",
                 ],
                 "additionalProperties": False,
             },
@@ -135,8 +141,8 @@ def _request(candidate, figure, problem, steps, model, effort):
         run_id=f"{REVIEWER_NAME}-{candidate.parent.name}",
         profile=reviewer_profile(
             model=model,
-            prompt_version="figure-fidelity-native-read-v3",
-            schema_version="figure-fidelity-output-v2",
+            prompt_version="figure-fidelity-native-read-v4",
+            schema_version="figure-fidelity-output-v3",
         ),
         prompt=prompt,
         output_schema=OUTPUT_SCHEMA,
@@ -223,13 +229,15 @@ def _normalize_actions(issues) -> int:
     for issue in issues:
         if issue.get("repair_action") != "auto_repair":
             continue
-        if (
+        if issue.get("difference_scope") in {
+            "runtime_problem_panel", "later_subquestion_stage", "decorative",
+        } or (
             issue.get("semantic_equivalence") is True
             or issue.get("temporal_status") == "delayed_but_present"
         ):
             issue["repair_action"] = "evidence_only"
             changed += 1
-        elif (
+        elif issue.get("difference_scope") == "later_solution_content" or (
             issue.get("authority_status") != "supported"
             or issue.get("source_role") != "required_input"
             or issue.get("temporal_status") not in {

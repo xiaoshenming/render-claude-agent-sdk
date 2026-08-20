@@ -144,20 +144,41 @@ def test_action_normalization_prevents_unsafe_auto_repair() -> None:
         "source_role": "required_input",
         "temporal_status": "corresponding_stage_mismatch",
         "semantic_equivalence": False,
+        "difference_scope": "base_figure",
     }
     equivalent = {
         "repair_action": "auto_repair", "authority_status": "supported",
         "source_role": "required_input", "temporal_status": "not_applicable",
         "semantic_equivalence": True,
+        "difference_scope": "decorative",
     }
     supported = {
         "repair_action": "auto_repair", "authority_status": "supported",
         "source_role": "required_input",
         "temporal_status": "corresponding_stage_mismatch",
         "semantic_equivalence": False,
+        "difference_scope": "base_figure",
+    }
+    runtime_panel = {
+        "repair_action": "auto_repair", "authority_status": "supported",
+        "source_role": "required_input",
+        "temporal_status": "corresponding_stage_mismatch",
+        "semantic_equivalence": False,
+        "difference_scope": "runtime_problem_panel",
+    }
+    later_solution = {
+        "repair_action": "auto_repair", "authority_status": "supported",
+        "source_role": "required_input",
+        "temporal_status": "corresponding_stage_mismatch",
+        "semantic_equivalence": False,
+        "difference_scope": "later_solution_content",
     }
 
-    assert _normalize_actions([conflict, equivalent, supported]) == 2
+    assert _normalize_actions([
+        conflict, equivalent, supported, runtime_panel, later_solution,
+    ]) == 4
     assert conflict["repair_action"] == "human_review"
     assert equivalent["repair_action"] == "evidence_only"
     assert supported["repair_action"] == "auto_repair"
+    assert runtime_panel["repair_action"] == "evidence_only"
+    assert later_solution["repair_action"] == "human_review"

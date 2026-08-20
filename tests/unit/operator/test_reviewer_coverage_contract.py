@@ -65,7 +65,7 @@ def test_visual_reviewer_requires_layout_and_typography_coverage():
 
 
 def test_figure_fidelity_reviewer_is_code_only_and_three_way_routed():
-    value = (PROMPTS / "figure_fidelity_reviewer_v3.md").read_text()
+    value = (PROMPTS / "figure_fidelity_reviewer_v4.md").read_text()
 
     assert "{{FIGURE_PATH}}" in value
     assert "{{CANDIDATE_PATH}}" in value
@@ -74,14 +74,17 @@ def test_figure_fidelity_reviewer_is_code_only_and_three_way_routed():
     assert "human_review" in value
     assert "不读取图片、视频、帧或联系图" in value
     assert "合法替代解法" in value
-    assert "与权威题目或老师步骤冲突" in value
-    assert "合法延迟揭示" in value
-    assert "语义等价替换" in value
-    assert "四项同时满足" in value
-    assert "两层结论必须分开" in value
+    assert "确认题图与权威题目确实冲突" in value
+    assert "delayed_but_present" in value
+    assert "semantic_equivalence=true" in value
+    assert "自动返修硬条件" in value
+    assert "先记录差异，再决定动作" in value
     assert "authority_status" in value
     assert "temporal_status" in value
     assert "semantic_equivalence" in value
+    assert "difference_scope" in value
+    assert "runtime_problem_panel" in value
+    assert "later_subquestion_stage" in value
 
 
 def test_parent_keeps_recovery_without_dependency_bookkeeping():
