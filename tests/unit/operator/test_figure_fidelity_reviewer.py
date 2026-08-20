@@ -9,6 +9,7 @@ from manim_quality.operator.figure_fidelity import (
     locate_confirmed_figure,
     run_figure_fidelity_reviewer,
 )
+from manim_quality.operator.reviewers import run_reviewers
 
 
 def _sources(root: Path) -> tuple[Path, Path]:
@@ -116,3 +117,21 @@ def test_auto_repair_requires_high_confidence_and_normalizes_decision() -> None:
     issue["confidence"] = 0.7
     with pytest.raises(ValueError, match="confidence"):
         _validate_output({"decision": "needs_repair", "issues": [issue]})
+
+
+def test_unified_reviewers_append_figure_reviewer_when_asset_exists(tmp_path) -> None:
+    candidate, _figure = _sources(tmp_path)
+    runtime = Runtime()
+
+    reviewers, records = run_reviewers(
+        runtime, candidate_path=candidate, problem_text="如图。",
+        model="test-model",
+    )
+
+    assert [item["agent_type"] for item in reviewers] == [
+        "math_geometry_reviewer",
+        "animation_lifecycle_reviewer",
+        "visual_layout_reviewer",
+        "figure_fidelity_reviewer",
+    ]
+    assert len(records) == 4
