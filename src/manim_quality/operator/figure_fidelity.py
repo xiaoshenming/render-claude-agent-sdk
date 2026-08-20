@@ -15,7 +15,7 @@ from manim_quality.contracts._json_values import thaw_json_object
 from .source_view import extract_solution
 
 REVIEWER_NAME = "figure_fidelity_reviewer"
-PROMPT_PATH = Path(__file__).with_name("prompts") / "figure_fidelity_reviewer_v1.md"
+PROMPT_PATH = Path(__file__).with_name("prompts") / "figure_fidelity_reviewer_v2.md"
 REPAIR_ACTIONS = {"auto_repair", "evidence_only", "human_review"}
 OUTPUT_SCHEMA = {
     "type": "object",
@@ -123,7 +123,7 @@ def _request(candidate, figure, problem, steps, model, effort):
         run_id=f"{REVIEWER_NAME}-{candidate.parent.name}",
         profile=reviewer_profile(
             model=model,
-            prompt_version="figure-fidelity-native-read-v1",
+            prompt_version="figure-fidelity-native-read-v2",
             schema_version="figure-fidelity-output-v1",
         ),
         prompt=prompt,
