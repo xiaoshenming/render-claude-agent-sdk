@@ -10,6 +10,7 @@ from pathlib import Path
 from manim_quality.agents.profile import reviewer_profile
 from manim_quality.agents.runtime import AgentRunRequest
 from manim_quality.agents.tool_policy import ToolInputPolicy
+from manim_quality.contracts._json_values import thaw_json_object
 
 from .source_view import extract_solution
 
@@ -160,10 +161,14 @@ def _run_with_required_reads(runtime, request, candidate, figure):
 
 
 def _result(outcome) -> dict[str, object]:
+    payload = thaw_json_object(outcome.structured_output)
+    raw_decision = payload.get("decision")
+    payload["decision"] = _decision(payload.get("issues", ()))
     return {
         "agent_type": REVIEWER_NAME,
         "is_error": False,
-        "payload": dict(outcome.structured_output),
+        "payload": payload,
+        "decision_normalized": raw_decision != payload["decision"],
         "usage": (
             asdict(outcome.record.usage)
             if outcome.record.usage.total_tokens else None
@@ -183,15 +188,20 @@ def _validate_output(value) -> None:
     }
     if not actions <= REPAIR_ACTIONS:
         raise ValueError("invalid figure fidelity repair_action")
-    expected = "needs_repair" if "auto_repair" in actions else "pass"
-    if value.get("decision") != expected:
-        raise ValueError(f"figure fidelity decision must be {expected}")
     for item in issues:
         if (
             item.get("repair_action") == "auto_repair"
             and item.get("confidence", 0) < 0.85
         ):
             raise ValueError("auto_repair requires confidence >= 0.85")
+
+
+def _decision(issues) -> str:
+    return (
+        "needs_repair"
+        if any(item.get("repair_action") == "auto_repair" for item in issues)
+        else "pass"
+    )
 
 
 def _read_normalizer(workspace, exact_reads):

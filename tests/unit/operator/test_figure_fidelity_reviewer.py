@@ -4,6 +4,7 @@ from types import SimpleNamespace
 import pytest
 
 from manim_quality.operator.figure_fidelity import (
+    _decision,
     _validate_output,
     locate_confirmed_figure,
     run_figure_fidelity_reviewer,
@@ -106,11 +107,12 @@ def test_missing_figure_is_not_applicable(tmp_path, monkeypatch) -> None:
     ) == (None, None)
 
 
-def test_auto_repair_requires_high_confidence_and_needs_repair() -> None:
+def test_auto_repair_requires_high_confidence_and_normalizes_decision() -> None:
     issue = {"repair_action": "auto_repair", "confidence": 0.9}
     _validate_output({"decision": "needs_repair", "issues": [issue]})
-    with pytest.raises(ValueError, match="decision must be needs_repair"):
-        _validate_output({"decision": "pass", "issues": [issue]})
+    _validate_output({"decision": "pass", "issues": [issue]})
+    assert _decision([issue]) == "needs_repair"
+    assert _decision([{"repair_action": "evidence_only"}]) == "pass"
     issue["confidence"] = 0.7
     with pytest.raises(ValueError, match="confidence"):
         _validate_output({"decision": "needs_repair", "issues": [issue]})
