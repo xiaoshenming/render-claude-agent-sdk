@@ -5,6 +5,7 @@ import pytest
 
 from manim_quality.operator.figure_fidelity import (
     _decision,
+    _normalize_actions,
     _validate_output,
     locate_confirmed_figure,
     run_figure_fidelity_reviewer,
@@ -135,3 +136,28 @@ def test_unified_reviewers_append_figure_reviewer_when_asset_exists(tmp_path) ->
         "figure_fidelity_reviewer",
     ]
     assert len(records) == 4
+
+
+def test_action_normalization_prevents_unsafe_auto_repair() -> None:
+    conflict = {
+        "repair_action": "auto_repair", "authority_status": "contradicted",
+        "source_role": "required_input",
+        "temporal_status": "corresponding_stage_mismatch",
+        "semantic_equivalence": False,
+    }
+    equivalent = {
+        "repair_action": "auto_repair", "authority_status": "supported",
+        "source_role": "required_input", "temporal_status": "not_applicable",
+        "semantic_equivalence": True,
+    }
+    supported = {
+        "repair_action": "auto_repair", "authority_status": "supported",
+        "source_role": "required_input",
+        "temporal_status": "corresponding_stage_mismatch",
+        "semantic_equivalence": False,
+    }
+
+    assert _normalize_actions([conflict, equivalent, supported]) == 2
+    assert conflict["repair_action"] == "human_review"
+    assert equivalent["repair_action"] == "evidence_only"
+    assert supported["repair_action"] == "auto_repair"

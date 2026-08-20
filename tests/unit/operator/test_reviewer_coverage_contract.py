@@ -65,7 +65,7 @@ def test_visual_reviewer_requires_layout_and_typography_coverage():
 
 
 def test_figure_fidelity_reviewer_is_code_only_and_three_way_routed():
-    value = (PROMPTS / "figure_fidelity_reviewer_v2.md").read_text()
+    value = (PROMPTS / "figure_fidelity_reviewer_v3.md").read_text()
 
     assert "{{FIGURE_PATH}}" in value
     assert "{{CANDIDATE_PATH}}" in value
@@ -78,6 +78,10 @@ def test_figure_fidelity_reviewer_is_code_only_and_three_way_routed():
     assert "合法延迟揭示" in value
     assert "语义等价替换" in value
     assert "四项同时满足" in value
+    assert "两层结论必须分开" in value
+    assert "authority_status" in value
+    assert "temporal_status" in value
+    assert "semantic_equivalence" in value
 
 
 def test_parent_keeps_recovery_without_dependency_bookkeeping():

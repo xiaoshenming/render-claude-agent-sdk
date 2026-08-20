@@ -15,7 +15,7 @@ from manim_quality.contracts._json_values import thaw_json_object
 from .source_view import extract_solution
 
 REVIEWER_NAME = "figure_fidelity_reviewer"
-PROMPT_PATH = Path(__file__).with_name("prompts") / "figure_fidelity_reviewer_v2.md"
+PROMPT_PATH = Path(__file__).with_name("prompts") / "figure_fidelity_reviewer_v3.md"
 REPAIR_ACTIONS = {"auto_repair", "evidence_only", "human_review"}
 OUTPUT_SCHEMA = {
     "type": "object",
@@ -41,11 +41,23 @@ OUTPUT_SCHEMA = {
                     "candidate_evidence": {"type": "string"},
                     "repair_scope": {"type": "string"},
                     "description": {"type": "string"},
+                    "authority_status": {"type": "string", "enum": [
+                        "supported", "contradicted", "not_stated", "unclear",
+                    ]},
+                    "source_role": {"type": "string", "enum": [
+                        "required_input", "source_extra_or_answer", "unclear",
+                    ]},
+                    "temporal_status": {"type": "string", "enum": [
+                        "corresponding_stage_mismatch", "candidate_earlier_leak",
+                        "delayed_but_present", "not_applicable",
+                    ]},
+                    "semantic_equivalence": {"type": "boolean"},
                 },
                 "required": [
                     "issue_id", "category", "repair_action", "confidence",
                     "source_evidence", "candidate_evidence", "repair_scope",
-                    "description",
+                    "description", "authority_status", "source_role",
+                    "temporal_status", "semantic_equivalence",
                 ],
                 "additionalProperties": False,
             },
@@ -123,8 +135,8 @@ def _request(candidate, figure, problem, steps, model, effort):
         run_id=f"{REVIEWER_NAME}-{candidate.parent.name}",
         profile=reviewer_profile(
             model=model,
-            prompt_version="figure-fidelity-native-read-v2",
-            schema_version="figure-fidelity-output-v1",
+            prompt_version="figure-fidelity-native-read-v3",
+            schema_version="figure-fidelity-output-v2",
         ),
         prompt=prompt,
         output_schema=OUTPUT_SCHEMA,
@@ -163,12 +175,14 @@ def _run_with_required_reads(runtime, request, candidate, figure):
 def _result(outcome) -> dict[str, object]:
     payload = thaw_json_object(outcome.structured_output)
     raw_decision = payload.get("decision")
+    action_normalizations = _normalize_actions(payload.get("issues", ()))
     payload["decision"] = _decision(payload.get("issues", ()))
     return {
         "agent_type": REVIEWER_NAME,
         "is_error": False,
         "payload": payload,
         "decision_normalized": raw_decision != payload["decision"],
+        "action_normalizations": action_normalizations,
         "usage": (
             asdict(outcome.record.usage)
             if outcome.record.usage.total_tokens else None
@@ -202,6 +216,29 @@ def _decision(issues) -> str:
         if any(item.get("repair_action") == "auto_repair" for item in issues)
         else "pass"
     )
+
+
+def _normalize_actions(issues) -> int:
+    changed = 0
+    for issue in issues:
+        if issue.get("repair_action") != "auto_repair":
+            continue
+        if (
+            issue.get("semantic_equivalence") is True
+            or issue.get("temporal_status") == "delayed_but_present"
+        ):
+            issue["repair_action"] = "evidence_only"
+            changed += 1
+        elif (
+            issue.get("authority_status") != "supported"
+            or issue.get("source_role") != "required_input"
+            or issue.get("temporal_status") not in {
+                "corresponding_stage_mismatch", "candidate_earlier_leak",
+            }
+        ):
+            issue["repair_action"] = "human_review"
+            changed += 1
+    return changed
 
 
 def _read_normalizer(workspace, exact_reads):
