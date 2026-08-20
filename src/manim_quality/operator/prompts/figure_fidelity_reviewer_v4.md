@@ -46,12 +46,14 @@
 - 把直角三角形改正三角形、横/竖长方形改正方形、交换展开图编号：`base_figure + auto_repair`。
 - 题目明确要求直线/射线/坐标轴却丢失对应方向，或遗漏题目使用的 O/B 等身份标签：`base_figure + auto_repair`。
 - 读题阶段直接使用最值构型、中点条件、待求坐标或待求函数：`base_figure + candidate_earlier_leak + auto_repair`。
+- 确认图只显示点名 A、B，候选在读题阶段改成 A(2,0)、B(0,4)，且坐标本应后续求出：`base_figure + candidate_earlier_leak + auto_repair`。
 - 整个 Solution 讲了另一道题：以权威题目为准；确认题图支持本题时，`base_figure + auto_repair`。
 - figure.py 额外含完整题干卡片，而 Solution 没有重复：`runtime_problem_panel + evidence_only`，严禁 auto。
 - Dot/Brace/页脚缺失但身份与数值关系清楚，或 Brace 改成区域内等式：`decorative + semantic_equivalence=true + evidence_only`。
 - 截距点、动点或后续小问对象被延迟到对应推导/小问，后续完整出现：`later_subquestion_stage + delayed_but_present + evidence_only`。
 - 候选给出另一套合法火柴解、运算或证明：不产生题图保真 issue。
 - 最终答案与老师脚本冲突但确认题图没有答案 Panel：`later_solution_content + human_review`，交给数学 Reviewer。
+- 题目要求 DM/EN 等对象，但确认 figure.py 与候选都没有实际创建它：这不是输入被输出改错，归 `later_solution_content + human_review`，严禁 auto。
 
 ## 自动返修硬条件
 

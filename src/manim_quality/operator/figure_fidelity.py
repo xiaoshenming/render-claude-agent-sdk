@@ -141,7 +141,7 @@ def _request(candidate, figure, problem, steps, model, effort):
         run_id=f"{REVIEWER_NAME}-{candidate.parent.name}",
         profile=reviewer_profile(
             model=model,
-            prompt_version="figure-fidelity-native-read-v4",
+            prompt_version="figure-fidelity-native-read-v4.2",
             schema_version="figure-fidelity-output-v3",
         ),
         prompt=prompt,
