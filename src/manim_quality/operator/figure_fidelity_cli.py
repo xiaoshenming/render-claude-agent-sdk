@@ -22,6 +22,7 @@ def main(argv=None) -> int:
     output.mkdir(parents=True, exist_ok=True)
     if args.base_url:
         os.environ["ANTHROPIC_BASE_URL"] = args.base_url
+    _adopt_batchops_credential()
     sink = RecordingJsonlUsageLedger(output / "usage-events.jsonl")
     runtime = AgentRuntime(
         ClaudeSdkBackend(provider_env=_provider_environment(os.environ)),
@@ -69,6 +70,14 @@ def _arguments(argv=None):
     parser.add_argument("--base-url", default="")
     parser.add_argument("--effort", choices=("low", "medium"), default="low")
     return parser.parse_args(argv)
+
+
+def _adopt_batchops_credential() -> None:
+    if os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("ANTHROPIC_AUTH_TOKEN"):
+        return
+    value = os.environ.get("BATCHOPS_QUALITY_AGENT_API_KEY", "").strip()
+    if value:
+        os.environ["ANTHROPIC_AUTH_TOKEN"] = value
 
 
 def _limits() -> BudgetLimits:
