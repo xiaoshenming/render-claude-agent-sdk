@@ -182,3 +182,20 @@ def test_action_normalization_prevents_unsafe_auto_repair() -> None:
     assert supported["repair_action"] == "auto_repair"
     assert runtime_panel["repair_action"] == "evidence_only"
     assert later_solution["repair_action"] == "human_review"
+
+
+def test_orientation_change_is_not_downgraded_as_semantic_equivalence() -> None:
+    orientation = {
+        "category": "orientation_change",
+        "repair_action": "evidence_only",
+        "confidence": 0.96,
+        "authority_status": "supported",
+        "source_role": "required_input",
+        "temporal_status": "corresponding_stage_mismatch",
+        "semantic_equivalence": True,
+        "difference_scope": "base_figure",
+    }
+
+    assert _normalize_actions([orientation]) == 1
+    assert orientation["repair_action"] == "auto_repair"
+    assert orientation["semantic_equivalence"] is False

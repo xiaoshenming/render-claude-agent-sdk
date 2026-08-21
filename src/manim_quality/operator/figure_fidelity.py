@@ -31,7 +31,8 @@ OUTPUT_SCHEMA = {
                     "category": {"type": "string", "enum": [
                         "missing_object", "identity_binding", "topology",
                         "line_semantics", "panel_identity", "answer_leakage",
-                        "legal_transform", "ambiguous_evidence",
+                        "legal_transform", "orientation_change",
+                        "ambiguous_evidence",
                     ]},
                     "repair_action": {
                         "type": "string", "enum": sorted(REPAIR_ACTIONS),
@@ -141,7 +142,7 @@ def _request(candidate, figure, problem, steps, model, effort):
         run_id=f"{REVIEWER_NAME}-{candidate.parent.name}",
         profile=reviewer_profile(
             model=model,
-            prompt_version="figure-fidelity-native-read-v4.2",
+            prompt_version="figure-fidelity-native-read-v4.3",
             schema_version="figure-fidelity-output-v3",
         ),
         prompt=prompt,
@@ -227,6 +228,19 @@ def _decision(issues) -> str:
 def _normalize_actions(issues) -> int:
     changed = 0
     for issue in issues:
+        if (
+            issue.get("category") == "orientation_change"
+            and issue.get("difference_scope") == "base_figure"
+            and issue.get("authority_status") == "supported"
+            and issue.get("source_role") == "required_input"
+            and issue.get("temporal_status")
+            == "corresponding_stage_mismatch"
+            and issue.get("confidence", 0) >= 0.85
+        ):
+            issue["semantic_equivalence"] = False
+            if issue.get("repair_action") != "auto_repair":
+                issue["repair_action"] = "auto_repair"
+                changed += 1
         if issue.get("repair_action") != "auto_repair":
             continue
         if issue.get("difference_scope") in {

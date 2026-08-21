@@ -43,6 +43,8 @@
 ## 具体正反例
 
 - 候选移动 A/B/E 等选项点，改变它们相对不变图形的包含关系：`base_figure + auto_repair`。
+- 候选把确认题图整体或必要主体旋转、镜像、翻转，或改变主要朝向/阅读方向：即使对象、拓扑和数学逻辑仍等价，学生也需要额外做心理旋转和位置映射，必须判为 `orientation_change + base_figure + semantic_equivalence=false + auto_repair`。只有整体平移、等比例缩放且方向与左右上下关系不变，才属于 `legal_transform + semantic_equivalence=true + evidence_only`。
+- 题目本身明确讲旋转变换时，候选可以在对应推导阶段执行题目要求的旋转；但基础读题阶段仍须保留确认题图的原始朝向，不能用后续旋转教学为基础图朝向改变免责。
 - 把直角三角形改正三角形、横/竖长方形改正方形、交换展开图编号：`base_figure + auto_repair`。
 - 题目明确要求直线/射线/坐标轴却丢失对应方向，或遗漏题目使用的 O/B 等身份标签：`base_figure + auto_repair`。
 - 读题阶段直接使用最值构型、中点条件、待求坐标或待求函数：`base_figure + candidate_earlier_leak + auto_repair`。
@@ -64,7 +66,7 @@
 3. `source_role=required_input`；
 4. `temporal_status` 为 `corresponding_stage_mismatch` 或 `candidate_earlier_leak`；
 5. `semantic_equivalence=false`；
-6. 差异真正改变必要对象、身份/数值绑定、空间拓扑、题目明确的线方向、Panel/选项身份或新增答案泄露。
+6. 差异真正改变必要对象、身份/数值绑定、空间拓扑、题目明确的线方向、原始朝向/阅读方向、Panel/选项身份或新增答案泄露。旋转、镜像、翻转造成的额外心理映射负担属于本项，即使拓扑与数学逻辑不变也不是语义等价。
 
 其余差异：等价/装饰/运行时题干/合法延迟用 `evidence_only`；上游冲突或证据不足用 `human_review`。confidence 至少0.85，repair_scope 限定到具体对象；禁止全局重写。
 

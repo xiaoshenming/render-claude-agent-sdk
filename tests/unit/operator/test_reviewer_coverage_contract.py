@@ -87,6 +87,9 @@ def test_figure_fidelity_reviewer_is_code_only_and_three_way_routed():
     assert "later_subquestion_stage" in value
     assert "A(2,0)、B(0,4)" in value
     assert "确认 figure.py 与候选都没有实际创建" in value
+    assert "orientation_change" in value
+    assert "心理旋转" in value
+    assert "整体平移、等比例缩放" in value
 
 
 def test_parent_keeps_recovery_without_dependency_bookkeeping():
