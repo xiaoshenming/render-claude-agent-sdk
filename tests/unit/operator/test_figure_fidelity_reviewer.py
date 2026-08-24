@@ -4,6 +4,7 @@ from types import SimpleNamespace
 import pytest
 
 from manim_quality.operator.figure_fidelity import (
+    OUTPUT_SCHEMA,
     _decision,
     _normalize_actions,
     _validate_output,
@@ -199,3 +200,21 @@ def test_orientation_change_is_not_downgraded_as_semantic_equivalence() -> None:
     assert _normalize_actions([orientation]) == 1
     assert orientation["repair_action"] == "auto_repair"
     assert orientation["semantic_equivalence"] is False
+
+
+def test_output_contract_excludes_teaching_timing_categories() -> None:
+    issue_properties = OUTPUT_SCHEMA["properties"]["issues"]["items"]["properties"]
+
+    assert "answer_leakage" not in issue_properties["category"]["enum"]
+    assert "candidate_earlier_leak" not in issue_properties["temporal_status"]["enum"]
+
+
+def test_non_corresponding_stage_mismatch_cannot_auto_repair() -> None:
+    delayed = {
+        "repair_action": "auto_repair", "authority_status": "supported",
+        "source_role": "required_input", "temporal_status": "delayed_but_present",
+        "semantic_equivalence": False, "difference_scope": "base_figure",
+    }
+
+    assert _normalize_actions([delayed]) == 1
+    assert delayed["repair_action"] == "evidence_only"

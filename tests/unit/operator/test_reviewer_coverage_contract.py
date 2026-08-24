@@ -86,6 +86,9 @@ def test_figure_fidelity_reviewer_is_code_only_and_three_way_routed():
     assert "runtime_problem_panel" in value
     assert "later_subquestion_stage" in value
     assert "A(2,0)、B(0,4)" in value
+    assert "不审核版式美感、动画生命周期、答案泄露、教学时序" in value
+    assert "不产生题图保真 issue" in value
+    assert "candidate_earlier_leak" not in value
     assert "确认 figure.py 与候选都没有实际创建" in value
     assert "orientation_change" in value
     assert "心理旋转" in value

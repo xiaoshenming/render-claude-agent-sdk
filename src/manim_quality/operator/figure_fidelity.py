@@ -30,8 +30,8 @@ OUTPUT_SCHEMA = {
                     "issue_id": {"type": "string"},
                     "category": {"type": "string", "enum": [
                         "missing_object", "identity_binding", "topology",
-                        "line_semantics", "panel_identity", "answer_leakage",
-                        "legal_transform", "orientation_change",
+                        "line_semantics", "panel_identity", "legal_transform",
+                        "orientation_change",
                         "ambiguous_evidence",
                     ]},
                     "repair_action": {
@@ -49,8 +49,8 @@ OUTPUT_SCHEMA = {
                         "required_input", "source_extra_or_answer", "unclear",
                     ]},
                     "temporal_status": {"type": "string", "enum": [
-                        "corresponding_stage_mismatch", "candidate_earlier_leak",
-                        "delayed_but_present", "not_applicable",
+                        "corresponding_stage_mismatch", "delayed_but_present",
+                        "not_applicable",
                     ]},
                     "semantic_equivalence": {"type": "boolean"},
                     "difference_scope": {"type": "string", "enum": [
@@ -142,8 +142,8 @@ def _request(candidate, figure, problem, steps, model, effort):
         run_id=f"{REVIEWER_NAME}-{candidate.parent.name}",
         profile=reviewer_profile(
             model=model,
-            prompt_version="figure-fidelity-native-read-v4.3",
-            schema_version="figure-fidelity-output-v3",
+            prompt_version="figure-fidelity-native-read-v4.4",
+            schema_version="figure-fidelity-output-v4",
         ),
         prompt=prompt,
         output_schema=OUTPUT_SCHEMA,
@@ -254,9 +254,7 @@ def _normalize_actions(issues) -> int:
         elif issue.get("difference_scope") == "later_solution_content" or (
             issue.get("authority_status") != "supported"
             or issue.get("source_role") != "required_input"
-            or issue.get("temporal_status") not in {
-                "corresponding_stage_mismatch", "candidate_earlier_leak",
-            }
+            or issue.get("temporal_status") != "corresponding_stage_mismatch"
         ):
             issue["repair_action"] = "human_review"
             changed += 1
