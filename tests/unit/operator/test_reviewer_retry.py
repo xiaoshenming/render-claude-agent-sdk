@@ -1,3 +1,5 @@
+import threading
+import time
 from types import SimpleNamespace
 
 from manim_quality.operator.reviewers import run_reviewers
@@ -48,6 +50,48 @@ class VisualFailureRuntime(Runtime):
         if request.run_id.startswith("visual_layout_reviewer"):
             raise RuntimeError("visual provider unavailable")
         return next(self.outcomes)
+
+
+class ParallelRuntime:
+    def __init__(self):
+        self.lock = threading.Lock()
+        self.active = 0
+        self.max_active = 0
+
+    def run(self, _request):
+        with self.lock:
+            self.active += 1
+            self.max_active = max(self.max_active, self.active)
+        try:
+            time.sleep(0.05)
+            return _outcome(read=True)
+        finally:
+            with self.lock:
+                self.active -= 1
+
+
+def test_reviewers_run_in_parallel_and_keep_declared_order(tmp_path) -> None:
+    candidate = tmp_path / "main.py"
+    candidate.write_text(
+        "class Solution(BaseConfigScene):\n"
+        "    def construct(self):\n"
+        "        pass\n",
+        encoding="utf-8",
+    )
+    runtime = ParallelRuntime()
+
+    reviewers, records = run_reviewers(
+        runtime, candidate_path=candidate,
+        problem_text="求解。", model="test-model",
+    )
+
+    assert runtime.max_active == 3
+    assert [row["agent_type"] for row in reviewers] == [
+        "math_geometry_reviewer",
+        "animation_lifecycle_reviewer",
+        "visual_layout_reviewer",
+    ]
+    assert len(records) == 3
 
 
 def test_reviewer_retries_once_after_missing_native_read(tmp_path) -> None:

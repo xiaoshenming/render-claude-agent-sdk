@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ast
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict, replace
 from pathlib import Path
 
@@ -46,67 +47,67 @@ def run_reviewers(
 ) -> tuple[tuple[dict[str, object], ...], tuple[object, ...]]:
     results = []
     records = []
-    for name, prompt_name in REVIEWER_SPECS:
-        request = _reviewer_request(
-            name, prompt_name, candidate_path, problem_text, solution_steps,
-            model, effort
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        pending = [(
+            name,
+            executor.submit(
+                _run_reviewer, runtime, name, prompt_name, candidate_path,
+                problem_text, solution_steps, model, effort,
+            ),
+        ) for name, prompt_name in REVIEWER_SPECS]
+        figure = executor.submit(
+            run_figure_fidelity_reviewer,
+            runtime, candidate_path=candidate_path,
+            problem_text=problem_text, solution_steps=solution_steps,
+            model=model, effort=effort,
         )
-        try:
-            outcome = _run_with_native_read(runtime, request, name)
-        except Exception as error:
-            if name not in OPTIONAL_REVIEWERS:
-                raise
-            results.append(_unavailable_result(name, error))
-            record = getattr(error, "record", None)
+        for name, future in pending:
+            try:
+                result, record = future.result()
+            except Exception as error:
+                if name not in OPTIONAL_REVIEWERS:
+                    raise
+                result = _unavailable_result(name, error)
+                record = getattr(error, "record", None)
+            results.append(result)
             if record is not None:
                 records.append(record)
-            continue
-        results.append(
-            {
-                "agent_type": name,
-                "is_error": False,
-                "payload": thaw_json_object(outcome.structured_output),
-                "usage": (
-                    asdict(outcome.record.usage)
-                    if outcome.record.usage.total_tokens else None
-                ),
-                "usage_complete": outcome.record.usage_complete,
-                "model": outcome.record.model,
-                "duration_ms": outcome.record.elapsed_ms,
-                "turns": outcome.record.turns,
-                "tool_calls": [
-                    item.name for item in outcome.record.tool_calls
-                ],
-            }
-        )
-        records.append(outcome.record)
-    _append_figure_reviewer(
-        results, records, runtime, candidate_path, problem_text,
-        solution_steps, model, effort,
-    )
+        try:
+            result, record = figure.result()
+        except Exception as error:
+            result = _unavailable_result("figure_fidelity_reviewer", error)
+            record = None
+        if result is not None:
+            results.append(result)
+        if record is not None:
+            records.append(record)
     return tuple(results), tuple(records)
 
 
-def _append_figure_reviewer(
-    results, records, runtime, candidate_path, problem_text,
+def _run_reviewer(
+    runtime, name, prompt_name, candidate_path, problem_text,
     solution_steps, model, effort,
 ):
-    try:
-        result, record = run_figure_fidelity_reviewer(
-            runtime,
-            candidate_path=candidate_path,
-            problem_text=problem_text,
-            solution_steps=solution_steps,
-            model=model,
-            effort=effort,
-        )
-    except Exception as error:
-        results.append(_unavailable_result("figure_fidelity_reviewer", error))
-        return
-    if result is not None:
-        results.append(result)
-    if record is not None:
-        records.append(record)
+    request = _reviewer_request(
+        name, prompt_name, candidate_path, problem_text, solution_steps,
+        model, effort,
+    )
+    outcome = _run_with_native_read(runtime, request, name)
+    result = {
+        "agent_type": name,
+        "is_error": False,
+        "payload": thaw_json_object(outcome.structured_output),
+        "usage": (
+            asdict(outcome.record.usage)
+            if outcome.record.usage.total_tokens else None
+        ),
+        "usage_complete": outcome.record.usage_complete,
+        "model": outcome.record.model,
+        "duration_ms": outcome.record.elapsed_ms,
+        "turns": outcome.record.turns,
+        "tool_calls": [item.name for item in outcome.record.tool_calls],
+    }
+    return result, outcome.record
 
 
 def _run_with_native_read(runtime, request, name):
