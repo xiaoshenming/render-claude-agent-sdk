@@ -14,12 +14,12 @@ from claude_agent_sdk import (
     ResultMessage,
     UserMessage,
     create_sdk_mcp_server,
-    query,
     tool,
 )
 
 from manim_quality.contracts._json_values import thaw_json_object
 
+from ._claude_client import ExplicitClientQuery
 from ._claude_hooks import ClaudeHookState, ClaudeSdkProtocolError
 from ._claude_message_compat import install_claude_sdk_message_compat
 from ._claude_result import ClaudeSdkRunError as ClaudeSdkRunError
@@ -54,12 +54,12 @@ class ClaudeSdkBackend(AgentBackend):
     def __init__(
         self,
         *,
-        query_func: QueryFunction = query,
+        query_func: QueryFunction | None = None,
         provider_env: Mapping[str, str] | None = None,
     ) -> None:
-        if not callable(query_func):
+        if query_func is not None and not callable(query_func):
             raise TypeError("query_func must be callable")
-        self._query = query_func
+        self._query = query_func or ExplicitClientQuery()
         self._provider_env = dict(provider_env or {})
 
     def run(self, request: BackendRequest, controls: RuntimeControls) -> BackendResult:
@@ -145,9 +145,7 @@ def _options(
         "PreToolUse": [HookMatcher(matcher=None, hooks=[state.pre_tool])],
         "PostToolUse": [HookMatcher(matcher=None, hooks=[state.post_tool])],
         "PostToolUseFailure": [HookMatcher(matcher=None, hooks=[state.failed_tool])],
-        "SubagentStart": [
-            HookMatcher(matcher=None, hooks=[state.subagent_start])
-        ],
+        "SubagentStart": [HookMatcher(matcher=None, hooks=[state.subagent_start])],
         "SubagentStop": [HookMatcher(matcher=None, hooks=[state.subagent_stop])],
     }
     denied = _denied_tools(tools)
@@ -229,9 +227,7 @@ def _subagent_definitions(
 def _denied_tools(enabled: list[str]) -> list[str]:
     aliases = {"Agent", "Task"} if "Agent" in enabled or "Task" in enabled else set()
     return [
-        tool
-        for tool in _DENIED_TOOLS
-        if tool not in enabled and tool not in aliases
+        tool for tool in _DENIED_TOOLS if tool not in enabled and tool not in aliases
     ]
 
 
