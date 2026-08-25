@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import time
 from pathlib import Path
@@ -31,8 +32,8 @@ class ManimRenderer:
         self._quality = quality
         # A shared cache_dir enables Manim's content-hashed partial-movie
         # cache across revisions of one problem: unchanged animations are
-        # reused, only edited segments re-render. Callers keep this OFF for
-        # the acceptance gate so delivered videos are always cold renders.
+        # reused, only edited segments re-render. Acceptance can share the
+        # same cache because it verifies the already-rendered authority.
         self._cache_dir = cache_dir
 
     def render(self, revision_dir: Path, candidate: Path) -> RenderResult:
@@ -86,7 +87,8 @@ class ManimRenderer:
             video,
             duration,
             None,
-            cache_hit_count=result.stdout.count("Using cached data"),
+            cache_hit_count=len(re.findall(
+                r"Using\s+cached\s+data", result.stdout)),
             new_partial_count=len(partials_after - partials_before),
             elapsed_ms=round((time.perf_counter() - started) * 1000),
         )

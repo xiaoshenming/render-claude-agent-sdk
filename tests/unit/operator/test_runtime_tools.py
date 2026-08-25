@@ -179,7 +179,13 @@ def test_render_result_records_cache_hits_and_new_partials(tmp_path) -> None:
             video.parent.mkdir(parents=True, exist_ok=True)
             video.write_bytes(b"video")
             return SimpleNamespace(
-                returncode=0, stdout="Using cached data (hash)", stderr="")
+                returncode=0,
+                stdout=(
+                    "Using cached data (hash)\n"
+                    "Using cached\n    data (wrapped hash)"
+                ),
+                stderr="",
+            )
         return SimpleNamespace(
             returncode=0,
             stdout='{"format":{"duration":"2.0"}}',
@@ -198,6 +204,6 @@ def test_render_result_records_cache_hits_and_new_partials(tmp_path) -> None:
         render_module.run_to_artifacts = original
 
     assert result.ok is True
-    assert result.cache_hit_count == 1
+    assert result.cache_hit_count == 2
     assert result.new_partial_count == 1
     assert result.elapsed_ms is not None
