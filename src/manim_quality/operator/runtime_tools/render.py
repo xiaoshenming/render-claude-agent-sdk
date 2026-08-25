@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import subprocess
+import time
 from pathlib import Path
 
 from .models import RenderResult
@@ -36,6 +37,8 @@ class ManimRenderer:
 
     def render(self, revision_dir: Path, candidate: Path) -> RenderResult:
         media = self._cache_dir or (revision_dir / "media")
+        partials_before = _partial_movies(media)
+        started = time.perf_counter()
         argv = [
             str(self._python),
             "-m",
@@ -58,21 +61,35 @@ class ManimRenderer:
                 env_overrides=self._environment,
             )
         except (OSError, subprocess.TimeoutExpired) as error:
-            return _failed(revision_dir, candidate, f"render_process:{error}")
+            return _failed(
+                revision_dir, candidate, f"render_process:{error}", started)
         if result.returncode != 0:
             return _failed(
                 revision_dir,
                 candidate,
                 f"manim_exit_code:{result.returncode}",
+                started,
             )
         video = _newest_video(media)
         if video is None:
-            return _failed(revision_dir, candidate, "render_video_missing")
+            return _failed(
+                revision_dir, candidate, "render_video_missing", started)
         try:
             duration = _probe_video(video, revision_dir, self._timeout)
         except (OSError, ValueError, subprocess.TimeoutExpired) as error:
-            return _failed(revision_dir, candidate, f"ffprobe:{error}")
-        return RenderResult(True, revision_dir, candidate, video, duration, None)
+            return _failed(revision_dir, candidate, f"ffprobe:{error}", started)
+        partials_after = _partial_movies(media)
+        return RenderResult(
+            True,
+            revision_dir,
+            candidate,
+            video,
+            duration,
+            None,
+            cache_hit_count=result.stdout.count("Using cached data"),
+            new_partial_count=len(partials_after - partials_before),
+            elapsed_ms=round((time.perf_counter() - started) * 1000),
+        )
 
 
 def _newest_video(media: Path) -> Path | None:
@@ -82,6 +99,16 @@ def _newest_video(media: Path) -> Path | None:
         if path.is_file() and "partial_movie_files" not in path.parts
     ]
     return max(videos, key=lambda path: path.stat().st_mtime_ns) if videos else None
+
+
+def _partial_movies(media: Path) -> set[Path]:
+    if not media.is_dir():
+        return set()
+    return {
+        path.relative_to(media)
+        for path in media.rglob("*.mp4")
+        if path.is_file() and "partial_movie_files" in path.parts
+    }
 
 
 def _probe_video(video: Path, revision_dir: Path, timeout: int) -> float:
@@ -113,5 +140,21 @@ def _probe_video(video: Path, revision_dir: Path, timeout: int) -> float:
     return duration
 
 
-def _failed(revision_dir: Path, candidate: Path, error: str) -> RenderResult:
-    return RenderResult(False, revision_dir, candidate, None, None, error)
+def _failed(
+    revision_dir: Path,
+    candidate: Path,
+    error: str,
+    started: float | None = None,
+) -> RenderResult:
+    return RenderResult(
+        False,
+        revision_dir,
+        candidate,
+        None,
+        None,
+        error,
+        elapsed_ms=(
+            round((time.perf_counter() - started) * 1000)
+            if started is not None else None
+        ),
+    )

@@ -33,6 +33,7 @@ class RuntimeToolchain:
         detector_path: Path | None = None,
         scene_name: str = "Solution",
         render_cache: bool = False,
+        render_cache_dir: Path | None = None,
     ) -> None:
         self._workspaces = RevisionWorkspace(artifact_root)
         self.reports_dir = Path(artifact_root) / "reports"
@@ -44,7 +45,12 @@ class RuntimeToolchain:
             python_executable=python_executable,
             environment=environment,
             scene_name=scene_name,
-            cache_dir=(Path(artifact_root) / "render_cache" if render_cache else None),
+            cache_dir=(
+                Path(render_cache_dir)
+                if render_cache_dir is not None
+                else Path(artifact_root) / "render_cache"
+                if render_cache else None
+            ),
         )
         self._probe = BBoxProbe(
             source_workspace=source_workspace,
@@ -178,6 +184,9 @@ class RealRevisionValidator:
             "rendered": result.ok,
             "video_path": str(result.video_path) if result.video_path else None,
             "duration_seconds": result.duration_seconds,
+            "cache_hit_count": result.cache_hit_count,
+            "new_partial_count": result.new_partial_count,
+            "render_elapsed_ms": result.elapsed_ms,
             "error": result.error,
             "render_diagnostic": (
                 None if result.ok else _render_diagnostic(result.revision_dir)

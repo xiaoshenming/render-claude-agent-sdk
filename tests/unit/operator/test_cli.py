@@ -24,6 +24,8 @@ def test_cli_arguments_require_candidate_output_and_model(tmp_path: Path) -> Non
             str(tmp_path / "run"),
             "--model",
             "model-a",
+            "--render-cache-dir",
+            str(tmp_path / "shared-cache"),
         ]
     )
 
@@ -31,6 +33,7 @@ def test_cli_arguments_require_candidate_output_and_model(tmp_path: Path) -> Non
     assert args.model == "model-a"
     assert args.max_turns == 24
     assert args.max_tool_calls == 40
+    assert args.render_cache_dir == tmp_path / "shared-cache"
 
 
 def test_cli_reads_structured_solution_steps_and_repair_feedback(

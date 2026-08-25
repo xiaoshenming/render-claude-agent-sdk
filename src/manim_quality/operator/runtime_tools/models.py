@@ -14,6 +14,9 @@ class RenderResult:
     video_path: Path | None
     duration_seconds: float | None
     error: str | None
+    cache_hit_count: int = 0
+    new_partial_count: int = 0
+    elapsed_ms: int | None = None
 
 
 @dataclass(frozen=True, slots=True)

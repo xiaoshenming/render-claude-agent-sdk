@@ -141,6 +141,7 @@ def _arguments(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--compile-only", action="store_true")
     parser.add_argument("--allow-ambient-login", action="store_true")
     parser.add_argument("--render-cache", action="store_true")
+    parser.add_argument("--render-cache-dir", type=Path)
     parser.add_argument("--max-turns", type=int, default=PARENT_MAX_TURNS)
     parser.add_argument(
         "--max-tool-calls",
@@ -187,13 +188,21 @@ def _harness(operator, args, workspace: Path) -> QualityHarness:
         / "probe_runner.txt"
     )
     runner = Path(geometry_sidecar_runner.__file__).resolve()
+    shared_render_cache = (
+        args.render_cache_dir.resolve()
+        if args.render_cache_dir is not None
+        else args.output / "render_cache"
+        if args.render_cache else None
+    )
+    if shared_render_cache is not None:
+        shared_render_cache.mkdir(parents=True, exist_ok=True)
     agent_chain = RuntimeToolchain(
         source_workspace=workspace,
         artifact_root=args.output / "agent_runtime",
         probe_runner=runner,
         python_executable=manim_python,
         environment=environment,
-        render_cache=args.render_cache,
+        render_cache_dir=shared_render_cache,
     )
     gate_chain = RuntimeToolchain(
         source_workspace=workspace,
@@ -201,6 +210,7 @@ def _harness(operator, args, workspace: Path) -> QualityHarness:
         probe_runner=runner,
         python_executable=manim_python,
         environment=environment,
+        render_cache_dir=shared_render_cache,
     )
     return QualityHarness(
         operator=operator,

@@ -83,6 +83,7 @@ def _arguments(argv: list[str] | None) -> argparse.Namespace:
     parser.add_argument("--logic-mode", default="one_shot")
     parser.add_argument("--layout-token-budget", type=int, default=180_000)
     parser.add_argument("--allow-vendor-clean-fallback", action="store_true")
+    parser.add_argument("--render-cache-dir", type=Path)
     args, unknown = parser.parse_known_args(argv)
     if unknown:
         print(f"ignoring unknown arguments: {unknown}", file=sys.stderr)
@@ -132,6 +133,10 @@ def _run_operator(args: argparse.Namespace, harness_root: Path) -> int:
         argv.extend(("--assets-dir", str(assets)))
     for path in args.runtime_python_path:
         argv.extend(("--runtime-python-path", str(path.resolve(strict=True))))
+    if args.render_cache_dir is not None:
+        cache = args.render_cache_dir.resolve()
+        cache.mkdir(parents=True, exist_ok=True)
+        argv.extend(("--render-cache-dir", str(cache)))
     try:
         return operator_main(argv)
     except SystemExit as error:

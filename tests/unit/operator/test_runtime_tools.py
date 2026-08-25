@@ -156,3 +156,48 @@ def test_render_cache_flag_controls_manim_caching(tmp_path) -> None:
     (partial / "seg01.mp4").write_bytes(b"segment-newer-mtime")
     chosen = _newest_video(tmp_path / "shared_cache")
     assert chosen is not None and chosen.name == "Solution.mp4"
+
+
+def test_render_result_records_cache_hits_and_new_partials(tmp_path) -> None:
+    from types import SimpleNamespace
+
+    from manim_quality.operator.runtime_tools.render import ManimRenderer
+    import manim_quality.operator.runtime_tools.render as render_module
+
+    workspace, cache = tmp_path / "ws", tmp_path / "cache"
+    workspace.mkdir()
+    interpreter, candidate = tmp_path / "python", tmp_path / "candidate.py"
+    interpreter.touch()
+    candidate.write_text("class Solution: pass\n", encoding="utf-8")
+
+    def fake_run(argv, **_kwargs):
+        if "-m" in argv and "manim" in argv:
+            partial = cache / "videos/480p15/partial_movie_files/Solution/a.mp4"
+            partial.parent.mkdir(parents=True, exist_ok=True)
+            partial.write_bytes(b"partial")
+            video = cache / "videos/480p15/Solution.mp4"
+            video.parent.mkdir(parents=True, exist_ok=True)
+            video.write_bytes(b"video")
+            return SimpleNamespace(
+                returncode=0, stdout="Using cached data (hash)", stderr="")
+        return SimpleNamespace(
+            returncode=0,
+            stdout='{"format":{"duration":"2.0"}}',
+            stderr="",
+        )
+
+    original = render_module.run_to_artifacts
+    render_module.run_to_artifacts = fake_run
+    try:
+        result = ManimRenderer(
+            source_workspace=workspace,
+            python_executable=interpreter,
+            cache_dir=cache,
+        ).render(tmp_path / "R1", candidate)
+    finally:
+        render_module.run_to_artifacts = original
+
+    assert result.ok is True
+    assert result.cache_hit_count == 1
+    assert result.new_partial_count == 1
+    assert result.elapsed_ms is not None
