@@ -88,7 +88,9 @@ class ManimRenderer:
             duration,
             None,
             cache_hit_count=len(re.findall(
-                r"Using\s+cached\s+data", result.stdout)),
+                r"Using\s+cached\s+data",
+                f"{result.stdout}\n{result.stderr}",
+            )),
             new_partial_count=len(partials_after - partials_before),
             elapsed_ms=round((time.perf_counter() - started) * 1000),
         )

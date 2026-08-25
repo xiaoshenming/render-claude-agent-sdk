@@ -180,11 +180,8 @@ def test_render_result_records_cache_hits_and_new_partials(tmp_path) -> None:
             video.write_bytes(b"video")
             return SimpleNamespace(
                 returncode=0,
-                stdout=(
-                    "Using cached data (hash)\n"
-                    "Using cached\n    data (wrapped hash)"
-                ),
-                stderr="",
+                stdout="Using cached data (hash)",
+                stderr="Using cached\n    data (wrapped hash)",
             )
         return SimpleNamespace(
             returncode=0,
