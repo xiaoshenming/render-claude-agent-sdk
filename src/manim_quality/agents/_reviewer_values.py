@@ -6,15 +6,8 @@ import json
 from collections.abc import Mapping
 
 
-def reviewer_payload(
-    text: str, error_type: type[Exception]
-) -> Mapping[str, object]:
-    try:
-        value = json.loads(text)
-    except json.JSONDecodeError as error:
-        raise error_type("Reviewer ToolResult must be valid JSON") from error
-    if not isinstance(value, Mapping):
-        raise error_type("Reviewer ToolResult must be a JSON object")
+def reviewer_payload(text: str, error_type: type[Exception]) -> Mapping[str, object]:
+    value = raw_reviewer_payload(text, error_type)
     warnings: list[str] = []
     decision = value.get("decision")
     if decision not in {"pass", "needs_repair"}:
@@ -31,9 +24,7 @@ def reviewer_payload(
     if len(issues) > 12:
         issues = issues[:12]
         warnings.append("issues_truncated")
-    normalized_issues = [
-        _normalize_issue(issue, warnings) for issue in issues
-    ]
+    normalized_issues = [_normalize_issue(issue, warnings) for issue in issues]
     coverage = value.get("coverage")
     if not isinstance(coverage, Mapping):
         coverage = {}
@@ -46,19 +37,28 @@ def reviewer_payload(
     if warnings:
         decision = "needs_repair"
         coverage = {**coverage, "protocol_warnings": warnings}
-    normalized = {
+    return {
         "decision": decision,
         "diagnosis": diagnosis,
         "issues": normalized_issues,
         "coverage": coverage,
         "confidence": confidence,
     }
-    return normalized
 
 
-def _normalize_issue(
-    value: object, warnings: list[str]
+def raw_reviewer_payload(
+    text: str, error_type: type[Exception]
 ) -> Mapping[str, object]:
+    try:
+        value = json.loads(text)
+    except json.JSONDecodeError as error:
+        raise error_type("Reviewer ToolResult must be valid JSON") from error
+    if not isinstance(value, Mapping):
+        raise error_type("Reviewer ToolResult must be a JSON object")
+    return value
+
+
+def _normalize_issue(value: object, warnings: list[str]) -> Mapping[str, object]:
     required = {"type", "target", "evidence", "required_invariant", "repair_scope"}
     if not isinstance(value, Mapping):
         warnings.append("non_object_issue")

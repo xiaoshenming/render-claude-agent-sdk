@@ -1,3 +1,4 @@
+from dataclasses import replace
 from pathlib import Path
 
 import anyio
@@ -72,6 +73,8 @@ class CleanScriptBackend(AgentBackend):
     def run(self, request: BackendRequest, controls: RuntimeControls):
         self.request = request
         controls.record_round_usage(TokenUsage(input_tokens=20, output_tokens=5))
+        if request.profile.role.value == "assurance":
+            return _native_reviews(controls, request)
         if request.profile.role.value == "reviewer":
             controls.authorize_tool(
                 "Read",
@@ -137,9 +140,12 @@ class CleanScriptBackend(AgentBackend):
             arguments,
         )
 
+
 class DirectOutputBackend(AgentBackend):
     def run(self, request: BackendRequest, controls: RuntimeControls):
         controls.record_round_usage(TokenUsage(input_tokens=1, output_tokens=1))
+        if request.profile.role.value == "assurance":
+            return _native_reviews(controls, request)
         if request.profile.role.value == "reviewer":
             controls.authorize_tool(
                 "Read",
@@ -167,6 +173,35 @@ class DirectOutputBackend(AgentBackend):
                 "summary": "Trust me.",
             }
         )
+
+
+def _native_reviews(controls, request):
+    payload = {
+        "decision": "pass",
+        "diagnosis": "No supported defect.",
+        "issues": [],
+        "coverage": {"source": "complete"},
+        "confidence": 0.9,
+    }
+    rows = tuple(
+        {
+            "agent_type": spec.name,
+            "agent_id": f"agent-{index}",
+            "is_error": False,
+            "payload": payload,
+            "raw_payload": payload,
+            "sdk_metadata": {
+                "subagent_tokens": 10,
+                "tool_uses": len(spec.allowed_tools),
+                "duration_ms": 5,
+            },
+        }
+        for index, spec in enumerate(request.subagents)
+    )
+    return replace(
+        controls.complete({"status": "complete"}),
+        subagent_results=rows,
+    )
 
 
 def limits() -> BudgetLimits:
@@ -221,12 +256,7 @@ def test_operator_runs_clean_candidate_through_tools_without_prompt_source(
     assert len(backend.request.managed_tools) == 6
     assert backend.request.subagents == ()
     assert CODE not in backend.request.prompt
-    assert [item.role for item in sink.records] == [
-        "reviewer",
-        "reviewer",
-        "reviewer",
-        "operator",
-    ]
+    assert [item.role for item in sink.records] == ["assurance", "operator"]
 
 
 def test_operator_rejects_structured_output_without_tool_submission(

@@ -8,7 +8,7 @@ import time
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
-from ._reviewer_values import reviewer_payload
+from ._reviewer_values import raw_reviewer_payload, reviewer_payload
 
 
 class SubagentProtocolError(RuntimeError):
@@ -39,9 +39,7 @@ class NativeSubagentProtocol:
     @property
     def results(self) -> tuple[Mapping[str, object], ...]:
         return tuple(
-            run.result
-            for run in self._runs.values()
-            if run.result is not None
+            run.result for run in self._runs.values() if run.result is not None
         )
 
     @property
@@ -124,6 +122,7 @@ class NativeSubagentProtocol:
             text,
             expected_agent_id=run.agent_id,
         )
+        raw_payload = raw_reviewer_payload(reviewer_text, SubagentProtocolError)
         payload = reviewer_payload(reviewer_text, SubagentProtocolError)
         run.result = {
             "agent_type": run.agent_type,
@@ -136,16 +135,14 @@ class NativeSubagentProtocol:
             "is_error": False,
             "content": reviewer_text,
             "payload": payload,
+            "raw_payload": raw_payload,
             "sdk_metadata": sdk_metadata,
             "parent_next_message_id": None,
         }
 
     def bind_parent_message(self, message_id: str | None) -> None:
         for run in self._runs.values():
-            if (
-                run.result is not None
-                and run.result["parent_next_message_id"] is None
-            ):
+            if run.result is not None and run.result["parent_next_message_id"] is None:
                 run.result["parent_next_message_id"] = message_id
 
     def validate_complete(self) -> None:
