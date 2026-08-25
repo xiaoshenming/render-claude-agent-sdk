@@ -113,7 +113,10 @@ class FinalAssuranceAgent:
 
 
 def _native_reviewers(runtime, model, case, verification):
-    if verification is None or case.source_path is None:
+    # Formal reviewers inspect the immutable source and do not require a new
+    # render. ``verification`` only enables the optional execution/layout
+    # rerun tools used by the parent assurance agent.
+    if case.source_path is None:
         return (), ()
     return run_reviewers(
         runtime,

@@ -32,8 +32,6 @@ from manim_quality.assurance.verification import VerificationConfig
 
 def main() -> int:
     args = arguments()
-    if args.with_agent and not args.full_verification:
-        raise SystemExit("--with-agent requires --full-verification")
     if args.case_manifest:
         cases = load_curated_cases(args.case_manifest, args.logs)
     elif args.all_successful:
