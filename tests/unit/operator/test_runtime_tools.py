@@ -68,7 +68,6 @@ def test_compact_layout_report_returns_only_bounded_issue_facts() -> None:
 def test_detached_render_groups_are_tracked_and_reapable(tmp_path) -> None:
     """A supervisor group-kill cannot reach detached render sessions, so
     live groups must be registered for explicit reaping."""
-    import subprocess
     import sys
     import time
 
@@ -161,8 +160,8 @@ def test_render_cache_flag_controls_manim_caching(tmp_path) -> None:
 def test_render_result_records_cache_hits_and_new_partials(tmp_path) -> None:
     from types import SimpleNamespace
 
-    from manim_quality.operator.runtime_tools.render import ManimRenderer
     import manim_quality.operator.runtime_tools.render as render_module
+    from manim_quality.operator.runtime_tools.render import ManimRenderer
 
     workspace, cache = tmp_path / "ws", tmp_path / "cache"
     workspace.mkdir()
@@ -201,6 +200,8 @@ def test_render_result_records_cache_hits_and_new_partials(tmp_path) -> None:
         render_module.run_to_artifacts = original
 
     assert result.ok is True
+    assert result.video_path == tmp_path / "R1" / "verified_video.mp4"
+    assert result.video_path.read_bytes() == b"video"
     assert result.cache_hit_count == 2
     assert result.new_partial_count == 1
     assert result.elapsed_ms is not None

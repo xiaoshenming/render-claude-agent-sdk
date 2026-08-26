@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+import shutil
 import subprocess
 import time
 from pathlib import Path
@@ -75,6 +76,14 @@ class ManimRenderer:
         if video is None:
             return _failed(
                 revision_dir, candidate, "render_video_missing", started)
+        if self._cache_dir is not None:
+            # Partial movies may be shared across revisions, but the composed
+            # MP4 is mutable at one stable Manim path. Freeze it before another
+            # revision overwrites the cache authority.
+            frozen = revision_dir / "verified_video.mp4"
+            frozen.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(video, frozen)
+            video = frozen
         try:
             duration = _probe_video(video, revision_dir, self._timeout)
         except (OSError, ValueError, subprocess.TimeoutExpired) as error:
