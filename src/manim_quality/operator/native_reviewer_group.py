@@ -11,20 +11,11 @@ from manim_quality.agents.managed_tools import ManagedToolGrant, ToolEffect
 from manim_quality.agents.profile import assurance_profile
 from manim_quality.agents.runtime import AgentRunRequest
 from manim_quality.agents.subagents import NativeSubagentSpec
-from manim_quality.contracts._json_values import thaw_json_object
 
-from .figure_fidelity import (
-    _decision as figure_decision,
-)
-from .figure_fidelity import (
-    _normalize_actions as normalize_figure_actions,
-)
-from .figure_fidelity import (
-    _validate_output as validate_figure_output,
-)
 from .figure_fidelity import (
     locate_confirmed_figure,
 )
+from .native_reviewer_results import ordered_results
 from .source_view import extract_solution
 
 PROMPTS = Path(__file__).with_name("prompts")
@@ -77,7 +68,7 @@ def run_native_reviewer_group(
         effort=effort,
     )
     outcome = runtime.run(request)
-    rows = _ordered_results(outcome.subagent_results, specs, model)
+    rows = ordered_results(outcome.subagent_results, specs, model)
     return rows, (outcome.record,)
 
 
@@ -236,36 +227,6 @@ def _parent_prompt(names):
         "each exact subagent_type and run_in_background=false. Wait for every "
         "ToolResult, then return only structured output with status complete."
     )
-
-
-def _ordered_results(results, specs, model):
-    by_name = {str(item.get("agent_type")): item for item in results}
-    rows = []
-    for spec in specs:
-        item = thaw_json_object(by_name[spec.name])
-        metadata = item.get("sdk_metadata")
-        observed_tools = (
-            metadata.get("tool_uses") if isinstance(metadata, dict) else None
-        )
-        if observed_tools != len(spec.allowed_tools):
-            item["protocol_warnings"] = [
-                f"native_tool_count:{observed_tools!r}/{len(spec.allowed_tools)}"
-            ]
-        payload = item["payload"]
-        if spec.name == "figure_fidelity_reviewer":
-            raw_payload = item["raw_payload"]
-            warnings = raw_payload.get("coverage", {}).get("protocol_warnings", [])
-            if "unstructured_output_preserved" not in warnings:
-                payload = raw_payload
-                validate_figure_output(payload)
-                item["action_normalizations"] = normalize_figure_actions(
-                    payload["issues"]
-                )
-                payload["decision"] = figure_decision(payload["issues"])
-        item["payload"] = payload
-        item.update({"usage": None, "usage_complete": True, "model": model})
-        rows.append(item)
-    return tuple(rows)
 
 
 def _content_language(candidate):

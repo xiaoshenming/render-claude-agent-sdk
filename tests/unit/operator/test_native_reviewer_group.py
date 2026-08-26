@@ -17,15 +17,18 @@ def _payload() -> dict[str, object]:
 
 
 class Runtime:
-    def __init__(self, *, metadata=True) -> None:
+    def __init__(self, *, metadata=True, invalid_figure=False) -> None:
         self.requests = []
         self.metadata = metadata
+        self.invalid_figure = invalid_figure
 
     def run(self, request):
         self.requests.append(request)
         rows = []
         for index, spec in enumerate(request.subagents):
             payload = _payload()
+            if self.invalid_figure and spec.name == "figure_fidelity_reviewer":
+                payload["issues"] = [{"repair_action": "provider_specific"}]
             rows.append(
                 {
                     "agent_type": spec.name,
@@ -103,3 +106,26 @@ def test_missing_sdk_tool_count_is_evidence_not_a_blocker(tmp_path) -> None:
 
     assert len(reviewers) == 3
     assert reviewers[0]["protocol_warnings"] == ["native_tool_count:None/1"]
+
+
+def test_nonstandard_figure_action_is_evidence_not_a_blocker(tmp_path) -> None:
+    candidate = tmp_path / "main.py"
+    candidate.write_text(
+        "class Solution(BaseConfigScene):\n    def construct(self):\n        pass\n",
+        encoding="utf-8",
+    )
+    figure = tmp_path / "assets/visual/figure.py"
+    figure.parent.mkdir(parents=True)
+    figure.write_text("class Figure: pass\n", encoding="utf-8")
+
+    reviewers, _ = run_reviewers(
+        Runtime(invalid_figure=True),
+        candidate_path=candidate,
+        problem_text="求解。",
+        solution_steps="完成证明。",
+        model="test-model",
+    )
+
+    figure_review = reviewers[-1]
+    assert figure_review["payload"]["decision"] == "needs_repair"
+    assert "figure_payload_nonstandard" in figure_review["protocol_warnings"][0]
