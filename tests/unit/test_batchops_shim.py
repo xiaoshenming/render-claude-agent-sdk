@@ -88,6 +88,62 @@ def test_proposed_is_candidate_ready_for_assurance(tmp_path: Path) -> None:
     assert result["artifact_identity"]["manifest_sha256"]
 
 
+def test_proposed_reuses_verified_video_from_shared_render_cache(
+    tmp_path: Path,
+) -> None:
+    args = _args(tmp_path)
+    output = args.output
+    harness = output / "harness"
+    cache = tmp_path / "manim-cache"
+    video = cache / "videos/480p15/Solution.mp4"
+    video.parent.mkdir(parents=True)
+    video.write_bytes(b"cached-r1-video")
+    args.render_cache_dir = cache
+    decision = {
+        "decision": "PROPOSED",
+        "final_revision_id": "R1",
+        "validation": {"details": {"video_path": str(video)}},
+    }
+    _decision(harness, decision)
+    (harness / "output" / "proposed_candidate.py").write_text(
+        "class Solution: fixed\n", encoding="utf-8"
+    )
+    output.mkdir(parents=True, exist_ok=True)
+
+    code = shim._emit_proposed(args, output, harness, decision)
+
+    assert code == 0
+    assert (output / "video_final.mp4").read_bytes() == b"cached-r1-video"
+
+
+def test_proposed_rejects_reported_video_outside_shared_cache(
+    tmp_path: Path,
+) -> None:
+    args = _args(tmp_path)
+    output = args.output
+    harness = output / "harness"
+    cache = tmp_path / "manim-cache"
+    cache.mkdir()
+    outside = tmp_path / "outside.mp4"
+    outside.write_bytes(b"untrusted-video")
+    args.render_cache_dir = cache
+    decision = {
+        "decision": "PROPOSED",
+        "final_revision_id": "R1",
+        "validation": {"details": {"video_path": str(outside)}},
+    }
+    _decision(harness, decision)
+    (harness / "output" / "proposed_candidate.py").write_text(
+        "class Solution: fixed\n", encoding="utf-8"
+    )
+    output.mkdir(parents=True, exist_ok=True)
+
+    code = shim._emit_proposed(args, output, harness, decision)
+
+    assert code == 3
+    assert not (output / "video_final.mp4").exists()
+
+
 def test_agent_tree_usage_does_not_double_count_reviewers(tmp_path: Path) -> None:
     decision = {
         "tokens": {"total_tokens": 55_842},

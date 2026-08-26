@@ -170,7 +170,8 @@ def _emit_proposed(
     decision: dict[str, object],
 ) -> int:
     candidate = harness_root / "output" / "proposed_candidate.py"
-    video = _final_video(harness_root, decision)
+    video = _final_video(
+        harness_root, decision, render_cache_dir=args.render_cache_dir)
     if not candidate.is_file() or video is None:
         print("PROPOSED artifacts missing; failing open", file=sys.stderr)
         return 3
@@ -235,17 +236,35 @@ def _emit_failed(
     )
 
 def _final_video(
-    harness_root: Path, decision: dict[str, object]
+    harness_root: Path,
+    decision: dict[str, object],
+    *,
+    render_cache_dir: Path | None = None,
 ) -> Path | None:
     revision = str(
         decision.get("final_revision_id")
         or decision.get("submitted_revision_id")
         or ""
     )
-    roots = (
+    roots = [
         harness_root / "acceptance_runtime" / revision,
         harness_root / "agent_runtime" / revision,
-    )
+    ]
+    if render_cache_dir is not None:
+        roots.append(render_cache_dir.resolve())
+        validation = decision.get("validation")
+        validation = validation if isinstance(validation, dict) else {}
+        details = validation.get("details")
+        details = details if isinstance(details, dict) else {}
+        reported = details.get("video_path")
+        candidate = Path(reported).resolve() if isinstance(reported, str) else None
+        if (
+            candidate is not None
+            and candidate.is_file()
+            and candidate.suffix.lower() == ".mp4"
+            and candidate.is_relative_to(render_cache_dir.resolve())
+        ):
+            return candidate
     for root in roots:
         if not revision or not root.is_dir():
             continue
