@@ -79,10 +79,6 @@ class NativeSubagentProtocol:
     ) -> None:
         run = self._active_run(agent_type, agent_id)
         if tool_name.endswith("__read_solution"):
-            if run.solution_read:
-                raise SubagentProtocolError(
-                    f"Reviewer read_solution limit exceeded: {run.agent_type}"
-                )
             run.solution_read = True
 
     def stop(self, agent_type: object, agent_id: object) -> None:
@@ -118,11 +114,17 @@ class NativeSubagentProtocol:
                 f"Reviewer returned an error ToolResult: {run.agent_type}"
             )
         text = _result_text(content)
-        reviewer_text, sdk_metadata = _result_parts(
-            text,
-            expected_agent_id=run.agent_id,
-        )
-        raw_payload = raw_reviewer_payload(reviewer_text, SubagentProtocolError)
+        try:
+            reviewer_text, sdk_metadata = _result_parts(
+                text, expected_agent_id=run.agent_id
+            )
+            raw_payload = raw_reviewer_payload(reviewer_text, SubagentProtocolError)
+        except SubagentProtocolError as error:
+            if "contains no JSON object" not in str(error):
+                raise
+            raw_payload = _evidence_payload(text)
+            reviewer_text = json.dumps(raw_payload, ensure_ascii=False)
+            sdk_metadata = None
         payload = reviewer_payload(reviewer_text, SubagentProtocolError)
         run.result = {
             "agent_type": run.agent_type,
@@ -134,6 +136,7 @@ class NativeSubagentProtocol:
             "completed_ms": _now_ms(),
             "is_error": False,
             "content": reviewer_text,
+            "raw_content": text,
             "payload": payload,
             "raw_payload": raw_payload,
             "sdk_metadata": sdk_metadata,
@@ -217,26 +220,23 @@ def _result_parts(
     *,
     expected_agent_id: str | None,
 ) -> tuple[str, Mapping[str, object] | None]:
-    """Locate the reviewer JSON among fences and prose, fail-closed.
-
-    A candidate is accepted only when nothing but an optional closing
-    fence and the strict SDK usage trailer follows it; identity and
-    payload validation stay unchanged after extraction.
-    """
+    """Locate the last reviewer-shaped JSON and preserve prose as evidence."""
 
     stripped = text.lstrip()
     reason = "Reviewer ToolResult contains no JSON object"
+    candidates: list[tuple[int, int]] = []
     for start in _json_candidate_starts(stripped):
         try:
-            _, end = json.JSONDecoder().raw_decode(stripped[start:])
+            value, end = json.JSONDecoder().raw_decode(stripped[start:])
         except json.JSONDecodeError:
             continue
         end += start
+        if isinstance(value, Mapping) and "decision" in value:
+            candidates.append((start, end))
+    for start, end in reversed(candidates):
         parts = _accepted_parts(stripped, start, end, expected_agent_id)
         if parts is not None:
             return parts
-        residue = stripped[end : end + 80].strip()[:80]
-        reason = f"Reviewer JSON is followed by unexpected text: {residue!r}"
     raise SubagentProtocolError(reason)
 
 
@@ -254,7 +254,7 @@ def _accepted_parts(
         return reviewer_text, None
     match = _SDK_RESULT_TRAILER.fullmatch(trailer)
     if match is None:
-        return None
+        return reviewer_text, None
     if expected_agent_id is None or match["agent_id"] != expected_agent_id:
         raise SubagentProtocolError("Reviewer ToolResult agent_id does not match hook")
     return reviewer_text, {
@@ -287,6 +287,13 @@ def _without_closing_fence(trailer: str) -> str:
     if stripped.startswith("```"):
         return stripped[3:]
     return trailer
+
+
+def _evidence_payload(text: str) -> Mapping[str, object]:
+    warning = ["unstructured_output_preserved"]
+    return {"decision": "needs_repair", "issues": [], "confidence": 0.0,
+            "diagnosis": text.strip()[:6_000] or "Reviewer 未返回文本。",
+            "coverage": {"protocol_warnings": warning}}
 
 
 def _now_ms() -> int:

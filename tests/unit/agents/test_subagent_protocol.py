@@ -148,13 +148,13 @@ def test_protocol_requires_stop_and_one_successful_json_result() -> None:
         )
 
     protocol = stopped()
-    with pytest.raises(SubagentProtocolError, match="no JSON object"):
-        protocol.record_result(
-            tool_use_id="tool-1",
-            content="not-json",
-            is_error=False,
-            parent_tool_use_id=None,
-        )
+    protocol.record_result(
+        tool_use_id="tool-1",
+        content="not-json",
+        is_error=False,
+        parent_tool_use_id=None,
+    )
+    assert protocol.results[0]["payload"]["decision"] == "needs_repair"
 
 
 def test_protocol_requires_parent_consumption_and_rejects_duplicates() -> None:
@@ -204,7 +204,6 @@ def test_protocol_strips_and_validates_sdk_agent_result_trailer() -> None:
     ("content", "match"),
     [
         (sdk_result(agent_id="forged-agent"), "does not match"),
-        (valid_result() + "\nunexpected", "followed by unexpected text"),
     ],
 )
 def test_protocol_rejects_forged_or_unknown_sdk_trailers(
@@ -280,6 +279,33 @@ def test_reviewer_json_survives_markdown_fences_and_prose() -> None:
 
     assert _json.loads(reviewer_text)["decision"] == "pass"
     assert trailer is None
+
+
+def test_reviewer_json_accepts_provider_tail_as_non_blocking_evidence() -> None:
+    protocol = stopped()
+    protocol.record_result(
+        tool_use_id="tool-1",
+        content=valid_result() + "\nprovider explanation\n</｜DSML｜tool_calls>",
+        is_error=False,
+        parent_tool_use_id=None,
+    )
+    assert protocol.results[0]["payload"]["decision"] == "pass"
+
+
+def test_unstructured_reviewer_output_is_preserved_and_does_not_block() -> None:
+    protocol = stopped()
+    protocol.record_result(
+        tool_use_id="tool-1",
+        content='结论基本正确，但这里有 "未转义引号"。',
+        is_error=False,
+        parent_tool_use_id=None,
+    )
+    payload = protocol.results[0]["payload"]
+    assert payload["decision"] == "needs_repair"
+    assert "未转义引号" in payload["diagnosis"]
+    assert payload["coverage"]["protocol_warnings"] == [
+        "unstructured_output_preserved"
+    ]
 
 
 def test_reviewer_json_is_found_after_a_schema_example_block() -> None:

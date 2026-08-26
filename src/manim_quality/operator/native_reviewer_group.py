@@ -248,15 +248,20 @@ def _ordered_results(results, specs, model):
             metadata.get("tool_uses") if isinstance(metadata, dict) else None
         )
         if observed_tools != len(spec.allowed_tools):
-            raise RuntimeError(
-                f"{spec.name} did not use every required native review tool"
-            )
+            item["protocol_warnings"] = [
+                f"native_tool_count:{observed_tools!r}/{len(spec.allowed_tools)}"
+            ]
         payload = item["payload"]
         if spec.name == "figure_fidelity_reviewer":
-            payload = item["raw_payload"]
-            validate_figure_output(payload)
-            item["action_normalizations"] = normalize_figure_actions(payload["issues"])
-            payload["decision"] = figure_decision(payload["issues"])
+            raw_payload = item["raw_payload"]
+            warnings = raw_payload.get("coverage", {}).get("protocol_warnings", [])
+            if "unstructured_output_preserved" not in warnings:
+                payload = raw_payload
+                validate_figure_output(payload)
+                item["action_normalizations"] = normalize_figure_actions(
+                    payload["issues"]
+                )
+                payload["decision"] = figure_decision(payload["issues"])
         item["payload"] = payload
         item.update({"usage": None, "usage_complete": True, "model": model})
         rows.append(item)

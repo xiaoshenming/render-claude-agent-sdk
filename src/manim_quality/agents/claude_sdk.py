@@ -12,6 +12,7 @@ from claude_agent_sdk import (
     ClaudeAgentOptions,
     HookMatcher,
     ResultMessage,
+    ThinkingConfigDisabled,
     UserMessage,
     create_sdk_mcp_server,
     query,
@@ -151,6 +152,9 @@ def _options(
         "SubagentStop": [HookMatcher(matcher=None, hooks=[state.subagent_stop])],
     }
     denied = _denied_tools(tools)
+    thinking = None
+    if "api.deepseek.com/anthropic" in provider_env.get("ANTHROPIC_BASE_URL", ""):
+        thinking = ThinkingConfigDisabled(type="disabled")
     return ClaudeAgentOptions(
         tools=tools,
         allowed_tools=tools + read_tool_names + managed_tool_names,
@@ -172,6 +176,7 @@ def _options(
         agents=_subagent_definitions(request),
         continue_conversation=False,
         env=dict(provider_env),
+        thinking=thinking,
         effort=request.effort,
     )
 

@@ -17,8 +17,9 @@ def _payload() -> dict[str, object]:
 
 
 class Runtime:
-    def __init__(self) -> None:
+    def __init__(self, *, metadata=True) -> None:
         self.requests = []
+        self.metadata = metadata
 
     def run(self, request):
         self.requests.append(request)
@@ -36,7 +37,7 @@ class Runtime:
                         "subagent_tokens": 10,
                         "tool_uses": len(spec.allowed_tools),
                         "duration_ms": 5,
-                    },
+                    } if self.metadata else None,
                 }
             )
         record = SimpleNamespace(
@@ -82,3 +83,23 @@ def test_reviewers_use_one_parent_with_four_native_subagents(tmp_path) -> None:
         item.name for item in request.subagents
     ]
     assert len(records) == 1
+
+
+def test_missing_sdk_tool_count_is_evidence_not_a_blocker(tmp_path) -> None:
+    candidate = tmp_path / "main.py"
+    candidate.write_text(
+        "class Solution(BaseConfigScene):\n    def construct(self):\n        pass\n",
+        encoding="utf-8",
+    )
+    runtime = Runtime(metadata=False)
+
+    reviewers, _ = run_reviewers(
+        runtime,
+        candidate_path=candidate,
+        problem_text="求解。",
+        solution_steps="完成证明。",
+        model="test-model",
+    )
+
+    assert len(reviewers) == 3
+    assert reviewers[0]["protocol_warnings"] == ["native_tool_count:None/1"]

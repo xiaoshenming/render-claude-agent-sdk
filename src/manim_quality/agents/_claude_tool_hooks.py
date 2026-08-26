@@ -17,6 +17,7 @@ from ._guard_primitives import (
     ToolDenied,
 )
 from ._runtime_models import OutputRejected
+from ._structured_output_compat import adapt_structured_output
 from .managed_tools import ManagedToolInputError
 
 
@@ -72,8 +73,13 @@ def _authorize_tool(state, data, tool_use_id):
             raise OutputRejected(
                 f"required reviewers have not completed: {sorted(missing)}"
             )
+        adapted = adapt_structured_output(tool_input, state._request.output_schema)
+        if adapted != tool_input:
+            state._controls.record_output_correction(
+                "provider structured output normalized without changing decision"
+            )
         normalized = state._controls.authorize_output_submission(
-            tool_input, call_id=tool_use_id)
+            adapted, call_id=tool_use_id)
         state._terminal_tools.add(tool_use_id)
         return normalized
     _enforce_findings_prerequisites(state, tool_name, agent_id)
