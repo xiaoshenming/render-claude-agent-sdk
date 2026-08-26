@@ -195,9 +195,7 @@ def _result_text(content: object) -> str:
         text = "\n".join(parts)
     else:
         raise SubagentProtocolError("Reviewer ToolResult must be text")
-    if not text.strip() or len(text) > 8_500:
-        raise SubagentProtocolError("Reviewer ToolResult exceeds transport bound")
-    return text
+    return text[:32_000] if text.strip() else "Reviewer 未返回文本。"
 
 
 _SDK_RESULT_TRAILER = re.compile(
@@ -247,8 +245,6 @@ def _accepted_parts(
     expected_agent_id: str | None,
 ) -> tuple[str, Mapping[str, object] | None] | None:
     reviewer_text = stripped[start:end]
-    if len(reviewer_text) > 8_000:
-        raise SubagentProtocolError("Reviewer ToolResult exceeds 8000 characters")
     trailer = _without_closing_fence(stripped[end:])
     if not trailer.strip():
         return reviewer_text, None

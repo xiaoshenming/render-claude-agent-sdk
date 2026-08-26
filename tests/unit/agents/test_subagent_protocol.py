@@ -251,13 +251,13 @@ def test_protocol_preserves_malformed_issue_as_non_blocking_evidence() -> None:
     protocol = stopped()
     oversized = json.loads(valid_result())
     oversized["diagnosis"] = "x" * 8_001
-    with pytest.raises(SubagentProtocolError, match="8000"):
-        protocol.record_result(
-            tool_use_id="tool-1",
-            content=json.dumps(oversized),
-            is_error=False,
-            parent_tool_use_id=None,
-        )
+    protocol.record_result(
+        tool_use_id="tool-1",
+        content=json.dumps(oversized),
+        is_error=False,
+        parent_tool_use_id=None,
+    )
+    assert len(protocol.results[0]["payload"]["diagnosis"]) == 8_001
 
 
 def test_reviewer_json_survives_markdown_fences_and_prose() -> None:
