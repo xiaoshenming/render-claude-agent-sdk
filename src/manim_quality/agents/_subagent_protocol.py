@@ -88,11 +88,13 @@ class NativeSubagentProtocol:
                 f"Reviewer completed without read_solution: {run.agent_type}"
             )
         run.stopped_ms = _now_ms()
+        if run.result is not None:
+            run.result["stopped_ms"] = run.stopped_ms
 
     def validate_agent_completion(self, tool_use_id: str) -> None:
-        run = self._run_for_tool(tool_use_id)
-        if run.stopped_ms is None:
-            raise SubagentProtocolError("Agent tool completed before Reviewer stop")
+        self._run_for_tool(tool_use_id)
+        # Some Anthropic-compatible providers deliver the foreground ToolResult
+        # before the lifecycle stop hook. Final validation still requires stop.
 
     def record_result(
         self,
@@ -103,8 +105,6 @@ class NativeSubagentProtocol:
         parent_tool_use_id: str | None,
     ) -> None:
         run = self._run_for_tool(tool_use_id)
-        if run.stopped_ms is None:
-            raise SubagentProtocolError("Reviewer ToolResult arrived before stop")
         if run.result is not None:
             raise SubagentProtocolError(
                 f"duplicate Reviewer ToolResult: {run.agent_type}"

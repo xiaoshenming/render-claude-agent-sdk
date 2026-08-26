@@ -130,13 +130,22 @@ def test_protocol_requires_bound_identity_and_active_lifecycle() -> None:
 
 def test_protocol_requires_stop_and_one_successful_json_result() -> None:
     protocol = started()
-    with pytest.raises(SubagentProtocolError, match="before stop"):
-        protocol.record_result(
-            tool_use_id="tool-1",
-            content=valid_result(),
-            is_error=False,
-            parent_tool_use_id=None,
-        )
+    protocol.authorize_tool(
+        agent_type=REVIEWER,
+        agent_id="agent-1",
+        tool_name="mcp__quality__read_solution",
+    )
+    protocol.record_result(
+        tool_use_id="tool-1",
+        content=valid_result(),
+        is_error=False,
+        parent_tool_use_id=None,
+    )
+    assert protocol.results[0]["stopped_ms"] is None
+    protocol.stop(REVIEWER, "agent-1")
+    assert protocol.results[0]["stopped_ms"] is not None
+    protocol.bind_parent_message("parent-next")
+    protocol.validate_complete()
 
     protocol = stopped()
     with pytest.raises(SubagentProtocolError, match="error ToolResult"):
