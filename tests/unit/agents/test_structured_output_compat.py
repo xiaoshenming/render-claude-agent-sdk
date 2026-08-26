@@ -1,4 +1,7 @@
-from manim_quality.agents._structured_output_compat import adapt_structured_output
+from manim_quality.agents._structured_output_compat import (
+    adapt_structured_output,
+    relaxed_provider_schema,
+)
 
 
 def test_adapter_removes_provider_extras_and_bounds_strings() -> None:
@@ -19,3 +22,22 @@ def test_adapter_does_not_invent_missing_semantic_fields() -> None:
     schema = {"properties": {"status": {"type": "string"}}}
 
     assert adapt_structured_output({"summary": "only prose"}, schema) == {}
+
+
+def test_deepseek_schema_keeps_required_fields_but_accepts_provider_extras() -> None:
+    schema = {
+        "type": "object",
+        "properties": {
+            "status": {"type": "string", "enum": ["held"]},
+            "summary": {"type": "string", "maxLength": 5},
+        },
+        "required": ["status", "summary"],
+        "additionalProperties": False,
+    }
+
+    relaxed = relaxed_provider_schema(schema)
+
+    assert relaxed["required"] == ["status", "summary"]
+    assert relaxed["additionalProperties"] is True
+    assert "maxLength" not in relaxed["properties"]["summary"]
+    assert schema["additionalProperties"] is False

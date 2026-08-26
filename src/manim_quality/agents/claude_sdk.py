@@ -27,6 +27,7 @@ from ._claude_result import ClaudeSdkRunError as ClaudeSdkRunError
 from ._claude_result import result_tree_usage, validate_terminal_result
 from ._deadline import _DeadlineExtender
 from ._runtime_models import BackendRequest, BackendResult
+from ._structured_output_compat import relaxed_provider_schema
 from .runtime import AgentBackend, RuntimeControls
 
 _DENIED_TOOLS = (
@@ -152,9 +153,16 @@ def _options(
         "SubagentStop": [HookMatcher(matcher=None, hooks=[state.subagent_stop])],
     }
     denied = _denied_tools(tools)
+    deepseek = "api.deepseek.com/anthropic" in provider_env.get(
+        "ANTHROPIC_BASE_URL", ""
+    )
     thinking = None
-    if "api.deepseek.com/anthropic" in provider_env.get("ANTHROPIC_BASE_URL", ""):
+    if deepseek:
         thinking = ThinkingConfigDisabled(type="disabled")
+    output_schema = (
+        relaxed_provider_schema(request.output_schema)
+        if deepseek else thaw_json_object(request.output_schema)
+    )
     return ClaudeAgentOptions(
         tools=tools,
         allowed_tools=tools + read_tool_names + managed_tool_names,
@@ -165,7 +173,7 @@ def _options(
         max_turns=request.max_turns,
         output_format={
             "type": "json_schema",
-            "schema": thaw_json_object(request.output_schema),
+            "schema": output_schema,
         },
         hooks=hooks,
         setting_sources=[],

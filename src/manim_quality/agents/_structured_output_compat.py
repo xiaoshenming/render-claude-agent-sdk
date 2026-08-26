@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from copy import deepcopy
 
 
 def adapt_structured_output(
@@ -25,3 +26,15 @@ def adapt_structured_output(
                 item = item[:limit]
         adapted[name] = item
     return adapted
+
+
+def relaxed_provider_schema(schema: Mapping[str, object]) -> dict[str, object]:
+    """Let provider extras reach hooks while keeping required semantic fields."""
+    relaxed = deepcopy(dict(schema))
+    relaxed["additionalProperties"] = True
+    properties = relaxed.get("properties")
+    if isinstance(properties, dict):
+        for rule in properties.values():
+            if isinstance(rule, dict):
+                rule.pop("maxLength", None)
+    return relaxed
