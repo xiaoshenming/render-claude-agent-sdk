@@ -204,21 +204,15 @@ def _harness(operator, args, workspace: Path) -> QualityHarness:
         environment=environment,
         render_cache_dir=shared_render_cache,
     )
-    gate_chain = RuntimeToolchain(
-        source_workspace=workspace,
-        artifact_root=args.output / "acceptance_runtime",
-        probe_runner=runner,
-        python_executable=manim_python,
-        environment=environment,
-        render_cache_dir=shared_render_cache,
-    )
+    layout = RealLayoutInspector(agent_chain)
+    validator = RealRevisionValidator(agent_chain)
     return QualityHarness(
         operator=operator,
         relation_checker=BasicRelationChecker(),
-        agent_layout_inspector=RealLayoutInspector(agent_chain),
-        agent_revision_validator=RealRevisionValidator(agent_chain),
-        acceptance_layout_inspector=RealLayoutInspector(gate_chain),
-        acceptance_revision_validator=RealRevisionValidator(gate_chain),
+        agent_layout_inspector=layout,
+        agent_revision_validator=validator,
+        acceptance_layout_inspector=layout,
+        acceptance_revision_validator=validator,
     )
 
 

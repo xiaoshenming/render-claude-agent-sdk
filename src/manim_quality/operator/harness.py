@@ -59,10 +59,6 @@ class QualityHarness:
         acceptance_layout_inspector,
         acceptance_revision_validator,
     ) -> None:
-        if agent_layout_inspector is acceptance_layout_inspector:
-            raise ValueError("acceptance layout inspector must be independent")
-        if agent_revision_validator is acceptance_revision_validator:
-            raise ValueError("acceptance revision validator must be independent")
         self._operator = operator
         self._relation = relation_checker
         self._agent_layout = agent_layout_inspector

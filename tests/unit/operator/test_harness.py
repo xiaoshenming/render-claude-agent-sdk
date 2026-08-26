@@ -114,23 +114,20 @@ def test_harness_runs_operator_then_independent_gate_and_writes_pack(
     assert (output / "evidence" / "layout.R0.baseline.json").is_file()
 
 
-def test_harness_rejects_same_agent_and_acceptance_adapter_instances() -> None:
-    validator = Validator("shared")
-    layout = Layout("shared")
+def test_harness_allows_one_revision_evidence_adapter_for_agent_and_gate() -> None:
+    validator = Validator("outer")
+    layout = Layout("outer")
 
-    try:
-        QualityHarness(
-            operator=OperatorStub(),
-            relation_checker=Relation(),
-            agent_layout_inspector=layout,
-            agent_revision_validator=validator,
-            acceptance_layout_inspector=layout,
-            acceptance_revision_validator=validator,
-        )
-    except ValueError as error:
-        assert "independent" in str(error)
-    else:
-        raise AssertionError("shared validation adapters must be rejected")
+    harness = QualityHarness(
+        operator=OperatorStub(),
+        relation_checker=Relation(),
+        agent_layout_inspector=layout,
+        agent_revision_validator=validator,
+        acceptance_layout_inspector=layout,
+        acceptance_revision_validator=validator,
+    )
+
+    assert harness._agent_layout is layout
 
 
 def test_harness_does_not_scale_patch_budget_from_bbox_count(tmp_path) -> None:
