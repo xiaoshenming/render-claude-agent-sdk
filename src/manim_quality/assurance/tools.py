@@ -75,6 +75,25 @@ def inspect_code_review(case: AssuranceCase) -> ToolReport:
 
 
 def inspect_layout(case: AssuranceCase) -> ToolReport:
+    prior = _json(case.log_dir / "layout_evidence.json")
+    if prior:
+        evidence = {
+            "id": f"{case.key}:quality-layout",
+            "source": "quality_agent_reused_bbox",
+            **prior,
+        }
+        if not prior.get("verified") or prior.get("error"):
+            return _report(
+                "inspect_layout", "incomplete", ("quality_layout_unverified",),
+                evidence,
+            )
+        blocking = int(prior.get("blocking_count") or 0)
+        return _report(
+            "inspect_layout",
+            "risk" if blocking else "complete",
+            ("blocking_layout_finding",) if blocking else (),
+            evidence,
+        )
     findings = _findings(case, {"layout", "overlap", "bbox"})
     risks = ("blocking_layout_finding",) if _blocking(findings) else ()
     return _report(

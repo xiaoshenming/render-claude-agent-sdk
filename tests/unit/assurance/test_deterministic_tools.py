@@ -89,6 +89,35 @@ def test_review_and_layout_preserve_structured_findings(tmp_path) -> None:
     assert inspect_layout(sample).risk_codes == ("blocking_layout_finding",)
 
 
+def test_layout_reuses_verified_quality_bbox_without_rendering(tmp_path) -> None:
+    sample = case(tmp_path)
+    (sample.log_dir / "layout_evidence.json").write_text(json.dumps({
+        "revision_id": "R2",
+        "code_hash": f"sha256:{'a' * 64}",
+        "verified": True,
+        "blocking_count": 0,
+        "probe_summary": {"snapshot_count": 49},
+    }), encoding="utf-8")
+
+    report = inspect_layout(sample)
+
+    assert report.status == "complete"
+    assert report.risk_codes == ()
+    assert report.evidence[0]["source"] == "quality_agent_reused_bbox"
+
+
+def test_reused_quality_bbox_keeps_blocking_finding(tmp_path) -> None:
+    sample = case(tmp_path)
+    (sample.log_dir / "layout_evidence.json").write_text(json.dumps({
+        "verified": True, "blocking_count": 2,
+    }), encoding="utf-8")
+
+    report = inspect_layout(sample)
+
+    assert report.status == "risk"
+    assert report.risk_codes == ("blocking_layout_finding",)
+
+
 def test_code_review_detects_wrong_derived_function_coefficient(tmp_path) -> None:
     source = tmp_path / "main.py"
     source.write_text(
