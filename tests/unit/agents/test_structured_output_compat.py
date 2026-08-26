@@ -1,3 +1,5 @@
+from types import MappingProxyType
+
 from manim_quality.agents._structured_output_compat import (
     adapt_structured_output,
     relaxed_provider_schema,
@@ -41,3 +43,25 @@ def test_deepseek_schema_keeps_required_fields_but_accepts_provider_extras() -> 
     assert relaxed["additionalProperties"] is True
     assert "maxLength" not in relaxed["properties"]["summary"]
     assert schema["additionalProperties"] is False
+
+
+def test_deepseek_schema_thaws_nested_frozen_json() -> None:
+    schema = MappingProxyType({
+        "type": "object",
+        "properties": MappingProxyType({
+            "status": MappingProxyType({
+                "type": "string", "enum": ("held",), "maxLength": 5,
+            }),
+        }),
+        "required": ("status",),
+        "additionalProperties": False,
+    })
+
+    relaxed = relaxed_provider_schema(schema)
+
+    assert relaxed == {
+        "type": "object",
+        "properties": {"status": {"type": "string", "enum": ["held"]}},
+        "required": ["status"],
+        "additionalProperties": True,
+    }

@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from copy import deepcopy
+
+from ..contracts._json_values import thaw_json_object
 
 
 def adapt_structured_output(
@@ -30,7 +31,7 @@ def adapt_structured_output(
 
 def relaxed_provider_schema(schema: Mapping[str, object]) -> dict[str, object]:
     """Let provider extras reach hooks while keeping required semantic fields."""
-    relaxed = deepcopy(dict(schema))
+    relaxed = thaw_json_object(schema)
     relaxed["additionalProperties"] = True
     properties = relaxed.get("properties")
     if isinstance(properties, dict):
