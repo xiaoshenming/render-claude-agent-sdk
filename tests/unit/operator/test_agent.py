@@ -14,6 +14,7 @@ from manim_quality.agents.runtime import (
     RuntimeControls,
 )
 from manim_quality.agents.usage import AgentCallRecord, TokenUsage, UsageSink
+from manim_quality.operator import agent as operator_agent
 from manim_quality.operator.agent import QualityOperatorAgent
 from manim_quality.operator.models import ValidationOutcome
 from manim_quality.operator.session import QualitySession
@@ -278,6 +279,64 @@ def test_operator_rejects_structured_output_without_tool_submission(
         )
 
     assert session.submitted_revision_id is None
+
+
+def test_final_assurance_feedback_goes_directly_to_coder(
+    tmp_path: Path, monkeypatch,
+) -> None:
+    session = QualitySession(
+        problem_text=PROBLEM,
+        candidate_code=CODE,
+        repair_feedback={
+            "origin": "final_assurance",
+            "issues": [{
+                "issue_id": "fa-1",
+                "category": "geometry",
+                "summary": "点M必须位于线段P1P2上",
+            }],
+        },
+    )
+
+    def forbidden(*_args, **_kwargs):
+        raise AssertionError("directed repair must not rerun reviewers")
+
+    monkeypatch.setattr(operator_agent, "run_reviewers", forbidden)
+
+    _, prompt, reviewer_results, reviewer_records = operator_agent._review_context(
+        None, "fake-model", tmp_path, session)
+
+    assert reviewer_records == ()
+    assert reviewer_results[0]["reviewers_skipped"] is True
+    assert reviewer_results[0]["skip_reason"] == (
+        "authoritative_final_assurance_feedback")
+    assert "fa-1" in prompt
+
+
+def test_unplayable_final_assurance_feedback_still_skips_reviewers(
+    tmp_path: Path, monkeypatch,
+) -> None:
+    session = QualitySession(
+        problem_text=PROBLEM,
+        candidate_code=CODE,
+        repair_feedback={
+            "origin": "final_assurance",
+            "issues": [],
+            "repair_brief": {"coder_text": "修复无法渲染的当前源码"},
+        },
+    )
+
+    monkeypatch.setattr(
+        operator_agent,
+        "run_reviewers",
+        lambda *_args, **_kwargs: pytest.fail("reviewers must be skipped"),
+    )
+
+    _, prompt, reviewer_results, reviewer_records = operator_agent._review_context(
+        None, "fake-model", tmp_path, session)
+
+    assert reviewer_records == ()
+    assert reviewer_results[0]["payload"]["issues"] == []
+    assert "修复无法渲染的当前源码" in prompt
 
 
 def test_terminal_output_supports_honest_held_state() -> None:
