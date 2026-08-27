@@ -1,9 +1,10 @@
-"""One parent session must own all foreground reviewer subagents."""
+"""Reviewer group orchestration stays parallel and provider-neutral."""
 
 from types import SimpleNamespace
 
 from manim_quality.agents.profile import AgentRole
 from manim_quality.agents.usage import ToolCallRecord
+from manim_quality.operator.parallel_reviewer_sessions import REVIEWER_SCHEMA
 from manim_quality.operator.reviewers import run_reviewers
 
 
@@ -77,6 +78,24 @@ def test_reviewers_use_one_parent_with_four_native_subagents(tmp_path) -> None:
         "figure_fidelity_reviewer",
     ]
     assert len(records) == 4
+
+
+def test_reviewer_schema_is_openai_strict_compatible() -> None:
+    def check(node) -> None:
+        if not isinstance(node, dict):
+            return
+        if node.get("type") == "object":
+            properties = node.get("properties", {})
+            assert node.get("additionalProperties") is False
+            assert set(node.get("required", ())) == set(properties)
+        for value in node.values():
+            if isinstance(value, dict):
+                check(value)
+            elif isinstance(value, list):
+                for item in value:
+                    check(item)
+
+    check(REVIEWER_SCHEMA)
 
 
 def test_missing_sdk_tool_count_is_evidence_not_a_blocker(tmp_path) -> None:
