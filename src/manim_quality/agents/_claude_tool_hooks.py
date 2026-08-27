@@ -24,6 +24,12 @@ from .managed_tools import ManagedToolInputError
 async def pre_tool(state, data, tool_use_id, context) -> dict[str, object]:
     del context
     async with state._lock:
+        permissions = getattr(state, "_allowed_tool_permissions", None)
+        if permissions is None:
+            permissions = state._allowed_tool_permissions = {}
+        cached = permissions.get(tool_use_id)
+        if cached is not None:
+            return cached
         try:
             normalized = _authorize_tool(state, data, tool_use_id)
         except OutputRejected as error:
@@ -46,13 +52,15 @@ async def pre_tool(state, data, tool_use_id, context) -> dict[str, object]:
         except Exception as error:
             state._failure = error
             return _deny("tool authorization failed")
-    return {
+    permission = {
         "hookSpecificOutput": {
             "hookEventName": "PreToolUse",
             "permissionDecision": "allow",
             "updatedInput": thaw_json_object(normalized),
         }
     }
+    permissions[tool_use_id] = permission
+    return permission
 
 
 def _authorize_tool(state, data, tool_use_id):

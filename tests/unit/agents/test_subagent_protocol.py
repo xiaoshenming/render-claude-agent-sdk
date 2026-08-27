@@ -111,6 +111,7 @@ def test_protocol_requires_bound_identity_and_active_lifecycle() -> None:
             agent_id="forged-agent",
             tool_name="mcp__quality__read_solution",
         )
+    protocol.start(REVIEWER, "agent-1")
     with pytest.raises(SubagentProtocolError, match="started twice"):
         protocol.start(REVIEWER, "agent-2")
 
@@ -119,6 +120,7 @@ def test_protocol_requires_bound_identity_and_active_lifecycle() -> None:
         agent_id="agent-1",
         tool_name="mcp__quality__read_solution",
     )
+    protocol.stop(REVIEWER, "agent-1")
     protocol.stop(REVIEWER, "agent-1")
     with pytest.raises(SubagentProtocolError, match="after stop"):
         protocol.authorize_tool(
@@ -175,10 +177,12 @@ def test_protocol_requires_parent_consumption_and_rejects_duplicates() -> None:
         parent_tool_use_id=None,
     )
 
+    changed = json.loads(valid_result())
+    changed["diagnosis"] = "Different replay payload."
     with pytest.raises(SubagentProtocolError, match="duplicate"):
         protocol.record_result(
             tool_use_id="tool-1",
-            content=valid_result(),
+            content=json.dumps(changed),
             is_error=False,
             parent_tool_use_id=None,
         )
@@ -207,6 +211,21 @@ def test_protocol_strips_and_validates_sdk_agent_result_trailer() -> None:
         "tool_uses": 1,
         "duration_ms": 48086,
     }
+
+
+def test_protocol_accepts_identical_replayed_tool_result() -> None:
+    protocol = stopped()
+    protocol.record_result(
+        tool_use_id="tool-1", content=valid_result(), is_error=False,
+        parent_tool_use_id=None,
+    )
+
+    protocol.record_result(
+        tool_use_id="tool-1", content=valid_result(), is_error=False,
+        parent_tool_use_id=None,
+    )
+
+    assert len(protocol.results) == 1
 
 
 @pytest.mark.parametrize(

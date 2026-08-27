@@ -1068,6 +1068,7 @@ def test_sdk_runs_foreground_native_reviewer_and_archives_tool_result(
         }
         allowed = await pre(parent_call, "agent-tool-1", {"signal": None})
         assert allowed["hookSpecificOutput"]["permissionDecision"] == "allow"
+        assert await pre(parent_call, "agent-tool-1", {"signal": None}) == allowed
         yield AssistantMessage(
             content=[
                 ToolUseBlock(id="agent-tool-1", name="Agent", input=agent_input)

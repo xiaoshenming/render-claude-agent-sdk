@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import json
 import re
-import time
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
 from ._reviewer_values import raw_reviewer_payload, reviewer_payload
+from ._subagent_clock import now_ms as _now_ms
 
 
 class SubagentProtocolError(RuntimeError):
@@ -61,6 +61,8 @@ class NativeSubagentProtocol:
     def start(self, agent_type: object, agent_id: object) -> None:
         run = self._run(agent_type)
         if run.agent_id is not None:
+            if run.agent_id == agent_id:
+                return
             raise SubagentProtocolError(f"Reviewer started twice: {run.agent_type}")
         if not isinstance(agent_id, str) or not agent_id:
             raise SubagentProtocolError("Reviewer agent_id is required")
@@ -82,7 +84,11 @@ class NativeSubagentProtocol:
             run.solution_read = True
 
     def stop(self, agent_type: object, agent_id: object) -> None:
-        run = self._active_run(agent_type, agent_id)
+        run = self._run(agent_type)
+        if run.agent_id != agent_id:
+            raise SubagentProtocolError("Reviewer agent_id does not match start event")
+        if run.stopped_ms is not None:
+            return
         if not run.solution_read:
             raise SubagentProtocolError(
                 f"Reviewer completed without read_solution: {run.agent_type}"
@@ -106,6 +112,8 @@ class NativeSubagentProtocol:
     ) -> None:
         run = self._run_for_tool(tool_use_id)
         if run.result is not None:
+            if not is_error and run.result.get("raw_content") == _result_text(content):
+                return
             raise SubagentProtocolError(
                 f"duplicate Reviewer ToolResult: {run.agent_type}"
             )
@@ -286,11 +294,6 @@ def _without_closing_fence(trailer: str) -> str:
 
 
 def _evidence_payload(text: str) -> Mapping[str, object]:
-    warning = ["unstructured_output_preserved"]
     return {"decision": "needs_repair", "issues": [], "confidence": 0.0,
             "diagnosis": text.strip()[:6_000] or "Reviewer 未返回文本。",
-            "coverage": {"protocol_warnings": warning}}
-
-
-def _now_ms() -> int:
-    return int(time.time() * 1_000)
+            "coverage": {"protocol_warnings": ["unstructured_output_preserved"]}}

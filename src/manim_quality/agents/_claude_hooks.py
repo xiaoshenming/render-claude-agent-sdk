@@ -44,6 +44,7 @@ class ClaudeHookState(ClaudeHookAccessors):
         self._output_corrections = 0
         self._denied_output_ids: set[str] = set()
         self._terminal_submitted = False
+        self._allowed_tool_permissions: dict[str, dict[str, object]] = {}
         self._sdk_messages: list[dict[str, object]] = []
         self._subagents = NativeSubagentProtocol(
             tuple(item.name for item in request.subagents)
