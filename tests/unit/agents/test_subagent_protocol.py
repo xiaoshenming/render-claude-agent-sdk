@@ -112,14 +112,13 @@ def test_protocol_requires_bound_identity_and_active_lifecycle() -> None:
             tool_name="mcp__quality__read_solution",
         )
     protocol.start(REVIEWER, "agent-1")
-    with pytest.raises(SubagentProtocolError, match="started twice"):
-        protocol.start(REVIEWER, "agent-2")
-
     protocol.authorize_tool(
         agent_type=REVIEWER,
         agent_id="agent-1",
         tool_name="mcp__quality__read_solution",
     )
+    with pytest.raises(SubagentProtocolError, match="started twice"):
+        protocol.start(REVIEWER, "agent-2")
     protocol.stop(REVIEWER, "agent-1")
     protocol.stop(REVIEWER, "agent-1")
     with pytest.raises(SubagentProtocolError, match="after stop"):
@@ -128,6 +127,22 @@ def test_protocol_requires_bound_identity_and_active_lifecycle() -> None:
             agent_id="agent-1",
             tool_name="mcp__quality__check_relation",
         )
+
+
+def test_protocol_allows_remote_id_replacement_before_reviewer_work() -> None:
+    protocol = NativeSubagentProtocol((REVIEWER,))
+    protocol.authorize(REVIEWER, "tool-1")
+    protocol.start(REVIEWER, "provisional-agent")
+
+    protocol.start(REVIEWER, "remote-agent")
+    protocol.authorize_tool(
+        agent_type=REVIEWER,
+        agent_id="remote-agent",
+        tool_name="mcp__quality__read_solution",
+    )
+
+    with pytest.raises(SubagentProtocolError, match="started twice"):
+        protocol.start(REVIEWER, "late-replacement")
 
 
 def test_protocol_requires_stop_and_one_successful_json_result() -> None:

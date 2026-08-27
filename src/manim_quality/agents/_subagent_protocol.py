@@ -9,6 +9,8 @@ from dataclasses import dataclass
 
 from ._reviewer_values import raw_reviewer_payload, reviewer_payload
 from ._subagent_clock import now_ms as _now_ms
+from ._subagent_lifecycle import replace_idle_agent_id
+from ._subagent_result_fallback import evidence_payload as _evidence_payload
 
 
 class SubagentProtocolError(RuntimeError):
@@ -60,12 +62,14 @@ class NativeSubagentProtocol:
 
     def start(self, agent_type: object, agent_id: object) -> None:
         run = self._run(agent_type)
+        if not isinstance(agent_id, str) or not agent_id:
+            raise SubagentProtocolError("Reviewer agent_id is required")
         if run.agent_id is not None:
             if run.agent_id == agent_id:
                 return
+            if replace_idle_agent_id(run, agent_id, self._agent_ids):
+                return
             raise SubagentProtocolError(f"Reviewer started twice: {run.agent_type}")
-        if not isinstance(agent_id, str) or not agent_id:
-            raise SubagentProtocolError("Reviewer agent_id is required")
         if agent_id in self._agent_ids:
             raise SubagentProtocolError("Reviewer agent_id must be unique")
         run.agent_id = agent_id
@@ -291,9 +295,3 @@ def _without_closing_fence(trailer: str) -> str:
     if stripped.startswith("```"):
         return stripped[3:]
     return trailer
-
-
-def _evidence_payload(text: str) -> Mapping[str, object]:
-    return {"decision": "needs_repair", "issues": [], "confidence": 0.0,
-            "diagnosis": text.strip()[:6_000] or "Reviewer 未返回文本。",
-            "coverage": {"protocol_warnings": ["unstructured_output_preserved"]}}
