@@ -9,7 +9,10 @@ def test_source_only_assurance_still_runs_formal_reviewers(
 ) -> None:
     source = tmp_path / "candidate.py"
     source.write_text("class Solution: pass\n", encoding="utf-8")
-    case = SimpleNamespace(source_path=source, question="题目")
+    case = SimpleNamespace(
+        source_path=source, question="题目", solution_steps="步骤",
+        final_answer="B",
+    )
     captured = {}
 
     def run_reviewers(runtime, **kwargs):
@@ -25,3 +28,5 @@ def test_source_only_assurance_still_runs_formal_reviewers(
     assert records == ("record",)
     assert captured["candidate_path"] == source
     assert captured["problem_text"] == "题目"
+    assert captured["solution_steps"] == "步骤"
+    assert captured["final_answer"] == "B"

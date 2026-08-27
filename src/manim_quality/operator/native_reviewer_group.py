@@ -29,13 +29,17 @@ def run_native_reviewer_group(
     candidate_path: Path,
     problem_text: str,
     solution_steps: str,
+    final_answer: str = "",
     model: str,
     effort: str,
 ):
     candidate = candidate_path.resolve(strict=True)
     figure = locate_confirmed_figure(candidate)
     tools = _tools(candidate, figure)
-    specs = _specs(tools, candidate, figure, problem_text, solution_steps, effort)
+    specs = _specs(
+        tools, candidate, figure, problem_text, solution_steps, final_answer,
+        effort,
+    )
     rows, records = run_parallel_reviewer_sessions(
         runtime, candidate=candidate, specs=specs, tools=tools,
         model=model, effort=effort,
@@ -106,14 +110,16 @@ def _grant(name, description, handler, *, max_calls):
     )
 
 
-def _specs(tools, candidate, figure, problem, steps, effort):
+def _specs(tools, candidate, figure, problem, steps, final_answer, effort):
     by_name = {item.name: item.sdk_name for item in tools}
     solution_tool = by_name["read_solution"]
     specs = [
         NativeSubagentSpec(
             name=name,
             description=f"Run the independent {name} source audit.",
-            prompt=_standard_prompt(prompt_name, candidate, problem, steps),
+            prompt=_standard_prompt(
+                prompt_name, candidate, problem, steps, final_answer
+            ),
             allowed_tools=(solution_tool,),
             max_turns=5,
             effort=effort,
@@ -127,7 +133,7 @@ def _specs(tools, candidate, figure, problem, steps, effort):
                 description=(
                     "Compare confirmed figure source with candidate Solution."
                 ),
-                prompt=_figure_prompt(candidate, problem, steps),
+                prompt=_figure_prompt(candidate, problem, steps, final_answer),
                 allowed_tools=(
                     by_name["read_confirmed_figure"],
                     solution_tool,
@@ -139,8 +145,8 @@ def _specs(tools, candidate, figure, problem, steps, effort):
     return tuple(specs)
 
 
-def _standard_prompt(name, candidate, problem, steps):
-    text = _fill(PROMPTS / name, candidate, problem, steps)
+def _standard_prompt(name, candidate, problem, steps, final_answer=""):
+    text = _fill(PROMPTS / name, candidate, problem, steps, final_answer)
     replacement = (
         "1. Call `mcp__quality__read_solution` exactly once with "
         '`{"revision_id":"R0"}`. Audit only the returned Solution and '
@@ -149,12 +155,13 @@ def _standard_prompt(name, candidate, problem, steps):
     return re.sub(r"1\. Use native `Read`.*?\n2\.", replacement, text, flags=re.S)
 
 
-def _figure_prompt(candidate, problem, steps):
+def _figure_prompt(candidate, problem, steps, final_answer=""):
     text = _fill(
         PROMPTS / "figure_fidelity_reviewer_v4.md",
         candidate,
         problem,
         steps,
+        final_answer,
     )
     replacement = (
         "必须分别调用 `mcp__quality__read_confirmed_figure` 和 "
@@ -169,13 +176,14 @@ def _figure_prompt(candidate, problem, steps):
     )
 
 
-def _fill(path, candidate, problem, steps):
+def _fill(path, candidate, problem, steps, final_answer=""):
     solution = extract_solution(candidate.read_text(encoding="utf-8"))
     line_count = solution.end_line - solution.start_line + 1
     return (
         path.read_text(encoding="utf-8")
         .replace("{{PROBLEM_TEXT}}", problem.strip())
         .replace("{{SOLUTION_STEPS}}", steps.strip())
+        .replace("{{FINAL_ANSWER}}", final_answer.strip())
         .replace("{{CONTENT_LANGUAGE}}", _content_language(candidate))
         .replace("{{CANDIDATE_PATH}}", "mcp__quality__read_solution")
         .replace("{{SOLUTION_START_LINE}}", str(solution.start_line))

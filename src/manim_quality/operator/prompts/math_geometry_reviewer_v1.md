@@ -19,6 +19,16 @@ either immutable input.
 {{SOLUTION_STEPS}}
 </authoritative_solution_steps>
 
+The following is the authoritative final answer. For a multiple-choice problem,
+it identifies the official option and outranks any answer asserted by candidate
+source. If authoritative fields conflict, report `input_context_conflict`;
+never claim that options are unsupported merely because candidate source is not
+an authority.
+
+<authoritative_final_answer>
+{{FINAL_ANSWER}}
+</authoritative_final_answer>
+
 1. Use native `Read` on `{{CANDIDATE_PATH}}` with
    `offset={{SOLUTION_START_LINE}}` and `limit={{SOLUTION_LINE_COUNT}}`.
    This is exactly `class Solution(BaseConfigScene):` through its AST end line

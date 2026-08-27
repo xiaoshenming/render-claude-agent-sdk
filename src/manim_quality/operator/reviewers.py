@@ -27,6 +27,7 @@ def run_reviewers(
     candidate_path: Path,
     problem_text: str,
     solution_steps: str = "",
+    final_answer: str = "",
     model: str,
     effort: str = "low",
 ):
@@ -35,6 +36,7 @@ def run_reviewers(
         candidate_path=candidate_path,
         problem_text=problem_text,
         solution_steps=solution_steps,
+        final_answer=final_answer,
         model=model,
         effort=effort,
     )

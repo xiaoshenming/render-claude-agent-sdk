@@ -92,6 +92,8 @@ def test_curated_case_binds_optional_comparison_media(tmp_path: Path) -> None:
                     "preview_video_path": "preview.mp4",
                     "subtitle_path": "final.srt",
                     "tts_mode": "silent",
+                    "solution_steps": "20×2+5=45，所以选 B。",
+                    "final_answer": "B",
                 }
             ]
         ),
@@ -104,4 +106,6 @@ def test_curated_case_binds_optional_comparison_media(tmp_path: Path) -> None:
     assert case.preview_video_path == tmp_path / "preview.mp4"
     assert case.subtitle_path == tmp_path / "final.srt"
     assert case.tts_mode == "silent"
+    assert case.solution_steps == "20×2+5=45，所以选 B。"
+    assert case.final_answer == "B"
     assert case.label is AssuranceLabel.UNLABELED

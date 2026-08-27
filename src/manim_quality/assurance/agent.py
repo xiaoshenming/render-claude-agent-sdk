@@ -71,6 +71,8 @@ class FinalAssuranceAgent:
         prompt = PROMPT.read_text(encoding="utf-8") + (
             f"\n\nassurance_policy: {POLICY_VERSION}@{POLICY_SHA256}\n"
             f"\n\ncase_key: {case.key}\n题目：{case.question}\n"
+            f"权威解题步骤：{case.solution_steps}\n"
+            f"权威最终答案：{case.final_answer}\n"
             "两路必需 Reviewer、视觉版式与可用时的题图保真 Reviewer 已由编排器处理，"
             "不要再调用 Agent 工具。以下回执是本次终审的只读证据：\n"
             f"{json.dumps(reviewers, ensure_ascii=False)}\n"
@@ -122,6 +124,8 @@ def _native_reviewers(runtime, model, case, verification):
         runtime,
         candidate_path=case.source_path,
         problem_text=case.question,
+        solution_steps=case.solution_steps,
+        final_answer=case.final_answer,
         model=model,
         effort="medium",
     )

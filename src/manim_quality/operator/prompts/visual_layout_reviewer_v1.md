@@ -17,6 +17,10 @@ wording; the other Reviewers own those concerns.
 {{SOLUTION_STEPS}}
 </authoritative_solution_steps>
 
+<authoritative_final_answer>
+{{FINAL_ANSWER}}
+</authoritative_final_answer>
+
 1. Use native `Read` on `{{CANDIDATE_PATH}}` with
    `offset={{SOLUTION_START_LINE}}` and `limit={{SOLUTION_LINE_COUNT}}`.
    Read exactly `class Solution(BaseConfigScene):` through AST end line

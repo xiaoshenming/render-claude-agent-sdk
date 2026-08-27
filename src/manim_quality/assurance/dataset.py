@@ -96,6 +96,8 @@ def load_curated_cases(
             assurance_input=AssuranceInput(
                 key=str(row["key"]),
                 question=str(row.get("question") or ""),
+                solution_steps=str(row.get("solution_steps") or ""),
+                final_answer=str(row.get("final_answer") or ""),
                 video_path=root / "videos" / f"{row['key']}.mp4",
                 source_path=root / "sources" / str(row["key"]) / "main.py",
                 subtitle_path=_optional_path(root, row.get("subtitle_path")),

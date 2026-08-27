@@ -11,6 +11,8 @@ class AssuranceInput:
     question: str
     video_path: Path
     log_dir: Path
+    solution_steps: str = ""
+    final_answer: str = ""
     source_path: Path | None = None
     subtitle_path: Path | None = None
     original_image_path: Path | None = None

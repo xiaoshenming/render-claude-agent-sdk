@@ -59,18 +59,19 @@ def test_reviewers_use_one_parent_with_four_native_subagents(tmp_path) -> None:
         candidate_path=candidate,
         problem_text="求解。",
         solution_steps="完成证明。",
+        final_answer="B",
         model="test-model",
     )
 
     assert len(runtime.requests) == 4
     assert all(r.profile.role is AgentRole.REVIEWER for r in runtime.requests)
     assert all(not r.subagents for r in runtime.requests)
-    assert [r.run_id.split("-")[1] for r in runtime.requests] == [
+    assert {r.run_id.split("-")[1] for r in runtime.requests} == {
         "math_geometry_reviewer",
         "animation_lifecycle_reviewer",
         "visual_layout_reviewer",
         "figure_fidelity_reviewer",
-    ]
+    }
     assert [item["agent_type"] for item in reviewers] == [
         "math_geometry_reviewer",
         "animation_lifecycle_reviewer",
@@ -78,6 +79,11 @@ def test_reviewers_use_one_parent_with_four_native_subagents(tmp_path) -> None:
         "figure_fidelity_reviewer",
     ]
     assert len(records) == 4
+    assert all(
+        "<authoritative_final_answer>\nB" in request.prompt
+        or "权威最终答案：\nB" in request.prompt
+        for request in runtime.requests
+    )
 
 
 def test_reviewer_schema_is_openai_strict_compatible() -> None:
