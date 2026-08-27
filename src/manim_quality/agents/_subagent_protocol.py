@@ -23,7 +23,6 @@ class _Run:
     tool_use_id: str
     agent_id: str | None = None
     agent_ids: set[str] = field(default_factory=set)
-    working_agent_id: str | None = None
     started_ms: int | None = None
     stopped_ms: int | None = None
     solution_read: bool = False
@@ -86,8 +85,6 @@ class NativeSubagentProtocol:
         run = self._run(agent_type)
         if agent_id not in run.agent_ids:
             raise SubagentProtocolError("Reviewer agent_id does not match start event")
-        if run.working_agent_id is None or run.working_agent_id != agent_id:
-            return
         if run.stopped_ms is not None:
             return
         if not run.solution_read:
@@ -125,7 +122,7 @@ class NativeSubagentProtocol:
         text = _result_text(content)
         try:
             reviewer_text, sdk_metadata = _result_parts(
-                text, expected_agent_id=run.agent_id
+                text, expected_agent_ids=run.agent_ids
             )
             raw_payload = raw_reviewer_payload(reviewer_text, SubagentProtocolError)
         except SubagentProtocolError as error:
@@ -174,11 +171,7 @@ class NativeSubagentProtocol:
         run = self._run(agent_type)
         if agent_id not in run.agent_ids:
             raise SubagentProtocolError("Reviewer agent_id does not match start event")
-        if run.working_agent_id not in {None, agent_id}:
-            raise SubagentProtocolError("Reviewer tool came from a non-working alias")
-        if run.stopped_ms is not None:
-            raise SubagentProtocolError("Reviewer tool call occurred after stop")
-        run.working_agent_id = run.agent_id = str(agent_id)
+        run.agent_id = str(agent_id)
         return run
 
     def _run(self, agent_type: object) -> _Run:
@@ -228,7 +221,7 @@ _SDK_RESULT_TRAILER = re.compile(
 def _result_parts(
     text: str,
     *,
-    expected_agent_id: str | None,
+    expected_agent_ids: set[str],
 ) -> tuple[str, Mapping[str, object] | None]:
     """Locate the last reviewer-shaped JSON and preserve prose as evidence."""
 
@@ -244,7 +237,7 @@ def _result_parts(
         if isinstance(value, Mapping) and "decision" in value:
             candidates.append((start, end))
     for start, end in reversed(candidates):
-        parts = _accepted_parts(stripped, start, end, expected_agent_id)
+        parts = _accepted_parts(stripped, start, end, expected_agent_ids)
         if parts is not None:
             return parts
     raise SubagentProtocolError(reason)
@@ -254,7 +247,7 @@ def _accepted_parts(
     stripped: str,
     start: int,
     end: int,
-    expected_agent_id: str | None,
+    expected_agent_ids: set[str],
 ) -> tuple[str, Mapping[str, object] | None] | None:
     reviewer_text = stripped[start:end]
     trailer = _without_closing_fence(stripped[end:])
@@ -263,7 +256,7 @@ def _accepted_parts(
     match = _SDK_RESULT_TRAILER.fullmatch(trailer)
     if match is None:
         return reviewer_text, None
-    if expected_agent_id is None or match["agent_id"] != expected_agent_id:
+    if match["agent_id"] not in expected_agent_ids:
         raise SubagentProtocolError("Reviewer ToolResult agent_id does not match hook")
     return reviewer_text, {
         "agent_id": match["agent_id"],

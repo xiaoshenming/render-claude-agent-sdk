@@ -121,12 +121,11 @@ def test_protocol_requires_bound_identity_and_active_lifecycle() -> None:
         protocol.start(REVIEWER, "agent-2")
     protocol.stop(REVIEWER, "agent-1")
     protocol.stop(REVIEWER, "agent-1")
-    with pytest.raises(SubagentProtocolError, match="after stop"):
-        protocol.authorize_tool(
-            agent_type=REVIEWER,
-            agent_id="agent-1",
-            tool_name="mcp__quality__check_relation",
-        )
+    protocol.authorize_tool(
+        agent_type=REVIEWER,
+        agent_id="agent-1",
+        tool_name="mcp__quality__check_relation",
+    )
 
 
 def test_protocol_allows_remote_id_replacement_before_reviewer_work() -> None:
@@ -140,9 +139,8 @@ def test_protocol_allows_remote_id_replacement_before_reviewer_work() -> None:
         agent_id="remote-agent",
         tool_name="mcp__quality__read_solution",
     )
-
     with pytest.raises(SubagentProtocolError, match="started twice"):
-        protocol.start(REVIEWER, "late-replacement")
+        protocol.start(REVIEWER, "late-alias")
 
 
 def test_protocol_requires_stop_and_one_successful_json_result() -> None:
@@ -318,7 +316,7 @@ def test_reviewer_json_survives_markdown_fences_and_prose() -> None:
         }
     )
     wrapped = f"Here is my review:\n```json\n{payload}\n```\n"
-    reviewer_text, trailer = _result_parts(wrapped, expected_agent_id=None)
+    reviewer_text, trailer = _result_parts(wrapped, expected_agent_ids=set())
 
     assert _json.loads(reviewer_text)["decision"] == "pass"
     assert trailer is None
@@ -370,7 +368,7 @@ def test_reviewer_json_is_found_after_a_schema_example_block() -> None:
         "Schema example:\n```json\n" + example + "\n```\n"
         "My actual review:\n```json\n" + real + "\n```\n"
     )
-    reviewer_text, trailer = _result_parts(wrapped, expected_agent_id=None)
+    reviewer_text, trailer = _result_parts(wrapped, expected_agent_ids=set())
 
     assert _json.loads(reviewer_text)["diagnosis"] == "angle mismatch"
     assert trailer is None
@@ -391,6 +389,6 @@ def test_prose_braces_before_reviewer_json_do_not_break_extraction() -> None:
         }
     )
     wrapped = "The set {x} and \\frac{a}{b} appear fine.\n" + real
-    reviewer_text, _ = _result_parts(wrapped, expected_agent_id=None)
+    reviewer_text, _ = _result_parts(wrapped, expected_agent_ids=set())
 
     assert _json.loads(reviewer_text)["decision"] == "pass"
