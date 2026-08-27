@@ -8,8 +8,9 @@ def replace_idle_agent_id(run, agent_id: str, active_ids: set[str]) -> bool:
         return False
     if agent_id in active_ids:
         return False
-    active_ids.discard(run.agent_id)
-    run.agent_id = agent_id
-    run.started_ms = now_ms()
+    run.agent_ids.add(agent_id)
+    if run.agent_id is None:
+        run.agent_id = agent_id
+        run.started_ms = now_ms()
     active_ids.add(agent_id)
     return True

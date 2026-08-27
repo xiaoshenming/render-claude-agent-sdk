@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import re
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from ._reviewer_values import raw_reviewer_payload, reviewer_payload
 from ._subagent_clock import now_ms as _now_ms
@@ -22,6 +22,8 @@ class _Run:
     agent_type: str
     tool_use_id: str
     agent_id: str | None = None
+    agent_ids: set[str] = field(default_factory=set)
+    working_agent_id: str | None = None
     started_ms: int | None = None
     stopped_ms: int | None = None
     solution_read: bool = False
@@ -64,17 +66,10 @@ class NativeSubagentProtocol:
         run = self._run(agent_type)
         if not isinstance(agent_id, str) or not agent_id:
             raise SubagentProtocolError("Reviewer agent_id is required")
-        if run.agent_id is not None:
-            if run.agent_id == agent_id:
-                return
-            if replace_idle_agent_id(run, agent_id, self._agent_ids):
-                return
+        if agent_id in run.agent_ids:
+            return
+        if not replace_idle_agent_id(run, agent_id, self._agent_ids):
             raise SubagentProtocolError(f"Reviewer started twice: {run.agent_type}")
-        if agent_id in self._agent_ids:
-            raise SubagentProtocolError("Reviewer agent_id must be unique")
-        run.agent_id = agent_id
-        run.started_ms = _now_ms()
-        self._agent_ids.add(agent_id)
 
     def authorize_tool(
         self,
@@ -89,8 +84,10 @@ class NativeSubagentProtocol:
 
     def stop(self, agent_type: object, agent_id: object) -> None:
         run = self._run(agent_type)
-        if run.agent_id != agent_id:
+        if agent_id not in run.agent_ids:
             raise SubagentProtocolError("Reviewer agent_id does not match start event")
+        if run.working_agent_id is None or run.working_agent_id != agent_id:
+            return
         if run.stopped_ms is not None:
             return
         if not run.solution_read:
@@ -175,10 +172,13 @@ class NativeSubagentProtocol:
 
     def _active_run(self, agent_type: object, agent_id: object) -> _Run:
         run = self._run(agent_type)
-        if run.agent_id != agent_id:
+        if agent_id not in run.agent_ids:
             raise SubagentProtocolError("Reviewer agent_id does not match start event")
+        if run.working_agent_id not in {None, agent_id}:
+            raise SubagentProtocolError("Reviewer tool came from a non-working alias")
         if run.stopped_ms is not None:
             raise SubagentProtocolError("Reviewer tool call occurred after stop")
+        run.working_agent_id = run.agent_id = str(agent_id)
         return run
 
     def _run(self, agent_type: object) -> _Run:
