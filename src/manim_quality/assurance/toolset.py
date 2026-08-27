@@ -168,7 +168,10 @@ class AssuranceToolset:
             input_schema=_SCHEMA,
             handler=checked,
             effect=ToolEffect.READ_ONLY,
-            max_calls=1,
+            # OpenAI-compatible relays may repeat an identical tool request
+            # once after receiving its result. These capabilities are
+            # deterministic and read-only, so tolerate one bounded replay.
+            max_calls=2,
             timeout_ms=timeout_ms,
             max_result_chars=chars,
         )

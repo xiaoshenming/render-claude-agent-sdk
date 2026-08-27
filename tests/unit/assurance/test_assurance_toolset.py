@@ -6,6 +6,20 @@ from manim_quality.assurance.models import AssuranceCase, ToolReport
 from manim_quality.assurance.toolset import AssuranceToolset
 
 
+def test_readonly_assurance_tools_allow_one_provider_replay(tmp_path: Path) -> None:
+    case = AssuranceCase(
+        key="authoritative-case",
+        question="test",
+        video_path=tmp_path / "video.mp4",
+        log_dir=tmp_path,
+    )
+
+    grants = AssuranceToolset(case, tmp_path).grants()
+
+    assert grants
+    assert all(grant.max_calls == 2 for grant in grants)
+
+
 def test_bound_tool_ignores_model_echoed_case_key(tmp_path: Path) -> None:
     case = AssuranceCase(
         key="authoritative-case",
