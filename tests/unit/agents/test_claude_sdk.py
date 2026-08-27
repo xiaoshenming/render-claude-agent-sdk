@@ -1150,11 +1150,11 @@ def test_sdk_runs_foreground_native_reviewer_and_archives_tool_result(
             ],
             parent_tool_use_id=None,
         )
-        await post(
-            parent_call | {"hook_event_name": "PostToolUse", "tool_response": {}},
-            "agent-tool-1",
-            {"signal": None},
-        )
+        parent_post = parent_call | {
+            "hook_event_name": "PostToolUse", "tool_response": {},
+        }
+        assert await post(parent_post, "agent-tool-1", {"signal": None}) == {}
+        assert await post(parent_post, "agent-tool-1", {"signal": None}) == {}
         yield AssistantMessage(
             content=[],
             model="fake-model",

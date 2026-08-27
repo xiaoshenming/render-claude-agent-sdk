@@ -22,7 +22,17 @@ def normalize_reviewer_agent_input(
     so a worktree is both unnecessary and invalid in a render workspace.
     """
 
-    value = dict(freeze_json_object(input_data, "agent_tool_input"))
+    value = _normalize_cli_metadata(
+        dict(freeze_json_object(input_data, "agent_tool_input"))
+    )
+    name = _validate_agent_shape(value, subagents)
+    if name in invoked:
+        raise ToolDenied(f"Reviewer may only run once: {name}")
+    invoked.add(name)
+    return freeze_json_object(value, "normalized_agent_tool_input")
+
+
+def _normalize_cli_metadata(value: dict[str, object]) -> dict[str, object]:
     isolation = value.get("isolation")
     if isolation not in {None, "remote", "worktree"}:
         raise ToolDenied(f"unsupported Reviewer isolation: {isolation}")
@@ -38,13 +48,21 @@ def normalize_reviewer_agent_input(
         raise ToolDenied("Reviewer name must match subagent_type")
     for field in ("mode", "team_name"):
         value.pop(field, None)
+    return value
+
+
+def _validate_agent_shape(
+    value: dict[str, object], subagents: Mapping[str, NativeSubagentSpec],
+) -> str:
     allowed_fields = {
         "description", "isolation", "name", "prompt", "run_in_background",
         "subagent_type",
     }
     unsupported = set(value) - allowed_fields
     if unsupported:
-        raise ToolDenied(f"Agent input contains unsupported fields: {sorted(unsupported)}")
+        raise ToolDenied(
+            f"Agent input contains unsupported fields: {sorted(unsupported)}"
+        )
     name = value.get("subagent_type")
     if not isinstance(name, str) or name not in subagents:
         raise ToolDenied("Agent subagent_type is not registered")
@@ -60,9 +78,4 @@ def normalize_reviewer_agent_input(
         or len(description) > 200
     ):
         raise ToolDenied("Agent description exceeds its bound")
-    if name in invoked:
-        raise ToolDenied(f"Reviewer may only run once: {name}")
-    invoked.add(name)
-    if name is None:
-        value.pop("name", None)
-    return freeze_json_object(value, "normalized_agent_tool_input")
+    return name

@@ -21,12 +21,17 @@ from ._structured_output_compat import adapt_structured_output
 from .managed_tools import ManagedToolInputError
 
 
+def _permission_cache(state) -> dict[str, dict[str, object]]:
+    permissions = getattr(state, "_allowed_tool_permissions", None)
+    if permissions is None:
+        permissions = state._allowed_tool_permissions = {}
+    return permissions
+
+
 async def pre_tool(state, data, tool_use_id, context) -> dict[str, object]:
     del context
     async with state._lock:
-        permissions = getattr(state, "_allowed_tool_permissions", None)
-        if permissions is None:
-            permissions = state._allowed_tool_permissions = {}
+        permissions = _permission_cache(state)
         cached = permissions.get(tool_use_id)
         if cached is not None:
             return cached

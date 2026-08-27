@@ -35,6 +35,7 @@ class ClaudeHookState(ClaudeHookAccessors):
         self._round_ready = anyio.Event()
         self._pending_tools: set[str] = set()
         self._terminal_tools: set[str] = set()
+        self._completed_tools: set[str] = set()
         self._seen_message_ids: set[str] = set()
         self._seen_tool_ids: set[str] = set()
         self._failure: Exception | None = None
@@ -56,7 +57,6 @@ class ClaudeHookState(ClaudeHookAccessors):
         self, data, tool_use_id, context
     ) -> dict[str, object]:
         return await pre_tool(self, data, tool_use_id, context)
-
     async def post_tool(self, data, tool_use_id, context) -> dict[str, object]:
         del tool_use_id, context
         self._controls.finish_tool_timing(data["tool_use_id"])
@@ -259,13 +259,18 @@ class ClaudeHookState(ClaudeHookAccessors):
         self._round_ready = anyio.Event()
 
     async def _finish_tool(self, tool_id: str) -> dict[str, object]:
+        if tool_id in self._completed_tools:
+            return {}
         await self._round_ready.wait()
         async with self._lock:
+            if tool_id in self._completed_tools:
+                return {}
             if tool_id not in self._pending_tools:
                 error = ClaudeSdkProtocolError(f"unexpected completed tool: {tool_id}")
                 self._failure = error
                 return {"continue_": False, "stopReason": str(error)}
             self._pending_tools.remove(tool_id)
+            self._completed_tools.add(tool_id)
             terminal = tool_id in self._terminal_tools
             if terminal:
                 self._terminal_tools.remove(tool_id)
