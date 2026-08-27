@@ -392,6 +392,42 @@ def test_guard_rejects_background_or_implicit_reviewer(
         guard.authorize("Agent", value)
 
 
+def test_guard_removes_cli_worktree_isolation_from_readonly_reviewer(
+    tmp_path: Path,
+) -> None:
+    tool = geometry_grant()
+    reviewer = NativeSubagentSpec(
+        name="math_geometry_reviewer",
+        description="Review geometry.",
+        prompt="Read once and report.",
+        allowed_tools=(tool.sdk_name,),
+    )
+    guard = ToolGuard(
+        workspace=tmp_path,
+        profile=assurance_profile(model="test", prompt_version="v1"),
+        readable_paths=(),
+        editable_paths=(),
+        read_tools=(tool,),
+        subagents=(reviewer,),
+    )
+
+    normalized = guard.authorize("Agent", {
+        "subagent_type": reviewer.name,
+        "description": "Review geometry",
+        "prompt": "Audit geometry.",
+        "run_in_background": False,
+        "isolation": "worktree",
+        "mode": "review",
+        "model": "model-injected-by-cli",
+        "name": reviewer.name,
+        "team_name": "generated-team",
+    })
+
+    assert normalized["isolation"] == "remote"
+    assert normalized["name"] == reviewer.name
+    assert not ({"mode", "model", "team_name"} & set(normalized))
+
+
 def test_failed_parent_mutation_can_refund_per_tool_quota(tmp_path: Path) -> None:
     tool = mutation_grant()
     guard = ToolGuard(

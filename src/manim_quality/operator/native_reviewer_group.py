@@ -224,8 +224,11 @@ def _parent_prompt(names):
     return (
         "Call every registered Reviewer exactly once in the foreground, all in "
         f"one assistant turn so they run in parallel: {', '.join(names)}. Use "
-        "each exact subagent_type and run_in_background=false. Wait for every "
-        "ToolResult, then return only structured output with status complete."
+        "each exact subagent_type and run_in_background=false. These Reviewers "
+        "are read-only MCP agents: use isolation=remote and never request a "
+        "worktree. "
+        "Wait for every ToolResult, then return only structured output with "
+        "status complete."
     )
 
 

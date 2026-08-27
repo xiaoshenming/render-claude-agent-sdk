@@ -7,6 +7,7 @@ from pathlib import Path
 
 from manim_quality.contracts._json_values import freeze_json_object
 
+from ._agent_tool_input import normalize_reviewer_agent_input
 from ._guard_primitives import (
     DuplicatePatch,
     DuplicateRead,
@@ -184,36 +185,9 @@ class ToolGuard:
         return normalized
 
     def _authorize_agent(self, input_data: object) -> Mapping[str, object]:
-        value = freeze_json_object(input_data, "agent_tool_input")
-        allowed_fields = {
-            "description",
-            "prompt",
-            "run_in_background",
-            "subagent_type",
-        }
-        if set(value) - allowed_fields:
-            raise ToolDenied("Agent input contains unsupported fields")
-        name = value.get("subagent_type")
-        if not isinstance(name, str) or name not in self._subagents:
-            raise ToolDenied("Agent subagent_type is not registered")
-        if value.get("run_in_background") is not False:
-            raise ToolDenied("Reviewer subagents must run in the foreground")
-        prompt = value.get("prompt")
-        if not isinstance(prompt, str) or not prompt.strip() or len(prompt) > 1_000:
-            raise ToolDenied("Agent prompt must contain 1 to 1000 characters")
-        description = value.get("description")
-        if (
-            description is not None
-            and (
-                not isinstance(description, str)
-                or not description.strip()
-                or len(description) > 200
-            )
-        ):
-            raise ToolDenied("Agent description exceeds its bound")
-        if name in self._invoked_subagents:
-            raise ToolDenied(f"Reviewer may only run once: {name}")
-        self._invoked_subagents.add(name)
+        value = normalize_reviewer_agent_input(
+            input_data, self._subagents, self._invoked_subagents,
+        )
         self._builtin_tool_calls["Agent"] = (
             self._builtin_tool_calls.get("Agent", 0) + 1
         )

@@ -82,6 +82,8 @@ def test_reviewers_use_one_parent_with_four_native_subagents(tmp_path) -> None:
         "visual_layout_reviewer",
         "figure_fidelity_reviewer",
     ]
+    assert "isolation=remote" in request.prompt
+    assert "never request a worktree" in request.prompt
     assert [item["agent_type"] for item in reviewers] == [
         item.name for item in request.subagents
     ]
