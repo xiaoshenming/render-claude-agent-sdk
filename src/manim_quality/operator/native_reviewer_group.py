@@ -1,4 +1,4 @@
-"""Parallel native Reviewer subagents owned by one parent SDK session."""
+"""Parallel native Reviewer sessions over provider-neutral tool calls."""
 
 from __future__ import annotations
 
@@ -8,14 +8,13 @@ import re
 from pathlib import Path
 
 from manim_quality.agents.managed_tools import ManagedToolGrant, ToolEffect
-from manim_quality.agents.profile import assurance_profile
-from manim_quality.agents.runtime import AgentRunRequest
 from manim_quality.agents.subagents import NativeSubagentSpec
 
 from .figure_fidelity import (
     locate_confirmed_figure,
 )
 from .native_reviewer_results import ordered_results
+from .parallel_reviewer_sessions import run_parallel_reviewer_sessions
 from .source_view import extract_solution
 
 PROMPTS = Path(__file__).with_name("prompts")
@@ -24,14 +23,6 @@ STANDARD_SPECS = (
     ("animation_lifecycle_reviewer", "animation_lifecycle_reviewer_v1.md"),
     ("visual_layout_reviewer", "visual_layout_reviewer_v1.md"),
 )
-PARENT_SCHEMA = {
-    "type": "object",
-    "properties": {"status": {"type": "string", "enum": ["complete"]}},
-    "required": ["status"],
-    "additionalProperties": False,
-}
-
-
 def run_native_reviewer_group(
     runtime,
     *,
@@ -45,31 +36,11 @@ def run_native_reviewer_group(
     figure = locate_confirmed_figure(candidate)
     tools = _tools(candidate, figure)
     specs = _specs(tools, candidate, figure, problem_text, solution_steps, effort)
-    parent_prompt = _parent_prompt(tuple(item.name for item in specs))
-    request = AgentRunRequest(
-        run_id=f"native-reviewers-{candidate.parent.name}",
-        profile=assurance_profile(
-            model=model,
-            prompt_version="native-four-reviewers-v1",
-            schema_version="native-reviewer-parent-v1",
-        ),
-        prompt=parent_prompt,
-        output_schema=PARENT_SCHEMA,
-        workspace=candidate.parent,
-        readable_paths=(),
-        editable_paths=(),
-        context_bytes=len(parent_prompt.encode("utf-8")),
-        estimated_input_tokens=400,
-        reserved_output_tokens=400,
-        reserved_cache_read_tokens=0,
-        reserved_cache_write_tokens=0,
-        managed_tools=tools,
-        subagents=specs,
-        effort=effort,
+    rows, records = run_parallel_reviewer_sessions(
+        runtime, candidate=candidate, specs=specs, tools=tools,
+        model=model, effort=effort,
     )
-    outcome = runtime.run(request)
-    rows = ordered_results(outcome.subagent_results, specs, model)
-    return rows, (outcome.record,)
+    return ordered_results(rows, specs, model), records
 
 
 def _tools(candidate: Path, figure: Path | None):

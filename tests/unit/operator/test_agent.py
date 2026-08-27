@@ -257,7 +257,9 @@ def test_operator_runs_clean_candidate_through_tools_without_prompt_source(
     assert len(backend.request.managed_tools) == 6
     assert backend.request.subagents == ()
     assert CODE not in backend.request.prompt
-    assert [item.role for item in sink.records] == ["assurance", "operator"]
+    assert [item.role for item in sink.records] == [
+        "reviewer", "reviewer", "reviewer", "operator",
+    ]
 
 
 def test_operator_rejects_structured_output_without_tool_submission(

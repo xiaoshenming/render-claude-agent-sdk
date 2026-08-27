@@ -3,6 +3,7 @@
 from types import SimpleNamespace
 
 from manim_quality.agents.profile import AgentRole
+from manim_quality.agents.usage import ToolCallRecord
 from manim_quality.operator.reviewers import run_reviewers
 
 
@@ -24,34 +25,21 @@ class Runtime:
 
     def run(self, request):
         self.requests.append(request)
-        rows = []
-        for index, spec in enumerate(request.subagents):
-            payload = _payload()
-            if self.invalid_figure and spec.name == "figure_fidelity_reviewer":
-                payload["issues"] = [{"repair_action": "provider_specific"}]
-            rows.append(
-                {
-                    "agent_type": spec.name,
-                    "agent_id": f"agent-{index}",
-                    "is_error": False,
-                    "payload": payload,
-                    "raw_payload": payload,
-                    "sdk_metadata": {
-                        "subagent_tokens": 10,
-                        "tool_uses": len(spec.allowed_tools),
-                        "duration_ms": 5,
-                    } if self.metadata else None,
-                }
-            )
+        payload = _payload()
+        if self.invalid_figure and "figure_fidelity_reviewer" in request.run_id:
+            payload["issues"] = [{"repair_action": "provider_specific"}]
         record = SimpleNamespace(
             usage=SimpleNamespace(total_tokens=40),
-            tool_calls=(),
+            tool_calls=tuple(
+                ToolCallRecord(name=tool.sdk_name, input={}, allowed=True)
+                for tool in request.managed_tools
+            ) if self.metadata else (),
             usage_complete=True,
             model="test-model",
             elapsed_ms=10,
             turns=1,
         )
-        return SimpleNamespace(subagent_results=tuple(rows), record=record)
+        return SimpleNamespace(structured_output=payload, record=record)
 
 
 def test_reviewers_use_one_parent_with_four_native_subagents(tmp_path) -> None:
@@ -73,21 +61,22 @@ def test_reviewers_use_one_parent_with_four_native_subagents(tmp_path) -> None:
         model="test-model",
     )
 
-    assert len(runtime.requests) == 1
-    request = runtime.requests[0]
-    assert request.profile.role is AgentRole.ASSURANCE
-    assert [item.name for item in request.subagents] == [
+    assert len(runtime.requests) == 4
+    assert all(r.profile.role is AgentRole.REVIEWER for r in runtime.requests)
+    assert all(not r.subagents for r in runtime.requests)
+    assert [r.run_id.split("-")[1] for r in runtime.requests] == [
         "math_geometry_reviewer",
         "animation_lifecycle_reviewer",
         "visual_layout_reviewer",
         "figure_fidelity_reviewer",
     ]
-    assert "isolation=remote" in request.prompt
-    assert "never request a worktree" in request.prompt
     assert [item["agent_type"] for item in reviewers] == [
-        item.name for item in request.subagents
+        "math_geometry_reviewer",
+        "animation_lifecycle_reviewer",
+        "visual_layout_reviewer",
+        "figure_fidelity_reviewer",
     ]
-    assert len(records) == 1
+    assert len(records) == 4
 
 
 def test_missing_sdk_tool_count_is_evidence_not_a_blocker(tmp_path) -> None:
