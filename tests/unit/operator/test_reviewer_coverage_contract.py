@@ -32,6 +32,17 @@ def test_lifecycle_reviewer_requires_temporal_and_survival_coverage():
         assert key in value
 
 
+def test_problem_panel_is_runtime_owned_not_solution_content():
+    math_value = (PROMPTS / "math_geometry_reviewer_v1.md").read_text()
+    lifecycle_value = (
+        PROMPTS / "animation_lifecycle_reviewer_v1.md").read_text()
+
+    for value in (math_value, lifecycle_value):
+        assert "BaseConfigScene.setup()" in value
+        assert "merely" in value and "because" in value
+        assert "runtime-owned" in value
+
+
 def test_visual_reviewer_requires_layout_and_typography_coverage():
     value = (PROMPTS / "visual_layout_reviewer_v1.md").read_text()
 

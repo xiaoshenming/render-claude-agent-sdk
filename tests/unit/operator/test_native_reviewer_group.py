@@ -89,9 +89,9 @@ def test_reviewers_use_one_parent_with_four_native_subagents(tmp_path) -> None:
     versions = {r.run_id.split("-")[1]: r.profile.prompt_version
                 for r in runtime.requests}
     assert versions == {
-        "math_geometry_reviewer": "parallel-math_geometry_reviewer-v2",
+        "math_geometry_reviewer": "parallel-math_geometry_reviewer-v3",
         "animation_lifecycle_reviewer": (
-            "parallel-animation_lifecycle_reviewer-v2"
+            "parallel-animation_lifecycle_reviewer-v3"
         ),
         "visual_layout_reviewer": "parallel-visual_layout_reviewer-v2",
         "figure_fidelity_reviewer": "parallel-figure_fidelity_reviewer-v5",
