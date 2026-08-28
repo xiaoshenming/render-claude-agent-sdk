@@ -39,6 +39,18 @@ def write_run_artifacts(
 
 def _write_inputs(target: Path, session: QualitySession) -> None:
     _write_text(target / "input" / "problem.snapshot", session.problem_text)
+    _write_text(
+        target / "input" / "parsed-standard-answer.snapshot",
+        session.parsed_standard_answer,
+    )
+    _write_text(
+        target / "input" / "teaching-script.snapshot",
+        session.solution_steps,
+    )
+    _write_json(
+        target / "input" / "reviewer-supplemental-notes.json",
+        session.reviewer_supplemental_notes,
+    )
     _write_text(target / "input" / "candidate.R0.py", session.baseline.code)
 
 

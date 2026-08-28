@@ -19,6 +19,10 @@ The immutable confirmed inputs are separate data domains:
 {{PROBLEM_TEXT}}
 </authoritative_problem>
 
+<parsed_standard_answer>
+{{PARSED_STANDARD_ANSWER}}
+</parsed_standard_answer>
+
 <authoritative_solution_steps>
 {{SOLUTION_STEPS}}
 </authoritative_solution_steps>

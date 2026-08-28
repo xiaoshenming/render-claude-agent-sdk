@@ -10,24 +10,23 @@ different problem from the candidate or let candidate prose override this text.
 {{PROBLEM_TEXT}}
 </authoritative_problem>
 
-The following are the authoritative confirmed solution steps. They include the
-conclusion and are not a separate answer fact source. Check that the current
-Solution implements their mathematical and teaching content without rewriting
-either immutable input.
+The following is the standard answer parsed directly from the original answer
+material. It is mathematical authority and includes the confirmed conclusion.
 
-<authoritative_solution_steps>
-{{SOLUTION_STEPS}}
-</authoritative_solution_steps>
+<parsed_standard_answer>
+{{PARSED_STANDARD_ANSWER}}
+</parsed_standard_answer>
 
-The following is the authoritative final answer. For a multiple-choice problem,
-it identifies the official option and outranks any answer asserted by candidate
-source. If authoritative fields conflict, report `input_context_conflict`;
-never claim that options are unsupported merely because candidate source is not
-an authority.
+The following is the polished five-stage teaching script. It controls teaching
+coverage but cannot override the parsed standard answer.
 
-<authoritative_final_answer>
-{{FINAL_ANSWER}}
-</authoritative_final_answer>
+<teaching_script>
+{{TEACHING_SCRIPT}}
+</teaching_script>
+
+<supplemental_note>
+{{SUPPLEMENTAL_NOTE}}
+</supplemental_note>
 
 1. Use native `Read` on `{{CANDIDATE_PATH}}` with
    `offset={{SOLUTION_START_LINE}}` and `limit={{SOLUTION_LINE_COUNT}}`.

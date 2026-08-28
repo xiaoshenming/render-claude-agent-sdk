@@ -45,17 +45,22 @@ def test_reviewer_receives_authoritative_problem_text(tmp_path: Path) -> None:
     assert "{{PROBLEM_TEXT}}" not in prompt
 
 
-def test_both_reviewers_receive_steps_without_repair_feedback(tmp_path: Path) -> None:
+def test_math_and_animation_receive_only_their_declared_context(tmp_path: Path) -> None:
     candidate = _candidate(tmp_path / "candidate.py", "zh-CN")
-    for name in (
-        "math_geometry_reviewer_v1.md",
-        "animation_lifecycle_reviewer_v1.md",
-    ):
-        prompt = _prompt(name, candidate, "求证 AB=AC", "先证全等，再得 AB=AC")
-        assert "<authoritative_problem>" in prompt
-        assert "<authoritative_solution_steps>" in prompt
-        assert "先证全等，再得 AB=AC" in prompt
-        assert "repair_feedback" not in prompt
+    math_prompt = _prompt(
+        "math_geometry_reviewer_v1.md", candidate,
+        "求证 AB=AC", "先证全等，再得 AB=AC")
+    animation_prompt = _prompt(
+        "animation_lifecycle_reviewer_v1.md", candidate,
+        "求证 AB=AC", "先证全等，再得 AB=AC")
+
+    assert "<authoritative_problem>" in math_prompt
+    assert "<teaching_script>" in math_prompt
+    assert "先证全等，再得 AB=AC" in math_prompt
+    assert "<authoritative_problem>" not in animation_prompt
+    assert "<teaching_script>" in animation_prompt
+    assert "先证全等，再得 AB=AC" in animation_prompt
+    assert "repair_feedback" not in math_prompt + animation_prompt
 
 
 def test_legacy_candidate_defaults_to_chinese(tmp_path: Path) -> None:

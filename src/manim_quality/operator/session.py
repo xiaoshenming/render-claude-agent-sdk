@@ -1,9 +1,6 @@
 from __future__ import annotations
-
 from collections.abc import Mapping
-
 from manim_quality.revisions.fingerprint import code_hash
-
 from .finding_dependencies import validate_finding_dependencies
 from .immutable_inputs import ImmutableReviewInputs
 from .models import (
@@ -28,8 +25,6 @@ from .session_rules import (
     verify_candidate,
 )
 from .source_view import apply_solution_replacement, extract_solution
-
-
 class QualitySession:
     """Own immutable inputs and a configured number of candidate attempts."""
 
@@ -39,6 +34,8 @@ class QualitySession:
         problem_text: str,
         candidate_code: str,
         solution_steps: str = "",
+        parsed_standard_answer: str = "",
+        reviewer_supplemental_notes: Mapping[str, object] | None = None,
         repair_feedback: Mapping[str, object] | None = None,
         max_patch_attempts: int = 12,
     ) -> None:
@@ -51,7 +48,8 @@ class QualitySession:
         compile(candidate_code, "candidate.py", "exec")
         extract_solution(candidate_code)
         self._review_inputs = ImmutableReviewInputs.build(
-            problem_text, solution_steps, repair_feedback
+            problem_text, solution_steps, parsed_standard_answer,
+            reviewer_supplemental_notes, repair_feedback,
         )
         self._embedded_problem_hash = embedded_problem_hash(
             candidate_code,
@@ -80,7 +78,11 @@ class QualitySession:
 
     problem_text = property(lambda self: self._review_inputs.problem_text)
     problem_hash = property(lambda self: self._review_inputs.problem_hash)
+    parsed_standard_answer = property(
+        lambda self: self._review_inputs.parsed_standard_answer)
     solution_steps = property(lambda self: self._review_inputs.solution_steps)
+    reviewer_supplemental_notes = property(
+        lambda self: dict(self._review_inputs.reviewer_supplemental_notes))
     solution_steps_hash = property(
         lambda self: self._review_inputs.solution_steps_hash
     )
@@ -94,11 +96,9 @@ class QualitySession:
     @property
     def baseline(self) -> CandidateAttempt:
         return self._attempts[0]
-
     @property
     def current_revision(self) -> CandidateAttempt:
         return self.get_revision(self._active_revision_id)
-
     @property
     def attempts(self) -> tuple[CandidateAttempt, ...]:
         return tuple(self._attempts)

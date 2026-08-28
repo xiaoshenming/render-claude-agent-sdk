@@ -13,6 +13,8 @@ class AssuranceInput:
     log_dir: Path
     solution_steps: str = ""
     final_answer: str = ""
+    parsed_standard_answer: str = ""
+    reviewer_supplemental_notes: dict[str, str] | None = None
     source_path: Path | None = None
     subtitle_path: Path | None = None
     original_image_path: Path | None = None

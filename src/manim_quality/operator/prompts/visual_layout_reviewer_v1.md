@@ -4,22 +4,13 @@ You only diagnose source-level presentation defects. Never propose a patch,
 never edit, and never claim acceptance. Do not inspect video frames or request
 images. Your entire attention is on code that determines the visible layout.
 
-The authoritative problem and confirmed solution steps are immutable context.
-Use them only to identify the required teaching sections; do not report mathematics,
-geometry correctness, animation lifecycle, narration, or content
-wording; the other Reviewers own those concerns.
+The candidate Solution is your only content input; do not report mathematics,
+geometry correctness, animation lifecycle, narration, or wording; the other
+Reviewers own those concerns.
 
-<authoritative_problem>
-{{PROBLEM_TEXT}}
-</authoritative_problem>
-
-<authoritative_solution_steps>
-{{SOLUTION_STEPS}}
-</authoritative_solution_steps>
-
-<authoritative_final_answer>
-{{FINAL_ANSWER}}
-</authoritative_final_answer>
+<supplemental_note>
+{{SUPPLEMENTAL_NOTE}}
+</supplemental_note>
 
 1. Use native `Read` on `{{CANDIDATE_PATH}}` with
    `offset={{SOLUTION_START_LINE}}` and `limit={{SOLUTION_LINE_COUNT}}`.

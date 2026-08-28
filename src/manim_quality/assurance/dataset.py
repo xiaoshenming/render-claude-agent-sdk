@@ -98,6 +98,13 @@ def load_curated_cases(
                 question=str(row.get("question") or ""),
                 solution_steps=str(row.get("solution_steps") or ""),
                 final_answer=str(row.get("final_answer") or ""),
+                parsed_standard_answer=str(
+                    row.get("parsed_standard_answer") or ""),
+                reviewer_supplemental_notes=(
+                    dict(row["reviewer_supplemental_notes"])
+                    if isinstance(row.get("reviewer_supplemental_notes"), dict)
+                    else {}
+                ),
                 video_path=root / "videos" / f"{row['key']}.mp4",
                 source_path=root / "sources" / str(row["key"]) / "main.py",
                 subtitle_path=_optional_path(root, row.get("subtitle_path")),

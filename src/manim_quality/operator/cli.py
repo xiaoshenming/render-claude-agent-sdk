@@ -60,6 +60,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     candidate = args.candidate.resolve(strict=True).read_text(encoding="utf-8")
     problem = _problem_identity(candidate, args.problem)
     solution_steps = _text_input(args.solution_steps)
+    parsed_standard_answer = _text_input(args.parsed_standard_answer)
+    reviewer_notes = _json_input(args.reviewer_supplemental_notes)
     repair_feedback = _json_input(args.repair_feedback)
     workspace = args.workspace.resolve(strict=True)
     if not workspace.is_dir():
@@ -88,6 +90,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         artifact_root=args.output,
         problem_text=problem,
         solution_steps=solution_steps,
+        parsed_standard_answer=parsed_standard_answer,
+        reviewer_supplemental_notes=reviewer_notes,
         repair_feedback=repair_feedback,
         candidate_code=candidate,
         estimated_input_tokens=args.estimated_input_tokens,
@@ -121,6 +125,8 @@ def _arguments(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--candidate", type=Path, required=True)
     parser.add_argument("--problem", type=Path)
     parser.add_argument("--solution-steps", type=Path)
+    parser.add_argument("--parsed-standard-answer", type=Path)
+    parser.add_argument("--reviewer-supplemental-notes", type=Path)
     parser.add_argument("--repair-feedback", type=Path)
     parser.add_argument("--workspace", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)

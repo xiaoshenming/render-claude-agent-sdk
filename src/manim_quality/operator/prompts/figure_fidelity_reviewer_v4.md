@@ -7,14 +7,8 @@
 
 题图计划：`{{FIGURE_PLAN}}`
 
-权威题目：
-{{PROBLEM_TEXT}}
-
-老师解题步骤：
-{{SOLUTION_STEPS}}
-
-权威最终答案：
-{{FINAL_ANSWER}}
+补充说明（默认留空，不构成题图权威）：
+{{SUPPLEMENTAL_NOTE}}
 
 ## 先记录差异，再决定动作
 

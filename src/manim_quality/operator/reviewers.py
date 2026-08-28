@@ -28,6 +28,9 @@ def run_reviewers(
     problem_text: str,
     solution_steps: str = "",
     final_answer: str = "",
+    parsed_standard_answer: str = "",
+    teaching_script: str = "",
+    reviewer_supplemental_notes: dict[str, str] | None = None,
     model: str,
     effort: str = "low",
 ):
@@ -37,6 +40,9 @@ def run_reviewers(
         problem_text=problem_text,
         solution_steps=solution_steps,
         final_answer=final_answer,
+        parsed_standard_answer=parsed_standard_answer,
+        teaching_script=teaching_script,
+        reviewer_supplemental_notes=reviewer_supplemental_notes,
         model=model,
         effort=effort,
     )

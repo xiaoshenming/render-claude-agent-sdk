@@ -31,12 +31,16 @@ def _prepared_session_impl(
     candidate_code: str,
     max_patch_attempts: int | None,
     solution_steps: str = "",
+    parsed_standard_answer: str = "",
+    reviewer_supplemental_notes: Mapping[str, object] | None = None,
     repair_feedback: Mapping[str, object] | None = None,
 ) -> tuple[QualitySession, Mapping[str, object]]:
     session = QualitySession(
         problem_text=problem_text,
         candidate_code=candidate_code,
         solution_steps=solution_steps,
+        parsed_standard_answer=parsed_standard_answer,
+        reviewer_supplemental_notes=reviewer_supplemental_notes,
         repair_feedback=repair_feedback or {},
         max_patch_attempts=max_patch_attempts or 12,
     )
@@ -77,6 +81,8 @@ class QualityHarness:
         problem_text: str,
         candidate_code: str,
         solution_steps: str = "",
+        parsed_standard_answer: str = "",
+        reviewer_supplemental_notes: Mapping[str, object] | None = None,
         repair_feedback: Mapping[str, object] | None = None,
         estimated_input_tokens: int,
         reserved_output_tokens: int,
@@ -90,6 +96,8 @@ class QualityHarness:
             candidate_code,
             max_patch_attempts,
             solution_steps,
+            parsed_standard_answer,
+            reviewer_supplemental_notes,
             repair_feedback or {},
         )
         try:

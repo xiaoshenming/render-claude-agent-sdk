@@ -76,6 +76,8 @@ def _arguments(argv: list[str] | None) -> argparse.Namespace:
     parser.add_argument("--model", required=True)
     parser.add_argument("--base-url", default="")
     parser.add_argument("--solution-steps", type=Path)
+    parser.add_argument("--parsed-standard-answer", type=Path)
+    parser.add_argument("--reviewer-supplemental-notes", type=Path)
     parser.add_argument("--repair-feedback", type=Path)
     # Deprecated compatibility alias; interpreted as solution_steps when the
     # canonical argument is absent.
@@ -123,6 +125,16 @@ def _run_operator(args: argparse.Namespace, harness_root: Path) -> int:
     steps = args.solution_steps or args.expected_solution
     if steps is not None:
         argv.extend(("--solution-steps", str(steps.resolve(strict=True))))
+    if args.parsed_standard_answer is not None:
+        argv.extend((
+            "--parsed-standard-answer",
+            str(args.parsed_standard_answer.resolve(strict=True)),
+        ))
+    if args.reviewer_supplemental_notes is not None:
+        argv.extend((
+            "--reviewer-supplemental-notes",
+            str(args.reviewer_supplemental_notes.resolve(strict=True)),
+        ))
     if args.repair_feedback is not None:
         argv.extend((
             "--repair-feedback",

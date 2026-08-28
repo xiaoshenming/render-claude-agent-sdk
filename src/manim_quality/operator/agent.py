@@ -120,6 +120,9 @@ def _review_context(runtime, model, workspace, session):
             candidate_path=candidate_path,
             problem_text=session.problem_text,
             solution_steps=session.solution_steps,
+            parsed_standard_answer=session.parsed_standard_answer,
+            teaching_script=session.solution_steps,
+            reviewer_supplemental_notes=session.reviewer_supplemental_notes,
             model=model,
             effort="low",
         )
@@ -136,6 +139,10 @@ def _review_context(runtime, model, workspace, session):
         .replace("{{CANDIDATE_PATH}}", str(candidate_path))
         .replace("{{REVIEWER_RESULTS}}", reviewer_json)
         .replace("{{PROBLEM_TEXT}}", session.problem_text)
+        .replace(
+            "{{PARSED_STANDARD_ANSWER}}",
+            session.parsed_standard_answer,
+        )
         .replace("{{SOLUTION_STEPS}}", session.solution_steps)
         .replace(
             "{{REPAIR_FEEDBACK}}",

@@ -58,8 +58,14 @@ def test_reviewers_use_one_parent_with_four_native_subagents(tmp_path) -> None:
         runtime,
         candidate_path=candidate,
         problem_text="求解。",
-        solution_steps="完成证明。",
-        final_answer="B",
+        parsed_standard_answer="标准推导，所以选择B。",
+        teaching_script="五段式讲解。",
+        reviewer_supplemental_notes={
+            "review1_math_logic": "核对选择题结论",
+            "review2_animation_lifecycle": "关注结论停留",
+            "review3_visual_layout": "关注右侧安全区",
+            "review4_figure_fidelity": "保持原图方向",
+        },
         model="test-model",
     )
 
@@ -79,11 +85,18 @@ def test_reviewers_use_one_parent_with_four_native_subagents(tmp_path) -> None:
         "figure_fidelity_reviewer",
     ]
     assert len(records) == 4
-    assert all(
-        "<authoritative_final_answer>\nB" in request.prompt
-        or "权威最终答案：\nB" in request.prompt
-        for request in runtime.requests
-    )
+    prompts = {r.run_id.split("-")[1]: r.prompt for r in runtime.requests}
+    assert "标准推导，所以选择B。" in prompts["math_geometry_reviewer"]
+    assert "五段式讲解。" in prompts["math_geometry_reviewer"]
+    assert "核对选择题结论" in prompts["math_geometry_reviewer"]
+    assert "五段式讲解。" in prompts["animation_lifecycle_reviewer"]
+    assert "求解。" not in prompts["animation_lifecycle_reviewer"]
+    assert "标准推导" not in prompts["animation_lifecycle_reviewer"]
+    assert "关注右侧安全区" in prompts["visual_layout_reviewer"]
+    assert "五段式讲解。" not in prompts["visual_layout_reviewer"]
+    assert "保持原图方向" in prompts["figure_fidelity_reviewer"]
+    assert "求解。" not in prompts["figure_fidelity_reviewer"]
+    assert "五段式讲解。" not in prompts["figure_fidelity_reviewer"]
 
 
 def test_reviewer_schema_is_openai_strict_compatible() -> None:

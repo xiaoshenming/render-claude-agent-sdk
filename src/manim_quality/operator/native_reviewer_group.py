@@ -30,15 +30,20 @@ def run_native_reviewer_group(
     problem_text: str,
     solution_steps: str,
     final_answer: str = "",
+    parsed_standard_answer: str = "",
+    teaching_script: str = "",
+    reviewer_supplemental_notes: dict[str, str] | None = None,
     model: str,
     effort: str,
 ):
     candidate = candidate_path.resolve(strict=True)
     figure = locate_confirmed_figure(candidate)
     tools = _tools(candidate, figure)
+    teaching_script = teaching_script or solution_steps
+    parsed_standard_answer = parsed_standard_answer or final_answer
     specs = _specs(
-        tools, candidate, figure, problem_text, solution_steps, final_answer,
-        effort,
+        tools, candidate, figure, problem_text, parsed_standard_answer,
+        teaching_script, reviewer_supplemental_notes or {}, effort,
     )
     rows, records = run_parallel_reviewer_sessions(
         runtime, candidate=candidate, specs=specs, tools=tools,
@@ -110,7 +115,10 @@ def _grant(name, description, handler, *, max_calls):
     )
 
 
-def _specs(tools, candidate, figure, problem, steps, final_answer, effort):
+def _specs(
+    tools, candidate, figure, problem, parsed_answer, teaching_script,
+    notes, effort,
+):
     by_name = {item.name: item.sdk_name for item in tools}
     solution_tool = by_name["read_solution"]
     specs = [
@@ -118,7 +126,9 @@ def _specs(tools, candidate, figure, problem, steps, final_answer, effort):
             name=name,
             description=f"Run the independent {name} source audit.",
             prompt=_standard_prompt(
-                prompt_name, candidate, problem, steps, final_answer
+                prompt_name, candidate, problem, teaching_script,
+                parsed_answer=parsed_answer,
+                supplemental_note=str(notes.get(_note_key(name)) or ""),
             ),
             allowed_tools=(solution_tool,),
             max_turns=5,
@@ -133,7 +143,11 @@ def _specs(tools, candidate, figure, problem, steps, final_answer, effort):
                 description=(
                     "Compare confirmed figure source with candidate Solution."
                 ),
-                prompt=_figure_prompt(candidate, problem, steps, final_answer),
+                prompt=_figure_prompt(
+                    candidate,
+                    supplemental_note=str(
+                        notes.get("review4_figure_fidelity") or ""),
+                ),
                 allowed_tools=(
                     by_name["read_confirmed_figure"],
                     solution_tool,
@@ -145,8 +159,14 @@ def _specs(tools, candidate, figure, problem, steps, final_answer, effort):
     return tuple(specs)
 
 
-def _standard_prompt(name, candidate, problem, steps, final_answer=""):
-    text = _fill(PROMPTS / name, candidate, problem, steps, final_answer)
+def _standard_prompt(
+    name, candidate, problem, steps="", final_answer="", *,
+    parsed_answer="", supplemental_note="",
+):
+    text = _fill(
+        PROMPTS / name, candidate, problem, steps,
+        parsed_answer or final_answer, supplemental_note,
+    )
     replacement = (
         "1. Call `mcp__quality__read_solution` exactly once with "
         '`{"revision_id":"R0"}`. Audit only the returned Solution and '
@@ -155,13 +175,14 @@ def _standard_prompt(name, candidate, problem, steps, final_answer=""):
     return re.sub(r"1\. Use native `Read`.*?\n2\.", replacement, text, flags=re.S)
 
 
-def _figure_prompt(candidate, problem, steps, final_answer=""):
+def _figure_prompt(candidate, supplemental_note=""):
     text = _fill(
         PROMPTS / "figure_fidelity_reviewer_v4.md",
         candidate,
-        problem,
-        steps,
-        final_answer,
+        "",
+        "",
+        "",
+        supplemental_note,
     )
     replacement = (
         "必须分别调用 `mcp__quality__read_confirmed_figure` 和 "
@@ -176,14 +197,20 @@ def _figure_prompt(candidate, problem, steps, final_answer=""):
     )
 
 
-def _fill(path, candidate, problem, steps, final_answer=""):
+def _fill(
+    path, candidate, problem, teaching_script="", parsed_answer="",
+    supplemental_note="",
+):
     solution = extract_solution(candidate.read_text(encoding="utf-8"))
     line_count = solution.end_line - solution.start_line + 1
     return (
         path.read_text(encoding="utf-8")
         .replace("{{PROBLEM_TEXT}}", problem.strip())
-        .replace("{{SOLUTION_STEPS}}", steps.strip())
-        .replace("{{FINAL_ANSWER}}", final_answer.strip())
+        .replace("{{SOLUTION_STEPS}}", teaching_script.strip())
+        .replace("{{TEACHING_SCRIPT}}", teaching_script.strip())
+        .replace("{{PARSED_STANDARD_ANSWER}}", parsed_answer.strip())
+        .replace("{{FINAL_ANSWER}}", parsed_answer.strip())
+        .replace("{{SUPPLEMENTAL_NOTE}}", supplemental_note.strip())
         .replace("{{CONTENT_LANGUAGE}}", _content_language(candidate))
         .replace("{{CANDIDATE_PATH}}", "mcp__quality__read_solution")
         .replace("{{SOLUTION_START_LINE}}", str(solution.start_line))
@@ -197,6 +224,14 @@ def _fill(path, candidate, problem, steps, final_answer=""):
         )
         .strip()
     )
+
+
+def _note_key(name: str) -> str:
+    return {
+        "math_geometry_reviewer": "review1_math_logic",
+        "animation_lifecycle_reviewer": "review2_animation_lifecycle",
+        "visual_layout_reviewer": "review3_visual_layout",
+    }[name]
 
 
 def _parent_prompt(names):
