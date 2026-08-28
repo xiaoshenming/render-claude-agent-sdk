@@ -12,6 +12,7 @@ from manim_quality.operator.runtime_tools.services import (
     RealLayoutInspector,
     RealRevisionValidator,
     RuntimeToolchain,
+    _default_detector_path,
     _render_diagnostic,
 )
 from manim_quality.operator.services import (
@@ -102,6 +103,24 @@ def test_smoke_services_never_claim_full_acceptance() -> None:
     assert validation.passed is True
     assert validation.details["rendered"] is False
     assert layout["verified"] is False
+
+
+def test_detector_path_resolves_from_non_editable_release(tmp_path: Path) -> None:
+    release = tmp_path / "release"
+    module = (
+        release / ".venv/lib/python3.12/site-packages/manim_quality/"
+        "operator/runtime_tools/services.py"
+    )
+    module.parent.mkdir(parents=True)
+    module.touch()
+    detector = (
+        release / ".vendor/quality_repair/tools/quality_repair_checkers/"
+        "layout_probe_check.py"
+    )
+    detector.parent.mkdir(parents=True)
+    detector.touch()
+
+    assert _default_detector_path(module) == detector
 
 
 class _CountingRenderer:

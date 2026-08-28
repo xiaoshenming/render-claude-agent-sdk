@@ -59,14 +59,7 @@ class RuntimeToolchain:
             environment=environment,
             scene_name=scene_name,
         )
-        detector_path = detector_path or (
-            Path(__file__).resolve().parents[4]
-            / ".vendor"
-            / "quality_repair"
-            / "tools"
-            / "quality_repair_checkers"
-            / "layout_probe_check.py"
-        )
+        detector_path = detector_path or _default_detector_path(Path(__file__))
         self._detector = LayoutIssueDetector(detector_path)
         self._renders: dict[str, RenderResult] = {}
         self._probes: dict[str, ProbeResult] = {}
@@ -138,6 +131,18 @@ class RuntimeToolchain:
                 result.raw_path.with_name("geometry_sidecar.json")
             ),
         )
+
+
+def _default_detector_path(module_path: Path) -> Path:
+    relative = Path(
+        ".vendor/quality_repair/tools/quality_repair_checkers/"
+        "layout_probe_check.py"
+    )
+    for parent in module_path.resolve().parents:
+        candidate = parent / relative
+        if candidate.is_file():
+            return candidate
+    raise FileNotFoundError(f"verified layout detector missing below {module_path}")
 
 
 def _persist_report(
