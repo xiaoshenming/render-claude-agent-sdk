@@ -19,10 +19,12 @@ from .source_view import extract_solution
 
 PROMPTS = Path(__file__).with_name("prompts")
 STANDARD_SPECS = (
-    ("math_geometry_reviewer", "math_geometry_reviewer_v1.md"),
-    ("animation_lifecycle_reviewer", "animation_lifecycle_reviewer_v1.md"),
-    ("visual_layout_reviewer", "visual_layout_reviewer_v1.md"),
+    ("math_geometry_reviewer", "math_geometry_reviewer_v1.md", "v2"),
+    ("animation_lifecycle_reviewer", "animation_lifecycle_reviewer_v1.md", "v2"),
+    ("visual_layout_reviewer", "visual_layout_reviewer_v1.md", "v2"),
 )
+
+
 def run_native_reviewer_group(
     runtime,
     *,
@@ -131,10 +133,11 @@ def _specs(
                 supplemental_note=str(notes.get(_note_key(name)) or ""),
             ),
             allowed_tools=(solution_tool,),
+            prompt_version=prompt_version,
             max_turns=5,
             effort=effort,
         )
-        for name, prompt_name in STANDARD_SPECS
+        for name, prompt_name, prompt_version in STANDARD_SPECS
     ]
     if figure is not None:
         specs.append(
@@ -152,6 +155,7 @@ def _specs(
                     by_name["read_confirmed_figure"],
                     solution_tool,
                 ),
+                prompt_version="v5",
                 max_turns=6,
                 effort=effort,
             )

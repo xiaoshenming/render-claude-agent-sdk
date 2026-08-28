@@ -18,11 +18,12 @@ class NativeSubagentSpec:
     allowed_tools: tuple[str, ...]
     max_turns: int = 5
     effort: str = "low"
+    prompt_version: str = "v1"
 
     def __post_init__(self) -> None:
         if not isinstance(self.name, str) or _SAFE_NAME.fullmatch(self.name) is None:
             raise ValueError("subagent name must be a safe lowercase identifier")
-        for field in ("description", "prompt"):
+        for field in ("description", "prompt", "prompt_version"):
             value = getattr(self, field)
             if not isinstance(value, str) or not value.strip():
                 raise ValueError(f"{field} must be a non-empty string")

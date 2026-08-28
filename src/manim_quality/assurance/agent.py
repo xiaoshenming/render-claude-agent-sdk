@@ -68,15 +68,7 @@ class FinalAssuranceAgent:
             self.runtime, self.profile.model, case, verification
         )
         _validate_reviewers(reviewers)
-        prompt = PROMPT.read_text(encoding="utf-8") + (
-            f"\n\nassurance_policy: {POLICY_VERSION}@{POLICY_SHA256}\n"
-            f"\n\ncase_key: {case.key}\n"
-            "权威内容已按职责分别交给四个只读 Reviewer；Parent 只汇总回执，"
-            "不得重新审题或重复制造输入问题。\n"
-            "两路必需 Reviewer、视觉版式与可用时的题图保真 Reviewer 已由编排器处理，"
-            "不要再调用 Agent 工具。以下回执是本次终审的只读证据：\n"
-            f"{json.dumps(reviewers, ensure_ascii=False)}\n"
-        )
+        prompt = _assurance_prompt(case, reviewers)
         request = AgentRunRequest(
             run_id=f"assurance-{case.key}",
             profile=self.profile,
@@ -112,6 +104,18 @@ class FinalAssuranceAgent:
             raw_assessment=raw,
             policy_assessment=adjusted,
         )
+
+
+def _assurance_prompt(case, reviewers) -> str:
+    return PROMPT.read_text(encoding="utf-8") + (
+        f"\n\nassurance_policy: {POLICY_VERSION}@{POLICY_SHA256}\n"
+        f"\n\ncase_key: {case.key}\n"
+        "权威内容已按职责分别交给四个只读 Reviewer；Parent 只汇总回执，"
+        "不得重新审题或重复制造输入问题。\n"
+        "两路必需 Reviewer、视觉版式与可用时的题图保真 Reviewer 已由编排器处理，"
+        "不要再调用 Agent 工具。以下回执是本次终审的只读证据：\n"
+        f"{json.dumps(reviewers, ensure_ascii=False)}\n"
+    )
 
 
 def _native_reviewers(runtime, model, case, verification):

@@ -1,18 +1,13 @@
 from __future__ import annotations
+
 from collections.abc import Mapping
+
 from manim_quality.revisions.fingerprint import code_hash
+
 from .finding_dependencies import validate_finding_dependencies
 from .immutable_inputs import ImmutableReviewInputs
-from .models import (
-    CandidateAttempt,
-    Finding,
-    PatchScope,
-    ValidationRecord,
-)
-from .session_errors import (
-    DuplicatePatch,
-    InvalidSessionTransition,
-)
+from .models import CandidateAttempt, Finding, PatchScope, ValidationRecord
+from .session_errors import DuplicatePatch, InvalidSessionTransition
 from .session_rules import (
     best_validated_revision,
     embedded_problem_hash,
@@ -25,6 +20,8 @@ from .session_rules import (
     verify_candidate,
 )
 from .source_view import apply_solution_replacement, extract_solution
+
+
 class QualitySession:
     """Own immutable inputs and a configured number of candidate attempts."""
 
@@ -96,9 +93,11 @@ class QualitySession:
     @property
     def baseline(self) -> CandidateAttempt:
         return self._attempts[0]
+
     @property
     def current_revision(self) -> CandidateAttempt:
         return self.get_revision(self._active_revision_id)
+
     @property
     def attempts(self) -> tuple[CandidateAttempt, ...]:
         return tuple(self._attempts)

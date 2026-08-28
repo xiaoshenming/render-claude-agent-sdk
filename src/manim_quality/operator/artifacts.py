@@ -14,6 +14,7 @@ from .artifact_session import findings_payload, revisions_payload
 from .artifact_transcripts import reviewer_messages, tool_results
 from .artifact_usage import reviewer_tokens, token_ledger, usage_record
 from .gate import GateDecision, GateResult
+from .review_input_artifacts import write_review_input_artifacts
 from .session import QualitySession
 
 
@@ -30,28 +31,11 @@ def write_run_artifacts(
     target.mkdir(parents=True, exist_ok=True)
     for name in ("input", "revisions", "evidence", "logs", "output"):
         (target / name).mkdir(exist_ok=True)
-    _write_inputs(target, session)
+    write_review_input_artifacts(target, session)
     _write_revisions(target, session)
     _write_evidence(target, session, gate_result, baseline_layout_report or {})
     _write_logs(target, session, operator_result, gate_result)
     _write_output(target, session, gate_result)
-
-
-def _write_inputs(target: Path, session: QualitySession) -> None:
-    _write_text(target / "input" / "problem.snapshot", session.problem_text)
-    _write_text(
-        target / "input" / "parsed-standard-answer.snapshot",
-        session.parsed_standard_answer,
-    )
-    _write_text(
-        target / "input" / "teaching-script.snapshot",
-        session.solution_steps,
-    )
-    _write_json(
-        target / "input" / "reviewer-supplemental-notes.json",
-        session.reviewer_supplemental_notes,
-    )
-    _write_text(target / "input" / "candidate.R0.py", session.baseline.code)
 
 
 def _write_revisions(target: Path, session: QualitySession) -> None:

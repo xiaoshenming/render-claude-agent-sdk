@@ -122,17 +122,23 @@ class QualityHarness:
                 error=error,
             )
             raise
-        gate_result = anyio.run(self._gate.evaluate, session)
-        write_run_artifacts(
-            root=artifact_root,
-            session=session,
-            operator_result=operator_result,
-            gate_result=gate_result,
-            baseline_layout_report=baseline_layout,
+        return _finalize_result(
+            self._gate, artifact_root, session, operator_result, baseline_layout
         )
-        return QualityHarnessResult(
-            session=session,
-            operator_result=operator_result,
-            gate_result=gate_result,
-            baseline_layout_report=baseline_layout,
-        )
+
+
+def _finalize_result(gate, root, session, operator_result, baseline_layout):
+    gate_result = anyio.run(gate.evaluate, session)
+    write_run_artifacts(
+        root=root,
+        session=session,
+        operator_result=operator_result,
+        gate_result=gate_result,
+        baseline_layout_report=baseline_layout,
+    )
+    return QualityHarnessResult(
+        session=session,
+        operator_result=operator_result,
+        gate_result=gate_result,
+        baseline_layout_report=baseline_layout,
+    )

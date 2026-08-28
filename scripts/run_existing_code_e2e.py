@@ -122,19 +122,7 @@ def _run_operator(args: argparse.Namespace, harness_root: Path) -> int:
         "--run-id",
         args.job_id,
     ]
-    steps = args.solution_steps or args.expected_solution
-    if steps is not None:
-        argv.extend(("--solution-steps", str(steps.resolve(strict=True))))
-    if args.parsed_standard_answer is not None:
-        argv.extend((
-            "--parsed-standard-answer",
-            str(args.parsed_standard_answer.resolve(strict=True)),
-        ))
-    if args.reviewer_supplemental_notes is not None:
-        argv.extend((
-            "--reviewer-supplemental-notes",
-            str(args.reviewer_supplemental_notes.resolve(strict=True)),
-        ))
+    _append_review_inputs(argv, args)
     if args.repair_feedback is not None:
         argv.extend((
             "--repair-feedback",
@@ -156,6 +144,17 @@ def _run_operator(args: argparse.Namespace, harness_root: Path) -> int:
     except Exception as error:
         print(f"quality harness crashed: {error}", file=sys.stderr)
         return 4
+
+
+def _append_review_inputs(argv: list[str], args: argparse.Namespace) -> None:
+    values = (
+        ("--solution-steps", args.solution_steps or args.expected_solution),
+        ("--parsed-standard-answer", args.parsed_standard_answer),
+        ("--reviewer-supplemental-notes", args.reviewer_supplemental_notes),
+    )
+    for flag, path in values:
+        if path is not None:
+            argv.extend((flag, str(path.resolve(strict=True))))
 
 
 def _session_candidate(source: Path, harness_root: Path) -> Path:

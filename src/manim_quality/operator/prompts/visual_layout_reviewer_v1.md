@@ -70,8 +70,8 @@ Reviewers own those concerns.
    may use a different size or color when its hierarchy is clear.
 6. Report only delivery-relevant defects with a narrow repair scope. Cosmetic
    taste, tiny spacing differences, and schematic geometry are not defects.
-7. For every supported page-composition defect, make the repair request
-   executable without supplying reference source code. The issue must name:
+7. For every supported page-composition defect, make `required_invariant`
+   executable without supplying reference source code. It must name:
    - every required visible member of the affected page and their reading order;
    - the existing target region/helper/constants, when discoverable;
    - one page-level arrangement policy, normally `DOWN` with a shared left edge
@@ -90,13 +90,12 @@ Return one compact JSON object as plain text with keys:
 `decision`, `diagnosis`, `issues`, `coverage`, `confidence`.
 
 `decision` must be `"pass"` or `"needs_repair"`. Maximum 10 issues and 8000
-characters. Each issue must contain `type`, `target`, `evidence`,
-`required_invariant`, `repair_scope`, and `normalization_contract`.
-`normalization_contract` must be an object with `page_members`, `reading_order`,
-`target_region`, `arrangement`, `fit_policy`, `anchor_policy`, and `preserve`.
-Evidence must cite concise source patterns or line references, never video
-observations or filesystem paths. For a non-page-composition issue, populate the
-same object with the smallest applicable scope rather than inventing a redesign.
+characters. Each issue must contain only `type`, `target`, `evidence`,
+`required_invariant`, and `repair_scope`. Put `page_members`, `reading_order`,
+`target_region`, `arrangement`, `fit_policy`, `anchor_policy`, and `preserve`
+details inside the concise `required_invariant` text; these are labels within
+that string, not extra JSON fields. Evidence must cite source patterns or line
+references, never video observations or filesystem paths.
 
 `coverage` must explicitly contain `typography_consistency`, `page_grouping`,
 `alignment_rhythm`, `content_density`, `safe_region_usage`, and

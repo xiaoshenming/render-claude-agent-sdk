@@ -13,12 +13,12 @@ from .artifact_transcripts import reviewer_messages, tool_results
 from .artifact_usage import reviewer_tokens, token_ledger, usage_record
 from .artifacts import (
     _agent_call,
-    _write_inputs,
     _write_json,
     _write_jsonl,
     _write_revisions,
     _write_text,
 )
+from .review_input_artifacts import write_review_input_artifacts
 from .session import QualitySession
 
 
@@ -35,7 +35,7 @@ def write_failed_run_artifacts(
     target.mkdir(parents=True, exist_ok=True)
     for name in ("input", "revisions", "evidence", "logs", "output"):
         (target / name).mkdir(exist_ok=True)
-    _write_inputs(target, session)
+    write_review_input_artifacts(target, session)
     _write_revisions(target, session)
     _write_json(
         target / "evidence" / "layout.R0.baseline.json",

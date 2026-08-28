@@ -86,6 +86,16 @@ def test_reviewers_use_one_parent_with_four_native_subagents(tmp_path) -> None:
     ]
     assert len(records) == 4
     prompts = {r.run_id.split("-")[1]: r.prompt for r in runtime.requests}
+    versions = {r.run_id.split("-")[1]: r.profile.prompt_version
+                for r in runtime.requests}
+    assert versions == {
+        "math_geometry_reviewer": "parallel-math_geometry_reviewer-v2",
+        "animation_lifecycle_reviewer": (
+            "parallel-animation_lifecycle_reviewer-v2"
+        ),
+        "visual_layout_reviewer": "parallel-visual_layout_reviewer-v2",
+        "figure_fidelity_reviewer": "parallel-figure_fidelity_reviewer-v5",
+    }
     assert "标准推导，所以选择B。" in prompts["math_geometry_reviewer"]
     assert "五段式讲解。" in prompts["math_geometry_reviewer"]
     assert "核对选择题结论" in prompts["math_geometry_reviewer"]
@@ -93,10 +103,23 @@ def test_reviewers_use_one_parent_with_four_native_subagents(tmp_path) -> None:
     assert "求解。" not in prompts["animation_lifecycle_reviewer"]
     assert "标准推导" not in prompts["animation_lifecycle_reviewer"]
     assert "关注右侧安全区" in prompts["visual_layout_reviewer"]
+    assert "标准推导" not in prompts["visual_layout_reviewer"]
     assert "五段式讲解。" not in prompts["visual_layout_reviewer"]
     assert "保持原图方向" in prompts["figure_fidelity_reviewer"]
     assert "求解。" not in prompts["figure_fidelity_reviewer"]
     assert "五段式讲解。" not in prompts["figure_fidelity_reviewer"]
+    assert "标准推导" not in prompts["figure_fidelity_reviewer"]
+    assert "权威题目" not in prompts["figure_fidelity_reviewer"]
+    assert "老师步骤" not in prompts["figure_fidelity_reviewer"]
+    assert "normalization_contract" not in prompts["visual_layout_reviewer"]
+    requests = {r.run_id.split("-")[1]: r for r in runtime.requests}
+    figure_issue = requests["figure_fidelity_reviewer"].output_schema[
+        "properties"
+    ]["issues"]["items"]["properties"]
+    assert "repair_action" in figure_issue
+    assert "repair_action" not in requests[
+        "math_geometry_reviewer"
+    ].output_schema["properties"]["issues"]["items"]["properties"]
 
 
 def test_reviewer_schema_is_openai_strict_compatible() -> None:

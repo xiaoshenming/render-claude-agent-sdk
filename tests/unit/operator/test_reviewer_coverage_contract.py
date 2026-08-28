@@ -52,7 +52,7 @@ def test_visual_reviewer_requires_layout_and_typography_coverage():
     assert "wrapper around already scattered objects" in value
     assert "is not normalized layout" in value
     assert "fixed shrink" in value
-    assert "normalization_contract" in value
+    assert "required_invariant" in value
     assert "page_members" in value
     assert "Do not accept \"create a VGroup\" alone" in value
     assert "stack/composition helper" in value
@@ -73,26 +73,26 @@ def test_figure_fidelity_reviewer_is_code_only_and_three_way_routed():
     assert "evidence_only" in value
     assert "human_review" in value
     assert "不读取图片、视频、帧或联系图" in value
-    assert "合法替代解法" in value
-    assert "确认题图与权威题目确实冲突" in value
+    assert "另一套解法" in value
+    assert "唯一题图权威" in value
     assert "delayed_but_present" in value
-    assert "semantic_equivalence=true" in value
     assert "自动返修硬条件" in value
-    assert "先记录差异，再决定动作" in value
+    assert "唯一权威与审核边界" in value
+    assert "专属 schema" in value
+    assert "repair_action" in value
     assert "authority_status" in value
-    assert "temporal_status" in value
-    assert "semantic_equivalence" in value
-    assert "difference_scope" in value
     assert "runtime_problem_panel" in value
-    assert "later_subquestion_stage" in value
     assert "A(2,0)、B(0,4)" in value
-    assert "不审核版式美感、动画生命周期、答案泄露、教学时序" in value
+    assert "不审核版式美感、动画生命周期、答案、教学时序" in value
     assert "不产生题图保真 issue" in value
     assert "candidate_earlier_leak" not in value
-    assert "确认 figure.py 与候选都没有实际创建" in value
+    assert "不接收也不得推断题目文本" in value
     assert "orientation_change" in value
     assert "心理旋转" in value
     assert "整体平移、等比例缩放" in value
+    assert "权威题目" not in value
+    assert "老师步骤" not in value
+    assert "最终答案与老师脚本" not in value
 
 
 def test_parent_keeps_recovery_without_dependency_bookkeeping():

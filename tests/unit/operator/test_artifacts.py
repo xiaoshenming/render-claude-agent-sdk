@@ -51,7 +51,13 @@ def agent_record() -> AgentCallRecord:
 
 
 def accepted_fixture():
-    session = QualitySession(problem_text=PROBLEM, candidate_code=CODE)
+    session = QualitySession(
+        problem_text=PROBLEM,
+        candidate_code=CODE,
+        parsed_standard_answer="标准答案",
+        solution_steps="五段式脚本",
+        reviewer_supplemental_notes={"review1_math_logic": "补充约束"},
+    )
     session.mark_solution_read("R0")
     session.record_findings(())
     session.record_layout_inspection(
@@ -119,6 +125,16 @@ def test_artifact_writer_persists_replayable_run_pack(tmp_path: Path) -> None:
     assert (tmp_path / "input" / "candidate.R0.py").read_text(
         encoding="utf-8"
     ) == CODE
+    manifest = json.loads(
+        (tmp_path / "input" / "review-authority-manifest.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert manifest["contract_version"] == "review-authority-v1"
+    assert manifest["candidate_sha256"] == session.baseline.code_hash
+    assert manifest["problem_sha256"] == session.problem_hash
+    assert manifest["parsed_standard_answer_sha256"].startswith("sha256:")
+    assert manifest["teaching_script_sha256"] == session.solution_steps_hash
     assert (tmp_path / "revisions" / "R0.baseline.py").is_file()
     assert (tmp_path / "logs" / "agent_call.json").is_file()
     assert (tmp_path / "logs" / "tool_calls.jsonl").is_file()
