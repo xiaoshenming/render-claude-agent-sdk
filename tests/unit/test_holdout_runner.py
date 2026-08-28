@@ -23,6 +23,7 @@ def test_frozen_manifest_verification_rejects_changed_child(tmp_path: Path) -> N
             {
                 "schema_version": 1,
                 "frozen": True,
+                "suite_hash_contract": "utf8-lf-v1",
                 "suites": [
                     {
                         "name": "logic",
@@ -78,6 +79,30 @@ def test_launch_report_separates_outcomes_and_fails_closed() -> None:
     assert set(report["blocking_reasons"]) == {"real_render:not_run", "canary:not_run"}
 
 
+def test_frozen_suite_hash_is_stable_across_lf_and_crlf(tmp_path: Path) -> None:
+    child = tmp_path / "logic.json"
+    lf = '{\n  "frozen": true,\n  "sample_count": 2\n}\n'
+    child.write_bytes(lf.encode("utf-8"))
+    expected = _sha(child)
+    child.write_bytes(lf.replace("\n", "\r\n").encode("utf-8"))
+    manifest = tmp_path / "holdout.json"
+    manifest.write_text(
+        json.dumps({
+            "schema_version": 1,
+            "frozen": True,
+            "suite_hash_contract": "utf8-lf-v1",
+            "suites": [{
+                "name": "logic",
+                "path": "logic.json",
+                "sha256": expected,
+            }],
+        }),
+        encoding="utf-8",
+    )
+
+    assert verify_frozen_manifest(manifest) == {"logic": expected}
+
+
 def test_status_requires_non_empty_reason_when_not_run() -> None:
     with pytest.raises(ValueError, match="reason"):
         HoldoutStatus(HoldoutStatus.NOT_RUN, 0, {}, "")
@@ -99,4 +124,6 @@ def test_committed_launch_evidence_is_hash_bound_and_fail_closed() -> None:
 def _sha(path: Path) -> str:
     import hashlib
 
-    return "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
+    raw = path.read_text(encoding="utf-8")
+    canonical = raw.replace("\r\n", "\n").replace("\r", "\n")
+    return "sha256:" + hashlib.sha256(canonical.encode("utf-8")).hexdigest()

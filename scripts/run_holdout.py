@@ -70,6 +70,8 @@ class HoldoutEvidence:
 def verify_frozen_manifest(path: Path) -> dict[str, str]:
     root = path.resolve(strict=True).parent
     payload = _object(json.loads(path.read_text(encoding="utf-8")), "manifest")
+    if payload.get("suite_hash_contract") != "utf8-lf-v1":
+        raise ValueError("holdout manifest requires utf8-lf-v1 hashes")
     if payload.get("frozen") is not True:
         raise ValueError("holdout manifest must be frozen")
     suites = payload.get("suites")
@@ -169,7 +171,13 @@ def _write_json(path: Path, payload: dict[str, object]) -> None:
 
 
 def _file_hash(path: Path) -> str:
-    return "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
+    raw = path.read_bytes()
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as error:
+        raise ValueError("frozen suite must be UTF-8 text") from error
+    canonical = text.replace("\r\n", "\n").replace("\r", "\n").encode("utf-8")
+    return "sha256:" + hashlib.sha256(canonical).hexdigest()
 
 
 def _digest(value: object) -> str:

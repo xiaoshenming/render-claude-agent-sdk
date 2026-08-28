@@ -1,6 +1,7 @@
 {
   "schema_version": 1,
   "frozen": true,
+  "suite_hash_contract": "utf8-lf-v1",
   "split_policy": {
     "tuning": "No launch-v1 case may be used to change prompts, validators, thresholds, or tools before this report is closed.",
     "holdout": "The live launch probe uses the separately frozen launch_selection_v1.json.",
@@ -10,17 +11,17 @@
     {
       "name": "logic_known_bad",
       "path": "logic_known_bad/manifest.json",
-      "sha256": "sha256:5369d7e060dd302bb6251c7dd555c4ce82f67fd3cc517c726405f1def923aa62"
+      "sha256": "sha256:29931e96c3fd2c5d0d92343f6f5a49305f17c75aee7690bbf28997fa1769f0b1"
     },
     {
       "name": "logic_known_bad_replacement",
       "path": "logic_known_bad_replacement/manifest.json",
-      "sha256": "sha256:d45703bf0b51b227ebcef94c5c09a1474f3b3df371f8d3d74e278e6f0dffd43c"
+      "sha256": "sha256:edefb81899cb4597a6025af3fbf878159ce0f23d6aaacc514b6ec200e0bf0197"
     },
     {
       "name": "logic_known_good",
       "path": "logic_known_good/manifest.json",
-      "sha256": "sha256:27cdd7181d3e700689738dbf41c678fa05234afc479a6a68a70e130bec350016"
+      "sha256": "sha256:6b5ae4af81028a2dd29340a26c6055dae351740595401b15c5546aa0aaa5896b"
     },
     {
       "name": "overlap_regression",
