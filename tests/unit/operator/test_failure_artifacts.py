@@ -172,8 +172,8 @@ def test_failed_run_classifies_max_turns_and_recovers_reviewer_usage(
     tmp_path,
 ) -> None:
     session = repaired_session(submit=False)
-    failure_record = record("Claude Agent SDK failed: FAILED_MAX_TURNS")
-    error = RuntimeError("maximum turns reached")
+    failure_record = record(None)
+    error = RuntimeError("Reached maximum number of turns (24)")
     error.sdk_messages = ({
         "kind": "assistant",
         "message_id": "review-1",

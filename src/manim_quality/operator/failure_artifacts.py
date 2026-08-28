@@ -152,6 +152,7 @@ def _failure_status(error: str, session: QualitySession) -> str:
     for marker, status in (
         ("failed_max_turns", "FAILED_MAX_TURNS"),
         ("max turns", "FAILED_MAX_TURNS"),
+        ("maximum number of turns", "FAILED_MAX_TURNS"),
         ("maximum turns", "FAILED_MAX_TURNS"),
         ("max_turns", "FAILED_MAX_TURNS"),
         ("timed out", "FAILED_TIMEOUT"),
