@@ -10,6 +10,7 @@ from pathlib import Path
 import anyio
 
 from manim_quality.operator.models import CandidateAttempt, Finding, ValidationOutcome
+from manim_quality.runtime_paths import release_asset
 
 from .detector import LayoutIssueDetector
 from .issues import compact_layout_report
@@ -134,15 +135,11 @@ class RuntimeToolchain:
 
 
 def _default_detector_path(module_path: Path) -> Path:
-    relative = Path(
+    return release_asset(
+        module_path,
         ".vendor/quality_repair/tools/quality_repair_checkers/"
-        "layout_probe_check.py"
+        "layout_probe_check.py",
     )
-    for parent in module_path.resolve().parents:
-        candidate = parent / relative
-        if candidate.is_file():
-            return candidate
-    raise FileNotFoundError(f"verified layout detector missing below {module_path}")
 
 
 def _persist_report(

@@ -13,6 +13,7 @@ from manim_quality.operator.runtime_tools import (
     geometry_sidecar_runner,
 )
 from manim_quality.operator.session import QualitySession
+from manim_quality.runtime_paths import release_asset
 
 from .models import AssuranceCase, ToolReport
 
@@ -39,7 +40,6 @@ class AssuranceVerification:
             candidate_code=source,
         )
         environment = _render_environment(case, config)
-        repo = Path(__file__).resolve().parents[3]
         toolchain = RuntimeToolchain(
             source_workspace=case.source_path.parent,
             artifact_root=output_dir / "fresh-runtime",
@@ -49,7 +49,6 @@ class AssuranceVerification:
         )
         self.layout = RealLayoutInspector(toolchain)
         self.validator = RealRevisionValidator(toolchain)
-        self.repo = repo
 
     async def inspect_render(self) -> ToolReport:
         revision = self.session.baseline
@@ -105,14 +104,16 @@ def _render_environment(
     if assets.is_dir():
         environment["MATHPI_RENDER_ASSETS_DIR"] = str(assets)
     environment["MANIM_LAYOUT_PROBE_DELEGATE"] = str(
-        Path(__file__).resolve().parents[3] / "vendor/layout_probe/probe_runner.txt"
+        release_asset(__file__, "vendor/layout_probe/probe_runner.txt")
     )
     return environment
 
 
 def _silent_shim() -> Path:
-    root = Path(__file__).resolve().parents[3]
-    vendor = root / "vendor/logic_engine_mvp_baseline/tools/logic_engine_mvp"
+    vendor = release_asset(
+        __file__,
+        "vendor/logic_engine_mvp_baseline/tools/logic_engine_mvp/__init__.py",
+    ).parent
     sys.path.insert(0, str(vendor))
     try:
         from logic_engine_mvp.render_check import _ensure_tts_shim_dir

@@ -15,6 +15,7 @@ from manim_quality.agents.claude_sdk import ClaudeSdkBackend
 from manim_quality.agents.profile import operator_profile
 from manim_quality.agents.runtime import AgentRuntime
 from manim_quality.agents.usage_ledger import RecordingJsonlUsageLedger
+from manim_quality.runtime_paths import release_asset
 
 from .agent import QualityOperatorAgent
 from .defaults import PARENT_MAX_TOOL_CALLS, PARENT_MAX_TURNS
@@ -182,10 +183,7 @@ def _harness(operator, args, workspace: Path) -> QualityHarness:
     # versioned layout policy receives real stroke geometry. The wrapper never
     # alters the frozen runner's classification or stdout contract.
     environment["MANIM_LAYOUT_PROBE_DELEGATE"] = str(
-        Path(__file__).resolve().parents[3]
-        / "vendor"
-        / "layout_probe"
-        / "probe_runner.txt"
+        release_asset(__file__, "vendor/layout_probe/probe_runner.txt")
     )
     runner = Path(geometry_sidecar_runner.__file__).resolve()
     shared_render_cache = (
