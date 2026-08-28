@@ -41,18 +41,7 @@ class ManimRenderer:
         media = self._cache_dir or (revision_dir / "media")
         partials_before = _partial_movies(media)
         started = time.perf_counter()
-        argv = [
-            str(self._python),
-            "-m",
-            "manim",
-            str(candidate),
-            self._scene,
-            f"-q{self._quality}",
-            "--media_dir",
-            str(media),
-        ]
-        if self._cache_dir is None:
-            argv.append("--disable_caching")
+        argv = self._render_command(candidate, media)
         try:
             result = run_to_artifacts(
                 argv,
@@ -103,6 +92,15 @@ class ManimRenderer:
             new_partial_count=len(partials_after - partials_before),
             elapsed_ms=round((time.perf_counter() - started) * 1000),
         )
+
+    def _render_command(self, candidate: Path, media: Path) -> list[str]:
+        argv = [
+            str(self._python), "-m", "manim", str(candidate), self._scene,
+            f"-q{self._quality}", "--media_dir", str(media),
+        ]
+        if self._cache_dir is None:
+            argv.append("--disable_caching")
+        return argv
 
 
 def _newest_video(media: Path) -> Path | None:
