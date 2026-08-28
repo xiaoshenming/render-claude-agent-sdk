@@ -368,16 +368,23 @@ def test_terminal_output_supports_honest_held_state() -> None:
     with pytest.raises(ValueError, match="hold_reason"):
         _bind_output({"status": "held", "summary": "x"}, session)
 
-    with pytest.raises(ValueError, match="allows only"):
-        _bind_output(
-            {
-                "status": "held",
-                "summary": "x",
-                "hold_reason": "y",
-                "submitted_revision_id": "R1",
-            },
-            session,
-        )
+    assert _bind_output(
+        {
+            "status": "held",
+            "summary": "x",
+            "hold_reason": "y",
+            "submitted_revision_id": "R2",
+            "code_hash": "sha256:" + "a" * 64,
+            "problem_hash": session.problem_hash,
+        },
+        session,
+    ) == "x"
+
+    with pytest.raises(ValueError, match="unknown fields"):
+        _bind_output({
+            "status": "held", "summary": "x", "hold_reason": "y",
+            "unexpected": True,
+        }, session)
 
 
 def test_submitted_terminal_output_ignores_irrelevant_hold_reason() -> None:

@@ -268,8 +268,16 @@ def _bind_held_output(
     value: Mapping[str, object],
     session: QualitySession,
 ) -> str:
-    if not set(value) <= {"status", "summary", "hold_reason"}:
-        raise ValueError("held output allows only status, summary, hold_reason")
+    allowed = {
+        "status",
+        "summary",
+        "hold_reason",
+        "submitted_revision_id",
+        "code_hash",
+        "problem_hash",
+    }
+    if not set(value) <= allowed:
+        raise ValueError("held output contains unknown fields")
     if session.submitted_revision_id is not None:
         raise ValueError("held output is forbidden after a real submission")
     reason = value.get("hold_reason")
