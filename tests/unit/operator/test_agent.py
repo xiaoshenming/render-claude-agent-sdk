@@ -380,6 +380,30 @@ def test_terminal_output_supports_honest_held_state() -> None:
         )
 
 
+def test_submitted_terminal_output_ignores_irrelevant_hold_reason() -> None:
+    from manim_quality.operator.agent import _bind_output
+    from manim_quality.operator.session import QualitySession
+
+    session = QualitySession(problem_text=PROBLEM, candidate_code=CODE)
+    session.mark_solution_read("R0")
+    session.record_findings(())
+    session.record_layout_inspection(
+        revision_id="R0", fingerprint="sha256:" + "a" * 64,
+    )
+    revision = session.submit("R0")
+
+    summary = _bind_output({
+        "status": "submitted",
+        "submitted_revision_id": "R0",
+        "code_hash": revision.code_hash,
+        "problem_hash": session.problem_hash,
+        "summary": "R0 submitted.",
+        "hold_reason": "No hold; revision was submitted successfully.",
+    }, session)
+
+    assert summary == "R0 submitted."
+
+
 def test_held_terminal_result_propagates_hold_reason() -> None:
     from types import SimpleNamespace
 

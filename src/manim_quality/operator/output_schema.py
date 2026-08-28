@@ -7,11 +7,17 @@ OPERATOR_OUTPUT_SCHEMA = {
     "type": "object",
     "properties": {
         "status": {"type": "string", "enum": ["submitted", "held"]},
-        "submitted_revision_id": {"type": "string", "minLength": 2},
+        "submitted_revision_id": {
+            "type": "string", "minLength": 2,
+            "description": "Use only when status is submitted.",
+        },
         "code_hash": {"type": "string", "minLength": 71, "maxLength": 71},
         "problem_hash": {"type": "string", "minLength": 71, "maxLength": 71},
         "summary": {"type": "string", "minLength": 1, "maxLength": 2_000},
-        "hold_reason": {"type": "string", "minLength": 1, "maxLength": 500},
+        "hold_reason": {
+            "type": "string", "minLength": 1, "maxLength": 500,
+            "description": "Use only when status is held; omit when submitted.",
+        },
     },
     "required": ["status", "summary"],
     "additionalProperties": False,

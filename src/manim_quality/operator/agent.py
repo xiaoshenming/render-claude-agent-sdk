@@ -246,7 +246,8 @@ def _bind_submitted_output(
         "problem_hash",
         "summary",
     }
-    if set(value) != required:
+    keys = set(value)
+    if not required <= keys or keys - required > {"hold_reason"}:
         raise ValueError("invalid Quality Operator terminal output")
     submitted = session.submitted_revision_id
     if submitted is None:
