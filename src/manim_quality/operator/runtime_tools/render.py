@@ -65,14 +65,7 @@ class ManimRenderer:
         if video is None:
             return _failed(
                 revision_dir, candidate, "render_video_missing", started)
-        if self._cache_dir is not None:
-            # Partial movies may be shared across revisions, but the composed
-            # MP4 is mutable at one stable Manim path. Freeze it before another
-            # revision overwrites the cache authority.
-            frozen = revision_dir / "verified_video.mp4"
-            frozen.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(video, frozen)
-            video = frozen
+        video = _freeze_video(video, revision_dir)
         try:
             duration = _probe_video(video, revision_dir, self._timeout)
         except (OSError, ValueError, subprocess.TimeoutExpired) as error:
@@ -110,6 +103,15 @@ def _newest_video(media: Path) -> Path | None:
         if path.is_file() and "partial_movie_files" not in path.parts
     ]
     return max(videos, key=lambda path: path.stat().st_mtime_ns) if videos else None
+
+
+def _freeze_video(video: Path, revision_dir: Path) -> Path:
+    """Bind even non-cache renders to one immutable per-revision path."""
+    frozen = revision_dir / "verified_video.mp4"
+    frozen.parent.mkdir(parents=True, exist_ok=True)
+    if video.resolve() != frozen.resolve():
+        shutil.copy2(video, frozen)
+    return frozen
 
 
 def _partial_movies(media: Path) -> set[Path]:

@@ -1,6 +1,8 @@
 import json
 from pathlib import Path
 
+import pytest
+
 from manim_quality.operator.models import CandidateAttempt
 from manim_quality.operator.runtime_tools.issues import compact_layout_report
 from manim_quality.operator.runtime_tools.workspace import RevisionWorkspace
@@ -157,7 +159,10 @@ def test_render_cache_flag_controls_manim_caching(tmp_path) -> None:
     assert chosen is not None and chosen.name == "Solution.mp4"
 
 
-def test_render_result_records_cache_hits_and_new_partials(tmp_path) -> None:
+@pytest.mark.parametrize("cache_enabled", [False, True])
+def test_render_result_freezes_verified_video_with_or_without_cache(
+    tmp_path, cache_enabled,
+) -> None:
     from types import SimpleNamespace
 
     import manim_quality.operator.runtime_tools.render as render_module
@@ -171,10 +176,11 @@ def test_render_result_records_cache_hits_and_new_partials(tmp_path) -> None:
 
     def fake_run(argv, **_kwargs):
         if "-m" in argv and "manim" in argv:
-            partial = cache / "videos/480p15/partial_movie_files/Solution/a.mp4"
+            media = Path(argv[argv.index("--media_dir") + 1])
+            partial = media / "videos/480p15/partial_movie_files/Solution/a.mp4"
             partial.parent.mkdir(parents=True, exist_ok=True)
             partial.write_bytes(b"partial")
-            video = cache / "videos/480p15/Solution.mp4"
+            video = media / "videos/480p15/Solution.mp4"
             video.parent.mkdir(parents=True, exist_ok=True)
             video.write_bytes(b"video")
             return SimpleNamespace(
@@ -194,7 +200,7 @@ def test_render_result_records_cache_hits_and_new_partials(tmp_path) -> None:
         result = ManimRenderer(
             source_workspace=workspace,
             python_executable=interpreter,
-            cache_dir=cache,
+            cache_dir=cache if cache_enabled else None,
         ).render(tmp_path / "R1", candidate)
     finally:
         render_module.run_to_artifacts = original

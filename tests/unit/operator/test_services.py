@@ -1,3 +1,5 @@
+import hashlib
+import json
 import threading
 import time
 from pathlib import Path
@@ -5,7 +7,9 @@ from pathlib import Path
 import anyio
 import pytest
 
-from manim_quality.operator.models import CandidateAttempt
+from manim_quality.agents.usage import AgentCallRecord, TokenUsage
+from manim_quality.operator.failure_artifacts import write_failed_run_artifacts
+from manim_quality.operator.models import CandidateAttempt, PatchScope
 from manim_quality.operator.problem_source import extract_problem_text
 from manim_quality.operator.runtime_tools.models import ProbeResult, RenderResult
 from manim_quality.operator.runtime_tools.services import (
@@ -127,17 +131,20 @@ class _CountingRenderer:
     """Records every render so a duplicate within one round is visible."""
 
     def __init__(self, video_path: Path) -> None:
+        del video_path
         self.calls = 0
-        self._video_path = video_path
 
     def render(self, revision_dir: Path, candidate: Path) -> RenderResult:
         self.calls += 1
         time.sleep(0.05)
+        video = revision_dir / "verified_video.mp4"
+        video.parent.mkdir(parents=True, exist_ok=True)
+        video.write_bytes(b"verified-video")
         return RenderResult(
             ok=True,
             revision_dir=revision_dir,
             candidate_path=candidate,
-            video_path=self._video_path,
+            video_path=video,
             duration_seconds=1.0,
             error=None,
         )
@@ -162,7 +169,10 @@ class _StubDetector:
         return {"issues": [], "blocking_count": 0}
 
 
-def _toolchain(tmp_path: Path) -> RuntimeToolchain:
+def _toolchain(
+    tmp_path: Path,
+    artifact_root: Path | None = None,
+) -> RuntimeToolchain:
     workspace = tmp_path / "workspace"
     workspace.mkdir()
     runner = tmp_path / "probe_runner.py"
@@ -171,7 +181,7 @@ def _toolchain(tmp_path: Path) -> RuntimeToolchain:
     interpreter.touch()
     return RuntimeToolchain(
         source_workspace=workspace,
-        artifact_root=tmp_path / "artifacts",
+        artifact_root=artifact_root or tmp_path / "artifacts",
         probe_runner=runner,
         python_executable=interpreter,
     )
@@ -240,8 +250,6 @@ def test_concurrent_validate_and_inspect_render_revision_once(
 
 def test_in_session_verification_facts_survive_on_disk(tmp_path) -> None:
     """Session death must not erase already-computed evidence."""
-    import json
-
     toolchain = _toolchain(tmp_path)
     toolchain._renderer = _CountingRenderer(tmp_path / "video.mp4")
     toolchain._probe = _StubProbe()
@@ -270,6 +278,86 @@ def test_in_session_verification_facts_survive_on_disk(tmp_path) -> None:
     payload = json.loads((toolchain.reports_dir / layout_reports[0]).read_text())
     assert payload["revision_id"] == "R0"
     assert "blocking_count" in payload
+
+
+def test_real_validation_report_matches_best_evidence_and_survives_failure(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "artifacts"
+    toolchain = _toolchain(tmp_path, root / "agent_runtime")
+    toolchain._renderer = _CountingRenderer(tmp_path / "unused.mp4")
+    session = QualitySession(
+        problem_text="Construct a line.",
+        candidate_code=(
+            "class Solution(BaseConfigScene):\n"
+            "    def construct(self):\n"
+            "        pass\n"
+        ),
+    )
+    session.mark_solution_read("R0")
+    session.record_findings(())
+    revision = session.apply_patch(
+        scope=PatchScope.LOGIC,
+        old_text="        pass",
+        new_text="        self.wait()",
+        finding_ids=(),
+    )
+    outcome = anyio.run(
+        RealRevisionValidator(toolchain).validate,
+        revision,
+        (),
+        session.problem_hash,
+    )
+    session.record_validation(
+        revision_id=revision.revision_id,
+        passed=outcome.passed,
+        improved=outcome.improved,
+        fingerprint=outcome.fingerprint,
+    )
+    report_path = next(toolchain.reports_dir.glob("validation.R1.*.json"))
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    best = session.best_validated_evidence()
+
+    assert report["passed"] is True and report["improved"] is True
+    assert report["revision_id"] == best["revision_id"] == "R1"
+    assert report["code_hash"] == best["code_hash"] == revision.code_hash
+    assert report["problem_hash"] == session.problem_hash
+    expected_video_hash = "sha256:" + hashlib.sha256(
+        b"verified-video"
+    ).hexdigest()
+    assert report["video_sha256"] == expected_video_hash
+    assert Path(report["video_path"]).name == "verified_video.mp4"
+    assert report["details"]["rendered"] is True
+    assert report["details"]["video_path"] == report["video_path"]
+
+    error = RuntimeError("FAILED_MAX_TURNS")
+    record = AgentCallRecord(
+        run_id="incident-R1",
+        role="quality_operator",
+        model="test-model",
+        prompt="prompt",
+        prompt_version="v1",
+        schema_version="v1",
+        tool_version="v1",
+        structured_output=None,
+        tool_calls=(),
+        usage=TokenUsage(),
+        turns=1,
+        observed_model_rounds=1,
+        elapsed_ms=1,
+        error="FAILED_MAX_TURNS",
+        usage_complete=False,
+    )
+    write_failed_run_artifacts(
+        root=root,
+        session=session,
+        record=record,
+        baseline_layout_report={},
+        error=error,
+    )
+
+    assert report_path.is_file()
+    assert json.loads(report_path.read_text())["video_sha256"] == expected_video_hash
 
 
 def test_check_relation_covers_reviewer_needed_relations() -> None:

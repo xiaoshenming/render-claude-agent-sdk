@@ -19,6 +19,7 @@ from .layout_policy import load_geometry_sidecar
 from .models import ProbeResult, RenderResult
 from .probe import BBoxProbe
 from .render import ManimRenderer
+from .validation_report import validation_report
 from .workspace import RevisionWorkspace
 
 
@@ -194,24 +195,18 @@ class RealRevisionValidator:
                 None if result.ok else _render_diagnostic(result.revision_dir)
             ),
         }
+        report = validation_report(revision, problem_hash, result, details)
         _persist_report(
             self._toolchain,
             "validation",
             revision.revision_id,
             self._sequence,
-            {
-                "revision_id": revision.revision_id,
-                "code_hash": revision.code_hash,
-                "problem_hash": problem_hash,
-                **details,
-            },
+            report,
         )
         return ValidationOutcome(
             passed=result.ok,
             improved=result.ok,
-            summary=(
-                "real Manim render passed" if result.ok else "real Manim render failed"
-            ),
+            summary=str(report["summary"]),
             details=details,
             revision_id=revision.revision_id,
             code_hash=revision.code_hash,
