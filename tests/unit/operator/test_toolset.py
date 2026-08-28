@@ -28,12 +28,15 @@ class Relation:
 
 
 class Layout:
+    def __init__(self, blocking_count=0):
+        self.blocking_count = blocking_count
+
     async def inspect(self, revision, problem_hash):
         return {
             "revision_id": revision.revision_id,
             "code_hash": revision.code_hash,
             "problem_hash": problem_hash,
-            "blocking_count": 0,
+            "blocking_count": self.blocking_count,
             "issues": [],
         }
 
@@ -65,6 +68,21 @@ def _fixture(tmp_path: Path):
         session=session,
         relation_checker=Relation(),
         layout_inspector=Layout(),
+        revision_validator=Validator(),
+        candidate_path=candidate,
+    )
+    return session, candidate, {tool.name: tool for tool in tools}
+
+
+def _fixture_with_layout(tmp_path: Path, blocking_count: int):
+    candidate = tmp_path / "candidate.py"
+    candidate.write_text(CODE, encoding="utf-8")
+    session = QualitySession(problem_text=PROBLEM, candidate_code=CODE)
+    session.mark_solution_read("R0")
+    tools = build_quality_tools(
+        session=session,
+        relation_checker=Relation(),
+        layout_inspector=Layout(blocking_count),
         revision_validator=Validator(),
         candidate_path=candidate,
     )
@@ -134,6 +152,44 @@ def test_native_file_edit_becomes_immutable_revision_on_validation(
     assert session.current_revision.revision_id == "R1"
     assert session.current_revision.parent_revision_id == "R0"
     assert session.current_revision.finding_ids == ("logic-1",)
+
+
+def test_scaffolding_only_native_edit_is_discarded_without_noop_patch(
+    tmp_path: Path,
+) -> None:
+    session, candidate, tools = _fixture(tmp_path)
+    candidate.write_text(CODE.replace("from manim import *", "from manim import *\n"))
+
+    receipt = _execute(
+        tools["validate_revision"],
+        {"revision_id": "R0", "finding_ids": []},
+    )
+
+    assert receipt["revision_id"] == "R0"
+    assert candidate.read_text(encoding="utf-8") == CODE
+    assert len(session.attempts) == 1
+
+
+def test_render_passed_edit_submits_with_bbox_follow_up(tmp_path: Path) -> None:
+    session, candidate, tools = _fixture_with_layout(tmp_path, blocking_count=3)
+    _execute(tools["record_findings"], {"findings": []})
+    candidate.write_text(
+        CODE.replace("self.add(arrow)", "self.add(arrow.shift(UP))"),
+        encoding="utf-8",
+    )
+    binding = {"revision_id": "R0", "finding_ids": []}
+
+    validation = _execute(tools["validate_revision"], binding)
+    layout = _execute(tools["inspect_layout"], binding)
+    submitted = _execute(
+        tools["submit_revision"],
+        {"revision_id": validation["revision_id"]},
+    )
+
+    assert layout["blocking_count"] == 3
+    assert submitted["submitted_revision_id"] == "R1"
+    assert submitted["layout_evidence"]["follow_up_required"] is True
+    assert session.best_validated_evidence()["revision_id"] == "R1"
 
 
 def test_combined_native_edit_binds_logic_and_layout_findings(

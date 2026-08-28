@@ -10,7 +10,7 @@ from manim_quality.contracts._json_values import thaw_json_object
 from .artifact_root import validate_existing_root
 from .artifact_session import findings_payload, revisions_payload
 from .artifact_transcripts import reviewer_messages, tool_results
-from .artifact_usage import reviewer_tokens, token_ledger, usage_record
+from .artifact_usage import known_reviewer_tokens, token_ledger, usage_record
 from .artifacts import (
     _agent_call,
     _write_json,
@@ -115,12 +115,12 @@ def _tool_call(item) -> dict[str, object]:
 
 
 def _failure(record, session: QualitySession, error: Exception) -> dict[str, object]:
-    reviewers = reviewer_tokens(getattr(error, "subagent_results", ()))
-    known_total = (
-        record.usage.total_tokens
-        if record.usage_complete
-        else max(record.usage.total_tokens, reviewers)
+    messages = getattr(error, "sdk_messages", ())
+    reviewers = known_reviewer_tokens(
+        messages, getattr(error, "subagent_results", ())
     )
+    provider_total = record.usage.total_tokens
+    known_total = max(provider_total, reviewers)
     return {
         "status": _failure_status(record.error or str(error), session),
         "error_type": type(error).__name__,
@@ -130,6 +130,10 @@ def _failure(record, session: QualitySession, error: Exception) -> dict[str, obj
         "best_render_passed": session.best_validated_evidence(),
         "tokens": usage_record(record.usage),
         "tokens_scope": "agent_tree",
+        "token_accounting_status": (
+            "complete" if record.usage_complete else "partial"
+        ),
+        "known_provider_tokens": provider_total,
         "reviewer_tokens": reviewers,
         "reviewer_tokens_included": record.usage_complete,
         "total_tokens_with_reviewers": known_total,
@@ -146,6 +150,10 @@ def _failure_status(error: str, session: QualitySession) -> str:
     # them exists here by design.
     text = error.lower()
     for marker, status in (
+        ("failed_max_turns", "FAILED_MAX_TURNS"),
+        ("max turns", "FAILED_MAX_TURNS"),
+        ("maximum turns", "FAILED_MAX_TURNS"),
+        ("max_turns", "FAILED_MAX_TURNS"),
         ("timed out", "FAILED_TIMEOUT"),
         ("timeout", "FAILED_TIMEOUT"),
         ("elapsed time exceeds", "FAILED_TIMEOUT"),

@@ -30,6 +30,42 @@ def reviewer_tokens(subagent_results) -> int:
     return total
 
 
+def known_reviewer_tokens(sdk_messages, subagent_results) -> int:
+    """Best lower bound when a failed SDK session lacks terminal usage."""
+    attributed = reviewer_tokens(subagent_results)
+    cumulative: dict[str, dict[str, int]] = {}
+    for message in sdk_messages:
+        parent_id = message.get("parent_tool_use_id")
+        usage = message.get("usage")
+        if message.get("kind") != "assistant" or not isinstance(parent_id, str):
+            continue
+        if not isinstance(usage, Mapping):
+            continue
+        observed = _usage_counts(usage)
+        previous = cumulative.setdefault(parent_id, {})
+        for name, value in observed.items():
+            previous[name] = max(previous.get(name, 0), value)
+    from_messages = sum(sum(value.values()) for value in cumulative.values())
+    return max(attributed, from_messages)
+
+
+def _usage_counts(value: Mapping) -> dict[str, int]:
+    aliases = {
+        "input": ("input_tokens", "inputTokens"),
+        "output": ("output_tokens", "outputTokens"),
+        "cache_read": ("cache_read_input_tokens", "cacheReadInputTokens"),
+        "cache_write": (
+            "cache_creation_input_tokens",
+            "cacheCreationInputTokens",
+        ),
+    }
+    result = {}
+    for name, keys in aliases.items():
+        raw = next((value[key] for key in keys if key in value), 0)
+        result[name] = raw if isinstance(raw, int) and not isinstance(raw, bool) else 0
+    return result
+
+
 def token_ledger(record, sdk_messages, subagent_results) -> dict[str, object]:
     """Persist aggregate, per-message, and Reviewer attribution in one ledger."""
 

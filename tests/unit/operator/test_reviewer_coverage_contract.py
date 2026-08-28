@@ -130,8 +130,8 @@ def test_parent_requires_real_page_normalization_before_submit():
     assert "GlobalConfig.RIGHT_X" in value
     assert "do not invent board width" in value
     assert "RIGHT_X` is the left boundary" in value
-    assert "normalization_contract" in value
-    assert "blocking_count` 0 only" in value
+    assert "page-normalization `required_invariant`" in value
+    assert "`blocking_count` is follow-up evidence" in value
 
 
 def test_coder_finding_schema_hides_audit_bookkeeping():

@@ -80,15 +80,9 @@ class QualitySession:
     solution_steps = property(lambda self: self._review_inputs.solution_steps)
     reviewer_supplemental_notes = property(
         lambda self: dict(self._review_inputs.reviewer_supplemental_notes))
-    solution_steps_hash = property(
-        lambda self: self._review_inputs.solution_steps_hash
-    )
-    repair_feedback = property(
-        lambda self: dict(self._review_inputs.repair_feedback)
-    )
-    repair_feedback_hash = property(
-        lambda self: self._review_inputs.repair_feedback_hash
-    )
+    solution_steps_hash = property(lambda s: s._review_inputs.solution_steps_hash)
+    repair_feedback = property(lambda s: dict(s._review_inputs.repair_feedback))
+    repair_feedback_hash = property(lambda s: s._review_inputs.repair_feedback_hash)
 
     @property
     def baseline(self) -> CandidateAttempt:
@@ -143,6 +137,16 @@ class QualitySession:
             self._validations,
             self._layout_inspections,
         )
+
+    def layout_evidence(self, revision_id: str) -> dict[str, object] | None:
+        inspection = self._layout_inspections.get(revision_id)
+        if inspection is None:
+            return None
+        return {
+            "fingerprint": inspection[0],
+            "blocking_count": inspection[1],
+            "follow_up_required": inspection[1] > 0,
+        }
 
     def mark_solution_read(self, revision_id: str) -> None:
         self._require_open()
@@ -287,10 +291,6 @@ class QualitySession:
         if revision_id not in self._layout_inspections:
             raise InvalidSessionTransition(
                 "current revision requires a fresh layout inspection"
-            )
-        if self._layout_inspections[revision_id][1] > 0:
-            raise InvalidSessionTransition(
-                "current revision still has blocking layout issues"
             )
 
     def _require_open(self) -> None:

@@ -122,8 +122,9 @@ async def _inspect_layout(inspector, candidate, problem_hash):
         return report, ("invalid_layout_report",)
     if report.get("verified") is not True:
         return report, ("full_layout_not_verified",)
-    if blocking > 0:
-        return report, ("blocking_overlap_remaining",)
+    # Positive BBox findings remain explicit follow-up evidence. A successfully
+    # rendered source revision is still the downstream authority and must not
+    # be replaced by R0 solely because the observation count is non-zero.
     return report, ()
 
 
@@ -133,10 +134,16 @@ def _hold(
     validation: ValidationOutcome | None,
     layout_report: Mapping[str, object] | None,
 ) -> GateResult:
+    best = session.best_validated_evidence()
+    retained = (
+        session.get_revision(str(best["revision_id"]))
+        if best is not None
+        else session.baseline
+    )
     return GateResult(
         decision=GateDecision.HOLD,
         final_revision=None,
-        rollback_revision=session.baseline,
+        rollback_revision=retained,
         reasons=tuple(reasons),
         validation=validation,
         layout_report=layout_report,

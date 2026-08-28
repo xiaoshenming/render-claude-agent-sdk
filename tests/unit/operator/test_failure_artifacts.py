@@ -133,12 +133,17 @@ def test_failed_run_artifacts_classify_timeout_and_keep_best_candidate(
     assert failure["status"] == "FAILED_TIMEOUT"
     assert failure["best_render_passed"] == {
         "revision_id": "R1",
+        "code_hash": session.current_revision.code_hash,
+        "render_passed": True,
         "blocking_count": 0,
         "layout_inspected": True,
+        "layout_follow_up_required": False,
     }
     assert failure["usage_complete"] is False
     assert failure["reviewer_tokens"] == 321
     assert failure["total_tokens_with_reviewers"] == 321
+    assert failure["token_accounting_status"] == "partial"
+    assert failure["known_provider_tokens"] == 0
     assert failure["external_tool_ms"] == 250
     reviewer_messages = (
         tmp_path / "run" / "logs" / "reviewer-sdk-messages.jsonl"
@@ -161,6 +166,34 @@ def test_failed_run_artifacts_classify_timeout_and_keep_best_candidate(
         "math_geometry_reviewer"
     ]
     assert revisions["active_revision_id"] == "R1"
+
+
+def test_failed_run_classifies_max_turns_and_recovers_reviewer_usage(
+    tmp_path,
+) -> None:
+    session = repaired_session(submit=False)
+    failure_record = record("Claude Agent SDK failed: FAILED_MAX_TURNS")
+    error = RuntimeError("maximum turns reached")
+    error.sdk_messages = ({
+        "kind": "assistant",
+        "message_id": "review-1",
+        "parent_tool_use_id": "agent-review-1",
+        "usage": {"input_tokens": 120, "output_tokens": 30},
+    },)
+
+    write_failed_run_artifacts(
+        root=tmp_path / "run",
+        session=session,
+        record=failure_record,
+        baseline_layout_report={"blocking_count": 2},
+        error=error,
+    )
+
+    failure = json.loads((tmp_path / "run/logs/failure.json").read_text())
+    assert failure["status"] == "FAILED_MAX_TURNS"
+    assert failure["reviewer_tokens"] == 150
+    assert failure["total_tokens_with_reviewers"] == 150
+    assert failure["token_accounting_status"] == "partial"
 
 
 def test_failed_artifacts_preserve_preexisting_usage_ledger(tmp_path) -> None:

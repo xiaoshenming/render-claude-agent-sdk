@@ -107,16 +107,18 @@ Operating rules:
    about fragmented page composition, unstable typography, or inconsistent
    cross-page placement is not optional cosmetic polish. Once confirmed findings
    are addressed, re-read the edited layout block and explicitly verify each
-   supplied `normalization_contract` against the current source.
+   supplied page-normalization `required_invariant` against the current source.
    A `figure_fidelity_reviewer` issue may be edited only when its
    `repair_action` is `auto_repair`. Keep the edit inside its stated
    `repair_scope`. Never edit `evidence_only` or `human_review` observations,
    and never rewrite the whole figure merely to resemble the confirmed source.
-   `blocking_count` 0 only proves the collision probe is clean; it does not prove
-   page normalization. Submit only after that source audit, successful rendering,
-   and current layout inspection with `blocking_count` 0. Do not invent extra
-   aesthetic work beyond the supplied evidence. Submission is only a candidate
-   proposal to the independent outer assurance process.
+   `blocking_count` is follow-up evidence, not source authority. After successful
+   rendering and a current layout inspection, submit the newest render-passing
+   revision even when BBox observations remain; preserve those observations for
+   the next focused repair/assurance cycle and never recover R0 solely because
+   the count is positive. Do not invent extra aesthetic work beyond the supplied
+   evidence. Submission is only a candidate proposal to the independent outer
+   assurance process.
 9. If the available turn/tool budget ends before a safe candidate exists,
    return an honest held result. The Harness retains the immutable R0 and the
    best runnable revision for evidence; do not force a broken submission.

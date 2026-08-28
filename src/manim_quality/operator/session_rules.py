@@ -116,21 +116,25 @@ def best_validated_revision(
     validations: Mapping[str, object],
     inspections: Mapping[str, tuple[str, int]],
 ) -> dict[str, object] | None:
-    """Latest render-passing candidate with the lowest known blocking count.
+    """Best render-passing candidate without ever falling back to baseline.
 
-    The result is evidence, not a deliverable: it may still carry blocking
-    layout issues or lack a layout inspection entirely.
+    Valid layout evidence outranks missing evidence; fewer BBox findings rank
+    better, with newer revisions breaking ties. Positive BBox counts remain
+    follow-up evidence and never make R0 the retained source authority.
     """
 
-    best_key: tuple[int, int] | None = None
+    best_key: tuple[int, int, int] | None = None
     best_id: str | None = None
     for index, attempt in enumerate(attempts[1:], start=1):
         record = validations.get(attempt.revision_id)
         if record is None or not getattr(record, "passed", False):
             continue
         inspection = inspections.get(attempt.revision_id)
-        blocking = inspection[1] if inspection is not None else 10**9
-        key = (blocking, -index)
+        key = (
+            0 if inspection is not None else 1,
+            inspection[1] if inspection is not None else 0,
+            -index,
+        )
         if best_key is None or key < best_key:
             best_key = key
             best_id = attempt.revision_id
@@ -139,8 +143,15 @@ def best_validated_revision(
     inspection = inspections.get(best_id)
     return {
         "revision_id": best_id,
+        "code_hash": next(
+            item.code_hash for item in attempts if item.revision_id == best_id
+        ),
+        "render_passed": True,
         "blocking_count": None if inspection is None else inspection[1],
         "layout_inspected": inspection is not None,
+        "layout_follow_up_required": (
+            inspection is not None and inspection[1] > 0
+        ),
     }
 
 

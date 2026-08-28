@@ -281,7 +281,7 @@ def test_findings_can_be_added_in_logic_then_layout_batches() -> None:
     ]
 
 
-def test_submit_rejects_failed_validation_and_blocking_layout() -> None:
+def test_submit_rejects_failed_validation_but_keeps_bbox_follow_up() -> None:
     quality = session()
     quality.record_findings((finding(),))
     quality.apply_patch(
@@ -312,8 +312,9 @@ def test_submit_rejects_failed_validation_and_blocking_layout() -> None:
         fingerprint="sha256:" + "a" * 64,
         blocking_count=1,
     )
-    with pytest.raises(InvalidSessionTransition, match="blocking layout"):
-        blocked.submit("R0")
+    submitted = blocked.submit("R0")
+    assert submitted.revision_id == "R0"
+    assert blocked.layout_evidence("R0")["follow_up_required"] is True
 
 
 def test_layout_patch_may_rebuild_geometry_when_problem_is_preserved() -> None:
@@ -379,7 +380,7 @@ def test_leading_comment_problem_source_is_outside_patch_boundary() -> None:
         )
 
 
-def test_best_validated_revision_prefers_lowest_blocking_count() -> None:
+def test_best_validated_revision_prefers_lower_bbox_without_using_r0() -> None:
     quality = session()
     quality.record_findings(
         (
@@ -428,9 +429,80 @@ def test_best_validated_revision_prefers_lowest_blocking_count() -> None:
     evidence = quality.best_validated_evidence()
     assert evidence == {
         "revision_id": "R1",
+        "code_hash": quality.get_revision("R1").code_hash,
+        "render_passed": True,
         "blocking_count": 2,
         "layout_inspected": True,
+        "layout_follow_up_required": True,
     }
+
+
+def test_best_validated_revision_breaks_equal_bbox_tie_by_recency() -> None:
+    quality = session()
+    quality.record_findings((finding(),))
+    first = quality.apply_patch(
+        scope=PatchScope.LOGIC,
+        old_text="Line(LEFT, RIGHT)",
+        new_text="Line(LEFT, 2 * RIGHT)",
+        finding_ids=("logic-1",),
+    )
+    quality.record_validation(
+        revision_id=first.revision_id, passed=True, improved=True,
+        fingerprint="sha256:" + "1" * 64,
+    )
+    quality.record_layout_inspection(
+        revision_id=first.revision_id,
+        fingerprint="sha256:" + "2" * 64,
+        blocking_count=4,
+    )
+    quality.mark_solution_read(first.revision_id)
+    second = quality.apply_patch(
+        scope=PatchScope.LOGIC,
+        old_text="Line(LEFT, 2 * RIGHT)",
+        new_text="Line(LEFT, 3 * RIGHT)",
+        finding_ids=("logic-1",),
+    )
+    quality.record_validation(
+        revision_id=second.revision_id, passed=True, improved=True,
+        fingerprint="sha256:" + "3" * 64,
+    )
+    quality.record_layout_inspection(
+        revision_id=second.revision_id,
+        fingerprint="sha256:" + "4" * 64,
+        blocking_count=4,
+    )
+
+    assert quality.best_validated_evidence()["revision_id"] == "R2"
+
+
+def test_best_validated_revision_without_layout_uses_newest_rendered() -> None:
+    quality = session()
+    quality.record_findings((finding(),))
+    first = quality.apply_patch(
+        scope=PatchScope.LOGIC,
+        old_text="Line(LEFT, RIGHT)",
+        new_text="Line(LEFT, 2 * RIGHT)",
+        finding_ids=("logic-1",),
+    )
+    quality.record_validation(
+        revision_id=first.revision_id, passed=True, improved=True,
+        fingerprint="sha256:" + "5" * 64,
+    )
+    quality.mark_solution_read(first.revision_id)
+    second = quality.apply_patch(
+        scope=PatchScope.LOGIC,
+        old_text="Line(LEFT, 2 * RIGHT)",
+        new_text="Line(LEFT, 3 * RIGHT)",
+        finding_ids=("logic-1",),
+    )
+    quality.record_validation(
+        revision_id=second.revision_id, passed=True, improved=True,
+        fingerprint="sha256:" + "6" * 64,
+    )
+
+    evidence = quality.best_validated_evidence()
+    assert evidence["revision_id"] == "R2"
+    assert evidence["layout_inspected"] is False
 
 
 def test_best_validated_revision_ignores_failed_validation() -> None:

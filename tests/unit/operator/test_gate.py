@@ -106,7 +106,7 @@ def test_outer_gate_rejects_agent_submission_when_validation_fails() -> None:
     assert "independent_validation_failed" in result.reasons
 
 
-def test_outer_gate_rejects_remaining_blocking_overlap() -> None:
+def test_outer_gate_keeps_rendered_source_with_bbox_follow_up() -> None:
     gate = OuterAcceptanceGate(
         revision_validator=Validator(passed=True),
         layout_inspector=Layout(blocking_count=2),
@@ -114,10 +114,10 @@ def test_outer_gate_rejects_remaining_blocking_overlap() -> None:
 
     result = anyio.run(gate.evaluate, submitted_session())
 
-    assert result.decision is GateDecision.HOLD
-    assert result.final_revision is None
-    assert result.rollback_revision.revision_id == "R0"
-    assert "blocking_overlap_remaining" in result.reasons
+    assert result.decision is GateDecision.PROPOSED
+    assert result.final_revision.revision_id == "R0"
+    assert result.rollback_revision is None
+    assert result.layout_report["blocking_count"] == 2
 
 
 def test_outer_gate_fails_closed_on_malformed_layout_report() -> None:

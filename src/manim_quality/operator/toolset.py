@@ -150,20 +150,20 @@ class _Handlers:
         return _json_text({**receipt, **_budget_signal(self.session)})
 
     async def submit_revision(self, arguments):
-        del arguments
+        requested = bind_revision_id(arguments)
         current = self.session.current_revision
-        if (
-            self.candidate_path is not None
-            and self.candidate_path.read_text(encoding="utf-8") != current.code
-        ):
-            raise ValueError("native Edit must be validated before submission")
+        current = await self._sync_native_candidate(current.finding_ids)
+        if requested != current.revision_id:
+            raise ValueError("submit_revision must bind the current revision")
         revision = self.session.submit(current.revision_id)
+        layout = self.session.layout_evidence(revision.revision_id)
         return _json_text(
             {
                 "status": "submitted",
                 "submitted_revision_id": revision.revision_id,
                 "code_hash": revision.code_hash,
                 "problem_hash": self.session.problem_hash,
+                "layout_evidence": layout,
             }
         )
 
@@ -178,6 +178,13 @@ class _Handlers:
                 return current
             before = extract_solution(current.code)
             after = extract_solution(edited)
+            if before.source == after.source:
+                # Native Edit touched scaffolding outside the owned Solution.
+                # Discard it and continue with the immutable current revision;
+                # do not manufacture a no-op patch or corrupt the state machine.
+                self.candidate_path.write_text(current.code, encoding="utf-8")
+                _require_current_binding(current, finding_ids)
+                return current
             scope = _native_edit_scope(self.session, finding_ids)
             return self.session.apply_patch(
                 scope=scope,
