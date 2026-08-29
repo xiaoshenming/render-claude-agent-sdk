@@ -42,6 +42,14 @@ class ManimRenderer:
         partials_before = _partial_movies(media)
         started = time.perf_counter()
         argv = self._render_command(candidate, media)
+        environment = {
+            **self._environment,
+            "MANIM_COMBINED_BBOX_PATH": str(
+                revision_dir / "combined_bbox_probe.json"),
+            "MANIM_COMBINED_GEOMETRY_PATH": str(
+                revision_dir / "combined_geometry_sidecar.json"),
+            "MANIM_COMBINED_SCENE": self._scene,
+        }
         try:
             result = run_to_artifacts(
                 argv,
@@ -49,7 +57,7 @@ class ManimRenderer:
                 timeout_seconds=self._timeout,
                 stdout_path=revision_dir / "render.stdout.log",
                 stderr_path=revision_dir / "render.stderr.log",
-                env_overrides=self._environment,
+                env_overrides=environment,
             )
         except (OSError, subprocess.TimeoutExpired) as error:
             return _failed(

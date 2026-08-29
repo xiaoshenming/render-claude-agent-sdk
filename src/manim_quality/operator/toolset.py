@@ -174,7 +174,10 @@ class _Handlers:
                 return current
             edited = self.candidate_path.read_text(encoding="utf-8")
             if edited == current.code:
-                _require_current_binding(current, finding_ids)
+                # The native Edit has not changed since the last managed tool.
+                # Treat stale finding_ids as attribution metadata only and
+                # return the current SHA receipt instead of forcing another
+                # Agent turn or another Docker verification.
                 return current
             before = extract_solution(current.code)
             after = extract_solution(edited)
@@ -183,7 +186,6 @@ class _Handlers:
                 # Discard it and continue with the immutable current revision;
                 # do not manufacture a no-op patch or corrupt the state machine.
                 self.candidate_path.write_text(current.code, encoding="utf-8")
-                _require_current_binding(current, finding_ids)
                 return current
             scope = _native_edit_scope(self.session, finding_ids)
             return self.session.apply_patch(
@@ -223,17 +225,6 @@ def _native_edit_scope(session, finding_ids: tuple[str, ...]) -> PatchScope:
         if FindingCategory.LOGIC in categories
         else PatchScope.LAYOUT
     )
-
-
-def _require_current_binding(current, finding_ids: tuple[str, ...]) -> None:
-    if current.revision_id == "R0":
-        if finding_ids:
-            raise ValueError("R0 validation must use empty finding_ids")
-        return
-    if finding_ids != current.finding_ids:
-        raise ValueError(
-            "finding_ids must exactly match the current native Edit revision"
-        )
 
 
 def _validation_receipt(

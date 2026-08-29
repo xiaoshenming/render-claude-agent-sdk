@@ -134,7 +134,10 @@ class _CountingRenderer:
         del video_path
         self.calls = 0
 
-    def render(self, revision_dir: Path, candidate: Path) -> RenderResult:
+    def render(
+        self, revision_dir: Path, candidate: Path, code_hash: str | None = None,
+    ) -> RenderResult:
+        del code_hash
         self.calls += 1
         time.sleep(0.05)
         video = revision_dir / "verified_video.mp4"

@@ -20,6 +20,7 @@ from .models import ProbeResult, RenderResult
 from .probe import BBoxProbe
 from .render import ManimRenderer
 from .validation_report import validation_report
+from .verification_renderer import VerificationRenderer
 from .workspace import RevisionWorkspace
 
 
@@ -42,7 +43,7 @@ class RuntimeToolchain:
         # Cache scope is one toolchain = one problem; same-revision renders
         # are serialized by self._lock, so the shared media dir never sees
         # concurrent writers.
-        self._renderer = ManimRenderer(
+        renderer = ManimRenderer(
             source_workspace=source_workspace,
             python_executable=python_executable,
             environment=environment,
@@ -54,6 +55,7 @@ class RuntimeToolchain:
                 if render_cache else None
             ),
         )
+        self._renderer = VerificationRenderer(renderer, render_cache_dir)
         self._probe = BBoxProbe(
             source_workspace=source_workspace,
             runner_path=probe_runner,
@@ -79,7 +81,8 @@ class RuntimeToolchain:
         if cached is not None:
             return cached
         revision_dir, candidate = self._workspaces.materialize(revision)
-        result = self._renderer.render(revision_dir, candidate)
+        result = self._renderer.render(
+            revision_dir, candidate, revision.code_hash)
         self._renders[revision.code_hash] = result
         return result
 

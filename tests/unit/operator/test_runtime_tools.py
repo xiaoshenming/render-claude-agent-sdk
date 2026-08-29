@@ -67,6 +67,76 @@ def test_compact_layout_report_returns_only_bounded_issue_facts() -> None:
     assert result["issues"][0]["objects"][0]["path"] == "mobjects.0"
 
 
+def test_bbox_probe_reuses_combined_real_render_evidence(tmp_path: Path) -> None:
+    from manim_quality.operator.runtime_tools.probe import _combined_result
+
+    revision = tmp_path / "R1"
+    revision.mkdir()
+    payload = {
+        "capture_mode": "combined_real_render",
+        "scene": "Solution",
+        "error_count": 0,
+        "snapshot_count": 2,
+        "top_overlaps": [],
+        "top_bounds_violations": [],
+    }
+    geometry = {
+        "version": 1,
+        "capture_mode": "combined_real_render",
+        "captures": [],
+    }
+    (revision / "combined_bbox_probe.json").write_text(
+        json.dumps(payload), encoding="utf-8")
+    (revision / "combined_geometry_sidecar.json").write_text(
+        json.dumps(geometry), encoding="utf-8")
+
+    result = _combined_result(revision, revision / "bbox_probe.json")
+
+    assert result is not None and result.ok is True
+    assert result.payload["capture_mode"] == "combined_real_render"
+    assert (revision / "geometry_sidecar.json").is_file()
+
+
+def test_verification_receipt_reuses_video_and_bbox_across_sessions(
+    tmp_path: Path,
+) -> None:
+    from manim_quality.operator.runtime_tools.models import RenderResult
+    from manim_quality.operator.runtime_tools.verification_renderer import (
+        VerificationRenderer,
+    )
+
+    class Renderer:
+        calls = 0
+
+        def render(self, revision_dir, candidate):
+            self.calls += 1
+            revision_dir.mkdir(parents=True, exist_ok=True)
+            video = revision_dir / "verified_video.mp4"
+            video.write_bytes(b"video")
+            for name in (
+                "combined_bbox_probe.json",
+                "combined_geometry_sidecar.json",
+            ):
+                (revision_dir / name).write_text("{}", encoding="utf-8")
+            return RenderResult(
+                True, revision_dir, candidate, video, 3.0, None,
+                elapsed_ms=100,
+            )
+
+    renderer = Renderer()
+    code_hash = "sha256:" + "b" * 64
+    first = VerificationRenderer(renderer, tmp_path / "cache")
+    first.render(tmp_path / "session-1", tmp_path / "candidate.py", code_hash)
+    second = VerificationRenderer(renderer, tmp_path / "cache")
+    result = second.render(
+        tmp_path / "session-2", tmp_path / "candidate.py", code_hash)
+
+    assert renderer.calls == 1
+    assert result.elapsed_ms == 0
+    assert result.video_path.read_bytes() == b"video"
+    assert (tmp_path / "session-2/combined_bbox_probe.json").is_file()
+
+
 def test_detached_render_groups_are_tracked_and_reapable(tmp_path) -> None:
     """A supervisor group-kill cannot reach detached render sessions, so
     live groups must be registered for explicit reaping."""
@@ -120,6 +190,7 @@ def test_render_cache_flag_controls_manim_caching(tmp_path) -> None:
 
     def fake_run(argv, **kwargs):
         captured["argv"] = argv
+        captured["env"] = kwargs.get("env_overrides")
         raise OSError("stop before real subprocess")
 
     import manim_quality.operator.runtime_tools.render as render_module
@@ -134,6 +205,8 @@ def test_render_cache_flag_controls_manim_caching(tmp_path) -> None:
         cold.render(tmp_path / "R1", tmp_path / "c.py")
         assert "--disable_caching" in captured["argv"]
         assert str(tmp_path / "R1" / "media") in captured["argv"]
+        assert captured["env"]["MANIM_COMBINED_BBOX_PATH"].endswith(
+            "R1/combined_bbox_probe.json")
 
         cached = ManimRenderer(
             source_workspace=workspace,

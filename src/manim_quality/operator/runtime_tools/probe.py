@@ -34,6 +34,9 @@ class BBoxProbe:
 
     def inspect(self, revision_dir: Path, candidate: Path) -> ProbeResult:
         raw_path = revision_dir / "bbox_probe.json"
+        combined = _combined_result(revision_dir, raw_path)
+        if combined is not None:
+            return combined
         environment = {
             **self._environment,
             "MANIM_LAYOUT_PROBE_MEDIA_DIR": str(revision_dir / "media"),
@@ -71,3 +74,30 @@ class BBoxProbe:
         if result.returncode != 0 or int(payload.get("error_count") or 0) > 0:
             return ProbeResult(False, raw_path, payload, "bbox_probe_not_ok")
         return ProbeResult(True, raw_path, payload, None)
+
+
+def _combined_result(revision_dir: Path, raw_path: Path) -> ProbeResult | None:
+    source = revision_dir / "combined_bbox_probe.json"
+    sidecar = revision_dir / "combined_geometry_sidecar.json"
+    if not source.is_file() or not sidecar.is_file():
+        return None
+    try:
+        payload = json.loads(source.read_text(encoding="utf-8"))
+        geometry = json.loads(sidecar.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    if (
+        not isinstance(payload, dict)
+        or payload.get("capture_mode") != "combined_real_render"
+        or int(payload.get("snapshot_count") or 0) <= 0
+        or int(payload.get("error_count") or 0) > 0
+        or not isinstance(geometry, dict)
+        or geometry.get("capture_mode") != "combined_real_render"
+    ):
+        return None
+    raw_path.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    target = revision_dir / "geometry_sidecar.json"
+    target.write_text(
+        json.dumps(geometry, ensure_ascii=False, indent=2), encoding="utf-8")
+    return ProbeResult(True, raw_path, payload, None)
