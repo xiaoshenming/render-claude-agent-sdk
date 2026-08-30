@@ -21,7 +21,7 @@ PROMPTS = Path(__file__).with_name("prompts")
 STANDARD_SPECS = (
     ("math_geometry_reviewer", "math_geometry_reviewer_v1.md", "v3"),
     ("animation_lifecycle_reviewer", "animation_lifecycle_reviewer_v1.md", "v3"),
-    ("visual_layout_reviewer", "visual_layout_reviewer_v1.md", "v2"),
+    ("visual_layout_reviewer", "visual_layout_reviewer_v1.md", "v3"),
 )
 
 

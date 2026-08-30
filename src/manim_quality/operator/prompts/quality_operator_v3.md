@@ -86,6 +86,11 @@ Operating rules:
      individual children after the page has been normalized;
    - preserve equation-anchor helpers, mathematical content, diagram geometry,
      reveal order, and lifecycle ownership.
+   - typography repair is large-first: preserve the larger stable same-role
+     size tier and raise small rows through semantic wrapping, relation stacks,
+     and balanced pagination. Do not normalize by shrinking every large row to
+     the previous minimum, and do not trade readable size for large blank areas.
+     Treat 18 at 854x480 only as an emergency floor, never the target size.
    Complete this normalization across every listed page before the first
    validation. Do not spend a candidate revision on a wrapper-only intermediate
    edit or comment-only change.

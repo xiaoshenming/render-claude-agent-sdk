@@ -56,6 +56,14 @@ Reviewers own those concerns.
    - `cross_page_continuity`: related pages should reuse the same top edge,
      content width, body-size policy, and fitting strategy unless the teaching
      structure clearly changes.
+   When `<supplemental_note>` contains `batchops.runtime-typography.v1`, treat
+   it as evidence captured during the same real 480P render. Distinguish
+   right-board body/formulas from diagram labels and ticks. Use the larger
+   stable same-role tier or P75 as the readability target: improve small rows
+   through semantic wrapping, relation stacks, or balanced pagination. Do not
+   recommend shrinking all large rows to the former minimum. A size near 18 is
+   an emergency floor, not the target, and large blank regions are not a valid
+   typography repair. This evidence remains advisory and fail-open.
    A shared scale across related pages is preferred because it preserves visual
    continuity; do not flag an outlier-width risk unless source constants prove
    an unreadable final size or deterministic layout evidence is supplied.

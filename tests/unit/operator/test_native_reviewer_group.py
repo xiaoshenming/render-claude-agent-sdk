@@ -93,7 +93,7 @@ def test_reviewers_use_one_parent_with_four_native_subagents(tmp_path) -> None:
         "animation_lifecycle_reviewer": (
             "parallel-animation_lifecycle_reviewer-v3"
         ),
-        "visual_layout_reviewer": "parallel-visual_layout_reviewer-v2",
+        "visual_layout_reviewer": "parallel-visual_layout_reviewer-v3",
         "figure_fidelity_reviewer": "parallel-figure_fidelity_reviewer-v5",
     }
     assert "标准推导，所以选择B。" in prompts["math_geometry_reviewer"]
@@ -103,6 +103,10 @@ def test_reviewers_use_one_parent_with_four_native_subagents(tmp_path) -> None:
     assert "求解。" not in prompts["animation_lifecycle_reviewer"]
     assert "标准推导" not in prompts["animation_lifecycle_reviewer"]
     assert "关注右侧安全区" in prompts["visual_layout_reviewer"]
+    assert "batchops.runtime-typography.v1" in prompts["visual_layout_reviewer"]
+    assert "stable same-role tier or P75" in prompts[
+        "visual_layout_reviewer"
+    ]
     assert "标准推导" not in prompts["visual_layout_reviewer"]
     assert "五段式讲解。" not in prompts["visual_layout_reviewer"]
     assert "保持原图方向" in prompts["figure_fidelity_reviewer"]

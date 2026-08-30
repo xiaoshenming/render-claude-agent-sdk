@@ -132,6 +132,9 @@ def test_parent_requires_real_page_normalization_before_submit():
     assert "RIGHT_X` is the left boundary" in value
     assert "page-normalization `required_invariant`" in value
     assert "`blocking_count` is follow-up evidence" in value
+    assert "typography repair is large-first" in value
+    assert "Do not normalize by shrinking every large row" in value
+    assert "18 at 854x480 only as an emergency floor" in value
 
 
 def test_coder_finding_schema_hides_audit_bookkeeping():
