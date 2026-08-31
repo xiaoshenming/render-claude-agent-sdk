@@ -156,12 +156,14 @@ def _options(
     deepseek = "api.deepseek.com/anthropic" in provider_env.get(
         "ANTHROPIC_BASE_URL", ""
     )
+    model = str(request.profile.model or "").strip().lower()
+    relaxed_output = deepseek or model.startswith(("glm-", "zhipu/glm-"))
     thinking = None
     if deepseek:
         thinking = ThinkingConfigDisabled(type="disabled")
     output_schema = (
         relaxed_provider_schema(request.output_schema)
-        if deepseek else thaw_json_object(request.output_schema)
+        if relaxed_output else thaw_json_object(request.output_schema)
     )
     return ClaudeAgentOptions(
         tools=tools,

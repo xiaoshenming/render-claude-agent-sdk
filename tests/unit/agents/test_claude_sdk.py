@@ -239,6 +239,47 @@ def test_sdk_backend_binds_options_hooks_rounds_and_usage(
     ] == str(candidate.resolve())
 
 
+def test_glm_uses_relaxed_provider_schema(tmp_path: Path) -> None:
+    candidate = tmp_path / "candidate.py"
+    candidate.write_text("pass\n", encoding="utf-8")
+    captured = {}
+
+    async def fake_query(*, prompt, options):
+        captured["options"] = options
+        yield AssistantMessage(
+            content=[],
+            model="glm-5.3-flash",
+            message_id="message-1",
+            usage={"input_tokens": 40, "output_tokens": 10},
+        )
+        yield result_message(
+            turns=1,
+            usage={"input_tokens": 40, "output_tokens": 10},
+        )
+
+    run_request = replace(
+        request(tmp_path, candidate),
+        profile=reviewer_profile(
+            model="glm-5.3-flash", prompt_version="logic-v1"
+        ),
+        output_schema={
+            "type": "object",
+            "properties": {
+                "decision": {"type": "string", "maxLength": 5},
+            },
+            "required": ["decision"],
+            "additionalProperties": False,
+        },
+    )
+    AgentRuntime(
+        ClaudeSdkBackend(query_func=fake_query), MemorySink(), limits()
+    ).run(run_request)
+
+    schema = captured["options"].output_format["schema"]
+    assert schema["additionalProperties"] is True
+    assert "maxLength" not in schema["properties"]["decision"]
+
+
 def test_sdk_backend_mounts_only_explicit_in_process_read_tools(
     tmp_path: Path,
 ) -> None:
