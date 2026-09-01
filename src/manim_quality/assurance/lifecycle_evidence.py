@@ -45,6 +45,39 @@ def detached_transition_parts(source_path: Path | None) -> tuple[dict, ...]:
     return tuple(sorted(findings, key=_finding_key))
 
 
+def persistent_result_placeholders(source_path: Path | None) -> tuple[dict, ...]:
+    if source_path is None or not source_path.is_file():
+        return ()
+    try:
+        tree = ast.parse(source_path.read_text(encoding="utf-8"))
+    except (OSError, SyntaxError):
+        return ()
+    construct = _solution_construct(tree)
+    if construct is None:
+        return ()
+    assignments = _assignments(construct)
+    placeholders = {
+        name for name, value in assignments.items() if _contains_placeholder(value)
+    }
+    results = {name for name, value in assignments.items() if _is_result_row(value)}
+    findings = []
+    for call in _calls_named(construct, "make_calc_stage"):
+        plan = _layout_plan(call)
+        if not results.intersection(plan):
+            continue
+        for name in sorted(placeholders.intersection(plan)):
+            findings.append(
+                {
+                    "category": "persistent_result_placeholder",
+                    "object_name": name,
+                    "placeholder_line": assignments[name].lineno,
+                    "stage_line": call.lineno,
+                    "result_objects": sorted(results.intersection(plan)),
+                }
+            )
+    return tuple(findings)
+
+
 def _solution_construct(tree: ast.AST) -> ast.FunctionDef | None:
     for node in ast.iter_child_nodes(tree):
         if not isinstance(node, ast.ClassDef) or node.name != "Solution":
@@ -76,6 +109,46 @@ def _group_assignments(function: ast.FunctionDef) -> dict[str, tuple[str, ...]]:
             item for item in (_name(argument) for argument in value.args) if item
         )
     return groups
+
+
+def _assignments(function: ast.FunctionDef) -> dict[str, ast.AST]:
+    rows = {}
+    for node in ast.walk(function):
+        if not isinstance(node, (ast.Assign, ast.AnnAssign)):
+            continue
+        target = node.targets[0] if isinstance(node, ast.Assign) else node.target
+        name = _name(target)
+        if name and node.value is not None:
+            rows[name] = node.value
+    return rows
+
+
+def _contains_placeholder(node: ast.AST) -> bool:
+    markers = (r"\Box", r"\underline", r"\qquad")
+    return any(
+        isinstance(item, ast.Constant)
+        and isinstance(item.value, str)
+        and any(marker in item.value for marker in markers)
+        for item in ast.walk(node)
+    )
+
+
+def _is_result_row(node: ast.AST) -> bool:
+    return isinstance(node, ast.Call) and any(
+        item.arg == "role"
+        and isinstance(item.value, ast.Constant)
+        and item.value.value == "result"
+        for item in node.keywords
+    )
+
+
+def _layout_plan(call: ast.Call) -> set[str]:
+    value = next(
+        (item.value for item in call.keywords if item.arg == "layout_plan"), None
+    )
+    if not isinstance(value, (ast.List, ast.Tuple)):
+        return set()
+    return {name for name in (_name(item) for item in value.elts) if name}
 
 
 def _part_uses(function: ast.FunctionDef) -> dict[tuple[str, str], tuple[int, ...]]:

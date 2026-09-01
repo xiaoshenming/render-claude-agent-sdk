@@ -191,6 +191,35 @@ class Solution:
     assert report.risk_codes == ()
 
 
+def test_layout_detects_placeholder_persisting_with_final_result(tmp_path) -> None:
+    sample = source_case(tmp_path, r'''
+class Solution:
+    def construct(self):
+        row_blank = self.make_row(r"2(a + \Box)(a - \Box)")
+        row_result = self.make_row(r"2(a + 1)(a - 1)", role="result")
+        self.make_calc_stage(layout_plan=(row_blank, row_result))
+''')
+    write_clean_layout(sample)
+
+    report = inspect_layout(sample)
+
+    assert report.status == "risk"
+    assert report.risk_codes == ("persistent_result_placeholder",)
+    assert report.evidence[0]["lifecycle_findings"][0]["object_name"] == "row_blank"
+
+
+def test_layout_allows_placeholder_without_persistent_result_page(tmp_path) -> None:
+    sample = source_case(tmp_path, r'''
+class Solution:
+    def construct(self):
+        row_blank = self.make_row(r"2(a + \Box)(a - \Box)")
+        self.show_equation(row_blank)
+''')
+    write_clean_layout(sample)
+
+    assert inspect_layout(sample).status == "complete"
+
+
 def test_code_review_detects_wrong_derived_function_coefficient(tmp_path) -> None:
     source = tmp_path / "main.py"
     source.write_text(

@@ -166,6 +166,24 @@ def test_label_inside_safety_margin_of_an_edge_is_never_downgraded() -> None:
     assert evaluate_downgrade(issue, sidecar) is None
 
 
+def test_narrow_centered_label_near_edge_is_not_downgraded() -> None:
+    issue = _issue(
+        shape_class="Rectangle",
+        shape_path="mobjects.4.3",
+        shape_bbox={"left": -0.21, "right": 0.21, "top": 0.58, "bottom": -0.58},
+        text_bbox={"left": -0.19, "right": 0.19, "top": 0.12, "bottom": -0.12},
+    )
+    sidecar = _sidecar(
+        11,
+        "mobjects.4.3",
+        {"type": "polygon", "points": [
+            [-0.21, -0.58], [0.21, -0.58], [0.21, 0.58], [-0.21, 0.58],
+        ]},
+    )
+
+    assert evaluate_downgrade(issue, sidecar) is None
+
+
 def test_missing_vertex_data_fails_closed() -> None:
     issue = _issue(**_BIG_TRIANGLE)
 

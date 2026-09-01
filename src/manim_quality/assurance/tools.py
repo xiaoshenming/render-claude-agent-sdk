@@ -6,7 +6,7 @@ import json
 import subprocess
 from pathlib import Path
 
-from .lifecycle_evidence import detached_transition_parts
+from .layout_tool import inspect_layout as inspect_layout
 from .models import AssuranceCase, ToolReport
 
 
@@ -26,10 +26,7 @@ def inspect_artifact(case: AssuranceCase) -> ToolReport:
         **probe,
     }
     risks = list(risks)
-    if (
-        case.expected_video_sha256
-        and evidence["sha256"] != case.expected_video_sha256
-    ):
+    if case.expected_video_sha256 and evidence["sha256"] != case.expected_video_sha256:
         risks.append("final_video_sha_mismatch")
     return _report(
         "inspect_artifact",
@@ -59,9 +56,7 @@ def inspect_execution(case: AssuranceCase) -> ToolReport:
 def inspect_code_review(case: AssuranceCase) -> ToolReport:
     source_evidence, source_risks = _inspect_source(case)
     findings = (
-        ()
-        if source_evidence
-        else _findings(case, {"logic", "lifecycle", "code"})
+        () if source_evidence else _findings(case, {"logic", "lifecycle", "code"})
     )
     risks = list(source_risks)
     if _blocking(findings):
@@ -71,52 +66,6 @@ def inspect_code_review(case: AssuranceCase) -> ToolReport:
         "risk" if risks else ("complete" if source_evidence else "incomplete"),
         tuple(risks),
         *source_evidence,
-        *findings,
-    )
-
-
-def inspect_layout(case: AssuranceCase) -> ToolReport:
-    lifecycle = detached_transition_parts(case.source_path)
-    prior = _json(case.log_dir / "layout_evidence.json")
-    if prior:
-        evidence = {
-            "id": f"{case.key}:quality-layout",
-            "source": "quality_agent_reused_bbox",
-            **prior,
-            "lifecycle_findings": list(lifecycle),
-        }
-        if not prior.get("verified") or prior.get("error"):
-            return _report(
-                "inspect_layout", "incomplete", ("quality_layout_unverified",),
-                evidence,
-            )
-        blocking = int(prior.get("blocking_count") or 0)
-        risks = []
-        if blocking:
-            risks.append("blocking_layout_finding")
-        if lifecycle:
-            risks.append("detached_transition_part")
-        return _report(
-            "inspect_layout",
-            "risk" if risks else "complete",
-            tuple(risks),
-            evidence,
-        )
-    findings = _findings(case, {"layout", "overlap", "bbox"})
-    risks = []
-    if _blocking(findings):
-        risks.append("blocking_layout_finding")
-    if lifecycle:
-        risks.append("detached_transition_part")
-    evidence = ({
-        "id": f"{case.key}:lifecycle-layout",
-        "lifecycle_findings": list(lifecycle),
-    },) if lifecycle else ()
-    return _report(
-        "inspect_layout",
-        "risk" if risks else ("complete" if findings else "incomplete"),
-        tuple(risks),
-        *evidence,
         *findings,
     )
 
@@ -178,9 +127,7 @@ def _inspect_source(case: AssuranceCase) -> tuple[tuple[dict, ...], tuple[str, .
         tree = ast.parse(text)
     except SyntaxError:
         risks.append("final_source_syntax_error")
-    derived_mismatches = (
-        _derived_parameter_mismatches(tree) if tree is not None else ()
-    )
+    derived_mismatches = _derived_parameter_mismatches(tree) if tree is not None else ()
     if derived_mismatches:
         risks.append("derived_function_parameter_mismatch")
     evidence = {
