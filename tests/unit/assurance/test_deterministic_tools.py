@@ -118,6 +118,79 @@ def test_reused_quality_bbox_keeps_blocking_finding(tmp_path) -> None:
     assert report.risk_codes == ("blocking_layout_finding",)
 
 
+def test_layout_detects_detached_part_used_before_semantic_transition(
+    tmp_path,
+) -> None:
+    sample = source_case(tmp_path, """
+class Solution:
+    def construct(self):
+        square = Polygon()
+        line_ad = Line()
+        view_flat = VGroup(square)
+        view_3d = VGroup()
+        self.adopt_input_visual(
+            view_flat,
+            parts={"square": square, "line_ad": line_ad},
+        )
+        self.safe_indicate(self.get_source_part(view_flat, "line_ad"))
+        self.transition_semantic_view(view_flat, view_3d)
+""")
+    write_clean_layout(sample)
+
+    report = inspect_layout(sample)
+
+    assert report.status == "risk"
+    assert report.risk_codes == ("detached_transition_part",)
+    assert report.evidence[0]["lifecycle_findings"] == [{
+        "category": "detached_transition_part",
+        "root": "view_flat",
+        "part": "line_ad",
+        "object_name": "line_ad",
+        "registration_line": 8,
+        "use_lines": [12],
+        "transition_line": 13,
+    }]
+
+
+def test_layout_allows_registered_part_owned_by_transition_root(tmp_path) -> None:
+    sample = source_case(tmp_path, """
+class Solution:
+    def construct(self):
+        square = Polygon()
+        line_ad = Line()
+        view_flat = VGroup(square, line_ad)
+        view_3d = VGroup()
+        self.adopt_input_visual(view_flat, parts={"line_ad": line_ad})
+        self.safe_indicate(self.get_source_part(view_flat, "line_ad"))
+        self.transition_semantic_view(view_flat, view_3d)
+""")
+    write_clean_layout(sample)
+
+    report = inspect_layout(sample)
+
+    assert report.status == "complete"
+    assert report.risk_codes == ()
+
+
+def test_layout_ignores_detached_metadata_part_without_transition_use(
+    tmp_path,
+) -> None:
+    sample = source_case(tmp_path, """
+class Solution:
+    def construct(self):
+        square = Polygon()
+        helper = Line()
+        view_flat = VGroup(square)
+        self.adopt_input_visual(view_flat, parts={"helper": helper})
+""")
+    write_clean_layout(sample)
+
+    report = inspect_layout(sample)
+
+    assert report.status == "complete"
+    assert report.risk_codes == ()
+
+
 def test_code_review_detects_wrong_derived_function_coefficient(tmp_path) -> None:
     source = tmp_path / "main.py"
     source.write_text(
@@ -145,6 +218,27 @@ make_mini_fig(None, "A", -0.6, 0.3, -0.8)
     mismatch = report.evidence[0]["derived_parameter_mismatches"][0]
     assert mismatch["expected"] == -0.18
     assert mismatch["actual"] == -0.8
+
+
+def source_case(tmp_path, text: str) -> AssuranceCase:
+    source = tmp_path / "main.py"
+    source.write_text(text, encoding="utf-8")
+    sample = case(tmp_path)
+    return AssuranceCase(
+        key=sample.key,
+        question=sample.question,
+        video_path=sample.video_path,
+        log_dir=sample.log_dir,
+        source_path=source,
+    )
+
+
+def write_clean_layout(sample: AssuranceCase) -> None:
+    (sample.log_dir / "layout_evidence.json").write_text(json.dumps({
+        "verified": True,
+        "blocking_count": 0,
+        "probe_summary": {"snapshot_count": 1},
+    }), encoding="utf-8")
 
 
 def test_narration_comparison_matches_source_and_subtitle(tmp_path) -> None:

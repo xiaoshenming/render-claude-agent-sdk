@@ -6,6 +6,7 @@ import json
 import subprocess
 from pathlib import Path
 
+from .lifecycle_evidence import detached_transition_parts
 from .models import AssuranceCase, ToolReport
 
 
@@ -75,12 +76,14 @@ def inspect_code_review(case: AssuranceCase) -> ToolReport:
 
 
 def inspect_layout(case: AssuranceCase) -> ToolReport:
+    lifecycle = detached_transition_parts(case.source_path)
     prior = _json(case.log_dir / "layout_evidence.json")
     if prior:
         evidence = {
             "id": f"{case.key}:quality-layout",
             "source": "quality_agent_reused_bbox",
             **prior,
+            "lifecycle_findings": list(lifecycle),
         }
         if not prior.get("verified") or prior.get("error"):
             return _report(
@@ -88,18 +91,32 @@ def inspect_layout(case: AssuranceCase) -> ToolReport:
                 evidence,
             )
         blocking = int(prior.get("blocking_count") or 0)
+        risks = []
+        if blocking:
+            risks.append("blocking_layout_finding")
+        if lifecycle:
+            risks.append("detached_transition_part")
         return _report(
             "inspect_layout",
-            "risk" if blocking else "complete",
-            ("blocking_layout_finding",) if blocking else (),
+            "risk" if risks else "complete",
+            tuple(risks),
             evidence,
         )
     findings = _findings(case, {"layout", "overlap", "bbox"})
-    risks = ("blocking_layout_finding",) if _blocking(findings) else ()
+    risks = []
+    if _blocking(findings):
+        risks.append("blocking_layout_finding")
+    if lifecycle:
+        risks.append("detached_transition_part")
+    evidence = ({
+        "id": f"{case.key}:lifecycle-layout",
+        "lifecycle_findings": list(lifecycle),
+    },) if lifecycle else ()
     return _report(
         "inspect_layout",
         "risk" if risks else ("complete" if findings else "incomplete"),
-        risks,
+        tuple(risks),
+        *evidence,
         *findings,
     )
 
