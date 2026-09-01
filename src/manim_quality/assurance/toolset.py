@@ -127,6 +127,9 @@ class AssuranceToolset:
             )
 
     async def _run(self, name: str, fn):
+        cached = self.reports.get(name)
+        if cached is not None:
+            return json.dumps(cached.as_dict(), ensure_ascii=False, sort_keys=True)
         report = fn(self.case)
         if hasattr(report, "__await__"):
             report = await report

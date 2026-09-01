@@ -4,8 +4,10 @@ import json
 from dataclasses import dataclass, replace
 from pathlib import Path
 
+from manim_quality.agents._runtime_models import AgentRunFailed
 from manim_quality.agents.profile import assurance_profile
 from manim_quality.agents.runtime import AgentRunRequest, AgentRuntime
+from manim_quality.agents.usage import AgentCallRecord
 from manim_quality.operator.reviewers import run_reviewers
 
 from .contracts import ASSURANCE_OUTPUT_SCHEMA
@@ -30,6 +32,7 @@ class FinalAssuranceResult:
     reviewers: tuple[dict[str, object], ...]
     call_record: object
     parent_call_record: object
+    parent_attempt_records: tuple[AgentCallRecord, ...]
     raw_assessment: RawAgentAssessment
     policy_assessment: PolicyAdjustedAssessment
 
@@ -88,22 +91,111 @@ class FinalAssuranceAgent:
             subagents=(),
             effort="low",
         )
-        result = self.runtime.run(request)
+        result, parent_attempts = _run_parent_with_protocol_retry(
+            self.runtime, request, output_dir
+        )
         reports = {
             name: report.as_dict() for name, report in tools.reports.items()
         }
         raw = RawAgentAssessment(tools.normalize_output(result.structured_output))
         adjusted = apply_assurance_policy(
             raw, reports, case.key, reviewers=reviewers)
+        parent_record = _merge_parent_attempt_records(parent_attempts)
         return FinalAssuranceResult(
             output=adjusted.output,
             reports=reports,
             reviewers=reviewers,
-            call_record=_merge_reviewer_records(result.record, reviewer_records),
-            parent_call_record=result.record,
+            call_record=_merge_reviewer_records(parent_record, reviewer_records),
+            parent_call_record=parent_record,
+            parent_attempt_records=parent_attempts,
             raw_assessment=raw,
             policy_assessment=adjusted,
         )
+
+
+_RETRYABLE_PARENT_PROTOCOL_ERRORS = (
+    "sdk result has no structured output object",
+    "structured output correction limit exceeded",
+)
+
+
+def _run_parent_with_protocol_retry(runtime, request, output_dir):
+    """Retry only a malformed Final Assurance parent response once.
+
+    Reviewers have already completed before this boundary.  The retry reuses
+    the same immutable prompt, schema, workspace and read-only toolset; it does
+    not re-enter Render or the Quality Coder.
+    """
+    attempts: list[AgentCallRecord] = []
+    for attempt in (1, 2):
+        current = request if attempt == 1 else replace(
+            request, run_id=f"{request.run_id}-protocol-retry-1"
+        )
+        try:
+            result = runtime.run(current)
+        except AgentRunFailed as error:
+            attempts.append(error.record)
+            _record_parent_attempt(output_dir, attempt, error.record)
+            if attempt == 1 and _is_retryable_parent_protocol_error(error.record):
+                continue
+            raise
+        attempts.append(result.record)
+        _record_parent_attempt(output_dir, attempt, result.record)
+        return result, tuple(attempts)
+    raise AssertionError("bounded Final Assurance retry exhausted")
+
+
+def _is_retryable_parent_protocol_error(record: AgentCallRecord) -> bool:
+    error = str(record.error or "").lower()
+    return any(marker in error for marker in _RETRYABLE_PARENT_PROTOCOL_ERRORS)
+
+
+def _record_parent_attempt(
+    output_dir: Path, attempt: int, record: AgentCallRecord
+) -> None:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    usage = record.usage
+    payload = {
+        "attempt": attempt,
+        "run_id": record.run_id,
+        "status": "failed" if record.error else "succeeded",
+        "error": record.error,
+        "elapsed_ms": record.elapsed_ms,
+        "turns": record.turns,
+        "tool_calls": len(record.tool_calls),
+        "usage": {
+            "input_tokens": usage.input_tokens,
+            "output_tokens": usage.output_tokens,
+            "cache_read_tokens": usage.cache_read_tokens,
+            "cache_write_tokens": usage.cache_write_tokens,
+        },
+    }
+    with (output_dir / "parent-attempts.jsonl").open("a", encoding="utf-8") as stream:
+        stream.write(json.dumps(payload, ensure_ascii=False, sort_keys=True) + "\n")
+
+
+def _merge_parent_attempt_records(
+    attempts: tuple[AgentCallRecord, ...],
+) -> AgentCallRecord:
+    record = attempts[-1]
+    for previous in attempts[:-1]:
+        record = replace(
+            record,
+            usage=previous.usage.plus(record.usage),
+            turns=previous.turns + record.turns,
+            observed_model_rounds=(
+                previous.observed_model_rounds + record.observed_model_rounds
+            ),
+            tool_calls=tuple(previous.tool_calls) + tuple(record.tool_calls),
+            elapsed_ms=previous.elapsed_ms + record.elapsed_ms,
+            external_tool_ms=previous.external_tool_ms + record.external_tool_ms,
+            usage_complete=previous.usage_complete and record.usage_complete,
+            token_limit_observations=(
+                tuple(previous.token_limit_observations)
+                + tuple(record.token_limit_observations)
+            ),
+        )
+    return record
 
 
 def _assurance_prompt(case, reviewers) -> str:
