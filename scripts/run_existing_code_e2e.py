@@ -84,8 +84,6 @@ def _arguments(argv: list[str] | None) -> argparse.Namespace:
     parser.add_argument("--expected-solution", type=Path)
     parser.add_argument("--logic-mode", default="one_shot")
     parser.add_argument("--layout-token-budget", type=int, default=180_000)
-    parser.add_argument("--max-turns", type=int)
-    parser.add_argument("--max-tool-calls", type=int)
     parser.add_argument("--allow-vendor-clean-fallback", action="store_true")
     parser.add_argument("--render-cache-dir", type=Path)
     args, unknown = parser.parse_known_args(argv)
@@ -124,10 +122,6 @@ def _run_operator(args: argparse.Namespace, harness_root: Path) -> int:
         "--run-id",
         args.job_id,
     ]
-    if args.max_turns is not None:
-        argv.extend(("--max-turns", str(args.max_turns)))
-    if args.max_tool_calls is not None:
-        argv.extend(("--max-tool-calls", str(args.max_tool_calls)))
     _append_review_inputs(argv, args)
     if args.repair_feedback is not None:
         argv.extend((
