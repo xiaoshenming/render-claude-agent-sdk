@@ -143,7 +143,10 @@ def _native_reviewers(runtime, model, case, verification):
 
 
 def _layout_evidence(case) -> dict[str, object]:
-    path = case.log_dir / "layout_evidence.json"
+    log_dir = getattr(case, "log_dir", None)
+    if log_dir is None:
+        return {}
+    path = log_dir / "layout_evidence.json"
     if not path.is_file():
         return {}
     try:
