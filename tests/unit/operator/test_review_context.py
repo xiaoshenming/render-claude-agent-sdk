@@ -17,7 +17,7 @@ def test_loads_final_assurance_issues(tmp_path):
                 "category": "mathematical_proof",
                 "severity": "high",
                 "summary": "The visible proof uses the wrong angle pair.",
-                "evidence_ids": ["case:risk-frames", "case:final-source"],
+                "evidence_ids": ["case:quality-layout", "case:final-source"],
             }
         ]
     }

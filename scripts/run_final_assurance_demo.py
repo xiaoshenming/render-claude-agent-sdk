@@ -18,7 +18,6 @@ from manim_quality.assurance.dataset import (
     load_successful_cases,
 )
 from manim_quality.assurance.metrics import summarize
-from manim_quality.assurance.risk_frames import inspect_risk_frames
 from manim_quality.assurance.tools import (
     inspect_artifact,
     inspect_code_review,
@@ -144,12 +143,12 @@ def usage_dict(record) -> dict | None:
 
 
 def deterministic_reports(case, frame_root: Path):
+    del frame_root
     return (
         inspect_artifact(case),
         inspect_execution(case),
         inspect_code_review(case),
         inspect_layout(case),
-        inspect_risk_frames(case, frame_root),
         inspect_tts(case),
         inspect_consistency(case),
     )

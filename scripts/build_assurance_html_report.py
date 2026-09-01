@@ -95,7 +95,7 @@ def page(cards: list[str], rows: list[dict], tags: dict[str, tuple[str, ...]]) -
   <p class="eyebrow">FINAL ASSURANCE · 2026-07-27</p>
   <h1>{total} 个最终视频全链路审查</h1>
   <p class="lead">每个样本均重新执行最终源码冷渲染、逐帧 BBox、代码双 reviewer、
-  多模态风险帧、音轨与最终产物一致性检查。工具风险是分维度证据，不等于视频整体必错。</p>
+  BBox布局、音轨与最终产物一致性检查。工具风险是分维度证据，不等于视频整体必错。</p>
   <div class="metrics">
     <div><strong>{total}</strong><span>完整 Agent 已完成</span></div>
     <div><strong>{receipts}</strong><span>7 工具 + 2 reviewer 齐全</span></div>
@@ -156,7 +156,7 @@ def tool_name(value: str) -> str:
     return {
         "inspect_artifact": "视频产物", "inspect_execution": "执行终态",
         "inspect_code_review": "代码审查", "inspect_layout": "布局/BBox",
-        "inspect_risk_frames": "多模态画面", "inspect_tts": "TTS",
+        "inspect_tts": "TTS",
         "inspect_consistency": "版本一致性",
     }.get(value, value)
 

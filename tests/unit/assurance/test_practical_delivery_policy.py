@@ -14,8 +14,10 @@ def test_final_assurance_prompt_contains_practical_delivery_baseline() -> None:
     assert "不得再次调用 Agent" in text
     assert "两路必需 Reviewer" in text
     assert "不得据此阻断" in text
-    assert "冻结窗口只证明像素长期" in text
-    assert "只能作为 observation" in text
+    assert "最终源码绑定的确定性BBox" in text
+    assert "不得降级为warning" in text
+    assert "risk-frames" not in text
+    assert "多模态" not in text
 
 
 def test_specialist_reviewers_distinguish_schematic_and_visible_errors() -> None:

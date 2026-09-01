@@ -173,7 +173,7 @@ def tool_name(value: str) -> str:
     return {
         "inspect_artifact": "交付视频", "inspect_execution": "冷渲染",
         "inspect_code_review": "源码审查", "inspect_layout": "BBox布局",
-        "inspect_risk_frames": "风险帧", "inspect_tts": "TTS合同",
+        "inspect_tts": "TTS合同",
         "inspect_consistency": "版本一致性",
     }.get(value, value)
 

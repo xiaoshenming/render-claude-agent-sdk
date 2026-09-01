@@ -8,7 +8,6 @@ REQUIRED_TOOLS = frozenset(
         "inspect_execution",
         "inspect_code_review",
         "inspect_layout",
-        "inspect_risk_frames",
         "inspect_tts",
         "inspect_consistency",
     }

@@ -15,7 +15,6 @@ def test_output_requires_every_tool_receipt() -> None:
                 "inspect_execution",
                 "inspect_code_review",
                 "inspect_layout",
-                "inspect_risk_frames",
                 "inspect_tts",
                 "inspect_consistency",
             )
@@ -116,7 +115,6 @@ def valid_output() -> dict:
                 "inspect_execution",
                 "inspect_code_review",
                 "inspect_layout",
-                "inspect_risk_frames",
                 "inspect_tts",
                 "inspect_consistency",
             )

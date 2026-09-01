@@ -5,15 +5,11 @@ import json
 from dataclasses import dataclass
 
 from .contracts import validate_assurance_output
-from .detector_policy import normalize_detector_issues
-
-POLICY_VERSION = "final-assurance-policy-v4"
+POLICY_VERSION = "final-assurance-policy-v5"
 POLICY_RULES = (
     "derived_parameter_mismatch_promoted",
-    "confirmed_anchor_drift_promoted",
+    "verified_layout_risk_promoted",
     "unreported_consistency_issue_removed",
-    "unconfirmed_detector_medium_downgraded",
-    "unconfirmed_freeze_telemetry_downgraded",
 )
 
 
@@ -42,11 +38,10 @@ def apply_assurance_policy(
     reasons = []
     if _normalize_derived_parameters(output, reports, case_key):
         reasons.append("derived_parameter_mismatch_promoted")
-    if _normalize_anchor_drift(output):
-        reasons.append("confirmed_anchor_drift_promoted")
+    if _promote_verified_layout_risk(output, reports, case_key):
+        reasons.append("verified_layout_risk_promoted")
     if _remove_unreported_consistency_issues(output, reports, case_key):
         reasons.append("unreported_consistency_issue_removed")
-    reasons.extend(normalize_detector_issues(output, reports, reviewers))
     expected = {
         name: report
         for name, report in reports.items()
@@ -70,8 +65,6 @@ def _normalize_derived_parameters(output, reports, case_key) -> bool:
         return False
     changed = False
     evidence_ids = [f"{case_key}:final-source"]
-    if reports.get("inspect_risk_frames", {}).get("evidence"):
-        evidence_ids.append(f"{case_key}:risk-frames")
     for mismatch in mismatches:
         expected, actual = mismatch.get("expected"), mismatch.get("actual")
         match = next(
@@ -106,17 +99,40 @@ def _normalize_derived_parameters(output, reports, case_key) -> bool:
     return changed
 
 
-def _normalize_anchor_drift(output) -> bool:
-    changed = False
-    for issue in output.get("issues", []):
-        summary = str(issue.get("summary", ""))
-        ids = issue.get("evidence_ids", [])
-        confirmed = any(str(item).endswith(":risk-frames") for item in ids)
-        drift_terms = ("漂移", "脱离", "悬空", "旧坐标")
-        if confirmed and any(term in summary for term in drift_terms):
-            changed |= issue.get("severity") != "high"
-            issue["severity"] = "high"
-    return changed
+def _promote_verified_layout_risk(output, reports, case_key) -> bool:
+    report = reports.get("inspect_layout")
+    if not isinstance(report, dict) or report.get("status") != "risk":
+        return False
+    evidence = report.get("evidence")
+    evidence_ids = [
+        str(item.get("id"))
+        for item in evidence if isinstance(item, dict) and item.get("id")
+    ] if isinstance(evidence, list) else []
+    evidence_ids = evidence_ids or [f"{case_key}:quality-layout"]
+    issues = output.get("issues")
+    if not isinstance(issues, list):
+        return False
+    matched = next((
+        item for item in issues if isinstance(item, dict)
+        and set(map(str, item.get("evidence_ids", []))) & set(evidence_ids)
+    ), None)
+    if matched is None:
+        issues.append({
+            "severity": "medium",
+            "category": "verified_layout_risk",
+            "summary": (
+                "最终源码绑定的确定性BBox布局验证仍有blocking问题，"
+                "必须返回Coder修复并重新验证。"
+            ),
+            "evidence_ids": evidence_ids,
+        })
+    elif matched.get("severity") not in {
+        "medium", "high", "blocking", "critical",
+    }:
+        matched["severity"] = "medium"
+    if output.get("status") != "incomplete":
+        output["status"] = "review"
+    return True
 
 
 def _remove_unreported_consistency_issues(output, reports, case_key) -> bool:
