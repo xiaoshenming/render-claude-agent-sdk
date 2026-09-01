@@ -140,6 +140,32 @@ def test_compact_layout_report_preserves_unfiltered_agent_candidates() -> None:
     assert stored["b"]["text"] == "b=2"
 
 
+def test_candidates_reduce_filtered_issue_rows_but_keep_total_count() -> None:
+    issues = [
+        {
+            "category": "text_formula_overlap",
+            "ratio_of_smaller": 0.5,
+            "a": {"text": f"a-{index}"},
+            "b": {"text": f"b-{index}"},
+        }
+        for index in range(20)
+    ]
+    candidate = {
+        "category": "semantic_row_bbox_overlap",
+        "a": {"text": "result"},
+        "b": {"text": "previous"},
+    }
+
+    result = compact_layout_report({
+        "issues": issues,
+        "agent_bbox_candidates": {"semantic_row_overlaps": [candidate]},
+    })
+
+    assert result["blocking_count"] == 20
+    assert result["returned_issue_count"] == 8
+    assert result["truncated"] is True
+
+
 def test_detector_forwards_candidates_without_promoting_them(tmp_path) -> None:
     checker = tmp_path / "checker.py"
     checker.write_text(

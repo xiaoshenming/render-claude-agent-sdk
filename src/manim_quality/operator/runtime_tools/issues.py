@@ -18,9 +18,11 @@ def compact_layout_report(
     raw = _raw_issues(payload)
     decisions = [evaluate_downgrade(item, geometry_sidecar) for item in raw]
     blocking_count = sum(1 for policy in decisions if policy is None)
+    candidates = _compact_candidates(payload.get("agent_bbox_candidates"))
+    issue_limit = min(max_issues, 8) if any(candidates.values()) else max_issues
     issues = [
         _compact_issue(item, policy)
-        for item, policy in zip(raw[:max_issues], decisions, strict=False)
+        for item, policy in zip(raw[:issue_limit], decisions, strict=False)
     ]
     probe_summary = payload.get("raw")
     if not isinstance(probe_summary, Mapping):
@@ -32,8 +34,7 @@ def compact_layout_report(
         "returned_issue_count": len(issues),
         "truncated": len(raw) > len(issues),
         "issues": issues,
-        "agent_bbox_candidates": _compact_candidates(
-            payload.get("agent_bbox_candidates")),
+        "agent_bbox_candidates": candidates,
         "probe_summary": {
             "snapshot_count": probe_summary.get("snapshot_count"),
             "estimated_duration": probe_summary.get("estimated_duration"),
