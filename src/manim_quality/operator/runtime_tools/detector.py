@@ -23,22 +23,11 @@ class LayoutIssueDetector:
         payload = self._module.payload_from_probe(probe)
         if not isinstance(payload, dict):
             raise TypeError("layout detector returned a malformed payload")
-        payload["agent_bbox_candidates"] = _agent_candidates(probe)
         artifact_path.write_text(
             json.dumps(payload, ensure_ascii=False, indent=2),
             encoding="utf-8",
         )
         return payload
-
-
-def _agent_candidates(probe: dict[str, object]) -> dict[str, object]:
-    return {
-        "semantic_row_overlaps": list(
-            probe.get("semantic_row_overlaps") or [])[:8],
-        "raw_overlaps": list(probe.get("top_overlaps") or [])[:8],
-        "raw_bounds_violations": list(
-            probe.get("top_bounds_violations") or [])[:4],
-    }
 
 
 def _load_module(path: Path) -> ModuleType:

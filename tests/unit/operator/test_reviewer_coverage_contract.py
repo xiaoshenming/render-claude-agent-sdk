@@ -56,8 +56,6 @@ def test_visual_reviewer_requires_layout_and_typography_coverage():
     ):
         assert key in value
     assert "Do not inspect video frames" in value
-    assert "agent_bbox_candidates" in value
-    assert "Distinct semantic rows" in value
     assert "independent objects" in value
     assert "shared page-level" in value
     assert "A shared scale across related pages is preferred" in value

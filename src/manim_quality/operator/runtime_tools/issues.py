@@ -18,11 +18,9 @@ def compact_layout_report(
     raw = _raw_issues(payload)
     decisions = [evaluate_downgrade(item, geometry_sidecar) for item in raw]
     blocking_count = sum(1 for policy in decisions if policy is None)
-    candidates = _compact_candidates(payload.get("agent_bbox_candidates"))
-    issue_limit = min(max_issues, 8) if any(candidates.values()) else max_issues
     issues = [
         _compact_issue(item, policy)
-        for item, policy in zip(raw[:issue_limit], decisions, strict=False)
+        for item, policy in zip(raw[:max_issues], decisions)
     ]
     probe_summary = payload.get("raw")
     if not isinstance(probe_summary, Mapping):
@@ -34,45 +32,11 @@ def compact_layout_report(
         "returned_issue_count": len(issues),
         "truncated": len(raw) > len(issues),
         "issues": issues,
-        "agent_bbox_candidates": candidates,
         "probe_summary": {
             "snapshot_count": probe_summary.get("snapshot_count"),
             "estimated_duration": probe_summary.get("estimated_duration"),
             "raw_issue_count": len(raw),
         },
-    }
-
-
-def _compact_candidates(value: object) -> dict[str, list[dict[str, object]]]:
-    if not isinstance(value, Mapping):
-        return {}
-    return {
-        name: [_compact_candidate(row) for row in rows[:20]
-               if isinstance(row, Mapping)]
-        for name in (
-            "semantic_row_overlaps", "raw_overlaps", "raw_bounds_violations",
-        )
-        if isinstance((rows := value.get(name)), list)
-    }
-
-
-def _compact_candidate(row: Mapping[str, object]) -> dict[str, object]:
-    objects = {
-        name: _object_ref(row.get(name))
-        for name in ("a", "b", "object")
-        if _object_ref(row.get(name)) is not None
-    }
-    return {
-        "category": row.get("category"),
-        "step": row.get("step"),
-        "event": row.get("event"),
-        "time_window": row.get("time_window"),
-        "ratio_of_smaller": row.get("ratio_of_smaller"),
-        "x_overlap": row.get("x_overlap"),
-        "y_overlap": row.get("y_overlap"),
-        "overflow_x": row.get("overflow_x"),
-        "overflow_y": row.get("overflow_y"),
-        **objects,
     }
 
 
@@ -129,7 +93,7 @@ def _object_ref(value: object) -> dict[str, object] | None:
     bbox = value.get("bbox")
     return {
         key: value.get(key)
-        for key in ("path", "class", "kind", "text", "role")
+        for key in ("path", "class", "kind", "text")
         if value.get(key) not in (None, "")
     } | ({"bbox": bbox} if isinstance(bbox, Mapping) else {})
 

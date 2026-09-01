@@ -7,6 +7,7 @@ import json
 import re
 from pathlib import Path
 
+from manim_quality.agents.managed_tools import ManagedToolGrant, ToolEffect
 from manim_quality.agents.subagents import NativeSubagentSpec
 
 from .figure_fidelity import (
@@ -14,7 +15,6 @@ from .figure_fidelity import (
 )
 from .native_reviewer_results import ordered_results
 from .parallel_reviewer_sessions import run_parallel_reviewer_sessions
-from .reviewer_tools import build_reviewer_tools
 from .source_view import extract_solution
 
 PROMPTS = Path(__file__).with_name("prompts")
@@ -35,13 +35,12 @@ def run_native_reviewer_group(
     parsed_standard_answer: str = "",
     teaching_script: str = "",
     reviewer_supplemental_notes: dict[str, str] | None = None,
-    layout_evidence: dict[str, object] | None = None,
     model: str,
     effort: str,
 ):
     candidate = candidate_path.resolve(strict=True)
     figure = locate_confirmed_figure(candidate)
-    tools = build_reviewer_tools(candidate, figure, layout_evidence or {})
+    tools = _tools(candidate, figure)
     teaching_script = teaching_script or solution_steps
     parsed_standard_answer = parsed_standard_answer or final_answer
     specs = _specs(
@@ -55,36 +54,91 @@ def run_native_reviewer_group(
     return ordered_results(rows, specs, model), records
 
 
+def _tools(candidate: Path, figure: Path | None):
+    solution = extract_solution(candidate.read_text(encoding="utf-8"))
+
+    async def read_solution(_arguments):
+        return json.dumps(
+            {
+                "source": solution.source,
+                "start_line": solution.start_line,
+                "end_line": solution.end_line,
+                "sha256": solution.sha256,
+            },
+            ensure_ascii=False,
+        )
+
+    tools = [
+        _grant(
+            "read_solution",
+            "Read the immutable candidate Solution.",
+            read_solution,
+            max_calls=4,
+        )
+    ]
+    if figure is not None:
+
+        async def read_figure(_arguments):
+            return json.dumps(
+                {
+                    "source": figure.read_text(encoding="utf-8"),
+                    "figure_plan": _figure_plan(figure),
+                },
+                ensure_ascii=False,
+            )
+
+        tools.append(
+            _grant(
+                "read_confirmed_figure",
+                "Read the immutable confirmed figure.",
+                read_figure,
+                max_calls=1,
+            )
+        )
+    return tuple(tools)
+
+
+def _grant(name, description, handler, *, max_calls):
+    return ManagedToolGrant(
+        server_name="quality",
+        name=name,
+        description=description,
+        input_schema={
+            "type": "object",
+            "properties": {"revision_id": {"type": "string", "enum": ["R0"]}},
+            "required": ["revision_id"],
+            "additionalProperties": False,
+        },
+        handler=handler,
+        effect=ToolEffect.READ_ONLY,
+        max_calls=max_calls,
+        timeout_ms=10_000,
+        max_result_chars=80_000,
+    )
+
+
 def _specs(
     tools, candidate, figure, problem, parsed_answer, teaching_script,
     notes, effort,
 ):
     by_name = {item.name: item.sdk_name for item in tools}
     solution_tool = by_name["read_solution"]
-    specs = []
-    for name, prompt_name, prompt_version in STANDARD_SPECS:
-        prompt = _standard_prompt(
-            prompt_name, candidate, problem, teaching_script,
-            parsed_answer=parsed_answer,
-            supplemental_note=str(notes.get(_note_key(name)) or ""),
-        )
-        allowed = (solution_tool,)
-        if name == "visual_layout_reviewer" and "read_layout_evidence" in by_name:
-            prompt += (
-                "\n\nCall `mcp__quality__read_layout_evidence` exactly once with "
-                '`{"revision_id":"R0"}` and audit every returned BBox '
-                "candidate."
-            )
-            allowed += (by_name["read_layout_evidence"],)
-        specs.append(NativeSubagentSpec(
+    specs = [
+        NativeSubagentSpec(
             name=name,
             description=f"Run the independent {name} source audit.",
-            prompt=prompt,
-            allowed_tools=allowed,
+            prompt=_standard_prompt(
+                prompt_name, candidate, problem, teaching_script,
+                parsed_answer=parsed_answer,
+                supplemental_note=str(notes.get(_note_key(name)) or ""),
+            ),
+            allowed_tools=(solution_tool,),
             prompt_version=prompt_version,
             max_turns=5,
             effort=effort,
-        ))
+        )
+        for name, prompt_name, prompt_version in STANDARD_SPECS
+    ]
     if figure is not None:
         specs.append(
             NativeSubagentSpec(

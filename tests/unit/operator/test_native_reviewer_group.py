@@ -66,12 +66,6 @@ def test_reviewers_use_one_parent_with_four_native_subagents(tmp_path) -> None:
             "review3_visual_layout": "关注右侧安全区",
             "review4_figure_fidelity": "保持原图方向",
         },
-        layout_evidence={
-            "verified": True,
-            "agent_bbox_candidates": {
-                "semantic_row_overlaps": [{"category": "candidate"}],
-            },
-        },
         model="test-model",
     )
 
@@ -123,9 +117,6 @@ def test_reviewers_use_one_parent_with_four_native_subagents(tmp_path) -> None:
     assert "老师步骤" not in prompts["figure_fidelity_reviewer"]
     assert "normalization_contract" not in prompts["visual_layout_reviewer"]
     requests = {r.run_id.split("-")[1]: r for r in runtime.requests}
-    assert len(requests["visual_layout_reviewer"].managed_tools) == 2
-    assert "read_layout_evidence" in prompts["visual_layout_reviewer"]
-    assert len(requests["math_geometry_reviewer"].managed_tools) == 1
     figure_issue = requests["figure_fidelity_reviewer"].output_schema[
         "properties"
     ]["issues"]["items"]["properties"]

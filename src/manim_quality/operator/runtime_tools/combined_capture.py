@@ -8,12 +8,6 @@ from pathlib import Path
 from typing import Any
 
 from .geometry_sidecar_runner import _load_delegate, _shape_records
-from .semantic_rows import (
-    collect_semantic_rows,
-    dedupe_semantic,
-    install_semantic_tagging,
-    semantic_row_overlaps,
-)
 
 PAYLOAD_ENV = "MANIM_COMBINED_BBOX_PATH"
 SIDECAR_ENV = "MANIM_COMBINED_GEOMETRY_PATH"
@@ -37,7 +31,6 @@ class _Capture:
                 except Exception:
                     pass
             items = self.delegate._collect_objects(scene)
-            semantic_rows = collect_semantic_rows(scene, self.delegate)
             from manim import config
 
             step = int(getattr(scene, "_combined_capture_step", 0))
@@ -61,7 +54,6 @@ class _Capture:
                 "object_count": len(items),
                 "objects": items,
                 "overlaps": overlaps,
-                "semantic_row_overlaps": semantic_row_overlaps(semantic_rows),
                 "bounds_violations": bounds,
             })
             self.geometry.append({"step": step, "shapes": _shape_records(items)})
@@ -84,17 +76,11 @@ class _Capture:
              "event": row["event"], "time_window": row["time_window"], **item}
             for row in self.snapshots for item in row["bounds_violations"]
         ]
-        semantic = [
-            {"scene": row["scene"], "step": row["step"],
-             "event": row["event"], "time_window": row["time_window"], **item}
-            for row in self.snapshots for item in row["semantic_row_overlaps"]
-        ]
         overlaps.sort(key=lambda item: item["ratio_of_smaller"], reverse=True)
         bounds.sort(
             key=lambda item: max(item["overflow_x"], item["overflow_y"]),
             reverse=True,
         )
-        semantic.sort(key=lambda item: item["ratio_of_smaller"], reverse=True)
         payload = {
             "capture_mode": "combined_real_render",
             "scene": self.snapshots[-1]["scene"] if self.snapshots else None,
@@ -104,7 +90,6 @@ class _Capture:
             "estimated_duration": max(
                 (row["estimated_duration"] for row in self.snapshots), default=0.0),
             "top_overlaps": self.delegate._dedupe_overlaps(overlaps)[:80],
-            "semantic_row_overlaps": dedupe_semantic(semantic)[:80],
             "top_bounds_violations": (
                 self.delegate._dedupe_bounds_violations(bounds)[:80]),
         }
@@ -121,7 +106,7 @@ def install() -> bool:
     delegate_path = os.environ.get("MANIM_LAYOUT_PROBE_DELEGATE", "").strip()
     if not payload or not delegate_path:
         return False
-    from manim import Mobject, Scene
+    from manim import Scene
 
     capture = _Capture(
         _load_delegate(Path(delegate_path)),
@@ -131,7 +116,6 @@ def install() -> bool:
     )
     target = os.environ.get(SCENE_ENV, "Solution").strip() or "Solution"
     original_play, original_wait, original_render = Scene.play, Scene.wait, Scene.render
-    install_semantic_tagging(Mobject)
 
     def selected(scene: Any) -> bool:
         return scene.__class__.__name__ == target
