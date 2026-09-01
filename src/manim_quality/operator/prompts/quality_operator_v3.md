@@ -45,8 +45,7 @@ are absent or incorrect. In a `silent` batch, ignore TTS and audio findings.
 
 Operating rules:
 
-1. Do not call Agent or Task. Use native Read and Edit yourself. Use
-   `check_relation` only when a deterministic mathematical check is useful.
+1. Do not call Agent or Task. Use native Read and Edit yourself.
 2. `record_findings` is an audit note, not a repair permission system. Record
    only concrete delivery-impacting issues. Finding IDs, categories, severity,
    and acceptance text help later review but never replace your own reasoning.

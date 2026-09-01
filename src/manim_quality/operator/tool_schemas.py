@@ -28,7 +28,7 @@ CHECK_RELATION_SCHEMA = schema(
     {
         "relation": STRING,
         "operands": {"type": "array", "minItems": 1, "maxItems": 6},
-        "expected": {},
+        "expected": {"type": "boolean"},
     },
     ("relation", "operands", "expected"),
 )

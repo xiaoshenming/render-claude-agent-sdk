@@ -78,6 +78,7 @@ class QualityOperatorAgent:
         )
         request = operator_request(
             run_id=run_id,
+            model=self._profile.model,
             profile=self._profile,
             prompt=prompt,
             workspace=workspace,
