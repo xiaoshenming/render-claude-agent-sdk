@@ -7,6 +7,8 @@ import json
 from pathlib import Path
 from types import ModuleType
 
+from .candidate_recovery import recover_candidates
+
 
 class LayoutIssueDetector:
     def __init__(self, checker_path: Path) -> None:
@@ -23,6 +25,7 @@ class LayoutIssueDetector:
         payload = self._module.payload_from_probe(probe)
         if not isinstance(payload, dict):
             raise TypeError("layout detector returned a malformed payload")
+        payload = recover_candidates(probe, payload)
         artifact_path.write_text(
             json.dumps(payload, ensure_ascii=False, indent=2),
             encoding="utf-8",
