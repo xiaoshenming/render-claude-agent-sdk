@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 from manim_quality.assurance.models import AssuranceCase
 from manim_quality.assurance.tools import (
@@ -96,6 +97,9 @@ def test_layout_reuses_verified_quality_bbox_without_rendering(tmp_path) -> None
         "code_hash": f"sha256:{'a' * 64}",
         "verified": True,
         "blocking_count": 0,
+        "agent_bbox_candidates": {
+            "semantic_row_overlaps": [{"category": "candidate"}],
+        },
         "probe_summary": {"snapshot_count": 49},
     }), encoding="utf-8")
 
@@ -104,6 +108,18 @@ def test_layout_reuses_verified_quality_bbox_without_rendering(tmp_path) -> None
     assert report.status == "complete"
     assert report.risk_codes == ()
     assert report.evidence[0]["source"] == "quality_agent_reused_bbox"
+    assert report.evidence[0]["agent_bbox_candidates"] == {
+        "semantic_row_overlaps": [{"category": "candidate"}],
+    }
+
+
+def test_final_assurance_prompt_delegates_raw_bbox_candidates_to_agent() -> None:
+    prompt = Path(__file__).parents[3] / "src/manim_quality/assurance/prompt.md"
+
+    text = prompt.read_text(encoding="utf-8")
+
+    assert "agent_bbox_candidates" in text
+    assert "不是自动结论" in text
 
 
 def test_reused_quality_bbox_keeps_blocking_finding(tmp_path) -> None:

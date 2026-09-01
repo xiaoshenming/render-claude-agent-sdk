@@ -4,7 +4,14 @@ from pathlib import Path
 import pytest
 
 from manim_quality.operator.models import CandidateAttempt
+from manim_quality.operator.runtime_tools.detector import LayoutIssueDetector
 from manim_quality.operator.runtime_tools.issues import compact_layout_report
+from manim_quality.operator.runtime_tools.semantic_rows import (
+    SEMANTIC_ROLE,
+    SEMANTIC_SOURCE,
+    install_semantic_tagging,
+    semantic_row_overlaps,
+)
 from manim_quality.operator.runtime_tools.workspace import RevisionWorkspace
 
 
@@ -65,6 +72,96 @@ def test_compact_layout_report_returns_only_bounded_issue_facts() -> None:
     assert result["truncated"] is True
     assert "points" not in json.dumps(result)
     assert result["issues"][0]["objects"][0]["path"] == "mobjects.0"
+
+
+def test_semantic_row_overlap_keeps_source_text_for_agent_judgment() -> None:
+    rows = [
+        {"path": "mobjects.1", "text": r"\sqrt{25} = 5", "role": "body",
+         "bbox": {"left": 0, "right": 3, "top": 1, "bottom": 0,
+                  "width": 3, "height": 1}},
+        {"path": "mobjects.2", "text": r"\text{原式} = -1-\sqrt3",
+         "role": "result",
+         "bbox": {"left": 1, "right": 4, "top": 0.8, "bottom": -0.2,
+                  "width": 3, "height": 1}},
+    ]
+
+    overlaps = semantic_row_overlaps(rows)
+
+    assert len(overlaps) == 1
+    assert overlaps[0]["category"] == "semantic_row_bbox_overlap"
+    assert overlaps[0]["a"]["text"] == r"\sqrt{25} = 5"
+    assert overlaps[0]["b"]["role"] == "result"
+
+
+def test_semantic_tagging_survives_calc_row_insertion() -> None:
+    class Mobject:
+        def __init__(self, children=()):
+            self.children = list(children)
+
+        def add(self, *items):
+            self.children.extend(items)
+            return self
+
+        def get_family(self):
+            return [self, *self.children]
+
+    leaf = Mobject()
+    row = Mobject([leaf])
+    row._calc_source_content = (r"\sqrt{25}", "=", "5")
+    row._calc_role = "body"
+    page = Mobject()
+    install_semantic_tagging(Mobject)
+
+    page.add(row)
+
+    assert getattr(row, SEMANTIC_SOURCE) == row._calc_source_content
+    assert getattr(leaf, SEMANTIC_SOURCE) == row._calc_source_content
+    assert getattr(leaf, SEMANTIC_ROLE) == "body"
+
+
+def test_compact_layout_report_preserves_unfiltered_agent_candidates() -> None:
+    candidate = {
+        "category": "semantic_row_bbox_overlap",
+        "step": 8,
+        "ratio_of_smaller": 0.7,
+        "a": {"path": "mobjects.1", "kind": "formula", "text": "a=1",
+              "bbox": {"left": 0, "right": 1}},
+        "b": {"path": "mobjects.2", "kind": "formula", "text": "b=2",
+              "bbox": {"left": 0.5, "right": 2}},
+    }
+    result = compact_layout_report({
+        "issues": [],
+        "agent_bbox_candidates": {"semantic_row_overlaps": [candidate]},
+    })
+
+    assert result["blocking_count"] == 0
+    stored = result["agent_bbox_candidates"]["semantic_row_overlaps"][0]
+    assert stored["a"]["text"] == "a=1"
+    assert stored["b"]["text"] == "b=2"
+
+
+def test_detector_forwards_candidates_without_promoting_them(tmp_path) -> None:
+    checker = tmp_path / "checker.py"
+    checker.write_text(
+        "def payload_from_probe(probe):\n"
+        "    return {'passed': True, 'blocking_count': 0, 'issues': []}\n",
+        encoding="utf-8",
+    )
+    artifact = tmp_path / "detector.json"
+    candidate = {
+        "category": "semantic_row_bbox_overlap",
+        "a": {"text": "sqrt25=5"},
+        "b": {"text": "result=-1-sqrt3"},
+    }
+
+    result = LayoutIssueDetector(checker).detect(
+        {"semantic_row_overlaps": [candidate]}, artifact_path=artifact,
+    )
+
+    assert result["passed"] is True
+    assert result["blocking_count"] == 0
+    assert result["issues"] == []
+    assert result["agent_bbox_candidates"]["semantic_row_overlaps"] == [candidate]
 
 
 def test_bbox_probe_reuses_combined_real_render_evidence(tmp_path: Path) -> None:
