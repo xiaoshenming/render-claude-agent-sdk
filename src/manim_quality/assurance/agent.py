@@ -136,9 +136,21 @@ def _native_reviewers(runtime, model, case, verification):
         teaching_script=case.solution_steps,
         reviewer_supplemental_notes=(
             getattr(case, "reviewer_supplemental_notes", None) or {}),
+        layout_evidence=_layout_evidence(case),
         model=model,
         effort="medium",
     )
+
+
+def _layout_evidence(case) -> dict[str, object]:
+    path = case.log_dir / "layout_evidence.json"
+    if not path.is_file():
+        return {}
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    return value if isinstance(value, dict) else {}
 
 
 def _merge_reviewer_records(record, reviewer_records):
