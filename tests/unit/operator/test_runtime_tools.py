@@ -164,6 +164,30 @@ def test_detector_forwards_candidates_without_promoting_them(tmp_path) -> None:
     assert result["agent_bbox_candidates"]["semantic_row_overlaps"] == [candidate]
 
 
+def test_detector_bounds_candidates_for_sdk_tool_result_limit(tmp_path) -> None:
+    checker = tmp_path / "checker.py"
+    checker.write_text(
+        "def payload_from_probe(probe):\n"
+        "    return {'passed': True, 'blocking_count': 0, 'issues': []}\n",
+        encoding="utf-8",
+    )
+    rows = [{"category": "candidate", "step": index} for index in range(30)]
+
+    result = LayoutIssueDetector(checker).detect(
+        {
+            "semantic_row_overlaps": rows,
+            "top_overlaps": rows,
+            "top_bounds_violations": rows,
+        },
+        artifact_path=tmp_path / "detector.json",
+    )
+
+    stored = result["agent_bbox_candidates"]
+    assert len(stored["semantic_row_overlaps"]) == 8
+    assert len(stored["raw_overlaps"]) == 8
+    assert len(stored["raw_bounds_violations"]) == 4
+
+
 def test_bbox_probe_reuses_combined_real_render_evidence(tmp_path: Path) -> None:
     from manim_quality.operator.runtime_tools.probe import _combined_result
 

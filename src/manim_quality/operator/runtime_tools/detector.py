@@ -34,10 +34,10 @@ class LayoutIssueDetector:
 def _agent_candidates(probe: dict[str, object]) -> dict[str, object]:
     return {
         "semantic_row_overlaps": list(
-            probe.get("semantic_row_overlaps") or [])[:20],
-        "raw_overlaps": list(probe.get("top_overlaps") or [])[:20],
+            probe.get("semantic_row_overlaps") or [])[:8],
+        "raw_overlaps": list(probe.get("top_overlaps") or [])[:8],
         "raw_bounds_violations": list(
-            probe.get("top_bounds_violations") or [])[:20],
+            probe.get("top_bounds_violations") or [])[:4],
     }
 
 
