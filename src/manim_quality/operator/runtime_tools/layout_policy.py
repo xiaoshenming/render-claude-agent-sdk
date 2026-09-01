@@ -16,9 +16,9 @@ import json
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
-LAYOUT_POLICY_VERSION = "contained-label-v2"
+LAYOUT_POLICY_VERSION = "contained-label-v1"
 POLICY_ID = "contained_label_no_stroke_contact"
-STROKE_SAFETY_MARGIN = 0.08
+STROKE_SAFETY_MARGIN = 0.03
 
 _TEXT_KINDS = frozenset({"text", "formula"})
 
