@@ -120,6 +120,7 @@ def test_final_assurance_prompt_delegates_raw_bbox_candidates_to_agent() -> None
 
     assert "agent_bbox_candidates" in text
     assert "不是自动结论" in text
+    assert "不得跳过候选" in text
 
 
 def test_reused_quality_bbox_keeps_blocking_finding(tmp_path) -> None:

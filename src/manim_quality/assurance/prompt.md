@@ -40,6 +40,8 @@ pass。不得改写工具 status、虚构 evidence_id 或省略工具实际返�
 - `inspect_layout.evidence.agent_bbox_candidates` 是未经过业务过滤的原始框候选，
   不是自动结论。必须结合候选中的对象文本、BBox、时间点和 Reviewer 回执自行判断；
   真实遮挡应形成 issue，正常包含、同组排版或仅接近不得误报。
+  不得跳过候选：每条语义行重叠、文本/公式重叠和越界候选必须形成 issue，
+  或在 summary 中说明其可接受理由。
 - 终审不接收图片块。重叠、越界等布局问题以最终源码绑定的确定性BBox为
   运行证据；`inspect_layout=risk`必须返回Coder，不得声称已经目视视频画面。
 - 示意图未严格按比例、坐标导致长度/角度/面积/高/共线/垂直存在小幅误差、
