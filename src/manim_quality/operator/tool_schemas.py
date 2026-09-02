@@ -27,7 +27,22 @@ FINDING_SCHEMA = schema(
 CHECK_RELATION_SCHEMA = schema(
     {
         "relation": STRING,
-        "operands": {"type": "array", "minItems": 1, "maxItems": 6},
+        "operands": {
+            "type": "array",
+            "items": {
+                "oneOf": [
+                    {"type": "number"},
+                    {
+                        "type": "array",
+                        "items": {"type": "number"},
+                        "minItems": 2,
+                        "maxItems": 3,
+                    },
+                ]
+            },
+            "minItems": 1,
+            "maxItems": 6,
+        },
         "expected": {"type": "boolean"},
     },
     ("relation", "operands", "expected"),

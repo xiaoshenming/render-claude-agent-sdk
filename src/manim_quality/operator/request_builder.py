@@ -36,8 +36,6 @@ def operator_request(
         revision_validator=revision_validator,
         candidate_path=candidate_path,
     )
-    if str(model).lower().startswith("glm-"):
-        tools = tuple(tool for tool in tools if tool.name != "check_relation")
     return AgentRunRequest(
         run_id=run_id,
         profile=profile,
