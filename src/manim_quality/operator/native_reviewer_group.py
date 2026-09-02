@@ -10,11 +10,10 @@ from pathlib import Path
 from manim_quality.agents.managed_tools import ManagedToolGrant, ToolEffect
 from manim_quality.agents.subagents import NativeSubagentSpec
 
-from .figure_fidelity import (
-    locate_confirmed_figure,
-)
+from .figure_fidelity import locate_confirmed_figure
 from .native_reviewer_results import ordered_results
 from .parallel_reviewer_sessions import run_parallel_reviewer_sessions
+from .reachable_helpers import reviewer_source_context
 from .source_view import extract_solution
 
 PROMPTS = Path(__file__).with_name("prompts")
@@ -55,7 +54,9 @@ def run_native_reviewer_group(
 
 
 def _tools(candidate: Path, figure: Path | None):
-    solution = extract_solution(candidate.read_text(encoding="utf-8"))
+    full_source = candidate.read_text(encoding="utf-8")
+    solution = extract_solution(full_source)
+    source_context = reviewer_source_context(full_source)
 
     async def read_solution(_arguments):
         return json.dumps(
@@ -64,6 +65,7 @@ def _tools(candidate: Path, figure: Path | None):
                 "start_line": solution.start_line,
                 "end_line": solution.end_line,
                 "sha256": solution.sha256,
+                **source_context,
             },
             ensure_ascii=False,
         )
@@ -176,7 +178,25 @@ def _standard_prompt(
         '`{"revision_id":"R0"}`. Audit only the returned Solution and '
         "do not edit.\n2."
     )
-    return re.sub(r"1\. Use native `Read`.*?\n2\.", replacement, text, flags=re.S)
+    prompt = re.sub(r"1\. Use native `Read`.*?\n2\.", replacement, text, flags=re.S)
+    source = candidate.read_text(encoding="utf-8")
+    findings = reviewer_source_context(source)["source_findings"]
+    if name == "math_geometry_reviewer_v1.md":
+        findings = [
+            row for row in findings
+            if row.get("kind") in {
+                "opaque_semantic_point_index",
+                "transient_scale_on_original_geometry",
+            }
+        ]
+    return f"""{prompt}
+
+<deterministic_source_findings>
+{json.dumps(findings, ensure_ascii=False)}
+</deterministic_source_findings>
+These findings are AST facts from the same immutable candidate. Resolve every
+finding against its stated invariant and the reachable helper source. A pass
+decision must explain why each relevant finding is safe; do not silently omit one."""
 
 
 def _figure_prompt(candidate, supplemental_note=""):

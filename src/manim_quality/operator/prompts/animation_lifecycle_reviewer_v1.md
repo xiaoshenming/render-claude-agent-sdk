@@ -33,6 +33,9 @@ lifecycle. Do not judge mathematical correctness.
    call `self.play(super().helper(...))` and intentionally return `None`; such
    a bare wrapper call is correct and wrapping it in another `self.play` would
    cause `TypeError: Object None cannot be converted to an animation`.
+   The `read_solution` result also contains `reachable_helpers` and
+   `source_findings`. Treat them as code evidence from the same immutable
+   candidate. Resolve every lifecycle/highlight helper through that evidence.
 3. Trace anchors through every fit, scale, move, shift, and transform. Check
    objects created after transforms, stale coordinate arrays, owner VGroups,
    phase cleanup, ValueTracker, always_redraw, updater closures, and static to
@@ -47,8 +50,40 @@ lifecycle. Do not judge mathematical correctness.
      updater, and proof reference;
    - orphan lifecycle: no anonymous or detached Mobject may remain visible,
      be revealed twice, or escape the phase cleanup that owns it.
-4. Use `check_relation` only when a concrete relation needs deterministic
-   confirmation.
+   - anchor stability: a highlight must not scale or transform its caller-owned
+     point, line, arc, or diagram root. `Indicate(..., scale_factor!=1)` on a
+     helper parameter is a confirmed transient drift defect even if the object
+     returns to its original position. Animate a copy/overlay instead. Ordinary
+     emphasis of Text/MathTex labels, result rows, or a text-only VGroup is not
+     a geometry-anchor defect; only report it when the source target is actual
+     geometry or a geometry-owning composite;
+   - page handoff: different teaching pages must use one approved page-transition
+     helper. When ad-hoc old-page `FadeOut` plus new-page `Write/FadeIn` occurs in
+     one play, or a whole-page replacement is used, trace both page owners and
+     their placement. Report it when the source places both states in the same
+     board slot during the transition or retires all old content before the new
+     owner becomes visible; do not flag a proven disjoint/atomic handoff.
+     A Helper implemented as `Succession(FadeOut(old_page), first_new_reveal)`
+     deterministically retires the only page owner before the next reveal begins;
+     report it unless another meaningful foreground teaching owner is proven to
+     persist. The runtime problem panel and brand layers do not count as that
+     foreground owner: leaving only the fixed question/header while the active
+     explanation page is absent is a reportable teaching-page blank.
+     Conversely, sequentially retiring one right-board page and revealing the
+     next is safe when a separate, meaningful teaching diagram/model remains
+     visible for the entire handoff and the old rows are proven to retire. The
+     absence of a dedicated helper is not a defect by itself.
+   - duplicate reveal: when `source_findings` reports that the same named
+     Mobject is passed to `Create`, `FadeIn`, or `Write` twice without an
+     intervening retirement, report the repeated ownership interval. Do not
+     accept the second reveal merely because the final static state is valid.
+   - duplicate retirement: a second `FadeOut` of the same named Mobject without
+     an intervening reveal is a confirmed stale-owner defect. Manim can mount the
+     already-retired object to animate that second exit, making old content flash
+     back temporarily; report the repeated call and its first retirement.
+4. Cite the Solution call line and the resolved helper name for every checked
+   page transition and geometry highlight. Do not claim these items were checked
+   when their helper definition is absent from `reachable_helpers`.
 5. Return one compact JSON object as plain text. Maximum 12 issues, maximum two
    short source evidence strings per issue, and maximum 8000 total characters.
 

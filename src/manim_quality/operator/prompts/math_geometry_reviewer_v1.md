@@ -39,6 +39,9 @@ coverage but cannot override the parsed standard answer.
    This is exactly `class Solution(BaseConfigScene):` through its AST end line
    `{{SOLUTION_END_LINE}}`. Do not read imports, framework scaffolding, or the
    executable suffix outside that range, and do not edit.
+   The tool result also includes bounded `reachable_helpers` and deterministic
+   `source_findings` extracted from the same immutable module. Use them to trace
+   the actual effect of every math/geometry highlight and semantic anchor.
 2. Derive the intended mathematical result from the authoritative problem first,
    then use the explanation, formulas, and conclusions embedded in the Solution
    only as implementation evidence. Do not invent a stricter proof or drafting
@@ -50,6 +53,13 @@ coverage but cannot override the parsed standard answer.
    Explicitly cover all of the following:
    - label semantics: every point, side, angle, length, function, and formula
      label must be bound to the correct mathematical owner and live anchor;
+     a semantic point/label/answer edge must come from a named coordinate,
+     named Mobject, or named edge endpoint. `get_points()[number]` and comments
+     asserting what an opaque geometry index means are not sufficient identity
+     evidence. This restriction applies to geometry identity recovered from a
+     VMobject point array; it does not prohibit ordinary finite list/VGroup
+     indexing when the list construction order explicitly enumerates result
+     labels, table cells, or other non-geometric teaching items;
    - geometric meaning: verify that collinearity, incidence, direction,
      perpendicularity, angle, length, ratio, and marked values communicate the
      intended relation. Manim diagrams are schematic: coordinate-level
@@ -75,8 +85,18 @@ coverage but cannot override the parsed standard answer.
      `coverage.derived_parameter_checks`; this list cannot be omitted when such
      helpers exist. For example, `(-0.6, 0.3, -0.8)` is invalid because
      `-0.6 * 0.3 = -0.18`, not `-0.8`, even though both products are negative.
-4. Use `check_relation` only for a concrete numeric, symbolic, or geometric
-   relation that needs deterministic confirmation.
+4. For each mathematical highlight, cite the narrated target, actual Mobject
+   argument, and resolved helper effect. A correct target name is not enough if
+   the helper mutates a different object or transiently changes the real
+   geometry. Do not claim a relation was checked when its code evidence is absent.
+   Ordinary emphasis that scales only Text, MathTex, a result row, or a text-only
+   VGroup is not a geometry-anchor or mathematical-owner defect. Report transient
+   scaling only when the actual target owns geometry, a point/edge/arc/region, or
+   a composite whose geometry is part of the mathematical picture.
+   Page retirement, blank intervals, crossfades, duplicate lifecycle operations,
+   and whether a dedicated page-transition helper was used belong exclusively to
+   the animation lifecycle Reviewer. Do not report them unless the transition
+   itself changes a mathematical owner, label binding, formula, or diagram state.
 5. Return one compact JSON object as plain text. Maximum 12 issues, maximum two
    short source evidence strings per issue, and maximum 8000 total characters.
 
