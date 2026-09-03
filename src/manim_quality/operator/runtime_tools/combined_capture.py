@@ -23,7 +23,7 @@ class _Capture:
         self.sidecar_path = sidecar_path
         self.snapshots: list[dict[str, Any]] = []
         self.geometry: list[dict[str, Any]] = []
-        self.errors: list[dict[str, str]] = []
+        self.warnings: list[dict[str, str]] = []
         self.last_frame_sample = -1.0
 
     def snapshot_frame(self, scene: Any) -> None:
@@ -74,8 +74,8 @@ class _Capture:
             self.geometry.append({"step": step, "shapes": _shape_records(items)})
             if persist:
                 self._persist()
-        except Exception as error:  # capture must never break video delivery
-            self.errors.append({
+        except Exception as error:  # one bad object must not erase valid evidence
+            self.warnings.append({
                 "scene": scene.__class__.__name__,
                 "error": f"{type(error).__name__}: {error}",
             })
@@ -106,8 +106,10 @@ class _Capture:
         payload = {
             "capture_mode": "combined_real_render",
             "scene": self.snapshots[-1]["scene"] if self.snapshots else None,
-            "error_count": len(self.errors),
-            "errors": self.errors,
+            "error_count": 0,
+            "errors": [],
+            "warning_count": len(self.warnings),
+            "warnings": self.warnings,
             "snapshot_count": len(self.snapshots),
             "estimated_duration": max(
                 (row["estimated_duration"] for row in self.snapshots), default=0.0),

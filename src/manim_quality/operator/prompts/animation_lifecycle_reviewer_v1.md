@@ -63,16 +63,16 @@ lifecycle. Do not judge mathematical correctness.
      their placement. Report it when the source places both states in the same
      board slot during the transition or retires all old content before the new
      owner becomes visible; do not flag a proven disjoint/atomic handoff.
-     A Helper implemented as `Succession(FadeOut(old_page), first_new_reveal)`
-     deterministically retires the only page owner before the next reveal begins;
-     report it unless another meaningful foreground teaching owner is proven to
-     persist. The runtime problem panel and brand layers do not count as that
-     foreground owner: leaving only the fixed question/header while the active
-     explanation page is absent is a reportable teaching-page blank.
-     Conversely, sequentially retiring one right-board page and revealing the
-     next is safe when a separate, meaningful teaching diagram/model remains
-     visible for the entire handoff and the old rows are proven to retire. The
-     absence of a dedicated helper is not a defect by itself.
+     A normal `switch_calc_stage(old, new)` may intentionally use a short
+     sequential fade-then-reveal and is not a defect by itself. Do not report a
+     helper branch merely because its definition contains `Succession`; first
+     prove that the current Solution reaches that branch and that an old stage
+     remains visible, two stages are shown without a handoff, or no meaningful
+     teaching owner survives beyond the documented transition interval.
+     `stage_owner_not_retired` is deterministic evidence that two distinct
+     stages were shown without retiring or switching the old owner and must be
+     reported. The runtime problem panel and brand layers do not repair that
+     ownership error. A branch absent from the actual call path is not an issue.
    - duplicate reveal: when `source_findings` reports that the same named
      Mobject is passed to `Create`, `FadeIn`, or `Write` twice without an
      intervening retirement, report the repeated ownership interval. Do not

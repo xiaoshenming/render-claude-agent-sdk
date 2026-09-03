@@ -67,6 +67,29 @@ def test_compact_layout_report_returns_only_bounded_issue_facts() -> None:
     assert result["issues"][0]["objects"][0]["path"] == "mobjects.0"
 
 
+def test_detector_preserves_combined_capture_metadata(tmp_path: Path) -> None:
+    from manim_quality.operator.runtime_tools.detector import LayoutIssueDetector
+
+    checker = tmp_path / "checker.py"
+    checker.write_text(
+        "def payload_from_probe(value):\n"
+        "    return {'issues': [], 'raw': {'snapshot_count': 3}}\n",
+        encoding="utf-8",
+    )
+    probe = {
+        "capture_mode": "combined_real_render",
+        "warning_count": 2,
+        "legacy_errors_reclassified": True,
+    }
+
+    result = LayoutIssueDetector(checker).detect(
+        probe, artifact_path=tmp_path / "report.json")
+
+    assert result["raw"]["capture_mode"] == "combined_real_render"
+    assert result["raw"]["warning_count"] == 2
+    assert result["raw"]["legacy_errors_reclassified"] is True
+
+
 def test_bbox_probe_reuses_combined_real_render_evidence(tmp_path: Path) -> None:
     from manim_quality.operator.runtime_tools.probe import _combined_result
 
@@ -95,6 +118,39 @@ def test_bbox_probe_reuses_combined_real_render_evidence(tmp_path: Path) -> None
     assert result is not None and result.ok is True
     assert result.payload["capture_mode"] == "combined_real_render"
     assert (revision / "geometry_sidecar.json").is_file()
+
+
+def test_combined_bbox_keeps_valid_snapshots_when_one_object_warns(
+    tmp_path: Path,
+) -> None:
+    from manim_quality.operator.runtime_tools.probe import _combined_result
+
+    revision = tmp_path / "R1"
+    revision.mkdir()
+    payload = {
+        "capture_mode": "combined_real_render",
+        "error_count": 2,
+        "errors": [{"error": "ImageMobject has no opacity"}],
+        "snapshot_count": 3,
+        "semantic_row_overlaps": [{"category": "semantic_row_bbox_overlap"}],
+    }
+    geometry = {
+        "version": 1,
+        "capture_mode": "combined_real_render",
+        "captures": [{"step": 1, "shapes": []}],
+    }
+    (revision / "combined_bbox_probe.json").write_text(
+        json.dumps(payload), encoding="utf-8")
+    (revision / "combined_geometry_sidecar.json").write_text(
+        json.dumps(geometry), encoding="utf-8")
+
+    result = _combined_result(revision, revision / "bbox_probe.json")
+
+    assert result is not None and result.ok is True
+    assert result.payload["error_count"] == 0
+    assert result.payload["warning_count"] == 2
+    assert result.payload["legacy_errors_reclassified"] is True
+    assert len(result.payload["semantic_row_overlaps"]) == 1
 
 
 def test_verification_receipt_reuses_video_and_bbox_across_sessions(

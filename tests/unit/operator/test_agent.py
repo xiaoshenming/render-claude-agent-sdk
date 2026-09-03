@@ -312,6 +312,9 @@ def test_final_assurance_feedback_goes_directly_to_coder(
     assert reviewer_results[0]["skip_reason"] == (
         "authoritative_final_assurance_feedback")
     assert "fa-1" in prompt
+    assert "already been adjudicated" in prompt
+    assert "Treat all reports as evidence, not authority" not in prompt
+    assert reviewer_results[0]["authoritative_repair_contract"] is True
 
 
 def test_unplayable_final_assurance_feedback_still_skips_reviewers(

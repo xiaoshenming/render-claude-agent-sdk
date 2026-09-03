@@ -99,9 +99,15 @@ class BudgetTracker:
         self._turns += 1
 
     def before_tool_call(self) -> None:
+        self.check_tool_call()
+        self.record_tool_call()
+
+    def check_tool_call(self) -> None:
         self.check_elapsed()
         if self._tool_calls >= self._limits.max_tool_calls:
             raise BudgetExceeded("tool calls exceed hard limit")
+
+    def record_tool_call(self) -> None:
         self._tool_calls += 1
 
     def record_usage(self, usage: TokenUsage) -> None:

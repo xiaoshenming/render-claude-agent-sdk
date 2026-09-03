@@ -26,6 +26,14 @@ class LayoutIssueDetector:
         if not isinstance(payload, dict):
             raise TypeError("layout detector returned a malformed payload")
         payload = recover_candidates(probe, payload)
+        raw = dict(payload.get("raw") or {})
+        raw.update({
+            "capture_mode": probe.get("capture_mode"),
+            "warning_count": int(probe.get("warning_count") or 0),
+            "legacy_errors_reclassified": bool(
+                probe.get("legacy_errors_reclassified")),
+        })
+        payload = {**payload, "raw": raw}
         artifact_path.write_text(
             json.dumps(payload, ensure_ascii=False, indent=2),
             encoding="utf-8",

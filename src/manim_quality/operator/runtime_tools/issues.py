@@ -20,7 +20,7 @@ def compact_layout_report(
     blocking_count = sum(1 for policy in decisions if policy is None)
     issues = [
         _compact_issue(item, policy)
-        for item, policy in zip(raw[:max_issues], decisions)
+        for item, policy in zip(raw[:max_issues], decisions, strict=False)
     ]
     probe_summary = payload.get("raw")
     if not isinstance(probe_summary, Mapping):
@@ -33,9 +33,13 @@ def compact_layout_report(
         "truncated": len(raw) > len(issues),
         "issues": issues,
         "probe_summary": {
+            "capture_mode": probe_summary.get("capture_mode"),
             "snapshot_count": probe_summary.get("snapshot_count"),
             "estimated_duration": probe_summary.get("estimated_duration"),
             "raw_issue_count": len(raw),
+            "warning_count": probe_summary.get("warning_count", 0),
+            "legacy_errors_reclassified": probe_summary.get(
+                "legacy_errors_reclassified", False),
         },
     }
 

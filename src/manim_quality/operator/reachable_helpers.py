@@ -7,6 +7,7 @@ import heapq
 from collections import deque
 
 from .source_findings import collect_helper_findings, collect_solution_findings
+from .source_geometry_findings import screen_geometry_findings
 
 MAX_HELPERS = 56
 MAX_HELPER_CHARS = 52_000
@@ -33,6 +34,7 @@ def reviewer_source_context(source: str) -> dict[str, object]:
         solution, owners, methods, functions, aliases, lines)
     findings = [
         *collect_solution_findings(solution),
+        *screen_geometry_findings(tree, solution),
         *(finding for owner, node in helper_nodes
           for finding in collect_helper_findings(node, owner)),
     ]

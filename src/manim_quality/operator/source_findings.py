@@ -9,6 +9,7 @@ def collect_solution_findings(solution: ast.ClassDef) -> list[dict[str, object]]
     return [
         *_opaque_point_findings(solution),
         *_transition_findings(solution),
+        *_stage_owner_findings(solution),
         *_duplicate_reveal_findings(solution),
         *_duplicate_retire_findings(solution),
     ]
@@ -40,38 +41,72 @@ def collect_helper_findings(
                         "scale a caller-owned geometry object."
                     ),
                 })
-        if name == "ReplacementTransform" and len(call.args) >= 2:
+    return rows
+
+
+def _stage_owner_findings(solution: ast.ClassDef) -> list[dict[str, object]]:
+    visible: dict[str, int] = {}
+    rows = []
+    for call in _ordered_calls(solution):
+        if _apply_stage_exit_or_switch(call, visible):
+            continue
+        shown = _shown_stage(call)
+        if shown is None:
+            continue
+        for previous, previous_line in tuple(visible.items()):
+            if previous == shown:
+                continue
             rows.append({
-                "kind": "replacement_page_transition",
-                "helper": f"{owner}.{node.name}",
+                "kind": "stage_owner_not_retired",
                 "line": call.lineno,
-                "evidence": ast.unparse(call),
+                "evidence": (
+                    f"{previous}.show() line {previous_line}; "
+                    f"{shown}.show() line {call.lineno}"
+                ),
+                "old_stage": previous,
+                "new_stage": shown,
                 "invariant": (
-                    "Whole-page replacement requires source and target to share "
-                    "one semantic owner and compatible structure."
+                    "Before a distinct stage is shown, every previously visible "
+                    "stage must be retired or handed off through switch_calc_stage."
                 ),
             })
-        if name == "Succession":
-            nested = {
-                _call_name(item) for item in ast.walk(call)
-                if isinstance(item, ast.Call)
-            }
-            if "FadeOut" in nested and any(
-                isinstance(item, ast.Name) and item.id in params
-                for item in ast.walk(call)
-            ):
-                rows.append({
-                    "kind": "sequential_page_retire_then_reveal",
-                    "helper": f"{owner}.{node.name}",
-                    "line": call.lineno,
-                    "evidence": ast.unparse(call),
-                    "invariant": (
-                        "A page transition must preserve one meaningful owner "
-                        "through the handoff and cannot retire the whole old "
-                        "page before the first new content begins."
-                    ),
-                })
+        visible[shown] = call.lineno
     return rows
+
+
+def _apply_stage_exit_or_switch(
+    call: ast.Call,
+    visible: dict[str, int],
+) -> bool:
+    name = _call_name(call)
+    if name == "switch_calc_stage" and len(call.args) >= 2:
+        old, new = call.args[:2]
+        if isinstance(old, ast.Name):
+            visible.pop(old.id, None)
+        if isinstance(new, ast.Name):
+            visible[new.id] = call.lineno
+        return True
+    if name == "FadeOut" and call.args and isinstance(call.args[0], ast.Name):
+        visible.pop(call.args[0].id, None)
+        return True
+    if (
+        isinstance(call.func, ast.Attribute)
+        and call.func.attr == "retire"
+        and isinstance(call.func.value, ast.Name)
+    ):
+        visible.pop(call.func.value.id, None)
+        return True
+    return False
+
+
+def _shown_stage(call: ast.Call) -> str | None:
+    if (
+        isinstance(call.func, ast.Attribute)
+        and call.func.attr == "show"
+        and isinstance(call.func.value, ast.Name)
+    ):
+        return call.func.value.id
+    return None
 
 
 def _opaque_point_findings(solution: ast.ClassDef) -> list[dict[str, object]]:

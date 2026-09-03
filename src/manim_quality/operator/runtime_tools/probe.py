@@ -90,11 +90,23 @@ def _combined_result(revision_dir: Path, raw_path: Path) -> ProbeResult | None:
         not isinstance(payload, dict)
         or payload.get("capture_mode") != "combined_real_render"
         or int(payload.get("snapshot_count") or 0) <= 0
-        or int(payload.get("error_count") or 0) > 0
         or not isinstance(geometry, dict)
         or geometry.get("capture_mode") != "combined_real_render"
     ):
         return None
+    if int(payload.get("error_count") or 0) > 0:
+        payload = {
+            **payload,
+            "warning_count": int(payload.get("warning_count") or 0)
+            + int(payload.get("error_count") or 0),
+            "warnings": [
+                *list(payload.get("warnings") or []),
+                *list(payload.get("errors") or []),
+            ],
+            "error_count": 0,
+            "errors": [],
+            "legacy_errors_reclassified": True,
+        }
     raw_path.write_text(
         json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
     target = revision_dir / "geometry_sidecar.json"

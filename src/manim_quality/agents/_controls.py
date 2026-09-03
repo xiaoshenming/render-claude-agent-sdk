@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+import time
 from collections.abc import Callable, Mapping
 from dataclasses import replace
-import time
 
 from manim_quality.contracts._json_values import freeze_json_object
 from manim_quality.revisions.fingerprint import sha256_text
@@ -115,13 +115,14 @@ class RuntimeControls(ControlRecordMixin):
         call_id: str | None = None,
     ) -> Mapping[str, object]:
         try:
-            self._budget.before_tool_call()
+            self._budget.check_tool_call()
             normalized = self._guard.authorize(
                 name,
                 input_data,
                 agent_id=agent_id,
                 agent_type=agent_type,
             )
+            self._budget.record_tool_call()
         except Exception as error:
             self._record_denied(
                 name,

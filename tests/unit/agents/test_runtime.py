@@ -87,6 +87,19 @@ class OverBudgetBackend(AgentBackend):
         return controls.complete({"decision": "PASS"})
 
 
+class DuplicateReadThenUniqueBackend(AgentBackend):
+    def run(self, request: BackendRequest, controls: RuntimeControls) -> BackendResult:
+        controls.record_round_usage(TokenUsage(input_tokens=1))
+        payload = {"file_path": request.readable_paths[0]}
+        controls.authorize_tool("Read", payload)
+        try:
+            controls.authorize_tool("Read", payload)
+        except Exception:
+            pass
+        controls.authorize_tool("Read", {**payload, "offset": 2})
+        return controls.complete({"decision": "PASS"})
+
+
 class IncompleteAggregateBackend(AgentBackend):
     def run(self, request: BackendRequest, controls: RuntimeControls) -> BackendResult:
         controls.record_round_usage(TokenUsage(input_tokens=10, output_tokens=5))
@@ -461,3 +474,18 @@ def test_tool_budget_rejection_is_included_in_audit(tmp_path: Path) -> None:
     assert len(sink.records[0].tool_calls) == 2
     assert sink.records[0].tool_calls[1].allowed is False
     assert "tool calls" in sink.records[0].tool_calls[1].error
+
+
+def test_denied_duplicate_read_does_not_consume_tool_budget(tmp_path: Path) -> None:
+    candidate = tmp_path / "candidate.py"
+    candidate.write_text("pass\n", encoding="utf-8")
+    sink = MemorySink()
+    runtime = AgentRuntime(
+        DuplicateReadThenUniqueBackend(), sink, budget(max_tool_calls=2))
+
+    runtime.run(request(tmp_path, candidate))
+
+    assert [call.allowed for call in sink.records[0].tool_calls] == [
+        True, False, True,
+    ]
+    assert sink.records[0].error is None

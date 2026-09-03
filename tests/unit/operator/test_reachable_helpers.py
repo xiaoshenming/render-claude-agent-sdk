@@ -77,21 +77,42 @@ class Solution(BaseConfigScene):
     )
 
 
-def test_reports_replacement_page_transition_from_helper() -> None:
+def test_reports_unretired_stage_and_ignores_normal_switch() -> None:
     source = '''
 class BaseConfigScene:
     pass
-def switch_calc_stage(self, old, new):
-    return ReplacementTransform(old, new)
 class Solution(BaseConfigScene):
     def construct(self):
-        self.play(self.switch_calc_stage(stage_a, stage_b))
+        self.play(stage_a.show())
+        self.play(stage_b.show())
+        self.play(self.switch_calc_stage(stage_b, stage_c))
 '''
     value = reviewer_source_context(source)
-    assert any(
-        row["kind"] == "replacement_page_transition"
-        for row in value["source_findings"]
-    )
+    rows = [row for row in value["source_findings"]
+            if row["kind"] == "stage_owner_not_retired"]
+    assert [(row["old_stage"], row["new_stage"]) for row in rows] == [
+        ("stage_a", "stage_b")]
+
+
+def test_reports_anisotropic_perpendicularity() -> None:
+    source = r'''
+class GlobalConfig:
+    AXIS_BOX_X_RANGE = (-6.25, -0.45)
+    AXIS_BOX_Y_RANGE = (-3.05, 1.92)
+class BaseConfigScene:
+    pass
+class Solution(BaseConfigScene):
+    def construct(self):
+        axes = self.make_axes_manual(x_range=[-4, 2], y_range=[-1, 5])
+        line_AB = self.make_line_by_formula(1, 3)
+        line_PQ = self.make_line_by_formula(-1, 0)
+        note = r"PQ \perp AB"
+'''
+    value = reviewer_source_context(source)
+    rows = [row for row in value["source_findings"]
+            if row["kind"] == "anisotropic_perpendicularity"]
+    assert len(rows) == 1
+    assert rows[0]["deviation_degrees"] > 2
 
 
 def test_reviewer_prompt_receives_deterministic_findings(tmp_path: Path) -> None:

@@ -218,6 +218,22 @@ def test_orientation_change_is_not_downgraded_as_semantic_equivalence() -> None:
     assert orientation["semantic_equivalence"] is False
 
 
+def test_orientation_diagnosis_cannot_silently_pass_without_issue() -> None:
+    from manim_quality.agents._runtime_models import CorrectableOutputError
+    from manim_quality.operator.figure_fidelity import _validate_output
+
+    value = {
+        "decision": "pass",
+        "diagnosis": (
+            "整体旋转，应判为 orientation_change + base_figure + auto_repair"
+        ),
+        "issues": [],
+    }
+
+    with pytest.raises(CorrectableOutputError, match="diagnosis claims"):
+        _validate_output(value)
+
+
 def test_output_contract_excludes_teaching_timing_categories() -> None:
     issue_properties = OUTPUT_SCHEMA["properties"]["issues"]["items"]["properties"]
 

@@ -187,6 +187,7 @@ def _standard_prompt(
             if row.get("kind") in {
                 "opaque_semantic_point_index",
                 "transient_scale_on_original_geometry",
+                "anisotropic_perpendicularity",
             }
         ]
     return f"""{prompt}

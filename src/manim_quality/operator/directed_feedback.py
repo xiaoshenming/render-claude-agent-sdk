@@ -34,4 +34,5 @@ def directed_reviewer_context(
         "tool_calls": [],
         "reviewers_skipped": True,
         "skip_reason": "authoritative_final_assurance_feedback",
+        "authoritative_repair_contract": True,
     },)

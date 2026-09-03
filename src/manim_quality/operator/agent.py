@@ -25,6 +25,9 @@ from .session import QualitySession
 from .source_view import extract_solution
 
 PROMPT_PATH = Path(__file__).with_name("prompts") / "quality_operator_v3.md"
+DIRECTED_PROMPT_PATH = (
+    Path(__file__).with_name("prompts") / "directed_repair_operator_v1.md"
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -114,6 +117,7 @@ def _review_context(runtime, model, workspace, session):
     solution = extract_solution(candidate_path.read_text(encoding="utf-8"))
     line_count = solution.end_line - solution.start_line + 1
     reviewer_results = directed_reviewer_context(session.repair_feedback)
+    prompt_path = DIRECTED_PROMPT_PATH if reviewer_results is not None else PROMPT_PATH
     reviewer_records = ()
     if reviewer_results is None:
         reviewer_results, reviewer_records = run_reviewers(
@@ -136,7 +140,7 @@ def _review_context(runtime, model, workspace, session):
         separators=(",", ":"),
     )
     prompt = (
-        PROMPT_PATH.read_text(encoding="utf-8")
+        prompt_path.read_text(encoding="utf-8")
         .replace("{{CANDIDATE_PATH}}", str(candidate_path))
         .replace("{{REVIEWER_RESULTS}}", reviewer_json)
         .replace("{{PROBLEM_TEXT}}", session.problem_text)

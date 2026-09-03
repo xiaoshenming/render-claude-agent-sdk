@@ -97,6 +97,10 @@ coverage but cannot override the parsed standard answer.
    and whether a dedicated page-transition helper was used belong exclusively to
    the animation lifecycle Reviewer. Do not report them unless the transition
    itself changes a mathematical owner, label binding, formula, or diagram state.
+   When `anisotropic_perpendicularity` is present, the logical slopes are
+   perpendicular but the configured x/y display units distort the rendered
+   angle. Report the display-space relation and require a uniform coordinate
+   scale or an explicitly corrected screen-space construction.
 5. Return one compact JSON object as plain text. Maximum 12 issues, maximum two
    short source evidence strings per issue, and maximum 8000 total characters.
 

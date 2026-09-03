@@ -12,6 +12,7 @@ from manim_quality.agents.runtime import AgentRunRequest
 from manim_quality.agents.tool_policy import ToolInputPolicy
 from manim_quality.contracts._json_values import thaw_json_object
 
+from .figure_output_consistency import validate_figure_output_consistency
 from .source_view import extract_solution
 
 REVIEWER_NAME = "figure_fidelity_reviewer"
@@ -203,6 +204,7 @@ def _result(outcome) -> dict[str, object]:
 
 
 def _validate_output(value) -> None:
+    validate_figure_output_consistency(value)
     issues = value.get("issues", ())
     actions = {
         item.get("repair_action") for item in issues if isinstance(item, dict)
