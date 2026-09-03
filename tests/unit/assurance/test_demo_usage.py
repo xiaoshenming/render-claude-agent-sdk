@@ -1,7 +1,15 @@
 from types import SimpleNamespace
 
 from manim_quality.agents.usage import TokenUsage
-from scripts.run_final_assurance_demo import run_agent_case, usage_dict
+from scripts.run_final_assurance_demo import arguments, run_agent_case, usage_dict
+
+
+def test_demo_defaults_parent_to_production_turn_budget(monkeypatch, tmp_path) -> None:
+    monkeypatch.setattr(
+        "sys.argv", ["run_final_assurance_demo.py", "--output", str(tmp_path)]
+    )
+
+    assert arguments().max_turns == 24
 
 
 def test_demo_exports_all_result_message_usage_dimensions() -> None:

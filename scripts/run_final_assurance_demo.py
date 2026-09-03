@@ -167,7 +167,7 @@ def build_agent(args) -> FinalAssuranceAgent:
     sink = RecordingJsonlUsageLedger(args.output / "usage-events.jsonl")
     limits = BudgetLimits(
         max_context_bytes=2_000_000,
-        max_turns=12,
+        max_turns=args.max_turns,
         max_tool_calls=30,
         max_elapsed_ms=900_000,
         max_input_tokens=160_000,
@@ -219,7 +219,11 @@ def arguments() -> argparse.Namespace:
     parser.add_argument("--limit", type=int, default=0)
     parser.add_argument("--keys", default="")
     parser.add_argument("--workers", type=int, choices=range(1, 17), default=1)
-    return parser.parse_args()
+    parser.add_argument("--max-turns", type=int, default=24)
+    args = parser.parse_args()
+    if args.max_turns <= 0:
+        parser.error("--max-turns must be positive")
+    return args
 
 
 def write_json(path: Path, value: object) -> None:
