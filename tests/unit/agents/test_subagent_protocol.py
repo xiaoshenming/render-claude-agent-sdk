@@ -241,6 +241,57 @@ def test_protocol_accepts_identical_replayed_tool_result() -> None:
     assert len(protocol.results) == 1
 
 
+def test_protocol_maps_unlabelled_result_to_only_ready_reviewer() -> None:
+    protocol = started()
+    protocol.authorize_tool(
+        agent_type=REVIEWER, agent_id="agent-1",
+        tool_name="mcp__quality__read_solution",
+    )
+    assert protocol.owns_tool_use_id("provider-unmapped-call")
+
+    protocol.record_result(
+        tool_use_id="provider-unmapped-call", content=valid_result(),
+        is_error=False, parent_tool_use_id=None,
+    )
+
+    assert protocol.completed_names == {REVIEWER}
+    assert protocol.results[0]["tool_use_id"] == "tool-1"
+
+
+def test_protocol_rejects_ambiguous_unlabelled_result() -> None:
+    protocol = NativeSubagentProtocol((REVIEWER, "visual_layout_reviewer"))
+    for reviewer, tool_id, agent_id in (
+        (REVIEWER, "tool-1", "agent-1"),
+        ("visual_layout_reviewer", "tool-2", "agent-2"),
+    ):
+        protocol.authorize(reviewer, tool_id)
+        protocol.start(reviewer, agent_id)
+        protocol.authorize_tool(
+            agent_type=reviewer, agent_id=agent_id,
+            tool_name="mcp__quality__read_solution",
+        )
+
+    with pytest.raises(SubagentProtocolError, match="ambiguous"):
+        protocol.record_result(
+            tool_use_id="provider-unmapped-call", content=valid_result(),
+            is_error=False, parent_tool_use_id=None,
+        )
+
+
+def test_protocol_does_not_infer_unstructured_unlabelled_result() -> None:
+    protocol = started()
+    protocol.authorize_tool(
+        agent_type=REVIEWER, agent_id="agent-1",
+        tool_name="mcp__quality__read_solution",
+    )
+
+    with pytest.raises(SubagentProtocolError, match="structured Reviewer result"):
+        protocol.record_result(
+            tool_use_id="provider-unmapped-call", content="ordinary tool output",
+            is_error=False, parent_tool_use_id=None,
+        )
+
+
 @pytest.mark.parametrize(
     ("content", "match"),
     [

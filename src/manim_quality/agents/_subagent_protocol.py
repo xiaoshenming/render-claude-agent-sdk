@@ -41,18 +41,15 @@ class NativeSubagentProtocol:
 
     @property
     def results(self) -> tuple[Mapping[str, object], ...]:
-        return tuple(
-            run.result for run in self._runs.values() if run.result is not None
-        )
+        return tuple(filter(None, (run.result for run in self._runs.values())))
 
     @property
     def completed_names(self) -> frozenset[str]:
-        return frozenset(
-            name for name, run in self._runs.items() if run.result is not None
-        )
+        return frozenset(name for name, run in self._runs.items() if run.result)
 
     def owns_tool_use_id(self, tool_use_id: str) -> bool:
-        return any(run.tool_use_id == tool_use_id for run in self._runs.values())
+        return (any(run.tool_use_id == tool_use_id for run in self._runs.values())
+                or bool(self._ready_unconsumed_runs()))
 
     def authorize(self, agent_type: str, tool_use_id: str) -> None:
         if agent_type not in self._expected:
@@ -108,17 +105,15 @@ class NativeSubagentProtocol:
         is_error: bool,
         parent_tool_use_id: str | None,
     ) -> None:
-        run = self._run_for_tool(tool_use_id)
+        run = self._run_for_tool(tool_use_id, infer_unmapped=True)
+        inferred = run.tool_use_id != tool_use_id
         if run.result is not None:
             if not is_error and run.result.get("raw_content") == _result_text(content):
                 return
             raise SubagentProtocolError(
-                f"duplicate Reviewer ToolResult: {run.agent_type}"
-            )
+                f"duplicate Reviewer ToolResult: {run.agent_type}")
         if is_error:
-            raise SubagentProtocolError(
-                f"Reviewer returned an error ToolResult: {run.agent_type}"
-            )
+            raise SubagentProtocolError(f"Reviewer error ToolResult: {run.agent_type}")
         text = _result_text(content)
         try:
             reviewer_text, sdk_metadata = _result_parts(
@@ -128,6 +123,10 @@ class NativeSubagentProtocol:
         except SubagentProtocolError as error:
             if "contains no JSON object" not in str(error):
                 raise
+            if inferred:
+                raise SubagentProtocolError(
+                    "unmapped ToolResult must contain a structured Reviewer result"
+                ) from error
             raw_payload = _evidence_payload(text)
             reviewer_text = json.dumps(raw_payload, ensure_ascii=False)
             sdk_metadata = None
@@ -173,16 +172,27 @@ class NativeSubagentProtocol:
             raise SubagentProtocolError("Reviewer agent_id does not match start event")
         run.agent_id = str(agent_id)
         return run
-
     def _run(self, agent_type: object) -> _Run:
         if not isinstance(agent_type, str) or agent_type not in self._runs:
             raise SubagentProtocolError("unknown Reviewer lifecycle event")
         return self._runs[agent_type]
+    def _ready_unconsumed_runs(self) -> list[_Run]:
+        return [run for run in self._runs.values()
+                if run.result is None and run.agent_id is not None
+                and run.solution_read]
 
-    def _run_for_tool(self, tool_use_id: str) -> _Run:
+    def _run_for_tool(
+        self, tool_use_id: str, *, infer_unmapped: bool = False,
+    ) -> _Run:
         for run in self._runs.values():
             if run.tool_use_id == tool_use_id:
                 return run
+        candidates = self._ready_unconsumed_runs() if infer_unmapped else []
+        if len(candidates) == 1:
+            return candidates[0]
+        if candidates:
+            raise SubagentProtocolError(
+                "ambiguous ToolResult matches multiple Reviewer calls")
         raise SubagentProtocolError("ToolResult does not match a Reviewer call")
 
 
