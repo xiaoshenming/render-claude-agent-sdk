@@ -18,6 +18,7 @@ from ._guard_primitives import (
 )
 from ._runtime_models import OutputRejected
 from ._structured_output_compat import adapt_structured_output
+from ._structured_output_recovery import record_tool_candidate
 from .managed_tools import ManagedToolInputError
 
 
@@ -87,6 +88,7 @@ def _authorize_tool(state, data, tool_use_id):
                 f"required reviewers have not completed: {sorted(missing)}"
             )
         adapted = adapt_structured_output(tool_input, state._request.output_schema)
+        record_tool_candidate(state, adapted)
         if adapted != tool_input:
             state._controls.record_output_correction(
                 "provider structured output normalized without changing decision"
@@ -138,8 +140,7 @@ def _enforce_findings_prerequisites(state, tool_name, agent_id) -> None:
 
 def _handle_output_rejection(state, error, tool_use_id) -> dict[str, object]:
     if state._output_corrections != 0:
-        failure = ClaudeSdkProtocolError("structured output correction limit exceeded")
-        state._failure = failure
+        state._structured_output_exhausted = True
         return _deny("structured output correction limit exceeded")
     state._controls.record_output_correction(str(error))
     state._output_corrections += 1
@@ -197,7 +198,7 @@ def _prepare_structured_retry(state, tool_id: str, error_text: str):
         return error
     if state._output_corrections >= 2:
         error = ClaudeSdkProtocolError("structured output correction limit exceeded")
-        state._failure = error
+        state._structured_output_exhausted = True
         return error
     state._pending_tools.remove(tool_id)
     state._terminal_tools.discard(tool_id)

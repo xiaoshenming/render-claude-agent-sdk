@@ -24,10 +24,11 @@ from manim_quality.contracts._json_values import thaw_json_object
 from ._claude_hooks import ClaudeHookState, ClaudeSdkProtocolError
 from ._claude_message_compat import install_claude_sdk_message_compat
 from ._claude_result import ClaudeSdkRunError as ClaudeSdkRunError
-from ._claude_result import result_tree_usage, validate_terminal_result
+from ._claude_result import result_tree_usage
 from ._deadline import _DeadlineExtender
 from ._runtime_models import BackendRequest, BackendResult
 from ._structured_output_compat import relaxed_provider_schema
+from ._structured_output_recovery import complete_result_output
 from .runtime import AgentBackend, RuntimeControls
 
 _DENIED_TOOLS = (
@@ -115,18 +116,21 @@ class ClaudeSdkBackend(AgentBackend):
             controls.record_observed_model_rounds(state.turns)
         state.raise_failure()
         if result is None:
+            if getattr(state, "_structured_output_exhausted", False):
+                raise ClaudeSdkProtocolError(
+                    "structured output correction limit exceeded"
+                )
             raise ClaudeSdkProtocolError("Claude Agent SDK returned no ResultMessage")
         controls.record_reported_turns(result.num_turns)
         aggregate_usage = result_tree_usage(result, state.usage)
         controls.reconcile_usage(aggregate_usage)
-        validate_terminal_result(
-            result,
-            minimum_turns=state.sdk_turn_floor,
-            validate_subagents=state.validate_subagent_protocol,
+        completed, recovery_source = complete_result_output(
+            result, state, request.output_schema, controls
         )
-        if not isinstance(result.structured_output, Mapping):
-            raise ClaudeSdkProtocolError("SDK result has no structured output object")
-        completed = controls.complete(result.structured_output)
+        if recovery_source:
+            controls.record_output_correction(
+                f"schema_valid_recovery:{recovery_source}"
+            )
         return replace(
             completed,
             sdk_messages=state.sdk_messages,

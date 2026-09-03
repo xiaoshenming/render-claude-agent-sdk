@@ -7,6 +7,7 @@ import pytest
 from claude_agent_sdk import (
     AssistantMessage,
     ResultMessage,
+    TextBlock,
     ToolResultBlock,
     ToolUseBlock,
     UserMessage,
@@ -972,6 +973,188 @@ def test_sdk_backend_bounds_pretool_output_rejection(tmp_path: Path) -> None:
     assert [call.name for call in sink.records[0].tool_calls].count(
         "StructuredOutputCorrection"
     ) == 1
+
+
+def test_sdk_recovers_schema_valid_json_from_last_assistant_text(
+    tmp_path: Path,
+) -> None:
+    candidate = tmp_path / "candidate.py"
+    candidate.write_text("pass\n", encoding="utf-8")
+
+    async def fake_query(*, prompt, options):
+        yield AssistantMessage(
+            content=[TextBlock(text='最终结果：\n```json\n{"decision":"pass"}\n```')],
+            model="fake-model",
+            message_id="message-1",
+            usage={"input_tokens": 40, "output_tokens": 10},
+        )
+        yield ResultMessage(
+            subtype="success", duration_ms=100, duration_api_ms=80,
+            is_error=False, num_turns=1, session_id="session-1",
+            usage={"input_tokens": 40, "output_tokens": 10},
+            structured_output=None,
+        )
+
+    outcome = AgentRuntime(
+        ClaudeSdkBackend(query_func=fake_query), MemorySink(), limits()
+    ).run(request(tmp_path, candidate))
+
+    assert outcome.structured_output == {"decision": "pass"}
+    assert any(
+        call.name == "StructuredOutputCorrection"
+        and "assistant_text" in call.input["reason"]
+        for call in outcome.record.tool_calls
+    )
+
+
+def test_sdk_recovers_schema_valid_structured_tool_input_when_result_omits_it(
+    tmp_path: Path,
+) -> None:
+    candidate = tmp_path / "candidate.py"
+    candidate.write_text("pass\n", encoding="utf-8")
+
+    async def fake_query(*, prompt, options):
+        pre = options.hooks["PreToolUse"][0].hooks[0]
+        post = options.hooks["PostToolUse"][0].hooks[0]
+        item = {
+            "hook_event_name": "PreToolUse", "session_id": "session-1",
+            "transcript_path": "ignored", "cwd": str(tmp_path),
+            "tool_name": "StructuredOutput",
+            "tool_input": {"decision": "pass"},
+            "tool_use_id": "structured-1",
+        }
+        await pre(item, "structured-1", {"signal": None})
+        yield AssistantMessage(
+            content=[ToolUseBlock(
+                id="structured-1", name="StructuredOutput",
+                input={"decision": "pass"},
+            )],
+            model="fake-model", message_id="message-1",
+            usage={"input_tokens": 40, "output_tokens": 10},
+        )
+        await post(
+            item | {"hook_event_name": "PostToolUse", "tool_response": {}},
+            "structured-1", {"signal": None},
+        )
+        yield ResultMessage(
+            subtype="success", duration_ms=100, duration_api_ms=80,
+            is_error=False, num_turns=1, session_id="session-1",
+            usage={"input_tokens": 40, "output_tokens": 10},
+            structured_output=None,
+        )
+
+    outcome = AgentRuntime(
+        ClaudeSdkBackend(query_func=fake_query), MemorySink(), limits()
+    ).run(request(tmp_path, candidate))
+
+    assert outcome.structured_output == {"decision": "pass"}
+
+
+def test_sdk_never_recovers_assistant_json_that_fails_existing_validator(
+    tmp_path: Path,
+) -> None:
+    candidate = tmp_path / "candidate.py"
+    candidate.write_text("pass\n", encoding="utf-8")
+
+    async def fake_query(*, prompt, options):
+        yield AssistantMessage(
+            content=[TextBlock(text='{"decision":"invented"}')],
+            model="fake-model", message_id="message-1",
+            usage={"input_tokens": 40, "output_tokens": 10},
+        )
+        yield ResultMessage(
+            subtype="success", duration_ms=100, duration_api_ms=80,
+            is_error=False, num_turns=1, session_id="session-1",
+            usage={"input_tokens": 40, "output_tokens": 10},
+            structured_output=None,
+        )
+
+    def validate(value) -> None:
+        if value.get("decision") != "pass":
+            raise CorrectableOutputError("unsupported decision")
+
+    runtime = AgentRuntime(
+        ClaudeSdkBackend(query_func=fake_query), MemorySink(), limits()
+    )
+    with pytest.raises(AgentRunFailed, match="no structured output"):
+        runtime.run(replace(
+            request(tmp_path, candidate), output_validator=validate,
+        ))
+
+
+def test_sdk_never_recovers_json_rejected_by_declared_schema(
+    tmp_path: Path,
+) -> None:
+    candidate = tmp_path / "candidate.py"
+    candidate.write_text("pass\n", encoding="utf-8")
+
+    async def fake_query(*, prompt, options):
+        yield AssistantMessage(
+            content=[TextBlock(text='{"decision":"invented"}')],
+            model="fake-model", message_id="message-1",
+            usage={"input_tokens": 40, "output_tokens": 10},
+        )
+        yield ResultMessage(
+            subtype="success", duration_ms=100, duration_api_ms=80,
+            is_error=False, num_turns=1, session_id="session-1",
+            usage={"input_tokens": 40, "output_tokens": 10},
+            structured_output=None,
+        )
+
+    constrained = replace(request(tmp_path, candidate), output_schema={
+        "type": "object",
+        "properties": {"decision": {"type": "string", "enum": ["pass"]}},
+        "required": ["decision"],
+        "additionalProperties": False,
+    })
+    with pytest.raises(AgentRunFailed, match="no structured output"):
+        AgentRuntime(
+            ClaudeSdkBackend(query_func=fake_query), MemorySink(), limits()
+        ).run(constrained)
+
+
+def test_sdk_recovers_valid_final_text_after_correction_limit(
+    tmp_path: Path,
+) -> None:
+    candidate = tmp_path / "candidate.py"
+    candidate.write_text("pass\n", encoding="utf-8")
+
+    def validate(value) -> None:
+        if value.get("decision") != "pass":
+            raise CorrectableOutputError("unsupported decision")
+
+    async def fake_query(*, prompt, options):
+        pre = options.hooks["PreToolUse"][0].hooks[0]
+        base = {
+            "hook_event_name": "PreToolUse", "session_id": "session-1",
+            "transcript_path": "ignored", "cwd": str(tmp_path),
+            "tool_name": "StructuredOutput", "tool_input": {"wrong": True},
+        }
+        first = await pre(base | {"tool_use_id": "first"}, "first", {"signal": None})
+        second = await pre(
+            base | {"tool_use_id": "second"}, "second", {"signal": None}
+        )
+        assert first["continue_"] is True
+        assert second["continue_"] is False
+        yield AssistantMessage(
+            content=[TextBlock(text='结论 {"decision":"pass"}')],
+            model="fake-model", message_id="message-1",
+            usage={"input_tokens": 40, "output_tokens": 10},
+        )
+        yield ResultMessage(
+            subtype="error_during_execution", duration_ms=100, duration_api_ms=80,
+            is_error=True, num_turns=1, session_id="session-1",
+            usage={"input_tokens": 40, "output_tokens": 10},
+            structured_output=None,
+            errors=["structured output correction limit exceeded"],
+        )
+
+    outcome = AgentRuntime(
+        ClaudeSdkBackend(query_func=fake_query), MemorySink(),
+        limits(max_tool_calls=3),
+    ).run(replace(request(tmp_path, candidate), output_validator=validate))
+
+    assert outcome.structured_output == {"decision": "pass"}
 
 
 def test_sdk_backend_reserves_budget_before_pretool_correction_round(
