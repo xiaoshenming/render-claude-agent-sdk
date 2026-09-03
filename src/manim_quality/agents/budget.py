@@ -65,6 +65,10 @@ class BudgetTracker:
         self._usage_reconciled = False
         self._token_limit_observations: list[str] = []
 
+    @property
+    def remaining_turns(self) -> int:
+        return max(0, self._limits.max_turns - self._turns)
+
     def check_context(self, context_bytes: int) -> None:
         _require_count(context_bytes, "context_bytes")
         self.check_elapsed()

@@ -21,6 +21,7 @@ from ._claude_tool_hooks import (
     recover_managed_failure,
     retry_structured_output,
 )
+from ._final_turn import final_turn_reminder
 from ._runtime_models import BackendRequest
 from ._subagent_protocol import NativeSubagentProtocol
 from .runtime import RuntimeControls
@@ -53,9 +54,7 @@ class ClaudeHookState(ClaudeHookAccessors):
         self._subagent_usage: dict[str, TokenUsage] = {}
         self._parent_solution_read = False
 
-    async def pre_tool(
-        self, data, tool_use_id, context
-    ) -> dict[str, object]:
+    async def pre_tool(self, data, tool_use_id, context) -> dict[str, object]:
         return await pre_tool(self, data, tool_use_id, context)
     async def post_tool(self, data, tool_use_id, context) -> dict[str, object]:
         del tool_use_id, context
@@ -279,6 +278,7 @@ class ClaudeHookState(ClaudeHookAccessors):
                 return {}
             if terminal or self._terminal_submitted:
                 return {}
+            final_round = self._controls.remaining_turns == 1
             try:
                 self._before_next_round()
             except Exception as error:
@@ -286,7 +286,7 @@ class ClaudeHookState(ClaudeHookAccessors):
                 return {"continue_": False, "stopReason": str(error)}
             self._round_open = False
             self._round_ready = anyio.Event()
-        return {}
+        return final_turn_reminder(final_round)
 
     def _before_next_round(self) -> None:
         self._controls.before_next_round(

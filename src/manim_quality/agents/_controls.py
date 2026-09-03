@@ -50,6 +50,10 @@ class RuntimeControls(ControlRecordMixin):
     def observed_model_rounds(self) -> int | None:
         return self._observed_model_rounds
 
+    @property
+    def remaining_turns(self) -> int:
+        return self._budget.remaining_turns
+
     def before_next_round(
         self,
         *,

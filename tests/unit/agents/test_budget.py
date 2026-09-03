@@ -33,6 +33,7 @@ def test_budget_checks_context_rounds_tools_and_elapsed_before_work() -> None:
     tracker = BudgetTracker(limits(), clock=clock)
 
     tracker.check_context(100)
+    assert tracker.remaining_turns == 2
     tracker.before_round(
         estimated_input_tokens=10,
         reserved_output_tokens=5,
@@ -40,6 +41,7 @@ def test_budget_checks_context_rounds_tools_and_elapsed_before_work() -> None:
         reserved_cache_write_tokens=0,
     )
     tracker.before_tool_call()
+    assert tracker.remaining_turns == 1
     tracker.before_tool_call()
     with pytest.raises(BudgetExceeded, match="tool calls"):
         tracker.before_tool_call()
@@ -49,6 +51,7 @@ def test_budget_checks_context_rounds_tools_and_elapsed_before_work() -> None:
         reserved_cache_read_tokens=0,
         reserved_cache_write_tokens=0,
     )
+    assert tracker.remaining_turns == 0
     with pytest.raises(BudgetExceeded, match="turns"):
         tracker.before_round(
             estimated_input_tokens=1,
