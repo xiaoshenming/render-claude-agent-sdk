@@ -6,7 +6,7 @@ from manim_quality.assurance.policy import RawAgentAssessment, apply_assurance_p
 def test_policy_adjustment_is_versioned_hashed_and_revalidated() -> None:
     reports, output = _contract()
     adjusted = apply_assurance_policy(RawAgentAssessment(output), reports, "CASE")
-    assert adjusted.policy_version == "final-assurance-policy-v5"
+    assert adjusted.policy_version == "final-assurance-policy-v6-candidate-facts"
     assert len(adjusted.policy_sha256) == 64
     assert adjusted.raw_sha256 == adjusted.adjusted_sha256
 

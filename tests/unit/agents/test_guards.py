@@ -4,7 +4,6 @@ import pytest
 
 from manim_quality.agents.guards import (
     DuplicatePatch,
-    DuplicateRead,
     PathDenied,
     ToolDenied,
     ToolGuard,
@@ -110,13 +109,12 @@ def test_guard_rejects_parent_traversal_and_workspace_escape(tmp_path: Path) -> 
         guard.authorize("Read", {"file_path": str(outside)})
 
 
-def test_guard_detects_duplicate_reads_and_patches(tmp_path: Path) -> None:
+def test_guard_allows_reads_but_detects_duplicate_patches(tmp_path: Path) -> None:
     candidate = tmp_path / "candidate.py"
     candidate.write_text("value = 1\n", encoding="utf-8")
     read_guard = make_guard(tmp_path, candidate)
     read_guard.authorize("Read", {"file_path": str(candidate), "offset": 1})
-    with pytest.raises(DuplicateRead):
-        read_guard.authorize("Read", {"file_path": str(candidate), "offset": 1})
+    read_guard.authorize("Read", {"file_path": str(candidate), "offset": 1})
     read_guard.authorize("Read", {"file_path": str(candidate), "offset": 2})
 
     edit_guard = make_guard(tmp_path, candidate, coder=True)
@@ -130,7 +128,7 @@ def test_guard_detects_duplicate_reads_and_patches(tmp_path: Path) -> None:
         edit_guard.authorize("Edit", patch)
 
 
-def test_guard_allows_one_fresh_read_after_edit(tmp_path: Path) -> None:
+def test_guard_allows_fresh_reads_after_edit(tmp_path: Path) -> None:
     candidate = tmp_path / "candidate.py"
     candidate.write_text("value = 1\n", encoding="utf-8")
     guard = make_guard(tmp_path, candidate, coder=True)
@@ -147,8 +145,7 @@ def test_guard_allows_one_fresh_read_after_edit(tmp_path: Path) -> None:
     )
     guard.authorize("Read", read)
 
-    with pytest.raises(DuplicateRead):
-        guard.authorize("Read", read)
+    guard.authorize("Read", read)
 
 
 def test_guard_rejects_symlink_escape_when_supported(tmp_path: Path) -> None:

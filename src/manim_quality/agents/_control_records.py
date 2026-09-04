@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
-from dataclasses import replace
 import time
+from collections.abc import Callable, Mapping
+from dataclasses import replace
+
+from manim_quality.contracts._json_values import freeze_json_object
 
 from ._runtime_models import (
     CorrectableOutputError,
@@ -17,6 +19,15 @@ from .usage import ToolCallRecord, recordable_tool_input
 class ControlRecordMixin:
     _tool_calls: list[ToolCallRecord]
     _output_validator: object
+    _output_normalizer: Callable[[Mapping[str, object]], Mapping[str, object]] | None
+
+    def normalize_output(self, value: Mapping[str, object]) -> Mapping[str, object]:
+        """Apply the caller's evidence projection at every output boundary."""
+        normalized = freeze_json_object(value, "structured_output")
+        if self._output_normalizer is not None:
+            normalized = freeze_json_object(
+                self._output_normalizer(normalized), "structured_output")
+        return normalized
 
     def _record_denied(
         self,

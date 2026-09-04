@@ -6,7 +6,6 @@ import time
 from collections.abc import Callable, Mapping
 from dataclasses import replace
 
-from manim_quality.contracts._json_values import freeze_json_object
 from manim_quality.revisions.fingerprint import sha256_text
 
 from ._control_records import ControlRecordMixin
@@ -27,6 +26,9 @@ class RuntimeControls(ControlRecordMixin):
         guard: ToolGuard,
         *,
         output_validator: Callable[[Mapping[str, object]], None] | None = None,
+        output_normalizer: (
+            Callable[[Mapping[str, object]], Mapping[str, object]] | None
+        ) = None,
     ) -> None:
         self._budget = budget
         self._guard = guard
@@ -35,6 +37,7 @@ class RuntimeControls(ControlRecordMixin):
         self._round_usage_pending = True
         self._current_round_usage = TokenUsage()
         self._output_validator = output_validator
+        self._output_normalizer = output_normalizer
         self._reported_turns: int | None = None
         self._observed_model_rounds: int | None = None
 
@@ -158,7 +161,7 @@ class RuntimeControls(ControlRecordMixin):
         name = "StructuredOutput"
         try:
             self._budget.before_tool_call()
-            normalized = freeze_json_object(input_data, "structured_output")
+            normalized = self.normalize_output(input_data)
             self._validate_output(normalized)
         except Exception as error:
             self._record_denied(name, input_data, error)
@@ -274,7 +277,7 @@ class RuntimeControls(ControlRecordMixin):
             raise RuntimeProtocolError(
                 "authorized read tool was not executed and audited"
             )
-        normalized = freeze_json_object(structured_output, "structured_output")
+        normalized = self.normalize_output(structured_output)
         self._validate_output(normalized)
         return BackendResult(
             structured_output=normalized,
@@ -289,7 +292,6 @@ class RuntimeControls(ControlRecordMixin):
             raise RuntimeProtocolError(
                 "backend result was not finalized through runtime controls"
             )
-
 
 def _now_ms() -> int:
     return time.time_ns() // 1_000_000

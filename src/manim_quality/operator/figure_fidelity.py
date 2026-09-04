@@ -12,12 +12,14 @@ from manim_quality.agents.runtime import AgentRunRequest
 from manim_quality.agents.tool_policy import ToolInputPolicy
 from manim_quality.contracts._json_values import thaw_json_object
 
-from .figure_output_consistency import validate_figure_output_consistency
+from .figure_output_consistency import (
+    REPAIR_ACTIONS,
+    validate_figure_output_consistency,
+)
 from .source_view import extract_solution
 
 REVIEWER_NAME = "figure_fidelity_reviewer"
 PROMPT_PATH = Path(__file__).with_name("prompts") / "figure_fidelity_reviewer_v4.md"
-REPAIR_ACTIONS = {"auto_repair", "evidence_only", "human_review"}
 OUTPUT_SCHEMA = {
     "type": "object",
     "properties": {
@@ -205,18 +207,6 @@ def _result(outcome) -> dict[str, object]:
 
 def _validate_output(value) -> None:
     validate_figure_output_consistency(value)
-    issues = value.get("issues", ())
-    actions = {
-        item.get("repair_action") for item in issues if isinstance(item, dict)
-    }
-    if not actions <= REPAIR_ACTIONS:
-        raise ValueError("invalid figure fidelity repair_action")
-    for item in issues:
-        if (
-            item.get("repair_action") == "auto_repair"
-            and item.get("confidence", 0) < 0.85
-        ):
-            raise ValueError("auto_repair requires confidence >= 0.85")
 
 
 def _decision(issues) -> str:

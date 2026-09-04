@@ -476,16 +476,17 @@ def test_tool_budget_rejection_is_included_in_audit(tmp_path: Path) -> None:
     assert "tool calls" in sink.records[0].tool_calls[1].error
 
 
-def test_denied_duplicate_read_does_not_consume_tool_budget(tmp_path: Path) -> None:
+def test_repeated_read_consumes_existing_tool_budget(tmp_path: Path) -> None:
     candidate = tmp_path / "candidate.py"
     candidate.write_text("pass\n", encoding="utf-8")
     sink = MemorySink()
     runtime = AgentRuntime(
         DuplicateReadThenUniqueBackend(), sink, budget(max_tool_calls=2))
 
-    runtime.run(request(tmp_path, candidate))
+    with pytest.raises(AgentRunFailed, match="tool calls"):
+        runtime.run(request(tmp_path, candidate))
 
     assert [call.allowed for call in sink.records[0].tool_calls] == [
-        True, False, True,
+        True, True, False,
     ]
-    assert sink.records[0].error is None
+    assert "tool calls" in sink.records[0].error

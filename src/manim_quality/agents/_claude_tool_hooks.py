@@ -87,7 +87,8 @@ def _authorize_tool(state, data, tool_use_id):
             raise OutputRejected(
                 f"required reviewers have not completed: {sorted(missing)}"
             )
-        adapted = adapt_structured_output(tool_input, state._request.output_schema)
+        projected = state._controls.normalize_output(tool_input)
+        adapted = adapt_structured_output(projected, state._request.output_schema)
         record_tool_candidate(state, adapted)
         if adapted != tool_input:
             state._controls.record_output_correction(

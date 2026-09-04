@@ -26,7 +26,7 @@ def _adapt_value(value: object, rule: Mapping[str, object]) -> object:
             and name in value
             and isinstance(child, Mapping)
         }
-    if isinstance(value, list):
+    if isinstance(value, (list, tuple)):
         items = rule.get("items")
         if isinstance(items, Mapping):
             return [_adapt_value(item, items) for item in value]

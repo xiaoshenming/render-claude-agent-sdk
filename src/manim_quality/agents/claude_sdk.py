@@ -26,6 +26,7 @@ from ._claude_message_compat import install_claude_sdk_message_compat
 from ._claude_result import ClaudeSdkRunError as ClaudeSdkRunError
 from ._claude_result import result_tree_usage
 from ._deadline import _DeadlineExtender
+from ._query_lifecycle import closing_query, managed_query
 from ._runtime_models import BackendRequest, BackendResult
 from ._structured_output_compat import relaxed_provider_schema
 from ._structured_output_recovery import complete_result_output
@@ -62,7 +63,7 @@ class ClaudeSdkBackend(AgentBackend):
     ) -> None:
         if not callable(query_func):
             raise TypeError("query_func must be callable")
-        self._query = query_func
+        self._query = managed_query if query_func is query else query_func
         self._provider_env = dict(provider_env or {})
 
     def run(self, request: BackendRequest, controls: RuntimeControls) -> BackendResult:
@@ -97,17 +98,18 @@ class ClaudeSdkBackend(AgentBackend):
                 deadline=anyio.current_time() + request.timeout_ms / 1_000
             ) as scope:
                 extender.scope = scope
-                async for message in self._query(
+                async with closing_query(self._query(
                     prompt=request.prompt, options=options
-                ):
-                    if isinstance(message, AssistantMessage):
-                        await state.record_assistant(message)
-                    elif isinstance(message, UserMessage):
-                        await state.record_user(message)
-                    elif isinstance(message, ResultMessage):
-                        result = message
-                        await state.record_result(message)
-                    state.raise_failure()
+                )) as messages:
+                    async for message in messages:
+                        if isinstance(message, AssistantMessage):
+                            await state.record_assistant(message)
+                        elif isinstance(message, UserMessage):
+                            await state.record_user(message)
+                        elif isinstance(message, ResultMessage):
+                            result = message
+                            await state.record_result(message)
+                        state.raise_failure()
             if scope.cancelled_caught:
                 raise TimeoutError(
                     "Claude Agent SDK session exceeded the reasoning budget"

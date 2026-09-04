@@ -12,6 +12,7 @@ from manim_quality.operator.reviewers import run_reviewers
 
 from .contracts import ASSURANCE_OUTPUT_SCHEMA
 from .models import AssuranceCase
+from .parent_evidence import record_parent_attempt as _record_parent_attempt
 from .policy import (
     POLICY_SHA256,
     POLICY_VERSION,
@@ -47,7 +48,7 @@ class FinalAssuranceAgent:
         self.runtime = runtime
         self.profile = assurance_profile(
             model=model,
-            prompt_version=f"final-assurance-practical-v4-candidate-facts+{POLICY_VERSION}",
+            prompt_version=f"final-assurance-practical-v4.1-projected-receipts+{POLICY_VERSION}",
             schema_version="final-assurance-output-v2",
             tool_version="final-assurance-tools-v2",
         )
@@ -87,6 +88,7 @@ class FinalAssuranceAgent:
             reserved_cache_read_tokens=40_000,
             reserved_cache_write_tokens=0,
             output_validator=tools.validate_output,
+            output_normalizer=tools.normalize_output,
             managed_tools=tools.grants(),
             subagents=(),
             effort="low",
@@ -135,12 +137,14 @@ def _run_parent_with_protocol_retry(runtime, request, output_dir):
             result = runtime.run(current)
         except AgentRunFailed as error:
             attempts.append(error.record)
-            _record_parent_attempt(output_dir, attempt, error.record)
+            _record_parent_attempt(output_dir, attempt, error.record,
+                                   error.sdk_messages, error.subagent_results)
             if attempt == 1 and _is_retryable_parent_protocol_error(error.record):
                 continue
             raise
         attempts.append(result.record)
-        _record_parent_attempt(output_dir, attempt, result.record)
+        _record_parent_attempt(output_dir, attempt, result.record,
+                               result.sdk_messages, result.subagent_results)
         return result, tuple(attempts)
     raise AssertionError("bounded Final Assurance retry exhausted")
 
@@ -148,30 +152,6 @@ def _run_parent_with_protocol_retry(runtime, request, output_dir):
 def _is_retryable_parent_protocol_error(record: AgentCallRecord) -> bool:
     error = str(record.error or "").lower()
     return any(marker in error for marker in _RETRYABLE_PARENT_PROTOCOL_ERRORS)
-
-
-def _record_parent_attempt(
-    output_dir: Path, attempt: int, record: AgentCallRecord
-) -> None:
-    output_dir.mkdir(parents=True, exist_ok=True)
-    usage = record.usage
-    payload = {
-        "attempt": attempt,
-        "run_id": record.run_id,
-        "status": "failed" if record.error else "succeeded",
-        "error": record.error,
-        "elapsed_ms": record.elapsed_ms,
-        "turns": record.turns,
-        "tool_calls": len(record.tool_calls),
-        "usage": {
-            "input_tokens": usage.input_tokens,
-            "output_tokens": usage.output_tokens,
-            "cache_read_tokens": usage.cache_read_tokens,
-            "cache_write_tokens": usage.cache_write_tokens,
-        },
-    }
-    with (output_dir / "parent-attempts.jsonl").open("a", encoding="utf-8") as stream:
-        stream.write(json.dumps(payload, ensure_ascii=False, sort_keys=True) + "\n")
 
 
 def _merge_parent_attempt_records(

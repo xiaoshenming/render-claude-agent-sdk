@@ -58,15 +58,10 @@ class AgentRuntime:
         try:
             guard = _build_guard(request)
             controls = RuntimeControls(
-                budget, guard, output_validator=request.output_validator
+                budget, guard, output_validator=request.output_validator,
+                output_normalizer=request.output_normalizer,
             )
-            budget.check_context(_request_context_bytes(request))
-            budget.before_round(
-                estimated_input_tokens=request.estimated_input_tokens,
-                reserved_output_tokens=request.reserved_output_tokens,
-                reserved_cache_read_tokens=request.reserved_cache_read_tokens,
-                reserved_cache_write_tokens=request.reserved_cache_write_tokens,
-            )
+            _reserve_initial_context(request, budget)
             backend_request = build_backend_request(
                 request,
                 guard=guard,
@@ -92,7 +87,8 @@ class AgentRuntime:
             observed_model_rounds=observed_rounds,
             elapsed_ms=snapshot.elapsed_ms,
             error=error_text,
-            external_tool_ms=snapshot.external_ms, usage_complete=snapshot.usage_reconciled,
+            external_tool_ms=snapshot.external_ms,
+            usage_complete=snapshot.usage_reconciled,
             token_limit_observations=snapshot.token_limit_observations,
         )
         self._usage_sink.save(record)
@@ -107,6 +103,16 @@ class AgentRuntime:
             sdk_messages=backend_result.sdk_messages,
             subagent_results=backend_result.subagent_results,
         )
+
+
+def _reserve_initial_context(request, budget) -> None:
+    budget.check_context(_request_context_bytes(request))
+    budget.before_round(
+        estimated_input_tokens=request.estimated_input_tokens,
+        reserved_output_tokens=request.reserved_output_tokens,
+        reserved_cache_read_tokens=request.reserved_cache_read_tokens,
+        reserved_cache_write_tokens=request.reserved_cache_write_tokens,
+    )
 
 
 def _raise_run_failed(record, caught: Exception) -> None:

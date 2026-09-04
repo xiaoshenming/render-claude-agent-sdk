@@ -218,20 +218,26 @@ def test_orientation_change_is_not_downgraded_as_semantic_equivalence() -> None:
     assert orientation["semantic_equivalence"] is False
 
 
-def test_orientation_diagnosis_cannot_silently_pass_without_issue() -> None:
-    from manim_quality.agents._runtime_models import CorrectableOutputError
-    from manim_quality.operator.figure_fidelity import _validate_output
-
+@pytest.mark.parametrize("diagnosis", [
+    "无 auto_repair 项，判 pass",
+    "不存在 auto_repair 项",
+    "未发现任何 auto_repair 级差异",
+    "No auto_repair issue is present.",
+    "整体旋转，应判为 orientation_change + base_figure + auto_repair",
+])
+def test_diagnosis_words_do_not_override_structured_issues(diagnosis) -> None:
     value = {
         "decision": "pass",
-        "diagnosis": (
-            "整体旋转，应判为 orientation_change + base_figure + auto_repair"
-        ),
+        "diagnosis": diagnosis,
         "issues": [],
     }
+    _validate_output(value)
+    assert _decision(value["issues"]) == "pass"
 
-    with pytest.raises(CorrectableOutputError, match="diagnosis claims"):
-        _validate_output(value)
+
+def test_invalid_structured_repair_action_still_rejected() -> None:
+    with pytest.raises(ValueError, match="repair_action"):
+        _validate_output({"decision": "pass", "issues": [{"repair_action": "unknown"}]})
 
 
 def test_output_contract_excludes_teaching_timing_categories() -> None:

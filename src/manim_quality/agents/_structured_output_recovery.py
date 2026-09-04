@@ -37,7 +37,9 @@ def complete_result_output(result, state, schema, controls):
         )
     if isinstance(result.structured_output, Mapping):
         return controls.complete(result.structured_output), None
-    for source, candidate in recovery_candidates(state, schema):
+    for source, candidate in recovery_candidates(
+        state, schema, controls.normalize_output
+    ):
         try:
             return controls.complete(candidate), source
         except OutputRejected:
@@ -66,6 +68,7 @@ def record_tool_candidate(state, value: object) -> None:
 def recovery_candidates(
     state,
     schema: Mapping[str, object],
+    normalize=lambda value: value,
 ) -> Iterable[tuple[str, Mapping[str, object]]]:
     """Yield newest-first candidates that pass the declared JSON Schema."""
     seen: set[str] = set()
@@ -83,21 +86,23 @@ def recovery_candidates(
                 continue
             if block.get("name") == "StructuredOutput":
                 yield from _validated(
-                    "assistant_structured_tool", block.get("input"), schema, seen
+                    "assistant_structured_tool", block.get("input"),
+                    schema, seen, normalize
                 )
             text = block.get("text")
             if isinstance(text, str):
                 for value in _json_objects(text):
-                    yield from _validated("assistant_text", value, schema, seen)
+                    yield from _validated(
+                        "assistant_text", value, schema, seen, normalize)
     raw = list(getattr(state, "_structured_output_candidates", ()))
     for value in reversed(raw):
-        yield from _validated("structured_tool_input", value, schema, seen)
+        yield from _validated("structured_tool_input", value, schema, seen, normalize)
 
 
-def _validated(source, value, schema, seen):
+def _validated(source, value, schema, seen, normalize):
     if not isinstance(value, Mapping):
         return
-    adapted = adapt_structured_output(value, schema)
+    adapted = adapt_structured_output(normalize(value), schema)
     if not isinstance(adapted, Mapping):
         return
     plain = thaw_json_object(adapted)

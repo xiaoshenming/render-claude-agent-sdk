@@ -14,6 +14,7 @@ from manim_quality.contracts._json_values import thaw_json_object
 from .contracts import REQUIRED_TOOLS, validate_assurance_output
 from .identity import ArtifactIdentityReceipt, inspect_artifact_identity
 from .models import AssuranceCase, ToolReport
+from .output_projection import project_output
 from .tools import (
     inspect_artifact,
     inspect_code_review,
@@ -77,7 +78,6 @@ class AssuranceToolset:
         return tuple(grants)
 
     def validate_output(self, value) -> None:
-        self._record_output_attempt(value)
         try:
             missing = REQUIRED_TOOLS - self.reports.keys()
             if missing:
@@ -89,29 +89,22 @@ class AssuranceToolset:
                 },
             )
         except ValueError as error:
+            self._record_output_attempt(value, str(error))
             raise CorrectableOutputError(str(error)) from error
+        self._record_output_attempt(value)
 
     def normalize_output(self, value) -> dict[str, object]:
         """Bind mechanical receipt fields to immutable observed tool reports."""
-        payload = thaw_json_object(value)
-        receipts = payload.get("tool_receipts")
-        if not isinstance(receipts, list):
-            return payload
-        for receipt in receipts:
-            if not isinstance(receipt, dict):
-                continue
-            report = self.reports.get(str(receipt.get("tool") or ""))
-            if report is None:
-                continue
-            receipt["status"] = report.status
-            receipt["evidence_ids"] = [
-                str(row["id"])
-                for row in report.evidence
-                if isinstance(row.get("id"), str)
-            ]
+        payload = project_output(value, self.reports)
+        raw = thaw_json_object(value)
+        if raw != payload:
+            path = self.output_dir / "output-projections.jsonl"
+            with path.open("a", encoding="utf-8") as stream:
+                stream.write(json.dumps(
+                    {"raw": raw, "projected": payload}, ensure_ascii=False) + "\n")
         return payload
 
-    def _record_output_attempt(self, value) -> None:
+    def _record_output_attempt(self, value, error=None) -> None:
         path = self.output_dir / "structured-output-attempts.jsonl"
         with path.open("a", encoding="utf-8") as stream:
             stream.write(
@@ -119,6 +112,7 @@ class AssuranceToolset:
                     {
                         "output": thaw_json_object(value),
                         "observed_tools": sorted(self.reports),
+                        "validation_error": error,
                     },
                     ensure_ascii=False,
                     sort_keys=True,

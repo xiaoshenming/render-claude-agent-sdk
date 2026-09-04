@@ -37,6 +37,9 @@ class AgentRunRequest:
     tool_policies: Mapping[str, ToolInputPolicy] | None = None
     subagents: Sequence[NativeSubagentSpec] = ()
     effort: str = "low"
+    output_normalizer: (
+        Callable[[Mapping[str, object]], Mapping[str, object]] | None
+    ) = None
 
     def __post_init__(self) -> None:  # noqa: C901
         _require_text(self.run_id, "run_id")
@@ -61,6 +64,8 @@ class AgentRunRequest:
             _require_count(getattr(self, name), name)
         if self.output_validator is not None and not callable(self.output_validator):
             raise TypeError("output_validator must be callable or None")
+        if self.output_normalizer is not None and not callable(self.output_normalizer):
+            raise TypeError("output_normalizer must be callable or None")
         object.__setattr__(self, "read_tools", tuple(self.read_tools))
         if not all(isinstance(item, ReadonlyToolGrant) for item in self.read_tools):
             raise TypeError("read_tools must contain ReadonlyToolGrant values")

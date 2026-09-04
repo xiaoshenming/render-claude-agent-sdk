@@ -10,7 +10,6 @@ from manim_quality.contracts._json_values import freeze_json_object
 from ._agent_tool_input import normalize_reviewer_agent_input
 from ._guard_primitives import (
     DuplicatePatch,
-    DuplicateRead,
     PathDenied,
     ToolDenied,
     declare_managed_tools,
@@ -21,6 +20,7 @@ from ._guard_primitives import (
     input_hash,
     resolve_requested_path,
 )
+from ._guard_primitives import DuplicateRead as DuplicateRead
 from ._guard_primitives import GuardError as GuardError
 from .managed_tools import ManagedToolGrant
 from .profile import AgentProfile
@@ -53,7 +53,6 @@ class ToolGuard:
         if self._editable and "Edit" not in profile.allowed_tools:
             raise ToolDenied("profile cannot declare editable paths")
         self._file_versions: dict[Path, int] = {}
-        self._seen_reads: set[tuple[object, ...]] = set()
         self._seen_patches: set[tuple[str, str, str]] = set()
         self._read_tools = declare_read_tools(read_tools)
         self._managed_tools = declare_managed_tools(managed_tools)
@@ -233,17 +232,11 @@ class ToolGuard:
             self._pending_read_tools[signature] = pending - 1
 
     def _authorize_read(self, path: Path, data: Mapping[str, object]) -> None:
+        del data
         if path not in self._readable and path not in self._editable:
             raise PathDenied(f"read path is outside exact allowlist: {path}")
-        signature = (
-            str(path),
-            self._file_versions.get(path, 0),
-            data.get("offset"),
-            data.get("limit"),
-        )
-        if signature in self._seen_reads:
-            raise DuplicateRead(f"duplicate Read call: {path}")
-        self._seen_reads.add(signature)
+        # Reads have no mutation side effects. Repeated reads still consume
+        # the existing call/turn budgets and read current file contents.
 
     def _authorize_edit(self, path: Path, data: Mapping[str, object]) -> None:
         if path not in self._editable:

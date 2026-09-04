@@ -1,5 +1,10 @@
 from pathlib import Path
 
+import pytest
+
+from manim_quality.agents.guards import ToolGuard
+from manim_quality.agents.profile import operator_profile
+from manim_quality.agents.tool_policy import ToolInputPolicy
 from manim_quality.operator.candidate_io import (
     find_baseline_candidate,
     live_solution_read,
@@ -31,7 +36,7 @@ def test_live_solution_read_recomputes_after_edit(tmp_path: Path) -> None:
     )
     normalize = live_solution_read(candidate)
 
-    first = normalize({"file_path": str(candidate), "offset": 1, "limit": 999})
+    first = normalize({"file_path": str(candidate)})
     candidate.write_text(
         candidate.read_text(encoding="utf-8").replace(
             "        self.wait()\n",
@@ -44,8 +49,6 @@ def test_live_solution_read_recomputes_after_edit(tmp_path: Path) -> None:
     second = normalize(
         {
             "file_path": str(candidate),
-            "offset": first["offset"],
-            "limit": first["limit"],
         }
     )
 
@@ -69,7 +72,7 @@ def test_live_solution_read_rebinds_mistyped_candidate_path(tmp_path: Path) -> N
     )
 
     assert result["file_path"] == str(candidate)
-    assert (result["offset"], result["limit"]) == (1, 2)
+    assert (result["offset"], result["limit"]) == (2, 1)
 
 
 def test_live_solution_read_records_real_native_read(tmp_path: Path) -> None:
@@ -83,3 +86,30 @@ def test_live_solution_read_records_real_native_read(tmp_path: Path) -> None:
     normalize({"file_path": str(candidate), "offset": 1, "limit": 1})
 
     assert reads == ["R0"]
+
+
+def test_live_read_preserves_observed_helper_ranges_and_replays(tmp_path):
+    candidate = tmp_path / "candidate.py"
+    candidate.write_text(
+        "# header\n" * 1888 + "class Solution(BaseConfigScene):\n" + "    pass\n" * 153)
+    guard = ToolGuard(
+        workspace=tmp_path,
+        profile=operator_profile(model="fake", prompt_version="test"),
+        readable_paths=(candidate,), editable_paths=(candidate,),
+        tool_policies={"Read": ToolInputPolicy(
+            max_calls=120, input_normalizer=live_solution_read(candidate))},
+    )
+    # Exact requests seen in a production failed Coder session. The old
+    # normalizer rewrote both helper ranges to (1889,154), then denied them.
+    for offset, limit in [(1889, 154), (380, 35), (610, 170), (610, 170)]:
+        result = guard.authorize("Read", {
+            "file_path": str(candidate), "offset": offset, "limit": limit})
+        assert (result["offset"], result["limit"]) == (offset, limit)
+
+
+@pytest.mark.parametrize("count", [0, -1, True, "3"])
+def test_live_read_rejects_invalid_range(tmp_path, count):
+    candidate = tmp_path / "candidate.py"
+    candidate.write_text("class Solution(BaseConfigScene):\n    pass\n")
+    with pytest.raises(ValueError, match="positive integer"):
+        live_solution_read(candidate)({"offset": count})
