@@ -8,14 +8,19 @@ def test_final_assurance_prompt_contains_practical_delivery_baseline() -> None:
 
     assert "没有影响阅读的真实重叠" in text
     assert "示意图未严格按比例" in text
-    assert "实际视频未见异常时，不得报告为 high/blocking" in text
+    assert "BBox=0 只能证明未检出重叠或越界" in text
+    assert "不得用 BBox=0 否定" in text
+    assert "旧锚点" in text
+    assert "对象身份" in text
     assert "错误高亮" in text
     assert "目标转化”而不是循环论证" in text
     assert "不得再次调用 Agent" in text
-    assert "两路必需 Reviewer" in text
-    assert "不得据此阻断" in text
-    assert "最终源码绑定的确定性BBox" in text
-    assert "不得降级为warning" in text
+    assert "数学逻辑、动画生命周期" in text
+    assert "Reviewer 的原始 `needs_repair` 不是自动扣分项" in text
+    assert "inspect_layout=complete" in text
+    assert "必须形成至少 medium" in text
+    assert "全部六个 assurance 工具" in text
+    assert "七个工具" not in text
     assert "risk-frames" not in text
     assert "多模态" not in text
 
