@@ -17,8 +17,8 @@ def test_final_assurance_prompt_contains_practical_delivery_baseline() -> None:
     assert "不得再次调用 Agent" in text
     assert "数学逻辑、动画生命周期" in text
     assert "Reviewer 的原始 `needs_repair` 不是自动扣分项" in text
-    assert "inspect_layout=complete" in text
-    assert "必须形成至少 medium" in text
+    assert "severity=candidate" in text
+    assert "只有确认影响阅读的问题进入 issues" in text
     assert "全部六个 assurance 工具" in text
     assert "七个工具" not in text
     assert "risk-frames" not in text

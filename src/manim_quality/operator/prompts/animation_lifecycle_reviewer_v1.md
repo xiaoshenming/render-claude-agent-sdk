@@ -84,6 +84,12 @@ lifecycle. Do not judge mathematical correctness.
 4. Cite the Solution call line and the resolved helper name for every checked
    page transition and geometry highlight. Do not claim these items were checked
    when their helper definition is absent from `reachable_helpers`.
+   Trace copied coordinates and detached overlays explicitly: capture of coordinates,
+   later transform of their original owner, and later reuse of the old coordinates
+   form one chain. A copied line or highlight excluded from the transformed group
+   does not follow that group automatically. Conversely, a refreshed live endpoint
+   or a shared transformed owner is counterevidence. Cite that chain rather than
+   treating a clean overlap report as proof of correct anchors.
 5. Return one compact JSON object as plain text. Maximum 12 issues, maximum two
    short source evidence strings per issue, and maximum 8000 total characters.
 

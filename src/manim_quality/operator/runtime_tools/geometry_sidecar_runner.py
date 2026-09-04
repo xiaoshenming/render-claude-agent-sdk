@@ -35,6 +35,8 @@ def _load_delegate(path: Path):
     spec.loader.exec_module(module)
     if not callable(getattr(module, "main", None)):
         raise RuntimeError(f"layout probe delegate has no main(): {path}")
+    from manim_quality.operator.runtime_tools.display_bounds import install_complete_bounds
+    install_complete_bounds(module)
     return module
 
 

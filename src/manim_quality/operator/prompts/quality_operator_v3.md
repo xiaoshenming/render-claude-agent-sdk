@@ -116,7 +116,12 @@ Operating rules:
    `repair_action` is `auto_repair`. Keep the edit inside its stated
    `repair_scope`. Never edit `evidence_only` or `human_review` observations,
    and never rewrite the whole figure merely to resemble the confirmed source.
-   `blocking_count` is follow-up evidence, not source authority. After successful
+   `blocking_count` is follow-up evidence, not source authority. When the report
+   has `evidence_only=true`, inspect `candidate_count` and every returned candidate:
+   zero blocking_count means no deterministic quality ruling was imposed. It does
+   not mean zero overlap. Decide actual readability/contact from the source,
+   object bounds and time windows; preserve intended containment and fix genuine
+   obstruction. After successful
    rendering and a current layout inspection, submit the newest render-passing
    revision even when BBox observations remain; preserve those observations for
    the next focused repair/assurance cycle and never recover R0 solely because

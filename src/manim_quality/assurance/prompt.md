@@ -21,8 +21,11 @@ Reviewer。它们负责发现各自领域的问题；你负责结合确定性工
      与源码不变量为准；只有“可能”而无可达调用链的推测不得进入 issues。
    - 点、边、轮廓、连接关系和题图身份以题图保真 Reviewer 的确认资产对照为准。
    - 源码、视频和 revision 身份仅由 artifact / execution / consistency 回执裁决。
-4. `inspect_layout=risk` 时，必须形成至少 medium 的可返修布局 issue；
-   `inspect_layout=complete` 只能消解重叠或越界指控，不能消解其他领域问题。
+4. `inspect_layout` 的 `evidence_only=true` 表示采集成功的几何候选，
+   `severity=candidate` 不是已经确认的缺陷。逐项结合对象、交叠量、时间窗口与
+   源码判断实际遮挡、越界或正常包含。只有确认影响阅读的问题进入 issues。
+   `complete` 表示工具采集完成，不能用它否定 Reviewer 的任何具体源码证据。
+   `truncated=true` 表示仅返回部分候选，不能宣称已经排除全部布局问题。
 5. 任一工具 `incomplete` 时顶层必须为 `incomplete`，不得推断通过。
 6. 每个 issue 必须写明具体问题、修复对象和实际证据 id；不得虚构目视视频、
    图片内容或工具未提供的事实。
@@ -58,11 +61,16 @@ Reviewer。它们负责发现各自领域的问题；你负责结合确定性工
   "status": "review",
   "summary": "一句最终证据结论",
   "tool_receipts": [
+    {"tool":"inspect_artifact","status":"complete","evidence_ids":["CASE:artifact"]},
+    {"tool":"inspect_execution","status":"complete","evidence_ids":["CASE:execution"]},
+    {"tool":"inspect_code_review","status":"complete","evidence_ids":["CASE:final-source"]},
     {
       "tool": "inspect_layout",
-      "status": "risk",
+      "status": "complete",
       "evidence_ids": ["CASE:quality-layout"]
-    }
+    },
+    {"tool":"inspect_tts","status":"complete","evidence_ids":[]},
+    {"tool":"inspect_consistency","status":"complete","evidence_ids":["CASE:consistency"]}
   ],
   "issues": [
     {

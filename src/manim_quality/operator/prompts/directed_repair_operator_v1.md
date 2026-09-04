@@ -36,6 +36,9 @@ Operating contract:
 4. Record the accepted findings, then make one focused Edit for the shared root
    cause. Do not spend a revision on comments or a no-op.
 5. After the Edit, call `validate_revision` and `inspect_layout` together once.
+   For `evidence_only=true`, use `candidate_count` and candidate facts to judge
+   readability; `blocking_count=0` is not proof of a clean layout. Normal intended
+   containment is not a defect. Fix source-proven obstruction, not every bbox contact.
    Omit `finding_ids` from these calls; the accepted `fa-*` identifiers belong
    to the outer assurance ledger, not the local revision registry.
    If rendering fails, make one focused correction and validate that revision.

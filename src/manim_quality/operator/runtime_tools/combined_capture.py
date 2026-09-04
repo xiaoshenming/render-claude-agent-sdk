@@ -8,7 +8,8 @@ from pathlib import Path
 from typing import Any
 
 from .geometry_sidecar_runner import _load_delegate, _shape_records
-from .semantic_rows import collect, dedupe, install_tagging
+from .candidate_facts import group_candidates
+from .semantic_rows import collect, install_tagging
 from .semantic_rows import overlaps as row_overlaps
 
 PAYLOAD_ENV = "MANIM_COMBINED_BBOX_PATH"
@@ -49,12 +50,12 @@ class _Capture:
 
             step = int(getattr(scene, "_combined_capture_step", 0))
             timestamp = _scene_time(scene)
-            overlaps = self.delegate._find_overlaps(items)[:40]
+            overlaps = self.delegate._find_overlaps(items)
             bounds = self.delegate._find_frame_bounds_violations(
                 items,
                 frame_width=float(config.frame_width),
                 frame_height=float(config.frame_height),
-            )[:40]
+            )
             self.snapshots.append({
                 "scene": scene.__class__.__name__,
                 "step": step,
@@ -113,10 +114,9 @@ class _Capture:
             "snapshot_count": len(self.snapshots),
             "estimated_duration": max(
                 (row["estimated_duration"] for row in self.snapshots), default=0.0),
-            "top_overlaps": self.delegate._dedupe_overlaps(overlaps)[:80],
-            "semantic_row_overlaps": dedupe(semantic)[:80],
-            "top_bounds_violations": (
-                self.delegate._dedupe_bounds_violations(bounds)[:80]),
+            "top_overlaps": group_candidates(overlaps),
+            "semantic_row_overlaps": group_candidates(semantic),
+            "top_bounds_violations": group_candidates(bounds),
         }
         _atomic_json(self.payload_path, payload)
         _atomic_json(self.sidecar_path, {

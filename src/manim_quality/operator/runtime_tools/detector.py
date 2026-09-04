@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 from types import ModuleType
 
-from .candidate_recovery import recover_candidates
+from .candidate_facts import candidate_facts
 
 
 class LayoutIssueDetector:
@@ -25,7 +25,7 @@ class LayoutIssueDetector:
         payload = self._module.payload_from_probe(probe)
         if not isinstance(payload, dict):
             raise TypeError("layout detector returned a malformed payload")
-        payload = recover_candidates(probe, payload)
+        payload = candidate_facts(probe, payload)
         raw = dict(payload.get("raw") or {})
         raw.update({
             "capture_mode": probe.get("capture_mode"),

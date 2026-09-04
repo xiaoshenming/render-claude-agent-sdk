@@ -5,7 +5,7 @@ import json
 from dataclasses import dataclass
 
 from .contracts import validate_assurance_output
-POLICY_VERSION = "final-assurance-policy-v5"
+POLICY_VERSION = "final-assurance-policy-v6-candidate-facts"
 POLICY_RULES = (
     "derived_parameter_mismatch_promoted",
     "verified_layout_risk_promoted",
@@ -104,6 +104,11 @@ def _promote_verified_layout_risk(output, reports, case_key) -> bool:
     if not isinstance(report, dict) or report.get("status") != "risk":
         return False
     evidence = report.get("evidence")
+    if isinstance(evidence, list) and any(
+        isinstance(item, dict) and item.get("evidence_only") is True
+        for item in evidence
+    ):
+        return False
     evidence_ids = [
         str(item.get("id"))
         for item in evidence if isinstance(item, dict) and item.get("id")
